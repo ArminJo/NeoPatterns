@@ -1,0 +1,46 @@
+#######################################
+# Syntax Coloring Map for NeoPatterns
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+NeoPatterns	KEYWORD1
+NeoPixel	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+update	KEYWORD2
+RainbowCycle	KEYWORD2
+TheaterChase	KEYWORD2
+ColorWipe	KEYWORD2
+Scanner	KEYWORD2
+Fade	KEYWORD2
+
+Fire	KEYWORD2
+Cylon	KEYWORD2
+Delay	KEYWORD2
+ProcessSelectiveColor	KEYWORD2
+FadeSelectiveColor	KEYWORD2
+MovingPicturePGM	KEYWORD2
+TickerPGM	KEYWORD2
+Ticker	KEYWORD2
+loadPicturePGM	KEYWORD2
+Wheel	KEYWORD2
+HeatColor	KEYWORD2
+
+begin		KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+FORWARD	LITERAL1
+REVERSE	LITERAL1
+UP	LITERAL1
+DOWN	LITERAL1
+
+COLOR	LITERAL1
