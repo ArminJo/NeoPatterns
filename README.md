@@ -15,6 +15,7 @@ MOVING_PICTURE, TICKER
 
 #NeoPatterns EXAMPLE
 NeoPatterns on breadboard
-![NeoPatterns on breadboard](https://github.com/ArminJo/arduino-tone-detector/blob/master/media/Breadboard_close.jpg)
+![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/media/Breadboard_close.jpg)
+
 Youtube Demonstration of NeoPatternsDemo
-[![Demonstration of NeoPatterns](https://img.youtube.com/vi/tsxfSx0iY5s/0.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ)
+[![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ)
