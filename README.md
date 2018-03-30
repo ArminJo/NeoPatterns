@@ -1,10 +1,10 @@
-# NeoPatterns
-This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.  
-Extension are made to include more patterns, combined patterns and 8x8 NeoPixel matrix.
+# NeoPatterns and Snake game for NeoPixel matrix
+This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
+Extension are made to include more patterns, combined patterns and nxn NeoPixel matrix.
+*With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code in the computeSnakeDirection() function.*
 # Installation
-First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neo" as filter string.  
-Then download NeoPatterns.zip file, and add it with *Sketch -> add .ZIP Library...*.  
-If you use the GitHub *clone or download -> Download ZIP* button, then you must open zip file and rename the folder you see from *NeoPatterns-master* to *NeoPatterns* before adding it to Arduino.
+First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
+Then download NeoPatterns.zip file or use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
 **RAINBOW_CYCLE**, **THEATER_CHASE**, **COLOR_WIPE**, **SCANNER**, **FADE**  
@@ -13,8 +13,25 @@ The SCANNER pattern is extended and now has 4 modes.
 **FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
 ## New patterns
  **CYLON**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**
-## Patterns for 8x8 Matrix
-**MOVING_PICTURE**, **TICKER**
+## Patterns for nxn Matrix
+**MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
+
+# All pixel mappings except NEO_MATRIX_COLUMNS supported
+In case you need NEO_MATRIX_COLUMNS layout, try to rotate your Matrix and use NEO_MATRIX_ROWS or use your own custom mapping function.
+
+Pixel mappings definitions and semantics are taken from https://github.com/adafruit/Adafruit_NeoMatrix/blob/master/Adafruit_NeoMatrix.h
+Here you find also mappings for tiled display with multiple matrices.
+
+Examples:
+```
+     ProgressiveMapping                  ZigzagTypeMapping
+   Regular        Mirrored           Regular        Mirrored
+   Bottom/Right   Bottom/Left                                                             
+   15 14 13 12    12 13 14 15        12 13 14 15    15 14 13 12    
+   11 10  9  8     8  9 10 11        11 10  9  8     8  9 10 11    
+    7  6  5  4     4  5  6  7         4  5  6  7     7  6  5  4    
+    3  2  1  0     0  1  2  3         3  2  1  0     0  1  2  3   
+```
 
 NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/media/Breadboard_close.jpg)

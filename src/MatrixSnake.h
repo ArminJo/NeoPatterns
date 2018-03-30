@@ -1,0 +1,105 @@
+/*
+ * MatrixSnake.h
+ *
+ *  SUMMARY
+ *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
+ *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
+ *
+ *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  armin.joachimsmeyer@gmail.com
+ *
+ *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
+ *
+ *  NeoPatterns is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *
+ */
+
+#ifndef MATRIXSNAKE_H_
+#define MATRIXSNAKE_H_
+
+#include "MatrixNeoPatterns.h"
+
+#define APPLE_COLOR COLOR32_RED
+
+#define MILLIS_FOR_BUTTON_DEBOUNCING 100
+
+#define FLAG_USE_4_BUTTONS 0x01 // will be set if PinOfUpButton != 0 and up or down button was at least pressed once
+#define FLAG_SNAKE_IS_MOVING 0x02
+#define FLAG_SNAKE_SHOW_LENGTH 0x10         // signal number shown -> enables delay
+#define FLAG_SNAKE_AUTORUN 0x20             // autorun mode - for demo if no left buttons is defined
+#define SHOW_NUMBER_INTERVAL_MILLIS 2000
+
+#define TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS 7000
+
+// stores a 2d position TopLeft coordinates are 0,0
+struct position {
+    uint8_t x;
+    uint8_t y;
+};
+
+// stores the initial shape of the snake. SnakeInitialPixels[0] is head of snake
+position const SnakeInitialPixels[] = { { 4, 4 }, { 5, 4 }, { 6, 4 }, { 6, 5 } };
+
+// extension of NeoPattern Class approximately 85 Byte / object
+class MatrixSnake: public MatrixNeoPatterns {
+public:
+    MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin,  uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+
+    void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
+            uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);
+
+    bool Update();
+
+    void SnakeUpdate();
+    void SnakeInputHandler();
+    void SnakeDefaultHandler();
+    void showScore();
+
+    void newApple();
+    void drawSnake();
+    void resetAndDrawSnake();
+    void rotateRight();
+    void rotateLeft();
+
+    // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
+    // SnakePixelList[0] is head of snake
+    position * SnakePixelList;
+    uint16_t SnakeLength;
+
+    // the apple the snake chases after
+    position Apple;
+
+    uint16_t HighScore;
+
+    /*
+     * Snake input stuff
+     */
+    uint8_t PinOfRightButton;
+    uint8_t PinOfLeftButton;
+    uint8_t PinOfUpButton;
+    uint8_t PinOfDownButton;
+    uint8_t DirectionOfLastButtonPressed;  // for debouncing
+    uint32_t MillisOfLastButtonChange; // for debouncing
+
+};
+
+void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr);
+
+void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aTotalSteps = 1);
+uint8_t computeSnakeDirection(MatrixSnake * aSnake, position aSnakeHeadPosition, position aApplePosition, uint8_t aActualDirection,
+        uint8_t aStepsDone, uint16_t aSnakeLength, position * aSnakeBodyArray);
+void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr);
+
+#endif /* MATRIXSNAKE_H_ */

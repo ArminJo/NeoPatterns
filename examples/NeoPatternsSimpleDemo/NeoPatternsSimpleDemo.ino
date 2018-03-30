@@ -1,8 +1,9 @@
 /*
- *  NeoPatternsSimpleDemo.cpp
+ *  NeoPatterns144.cpp
  *
  *  Shows all patterns included in the NeoPixel library for NeoPixel stripes.
- *  First you need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neo" as filter string
+ *
+ *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
  *
  *  Copyright (C) 2018  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
@@ -26,21 +27,20 @@
 #endif
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN_BAR_16          7
+#define PIN_STRIPE_16          8
 
 // onComplete callback functions
 void allPatterns(NeoPatterns * aLedsPtr);
 
 // construct the NeoPatterns instances
-NeoPatterns bar16 = NeoPatterns(16, PIN_BAR_16, NEO_GRB + NEO_KHZ800, &allPatterns);
+NeoPatterns stripe16 = NeoPatterns(16, PIN_STRIPE_16, NEO_GRB + NEO_KHZ800, &allPatterns);
 
 void setup() {
     Serial.begin(115200);
     Serial.println("start");
 
-    bar16.begin(); // This initializes the NeoPixel library.
-    bar16.isBar = true;
-    bar16.ColorWipe(COLOR(0, 0, 255), 50, REVERSE); // Blue
+    stripe16.begin(); // This initializes the NeoPixel library.
+    stripe16.ColorWipe(COLOR32(0, 0, 02), 50, REVERSE); // Blue
 
     randomSeed(12345);
 
@@ -48,11 +48,11 @@ void setup() {
 }
 
 void loop() {
-    bar16.Update();
+    stripe16.Update();
 }
 
 /*
- * Handler for random pattern
+ * Handler for all pattern
  * since sState starts with (0++) scanner is the first pattern you see
  */
 void allPatterns(NeoPatterns * aLedsPtr) {
@@ -71,19 +71,19 @@ void allPatterns(NeoPatterns * aLedsPtr) {
         break;
     case 2:
         // Falling star
-        aLedsPtr->Scanner(COLOR(127, 127, 127), tDuration / 2, 5);
+        aLedsPtr->Scanner(COLOR32_WHITE_HALF, tDuration / 2, 5);
         break;
     case 3:
         aLedsPtr->RainbowCycle(20);
         break;
     case 4:
-        aLedsPtr->TheaterChase(COLOR(127, 127, 127), COLOR(0, 0, 0), tDuration + tDuration / 2); // White on Black
+        aLedsPtr->TheaterChase(COLOR32_WHITE_HALF, COLOR32_BLACK, tDuration + tDuration / 2); // White on Black
         break;
     case 5:
         aLedsPtr->TheaterChase(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), tDuration + tDuration / 2); //
         break;
     case 6:
-        aLedsPtr->Fade(COLOR(255, 0, 0), COLOR(0, 0, 255), 32, tDuration, REVERSE);
+        aLedsPtr->Fade(COLOR32_RED, COLOR32_BLUE, 32, tDuration, REVERSE);
         break;
     case 7:
         aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration);
@@ -94,10 +94,10 @@ void allPatterns(NeoPatterns * aLedsPtr) {
         break;
     case 9:
         // Multiple falling star
-        initFallingStar(aLedsPtr, COLOR(127, 127, 127), 3, &allPatterns);
+        initFallingStar(aLedsPtr, COLOR32_WHITE_HALF, tDuration / 2, 3, &allPatterns);
         break;
     case 10:
-        if (aLedsPtr->isBar) {
+        if (aLedsPtr->PatternsGeometry == GEOMETRY_BAR) {
             //Fire
             aLedsPtr->Fire(tDuration / 2, 150);
         } else {

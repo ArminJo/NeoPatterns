@@ -4,6 +4,7 @@
 // All font data from Benedikt K.
 // http://www.mikrocontroller.net/topic/54860
 
+// Fonts all have <blanks> at bottom line (except for descenders (like in p and q) and padded from leftmost column
 //Font selection (select only one font)
 //#define FONT_4X6
 //#define FONT_5X8
@@ -20,7 +21,7 @@
 //#define FONT_16X26
 
 //if defined char range 0x20-0x7F otherwise 0x20-0xFF
-//#define FONT_END7F
+#define FONT_END7F
 
 #define FONT_START (0x20) //first character
 

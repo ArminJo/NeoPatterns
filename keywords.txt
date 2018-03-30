@@ -8,6 +8,8 @@
 
 NeoPatterns	KEYWORD1
 NeoPixel	KEYWORD1
+MatrixNeoPatterns	KEYWORD1
+MatrixSnake	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -19,7 +21,6 @@ TheaterChase	KEYWORD2
 ColorWipe	KEYWORD2
 Scanner	KEYWORD2
 Fade	KEYWORD2
-
 Fire	KEYWORD2
 Cylon	KEYWORD2
 Delay	KEYWORD2
@@ -31,6 +32,8 @@ Ticker	KEYWORD2
 loadPicturePGM	KEYWORD2
 Wheel	KEYWORD2
 HeatColor	KEYWORD2
+Snake	KEYWORD2
+
 
 begin		KEYWORD2
 
@@ -38,9 +41,9 @@ begin		KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
-FORWARD	LITERAL1
-REVERSE	LITERAL1
-UP	LITERAL1
-DOWN	LITERAL1
+DIRECTION_RIGHT	LITERAL1
+DIRECTION_LEFT	LITERAL1
+DIRECTION_UP	LITERAL1
+DIRECTION_DOWN	LITERAL1
 
-COLOR	LITERAL1
+COLOR32	LITERAL1
