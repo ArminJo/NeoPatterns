@@ -1,7 +1,7 @@
 # NeoPatterns and Snake game for NeoPixel matrix
 This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
 Extension are made to include more patterns, combined patterns and nxn NeoPixel matrix.
-*With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code in the computeSnakeDirection() function.*
+
 # Installation
 First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
 Then download NeoPatterns.zip file or use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
@@ -16,7 +16,7 @@ The SCANNER pattern is extended and now has 4 modes.
 ## Patterns for nxn Matrix
 **MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
 
-# All pixel mappings except NEO_MATRIX_COLUMNS supported
+## All pixel mappings except NEO_MATRIX_COLUMNS supported
 In case you need NEO_MATRIX_COLUMNS layout, try to rotate your Matrix and use NEO_MATRIX_ROWS or use your own custom mapping function.
 
 Pixel mappings definitions and semantics are taken from https://github.com/adafruit/Adafruit_NeoMatrix/blob/master/Adafruit_NeoMatrix.h
@@ -32,9 +32,16 @@ Examples:
     7  6  5  4     4  5  6  7         4  5  6  7     7  6  5  4    
     3  2  1  0     0  1  2  3         3  2  1  0     0  1  2  3   
 ```
+# SNAKE GAME
+## SnakeGame Example
+The game can be controlled by 2 or 4 buttons or by serial input (WASD).
+The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game. After 7 seconds of inactivity it runs the Snake demo with a simple AI.
+## SnakeAutorun Example
+**With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code in the computeSnakeDirection() function.**
+
 
 NeoPatterns on breadboard
-![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/media/Breadboard_close.jpg)
+![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 Youtube Video of NeoPatternsDemo  
 [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ)

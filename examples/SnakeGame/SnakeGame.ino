@@ -1,9 +1,9 @@
 /*
- * SnakeDemo.cpp
+ * SnakeGame.cpp
  *
  *
- *  Simply runs the Snake game. It can be controlled by 2 or 4 buttons or by serial input.
- *  The experimental Python script in extras converts key presses and game controller input to appropriate serial output for the game.
+ *  Simply runs the Snake game. It can be controlled by 2 or 4 buttons or by serial input (WASD).
+ *  The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.
  *  After 7 seconds of inactivity it runs the Snake demo with a simple AI.
  *
  *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
