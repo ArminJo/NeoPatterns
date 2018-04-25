@@ -57,10 +57,7 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 
 void setup() {
     Serial.begin(115200);
-    Serial.print((const __FlashStringHelper *) PSTR("START\r\nVersion "));
-    Serial.print(VERSION_EXAMPLE);
-    Serial.print((const __FlashStringHelper *) PSTR(" from  "));
-    Serial.println(__DATE__);
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
 
     bar16.begin(); // This initializes the NeoPixel library.
     bar24.begin(); // This initializes the NeoPixel library.

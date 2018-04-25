@@ -24,8 +24,6 @@
 #include <Arduino.h>
 #include <MatrixSnake.h>
 
-#define GAME_REFRESH_INTERVAL   400
-
 #define PIN_NEO_PIXEL_MATRIX   8
 
 #define RIGHT_BUTTON_PIN     2
@@ -47,10 +45,7 @@ NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemo);
 
 void setup() {
     Serial.begin(115200);
-    Serial.print((const __FlashStringHelper *) PSTR("START\r\nVersion "));
-    Serial.print(VERSION_EXAMPLE);
-    Serial.print((const __FlashStringHelper *) PSTR(" from  "));
-    Serial.println(__DATE__);
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
 
     NeoPixelMatrix.begin(); // This initializes the NeoPixel library.
 

@@ -30,8 +30,6 @@
 #ifndef MATRIXNEOPATTERNS_H_
 #define MATRIXNEOPATTERNS_H_
 
-
-
 #include "NeoPatterns.h"
 
 #define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH
@@ -54,7 +52,7 @@ float const convolutionMatrix[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] 
 // extension of NeoPattern Class approximately 85 Byte / object
 class MatrixNeoPatterns: public NeoPatterns {
 public:
-    MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry,  uint8_t aTypeOfPixel,
+    MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
@@ -92,13 +90,13 @@ public:
     void TickerUpdate();
 
     color32_t getMatrixPixelColor(uint8_t x, uint8_t y);
+    //
     bool setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32BitColor);
     void showNumberOnMatrix(uint8_t aNumber, color32_t aColor);
 
     // Geometry of Matrix
     uint8_t Rows;       // Y Direction
     uint8_t Columns;    // X Direction
-
 
     // Two arrays for double buffering
     uint8_t * MatrixNew;
@@ -117,22 +115,20 @@ public:
     // Matrix layout information is passed in the 'matrixType' parameter for
     // each constructor (the parameter immediately following is the LED type
     // from NeoPixel.h).
-
     // These define the layout for a single 'unified' matrix (e.g. one made
     // from NeoPixel strips, or a single NeoPixel shield), or for the pixels
     // within each matrix of a tiled display (e.g. multiple NeoPixel shields).
-
-    #define NEO_MATRIX_TOP         0x00 // Pixel 0 is at top of matrix
-    #define NEO_MATRIX_BOTTOM      0x01 // Pixel 0 is at bottom of matrix
-    #define NEO_MATRIX_LEFT        0x00 // Pixel 0 is at left of matrix
-    #define NEO_MATRIX_RIGHT       0x02 // Pixel 0 is at right of matrix
-    #define NEO_MATRIX_CORNER      0x03 // Bitmask for pixel 0 matrix corner
-    #define NEO_MATRIX_ROWS        0x00 // Matrix is row major (horizontal)
-    #define NEO_MATRIX_COLUMNS     0x04 // Matrix is column major (vertical)
-    #define NEO_MATRIX_AXIS        0x04 // Bitmask for row/column layout
-    #define NEO_MATRIX_PROGRESSIVE 0x00 // Same pixel order across each line
-    #define NEO_MATRIX_ZIGZAG      0x08 // Pixel order reverses between lines
-    #define NEO_MATRIX_SEQUENCE    0x08 // Bitmask for pixel line order
+#define NEO_MATRIX_TOP         0x00 // Pixel 0 is at top of matrix
+#define NEO_MATRIX_BOTTOM      0x01 // Pixel 0 is at bottom of matrix
+#define NEO_MATRIX_LEFT        0x00 // Pixel 0 is at left of matrix
+#define NEO_MATRIX_RIGHT       0x02 // Pixel 0 is at right of matrix
+#define NEO_MATRIX_CORNER      0x03 // Bitmask for pixel 0 matrix corner
+#define NEO_MATRIX_ROWS        0x00 // Matrix is row major (horizontal)
+#define NEO_MATRIX_COLUMNS     0x04 // Matrix is column major (vertical)
+#define NEO_MATRIX_AXIS        0x04 // Bitmask for row/column layout
+#define NEO_MATRIX_PROGRESSIVE 0x00 // Same pixel order across each line
+#define NEO_MATRIX_ZIGZAG      0x08 // Pixel order reverses between lines
+#define NEO_MATRIX_SEQUENCE    0x08 // Bitmask for pixel line order
     uint8_t Geometry;    // Flags for geometry
 
 };

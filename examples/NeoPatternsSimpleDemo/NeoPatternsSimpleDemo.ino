@@ -26,6 +26,8 @@
 #include <avr/pgmspace.h>
 #endif
 
+#define VERSION_EXAMPLE "1.0"
+
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_STRIPE_16          8
 
@@ -37,7 +39,7 @@ NeoPatterns stripe16 = NeoPatterns(16, PIN_STRIPE_16, NEO_GRB + NEO_KHZ800, &all
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("start");
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
 
     stripe16.begin(); // This initializes the NeoPixel library.
     stripe16.ColorWipe(COLOR32(0, 0, 02), 50, REVERSE); // Blue

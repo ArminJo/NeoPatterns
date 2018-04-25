@@ -2,6 +2,9 @@
 This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
 Extension are made to include more patterns, combined patterns and nxn NeoPixel matrix.
 
+## Download
+ The actual version can be downloaded directly from GitHub [here] (https://github.com/ArminJo/NeoPatterns/blob/master/NeoPatterns.zip?raw=true)
+
 # Installation
 First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
 Then download NeoPatterns.zip file or use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
@@ -43,5 +46,8 @@ The experimental Python script in the extras folder converts key presses and gam
 NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
-Youtube Video of NeoPatternsDemo  
+Youtube Video of NeoPatternsDemo
 [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ)
+
+Youtube Video of MatrixDemo on a 10x10 matrix 
+[![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ)

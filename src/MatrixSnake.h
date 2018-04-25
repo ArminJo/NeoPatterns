@@ -34,10 +34,12 @@
 
 #define MILLIS_FOR_BUTTON_DEBOUNCING 100
 
-#define FLAG_USE_4_BUTTONS 0x01 // will be set if PinOfUpButton != 0 and up or down button was at least pressed once
-#define FLAG_SNAKE_IS_MOVING 0x02
-#define FLAG_SNAKE_SHOW_LENGTH 0x10         // signal number shown -> enables delay
-#define FLAG_SNAKE_AUTORUN 0x20             // autorun mode - for demo if no left buttons is defined
+#define FLAG_USE_4_BUTTONS 0x01             // will be set if PinOfUpButton != 0 and up or down button was at least pressed once
+#define FLAG_SNAKE_AUTORUN 0x02             // autorun mode - will be set if no left buttons is defined
+#define FLAG_SNAKE_IS_MOVING 0x10
+#define FLAG_SNAKE_SHOW_LENGTH 0x20         // signal number shown -> enables delay
+#define FLAG_SNAKE_SHOW_END 0x40            // signal end of snake shown -> enables delay
+#define SHOW_END_INTERVAL_MILLIS 6000
 #define SHOW_NUMBER_INTERVAL_MILLIS 2000
 
 #define TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS 7000
@@ -54,7 +56,7 @@ position const SnakeInitialPixels[] = { { 4, 4 }, { 5, 4 }, { 6, 4 }, { 6, 5 } }
 // extension of NeoPattern Class approximately 85 Byte / object
 class MatrixSnake: public MatrixNeoPatterns {
 public:
-    MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin,  uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+    MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
@@ -72,6 +74,13 @@ public:
     void resetAndDrawSnake();
     void rotateRight();
     void rotateLeft();
+    //
+    bool isPositionInArea(position aPositionToCheck);
+    uint16_t getIndexOfPositionInSnake(position aPositionToCheck);
+    uint16_t getIndexOfPositionInSnakeTail(position aPositionToCheck);
+    uint16_t checkDirection(uint8_t aDirectionToCheck);
+    //
+    bool computeNewHeadPosition(uint8_t aActualDirection, position * aSnakeNewHeadPosition);
 
     // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
     // SnakePixelList[0] is head of snake
@@ -95,11 +104,13 @@ public:
 
 };
 
+uint8_t computeDirection(position aStartPosition, position aEndPosition);
+
 void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr);
 
-void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aTotalSteps = 1);
-uint8_t computeSnakeDirection(MatrixSnake * aSnake, position aSnakeHeadPosition, position aApplePosition, uint8_t aActualDirection,
-        uint8_t aStepsDone, uint16_t aSnakeLength, position * aSnakeBodyArray);
+void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions = 1);
+uint8_t computeSnakeDirection(MatrixSnake * aSnake, uint8_t aColumns, uint8_t aRows, position aSnakeHeadPosition,
+        position aApplePosition, uint8_t aActualDirection, uint16_t aSnakeLength, position * aSnakeBodyArray);
 void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr);
 
 #endif /* MATRIXSNAKE_H_ */

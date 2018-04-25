@@ -34,6 +34,7 @@ enum pattern {
 #define DIRECTION_LEFT 1
 #define DIRECTION_DOWN 2
 #define DIRECTION_RIGHT 3
+#define NUMBER_OF_DIRECTIONS 4
 #define DIRECTION_NONE 4    // No button pressed
 
 // only for Backwards compatibility

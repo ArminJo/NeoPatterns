@@ -96,13 +96,13 @@ bool MatrixNeoPatterns::Update() {
  */
 bool MatrixNeoPatterns::setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32BitColor) {
 #ifdef DEBUG
-    Serial.print((const __FlashStringHelper *) PSTR("set x="));
+    Serial.print(F("set x="));
     Serial.print(x);
-    Serial.print((const __FlashStringHelper *) PSTR(" y="));
+    Serial.print(F(" y="));
     Serial.print(y);
-    Serial.print((const __FlashStringHelper *) PSTR(" n="));
+    Serial.print(F(" n="));
     Serial.print(LayoutMapping(x, y));
-    Serial.print((const __FlashStringHelper *) PSTR(" color="));
+    Serial.print(F(" color="));
     Serial.println(aColor, HEX);
 #endif
     if (LayoutMappingFunction == NULL) {
@@ -119,13 +119,13 @@ bool MatrixNeoPatterns::setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32B
 uint32_t MatrixNeoPatterns::getMatrixPixelColor(uint8_t x, uint8_t y) {
     uint32_t tColor;
 #ifdef DEBUG
-    Serial.print((const __FlashStringHelper *) PSTR("set x="));
+    Serial.print(F("set x="));
     Serial.print(x);
-    Serial.print((const __FlashStringHelper *) PSTR(" y="));
+    Serial.print(F(" y="));
     Serial.print(y);
-    Serial.print((const __FlashStringHelper *) PSTR(" n="));
+    Serial.print(F(" n="));
     Serial.print(LayoutMapping(x, y));
-    Serial.print((const __FlashStringHelper *) PSTR(" color="));
+    Serial.print(F(" color="));
     Serial.println(aColor, HEX);
 #endif
     if (LayoutMappingFunction == NULL) {
@@ -154,7 +154,7 @@ uint16_t MatrixNeoPatterns::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
     uint8_t tRows;
     if ((Geometry & NEO_MATRIX_COLUMNS) == NEO_MATRIX_COLUMNS) {
 #ifdef ERROR
-        Serial.print((const __FlashStringHelper *) PSTR("NEO_MATRIX_COLUMNS not yet implemented. Try to rotate your Matrix and use NEO_MATRIX_ROWS."));
+        Serial.print(F("NEO_MATRIX_COLUMNS not yet implemented. Try to rotate your Matrix and use NEO_MATRIX_ROWS."));
 #endif
 
     } else {
@@ -278,7 +278,7 @@ void MatrixNeoPatterns::Fire(uint16_t aIntervalMillis, uint16_t aRepetitions) {
     MatrixOld = (uint8_t *) calloc((Rows + 2) * (Columns + 2), 1);
 
 #ifdef INFO
-    Serial.print((const __FlashStringHelper *) PSTR("Starting Fire with refresh interval="));
+    Serial.print(F("Starting Fire with refresh interval="));
     Serial.println(aIntervalMillis);
 #endif
 #ifdef DEBUG
@@ -385,9 +385,9 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t* aGraphics8x8ArrayPGM, co
     Index = 0;
     Direction = aDirection;
 #ifdef INFO
-    Serial.print((const __FlashStringHelper *) PSTR("Starting MovingPicturePGM with refresh interval="));
+    Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
-    Serial.print((const __FlashStringHelper *) PSTR("ms. Direction="));
+    Serial.print(F("ms. Direction="));
     Serial.println(aDirection);
 #endif
 }
@@ -435,7 +435,7 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
     if (LayoutMappingFunction != NULL) {
         Serial.print(
-                (const __FlashStringHelper *) PSTR(
+                F(
                         "moveArrayContent with one parameter does not support other than Z type mappings."));
     } else {
         uint8_t * tPixels = getPixels();
@@ -576,9 +576,9 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aSteps, uint16_t aInte
         Index = aSteps;
         ActivePattern = MOVE;
 #ifdef INFO
-        Serial.print((const __FlashStringHelper *) PSTR("Starting Move with refresh interval="));
+        Serial.print(F("Starting Move with refresh interval="));
         Serial.print(aIntervalMillis);
-        Serial.print((const __FlashStringHelper *) PSTR("ms. Direction="));
+        Serial.print(F("ms. Direction="));
         Serial.println(aDirection);
 #endif
     }
@@ -623,15 +623,15 @@ void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForeground
     Direction = aDirection;
 
 #ifdef INFO
-    Serial.print((const __FlashStringHelper *) PSTR("Starting Ticker with refresh interval="));
+    Serial.print(F("Starting Ticker with refresh interval="));
     Serial.print(aIntervalMillis);
-    Serial.print((const __FlashStringHelper *) PSTR("ms. Text=\""));
+    Serial.print(F("ms. Text=\""));
     if (Flags & FLAG_TICKER_DATA_IN_FLASH) {
-        Serial.print((const __FlashStringHelper *) aStringPtr);
+        Serial.print(reinterpret_cast<const __FlashStringHelper *> (aStringPtr));
     } else {
         Serial.print(aStringPtr);
     }
-    Serial.print((const __FlashStringHelper *) PSTR("\" Direction="));
+    Serial.print(F("\" Direction="));
     Serial.println(aDirection);
 #endif
 // try to position fonts at middle
@@ -643,9 +643,9 @@ void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForeground
     } else if (aDirection == DIRECTION_UP) {
         GraphicsYOffset = -Rows;
     } else {
-        Serial.println((const __FlashStringHelper *) PSTR("Direction="));
+        Serial.println(F("Direction="));
         Serial.print(aDirection);
-        Serial.println((const __FlashStringHelper *) PSTR(" not supported (yet)"));
+        Serial.println(F(" not supported (yet)"));
         aDirection = DIRECTION_LEFT;
     }
 }
@@ -663,9 +663,9 @@ void MatrixNeoPatterns::TickerUpdate() {
     }
 
 #ifdef DEBUG
-    Serial.print((const __FlashStringHelper *) PSTR("tChar="));
+    Serial.print(F("tChar="));
     Serial.print(tChar);
-    Serial.print((const __FlashStringHelper *) PSTR(" tNextChar="));
+    Serial.print(F(" tNextChar="));
     Serial.println(tNextChar);
 #endif
 
@@ -748,11 +748,11 @@ void MatrixNeoPatterns::loadPicturePGM(const uint8_t* aGraphicsArrayPtr, int8_t 
         bool doPadding) {
 
 #ifdef DEBUG
-    Serial.print((const __FlashStringHelper *) PSTR("aGraphicsPtr="));
+    Serial.print(F("aGraphicsPtr="));
     Serial.print((uint16_t) aGraphicsArrayPtr, HEX);
-    Serial.print((const __FlashStringHelper *) PSTR(" aXOffset="));
+    Serial.print(F(" aXOffset="));
     Serial.print(aXOffset);
-    Serial.print((const __FlashStringHelper *) PSTR(" aYOffset="));
+    Serial.print(F(" aYOffset="));
     Serial.println(aYOffset);
 #endif
 
@@ -807,9 +807,9 @@ void MatrixNeoPatterns::loadPicturePGM(const uint8_t* aGraphicsArrayPtr, int8_t 
         uint16_t tBitmaskExtended = tBitmaskToStart; // shifting mask
 
 #ifdef TRACE
-        Serial.print((const __FlashStringHelper *) PSTR("tGraphicsPointer="));
+        Serial.print(F("tGraphicsPointer="));
         Serial.print((uint16_t) tGraphicsPointer, HEX);
-        Serial.print((const __FlashStringHelper *) PSTR(" tLineBitPattern="));
+        Serial.print(F(" tLineBitPattern="));
         Serial.println(tLineBitPattern, HEX);
 #endif
         /*
@@ -818,11 +818,11 @@ void MatrixNeoPatterns::loadPicturePGM(const uint8_t* aGraphicsArrayPtr, int8_t 
         for (int8_t x = 0; x < Rows; ++x) {
             uint8_t tBitmask = tBitmaskExtended & 0xFF;
 #ifdef TRACE
-            Serial.print((const __FlashStringHelper *) PSTR(" tBitmask="));
+            Serial.print(F(" tBitmask="));
             Serial.print(tBitmask);
-            Serial.print((const __FlashStringHelper *) PSTR(" x="));
+            Serial.print(F(" x="));
             Serial.print(x);
-            Serial.print((const __FlashStringHelper *) PSTR(" y="));
+            Serial.print(F(" y="));
             Serial.println(tYposition);
 #endif
             if (tBitmask != 0x00 && x >= aXOffset) {

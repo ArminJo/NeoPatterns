@@ -26,6 +26,7 @@
 #include <Arduino.h>
 #include <MatrixSnake.h>
 
+// Delay between two SNAKE moves / Speed of game
 #define GAME_REFRESH_INTERVAL   400
 
 #define PIN_AREA_SNAKE       8
@@ -48,10 +49,7 @@ NEO_GRB + NEO_KHZ800);
 
 void setup() {
     Serial.begin(115200);
-    Serial.print((const __FlashStringHelper *) PSTR("START\r\nVersion "));
-    Serial.print(VERSION_EXAMPLE);
-    Serial.print((const __FlashStringHelper *) PSTR(" from  "));
-    Serial.println(__DATE__);
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
 
     NeoPixelMatrixSnake.begin(); // This initializes the NeoPixel library.
     NeoPixelMatrixSnake.Snake(GAME_REFRESH_INTERVAL, COLOR32_BLUE, RIGHT_BUTTON_PIN, LEFT_BUTTON_PIN, UP_BUTTON_PIN,
