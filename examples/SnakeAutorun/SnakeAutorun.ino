@@ -55,6 +55,9 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
  * aSnakeBodyArray[0] is head position of snake
  * aSnakeBodyArray[aSnakeLength-1] is tail position of snake
  *
+ * Useful functions are: aSnake->checkDirection(uint8_t aDirectionToCheck)
+ *                  and: computeDirection(position aStartPosition, position aEndPosition)
+ *
  ********************************************/
 uint8_t computeSnakeDirection(MatrixSnake * aSnake, uint8_t aColumns, uint8_t aRows, position aSnakeHeadPosition,
         position aApplePosition, uint8_t aActualDirection, uint16_t aSnakeLength, position * aSnakeBodyArray) {
@@ -77,7 +80,7 @@ uint8_t computeSnakeDirection(MatrixSnake * aSnake, uint8_t aColumns, uint8_t aR
     Serial.print(F(" DeltaY="));
     Serial.println(tDeltaY);
 
-// Dummy example
+// Simple example
 
     /*
      * Avoid going to opposite direction, because this is invalid.
@@ -85,49 +88,18 @@ uint8_t computeSnakeDirection(MatrixSnake * aSnake, uint8_t aColumns, uint8_t aR
      */
     if (tDeltaX > 0 && aActualDirection != DIRECTION_LEFT) {
         tNewDirection = DIRECTION_RIGHT;
-    } else if (tDeltaX < 0 && aActualDirection != DIRECTION_RIGHT) {
-        tNewDirection = DIRECTION_LEFT;
-    } else if (tDeltaY > 0 && aActualDirection != DIRECTION_UP) {
-        tNewDirection = DIRECTION_DOWN;
-    } else if (tDeltaY < 0 && aActualDirection != DIRECTION_DOWN) {
-        tNewDirection = DIRECTION_UP;
     }
-
     /*
-     * chose new direction until one is valid
+     * And so on...
      */
-    uint16_t tIndexOfNewHeadPositionInSnake = aSnake->checkDirection(tNewDirection);
-    if (tIndexOfNewHeadPositionInSnake > 0) {
-        /*
-         * Direction is invalid, then as first guess try tail direction of collision point,
-         * which can be the same as the direction already chosen before!
-         */
-        Serial.print(F("Detected wrong direction="));
-        Serial.println(tNewDirection);
-        tNewDirection = computeDirection(aSnakeBodyArray[tIndexOfNewHeadPositionInSnake],
-                aSnakeBodyArray[tIndexOfNewHeadPositionInSnake + 1]);
-        tIndexOfNewHeadPositionInSnake = aSnake->checkDirection(tNewDirection);
-        if (tIndexOfNewHeadPositionInSnake > 0) {
-            Serial.print(F("Detected wrong direction="));
-            Serial.println(tNewDirection);
-            /*
-             * just try all directions with no preferences
-             */
-            for (tNewDirection = 0; tNewDirection < NUMBER_OF_DIRECTIONS; ++tNewDirection) {
-                if (aSnake->checkDirection(tNewDirection) == 0) {
-                    break;
-                }
-                Serial.print(F("Detected wrong direction="));
-                Serial.println(tNewDirection);
-            }
-            if (tNewDirection == NUMBER_OF_DIRECTIONS) {
-                Serial.print(F("Give up, no valid direction left"));
-            }
-        }
+
+    // check new direction...
+    if (aSnake->checkDirection(tNewDirection) != 0) {
+        // take next direction
+        tNewDirection = (tNewDirection + 1) % NUMBER_OF_DIRECTIONS;
     }
 
 // End of dummy example
-
     Serial.print(F("NewDirection="));
     Serial.println(tNewDirection);
 

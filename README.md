@@ -3,11 +3,12 @@ This is an extended version version of the NeoPattern example by Adafruit https:
 Extension are made to include more patterns, combined patterns and nxn NeoPixel matrix.
 
 ## Download
- The actual version can be downloaded directly from GitHub [here] (https://github.com/ArminJo/NeoPatterns/blob/master/NeoPatterns.zip?raw=true)
+The actual version can be downloaded directly from GitHub [here](https://github.com/ArminJo/NeoPatterns/blob/master/extras/NeoPatterns.zip?raw=true)
 
 # Installation
 First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
 Then download NeoPatterns.zip file or use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
+
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
 **RAINBOW_CYCLE**, **THEATER_CHASE**, **COLOR_WIPE**, **SCANNER**, **FADE**  

@@ -723,6 +723,7 @@ uint8_t __attribute__((weak)) computeSnakeDirection(MatrixSnake * aSnake, uint8_
         bool invalidDirectionsArray[NUMBER_OF_DIRECTIONS];
         memset(invalidDirectionsArray, false, NUMBER_OF_DIRECTIONS);
         invalidDirectionsArray[tNewDirection] = true;
+        invalidDirectionsArray[(aActualDirection + 2) % NUMBER_OF_DIRECTIONS] = true;
         Serial.print(F("Detected wrong direction="));
         Serial.println(tNewDirection);
         /*
