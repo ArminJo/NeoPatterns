@@ -4,8 +4,6 @@
  * Implements functions especially for 8x8 NeoPixel matrix.
  *
  *  SUMMARY
- *  This is an extended version version of the NeoPattern Example by Adafruit
- *  https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all
  *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns
  *  and patterns for nxn NeoPixel matrix (tested with 8x8 and 10x10).
@@ -434,9 +432,7 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
  */
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
     if (LayoutMappingFunction != NULL) {
-        Serial.print(
-                F(
-                        "moveArrayContent with one parameter does not support other than Z type mappings."));
+        Serial.print(F("moveArrayContent with one parameter does not support other than Z type mappings."));
     } else {
         uint8_t * tPixels = getPixels();
 
@@ -627,7 +623,7 @@ void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForeground
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Text=\""));
     if (Flags & FLAG_TICKER_DATA_IN_FLASH) {
-        Serial.print(reinterpret_cast<const __FlashStringHelper *> (aStringPtr));
+        Serial.print(reinterpret_cast<const __FlashStringHelper *>(aStringPtr));
     } else {
         Serial.print(aStringPtr);
     }
@@ -852,19 +848,19 @@ void MatrixNeoPatterns::loadPicturePGM(const uint8_t* aGraphicsArrayPtr, int8_t 
  */
 void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
     MatrixNeoPatterns* tLedsPtr = (MatrixNeoPatterns*) aLedsPtr;
-    static uint8_t sState = 0;
+    static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
     Serial.print("sState=");
     Serial.println(sState);
 
-    sState++;
     /*
      * implement a delay between each case
      */
     if (sState % 2 == 1) {
-        aLedsPtr->Delay(100); // not really needed
+        aLedsPtr->Delay(100); // to separate each pattern - not really needed here
+        sState++;
         return;
     }
 
@@ -874,14 +870,14 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
     uint8_t tXOffset = (tLedsPtr->Columns - HEART_WIDTH) / 2;
 
     switch (tState) {
-    case 1:
+    case 0:
         tLedsPtr->TickerPGM(PSTR("I love Neopixel"), NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection);
         sTickerDirection--;
         if (sTickerDirection < 0) {
             sTickerDirection = DIRECTION_LEFT;
         }
         break;
-    case 2:
+    case 1:
         tYOffset = HEART_HEIGHT;
         if (sHeartDirection == DIRECTION_UP) {
             tYOffset = -HEART_HEIGHT;
@@ -890,22 +886,22 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
         tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED_HALF, COLOR32_BLACK, tXOffset, tYOffset, tSteps, 100, sHeartDirection);
         break;
 
-    case 3:
+    case 2:
 // Next 4 cases show 2 heart beats
         aLedsPtr->ColorForSelection = aLedsPtr->Color1;
         aLedsPtr->ProcessSelectiveColor(&DimColor, 6, 40);
         break;
-    case 4:
+    case 3:
         aLedsPtr->ProcessSelectiveColor(&LightenColor, 6, 40);
         break;
-    case 5:
+    case 4:
         aLedsPtr->ProcessSelectiveColor(&DimColor, 6, 40);
         break;
-    case 6:
+    case 5:
         aLedsPtr->ProcessSelectiveColor(&LightenColor, 6, 40);
         break;
 
-    case 7:
+    case 6:
         // move out
         tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100, true);
 // change direction for next time
@@ -915,24 +911,24 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
             sHeartDirection = DIRECTION_DOWN;
         }
         break;
-    case 8:
+    case 7:
         aLedsPtr->Delay(1500);
         break;
-    case 9:
+    case 8:
         tLedsPtr->Fire(100, 50);
         break;
-    case 10:
+    case 9:
         aLedsPtr->clear(); // Clear matrix
         aLedsPtr->show();
         aLedsPtr->Delay(2000);
-        // do not forget sState = 0; in last sensible case
-        sState = 0;
+        // do not forget sState = -1; in last sensible case
+        sState = -1; // Start from beginning
+        break;
+    case 10:
         break;
     case 11:
-        break;
-    case 12:
 // safety net
-        sState = 0;
+        sState = -1; // Start from beginning
         break;
 
 // EXAMPLE ACTIONS for case
@@ -955,7 +951,10 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
 //        Serial.println(" not implemented");
         break;
     }
+
+    sState++;
 }
+
 #define TEST_DELAY_MILLIS 2000
 void myMoveTest1(MatrixNeoPatterns* aLedsPtr) {
     aLedsPtr->moveArrayContent(DIRECTION_UP, COLOR32_RED_HALF);

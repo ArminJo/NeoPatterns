@@ -8,6 +8,13 @@
  *  Copyright (C) 2018  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
+ *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
+ *
+ *  NeoPatterns is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -39,11 +46,11 @@
 #define PIN_NEO_PIXEL_MATRIX         8
 
 // onComplete callback functions
-void TestPatterns1(NeoPatterns * aLedsPtr);
+void TestPatterns(NeoPatterns * aLedsPtr);
 
 // construct the NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns bar24 = NeoPatterns(24, PIN_BAR_24, NEO_GRB + NEO_KHZ800, &TestPatterns1);
+NeoPatterns bar24 = NeoPatterns(24, PIN_BAR_24, NEO_GRB + NEO_KHZ800, &TestPatterns);
 NeoPatterns ring12 = NeoPatterns(12, PIN_RING_12, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring16 = NeoPatterns(16, PIN_RING_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring24 = NeoPatterns(24, PIN_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
@@ -72,7 +79,7 @@ void setup() {
     ring16.ColorWipe(COLOR32_RED, 50, DIRECTION_DOWN);
     ring24.ColorWipe(COLOR32_GREEN, 50);
     bar16.ColorWipe(COLOR32_BLUE, 50, DIRECTION_DOWN);
-    bar24.ColorWipe(COLOR32_CYAN, 50);
+    bar24.ColorWipe(COLOR32_BLACK, 50);
     NeoPixelMatrix.clear(); // Clear matrix
     NeoPixelMatrix.show();
     NeoPixelMatrix.Delay(5000); // start later
@@ -107,14 +114,15 @@ void loop() {
 /*
  * Handler for testing fire patterns
  */
-void TestPatterns1(NeoPatterns * aLedsPtr) {
-    static uint8_t sState = 0;
+void TestPatterns(NeoPatterns * aLedsPtr) {
+    static int8_t sState = 0;
 
-    sState++;
     switch (sState) {
-// No case 0!
+    case 0:
+        aLedsPtr->Pattern1(COLOR32_RED_HALF, COLOR32_BLUE_HALF, 80, FORWARD);
+        break;
     case 1:
-        aLedsPtr->Fire(80, 100);  // too slow
+        aLedsPtr->Pattern2(COLOR32_RED_HALF, COLOR32_BLUE_HALF, 80, FORWARD);
         break;
     case 2:
         aLedsPtr->ColorWipe(COLOR32_GREEN, 5);
@@ -137,10 +145,13 @@ void TestPatterns1(NeoPatterns * aLedsPtr) {
     case 8:
         // switches to random
         initFallingStar(aLedsPtr, COLOR32_WHITE_HALF, 30, 3, &allPatternsRandomExample);
-        sState = 0;
+        sState = -1; // Start from beginning
         break;
     default:
         Serial.println("ERROR");
         break;
     }
+
+    sState++;
+
 }

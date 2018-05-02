@@ -89,6 +89,12 @@ bool NeoPatterns::Update() {
         case DELAY:
             DelayUpdate();
             break;
+        case PATTERN1:
+            Pattern1Update();
+            break;
+        case PATTERN2:
+            Pattern2Update();
+            break;
         default:
             break;
         }
@@ -571,6 +577,66 @@ void NeoPatterns::FadeSelectiveUpdate() {
     show();
     ColorForSelection = tNewColor;
     Increment();
+}
+
+/*
+ * Code for pattern extensions
+ *
+ * Fill in your own code here
+ */
+// Initialize for Pattern1
+void NeoPatterns::Pattern1(color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection) {
+    ActivePattern = PATTERN1;
+    Interval = aInterval;
+    Color1 = aColor1;
+    Color2 = aColor2;
+    setDirectionAndTotalStepsAndIndex(aDirection, numPixels());
+}
+
+void NeoPatterns::Pattern2(color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection) {
+    ActivePattern = PATTERN2;
+    Interval = aInterval;
+    Color1 = aColor1;
+    Color2 = aColor2;
+    Direction = DIRECTION_UP;
+    Index = 0;
+    TotalSteps = numPixels() + 1; // must be greater than numPixels()
+}
+
+void NeoPatterns::Pattern1Update() {
+    /*
+     * Dummy implementation
+     */
+    for (uint16_t i = 0; i < numPixels(); i++) {
+        if (i == Index) {
+            setPixelColor(i, Color2);
+        } else {
+            setPixelColor(i, Color1);
+        }
+    }
+    show();
+    Increment();
+}
+
+void NeoPatterns::Pattern2Update() {
+    /*
+     * Dummy implementation
+     */
+    for (uint16_t i = 0; i < numPixels(); i++) {
+        if (i == Index) {
+            setPixelColor(i, Color2);
+        } else {
+            setPixelColor(i, COLOR32_BLACK);
+        }
+    }
+    show();
+    Increment();
+    if (Index == numPixels()) {
+        // change direction
+        Direction = DIRECTION_DOWN;
+        // do nor use upper pixel twice
+        Index--;
+    }
 }
 
 /***********************************************************

@@ -3,10 +3,21 @@
  *
  *  Shows all patterns included in the NeoPixel library for NeoPixel stripes.
  *
+ *  Just add your pattern code to the functions Pattern[1,2]() and Pattern[1,2]Update() in Neopatterns.cpp (line 588ff.)
+ *  to realize and see your own patterns.
+ *  Enable TEST_OWN_PATTERNS on line 38 to test your patterns.
+ *
  *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
  *
  *  Copyright (C) 2018  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
+ *
+ *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
+ *
+ *  NeoPatterns is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,21 +32,24 @@
 #include <Arduino.h>
 
 #include <NeoPatterns.h>
-#ifdef __AVR__
-#include <avr/power.h>
-#include <avr/pgmspace.h>
-#endif
 
 #define VERSION_EXAMPLE "1.0"
+
+//#define TEST_OWN_PATTERNS
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_STRIPE_16          8
 
 // onComplete callback functions
 void allPatterns(NeoPatterns * aLedsPtr);
+void ownPatterns(NeoPatterns * aLedsPtr);
 
 // construct the NeoPatterns instances
+#ifdef TEST_OWN_PATTERNS
+NeoPatterns stripe16 = NeoPatterns(16, PIN_STRIPE_16, NEO_GRB + NEO_KHZ800, &ownPatterns);
+#else
 NeoPatterns stripe16 = NeoPatterns(16, PIN_STRIPE_16, NEO_GRB + NEO_KHZ800, &allPatterns);
+#endif
 
 void setup() {
     Serial.begin(115200);
@@ -54,12 +68,37 @@ void loop() {
 }
 
 /*
+ * Handler for testing your patterns
+ */
+void ownPatterns(NeoPatterns * aLedsPtr) {
+    static int8_t sState = 0;
+
+    uint8_t tDuration = random(20, 120);
+    uint8_t tColor = random(255);
+
+    switch (sState) {
+    case 0:
+        aLedsPtr->Pattern1(COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        break;
+
+    case 1:
+        aLedsPtr->Pattern2(COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        sState = -1; // Start from beginning
+        break;
+
+    default:
+        Serial.println("ERROR");
+        break;
+    }
+
+    sState++;
+}
+
+/*
  * Handler for all pattern
- * since sState starts with (0++) scanner is the first pattern you see
  */
 void allPatterns(NeoPatterns * aLedsPtr) {
-    static uint8_t sState = 0;
-    sState++;
+    static int8_t sState = 0;
 
     uint8_t tDuration = random(40, 81);
     uint8_t tColor = random(255);
@@ -107,10 +146,12 @@ void allPatterns(NeoPatterns * aLedsPtr) {
             aLedsPtr->Scanner(NeoPatterns::Wheel(tColor), tDuration, 6);
         }
 
-        sState = 0; // Start from beginning
+        sState = -1; // Start from beginning
         break;
     default:
         Serial.println("ERROR");
         break;
     }
+
+    sState++;
 }

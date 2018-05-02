@@ -1,3 +1,32 @@
+/*
+ * NeoPatterns.h
+ *
+ *  SUMMARY
+ *  This is an extended version version of the NeoPattern Example by Adafruit
+ *  https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all
+ *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
+ *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
+ *
+ *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  armin.joachimsmeyer@gmail.com
+ *
+ *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
+ *
+ *  NeoPatterns is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *
+ */
+
 #ifndef NEOPATTERNS_H
 #define NEOPATTERNS_H
 
@@ -49,23 +78,26 @@ uint8_t Blue(color32_t color);
 class NeoPatterns: public Adafruit_NeoPixel {
 public:
     NeoPatterns(uint16_t pixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
-    //
     void setCallback(void (*callback)(NeoPatterns*));
     //
     bool Update();
     void Increment();
     void Reverse();
     void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t totalSteps);
+    uint32_t DimColor(color32_t color);
+    void ColorSet(color32_t color);
+
+    /*
+     * PATTERNS
+     */
     void RainbowCycle(uint8_t interval, uint8_t aDirection = DIRECTION_UP);
     void TheaterChase(color32_t color1, color32_t color2, uint8_t interval, uint8_t aDirection = DIRECTION_UP);
     void ColorWipe(color32_t color, uint8_t interval, uint8_t aDirection = DIRECTION_UP);
     void Scanner(color32_t color1, uint8_t interval, uint8_t mode = 0);
     void Fade(color32_t color1, color32_t color2, uint16_t steps, uint8_t interval, uint8_t aDirection = DIRECTION_UP);
-    uint32_t DimColor(color32_t color);
-    void ColorSet(color32_t color);
 
     /*
-     * Extensions
+     * PATTERN extensions
      */
     void Fire(uint16_t interval, uint16_t repetitions = 100);
     void Cylon(color32_t color1, uint16_t interval, uint8_t repetitions = 1);
@@ -73,10 +105,15 @@ public:
     void ProcessSelectiveColor(uint32_t (*aSingleLEDProcessingFunction)(NeoPatterns*), uint16_t steps, uint16_t interval);
     void FadeSelectiveColor(color32_t color1, color32_t color2, uint16_t steps, uint16_t interval);
 
-// Static functions
-    static uint32_t Wheel(byte WheelPos);
-    static uint32_t HeatColor(uint8_t aTemperature);
+    /*
+     * Template for your own extensions
+     */
+    void Pattern1(color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection = DIRECTION_UP);
+    void Pattern2(color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection = DIRECTION_UP);
 
+    /*
+     * UPDATE functions
+     */
     void RainbowCycleUpdate();
     void TheaterChaseUpdate();
     void ColorWipeUpdate();
@@ -92,6 +129,12 @@ public:
     void ProcessSelectiveColorUpdate();
     void ProcessSelectiveColorForAllPixelAndShow();
     void FadeSelectiveUpdate();
+    void Pattern1Update();
+    void Pattern2Update();
+
+    // Static functions
+    static uint32_t Wheel(byte WheelPos);
+    static uint32_t HeatColor(uint8_t aTemperature);
 
     // Member Variables:
     pattern ActivePattern;  // which pattern is running
@@ -106,7 +149,7 @@ public:
     unsigned long lastUpdate; // last update of position
 
     uint16_t TotalSteps;  // total number of steps in the pattern. will be compared with Index for basic patterns.
-    uint16_t Index;  // Counter for basic pattern. Current step within the pattern. Counter for basic patterns. Step counter of snake.
+    uint16_t Index; // Counter for basic pattern. Current step within the pattern. Counter for basic patterns. Step counter of snake.
 
     void (*OnPatternComplete)(NeoPatterns*);  // Callback on completion of pattern
 

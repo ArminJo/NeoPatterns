@@ -2,7 +2,8 @@
  * MatrixSnake.cpp
  *
  * Implements a snake game on NeoPixel matrix.
- * High-Score is reset if both RightButton and Left Button are pressed at start of game by calling Snake()
+ * High-Score is reset if both RightButton and Left Button are pressed at start of game by calling Snake().
+ *
  *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
  *
  *  SUMMARY
@@ -536,16 +537,16 @@ uint8_t computeReverseDirection(uint8_t aDirection) {
  */
 void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
     MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
-    static uint8_t sState = 0;
+    static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
-    sState++;
     /*
      * implement a delay between each case
      */
     if (sState % 2 == 1) {
-        aLedsPtr->Delay(100); // not really needed
+        aLedsPtr->Delay(100); // to separate each pattern - not really needed here
+        sState++;
         return;
     }
 
@@ -560,7 +561,7 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
 #endif
 
     switch (tState) {
-    case 1:
+    case 0:
 //        myLoadTest(tLedsPtr);
         tLedsPtr->TickerPGM(PSTR("I love Neopixel"), NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection);
         sTickerDirection--;
@@ -568,7 +569,7 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
             sTickerDirection = DIRECTION_LEFT;
         }
         break;
-    case 2:
+    case 1:
         tYOffset = HEART_HEIGHT;
         if (sHeartDirection == DIRECTION_UP) {
             tYOffset = -HEART_HEIGHT;
@@ -577,21 +578,21 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
 
         tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED_HALF, COLOR32_BLACK, tXOffset, tYOffset, tSteps, 100, sHeartDirection);
         break;
-    case 3:
+    case 2:
         // Next 4 cases show 2 heart beats
         aLedsPtr->ColorForSelection = aLedsPtr->Color1;
         aLedsPtr->ProcessSelectiveColor(&DimColor, 6, 40);
         break;
-    case 4:
+    case 3:
         aLedsPtr->ProcessSelectiveColor(&LightenColor, 6, 40);
         break;
-    case 5:
+    case 4:
         aLedsPtr->ProcessSelectiveColor(&DimColor, 6, 40);
         break;
-    case 6:
+    case 5:
         aLedsPtr->ProcessSelectiveColor(&LightenColor, 6, 40);
         break;
-    case 7:
+    case 6:
         // move out
         tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100, true);
         // change direction for next time
@@ -601,28 +602,28 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
             sHeartDirection = DIRECTION_DOWN;
         }
         break;
-    case 8:
+    case 7:
         aLedsPtr->Delay(1500);
         break;
-    case 9:
+    case 8:
         if (sTickerDirection == DIRECTION_LEFT) {
             tLedsPtr->Fire(100, 50);
         } else {
             initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 3);
         }
         break;
-    case 10:
+    case 9:
         aLedsPtr->clear(); // Clear matrix
         aLedsPtr->show();
         aLedsPtr->Delay(2000);
-        // do not forget sState = 0; in last sensible case
-        sState = 0;
+        // do not forget sState = -1; in last sensible case
+        sState = -1; // Start from beginning
+        break;
+    case 10:
         break;
     case 11:
-        break;
-    case 12:
         // safety net
-        sState = 0;
+        sState = -1; // Start from beginning
         break;
 
 // EXAMPLE ACTIONS for case
@@ -647,6 +648,8 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
 #endif
         break;
     }
+
+    sState++;
 }
 
 /*****************************************************************

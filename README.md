@@ -19,6 +19,8 @@ The SCANNER pattern is extended and now has 4 modes.
  **CYLON**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**
 ## Patterns for nxn Matrix
 **MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
+## Your own patterns
+**Just add your pattern code to the functions Pattern\[1,2]() and Pattern[1,2]Update() in NeoPatterns.cpp (line 588ff.) to realize your own patterns. Use NeoPatternsSimpleDemo and enable TEST_OWN_PATTERNS on line 38 to test them.**
 
 ## All pixel mappings except NEO_MATRIX_COLUMNS supported
 In case you need NEO_MATRIX_COLUMNS layout, try to rotate your Matrix and use NEO_MATRIX_ROWS or use your own custom mapping function.
