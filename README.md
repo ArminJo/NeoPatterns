@@ -1,6 +1,23 @@
-# NeoPatterns and Snake game for NeoPixel matrix
+# NeoPatterns for NeoPixel strips and Snake game for NeoPixel matrix.
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status](https://travis-ci.org/ArminJo/NeoPatterns.svg?branch=master)](https://travis-ci.org/ArminJo/NeoPatterns)
+
 This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
-Extension are made to include more patterns, combined patterns and nxn NeoPixel matrix.
+New Patterns are added, a snake game running on a matrix is included and you can run multiple patterns simultaneously on the same strip.
+
+# PATTERNS
+## Patterns from [Adafruit](https://www.adafruit.com/)
+**RAINBOW_CYCLE**, **COLOR_WIPE**, **FADE**
+## New patterns
+**SCANNER**. **STRIPES**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**
+The original **SCANNER** pattern is extended and includes the **CYLON** as well as the **ROCKET** or **FALLING_STAR** pattern. The more versatile **STRIPES** pattern replaces the old **THEATER_CHASE** one.
+## Pattern from [FastLed](https://github.com/FastLED/FastLED)
+**FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
+## Patterns only for nxn Matrix
+**MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
+## Your own patterns
+**Just put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in NeoPatternsSimpleDemo.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 39 to test them.**
 
 ## Download
 The actual version can be downloaded directly from GitHub [here](https://github.com/ArminJo/NeoPatterns/blob/master/extras/NeoPatterns.zip?raw=true)
@@ -9,21 +26,9 @@ The actual version can be downloaded directly from GitHub [here](https://github.
 First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
 Then download NeoPatterns.zip file or use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
 
-# PATTERNS
-## Patterns from [Adafruit](https://www.adafruit.com/)
-**RAINBOW_CYCLE**, **THEATER_CHASE**, **COLOR_WIPE**, **SCANNER**, **FADE**  
-The SCANNER pattern is extended and now has 4 modes.
-## Pattern from [FastLed](https://github.com/FastLED/FastLED)
-**FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
-## New patterns
- **CYLON**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**
-## Patterns for nxn Matrix
-**MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
-## Your own patterns
-**Just add your pattern code to the functions Pattern\[1,2]() and Pattern[1,2]Update() in NeoPatterns.cpp (line 588ff.) to realize your own patterns. Use NeoPatternsSimpleDemo and enable TEST_OWN_PATTERNS on line 38 to test them.**
 
 ## All pixel mappings except NEO_MATRIX_COLUMNS supported
-In case you need NEO_MATRIX_COLUMNS layout, try to rotate your Matrix and use NEO_MATRIX_ROWS or use your own custom mapping function.
+In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
 
 Pixel mappings definitions and semantics are taken from https://github.com/adafruit/Adafruit_NeoMatrix/blob/master/Adafruit_NeoMatrix.h
 Here you find also mappings for tiled display with multiple matrices.
@@ -40,10 +45,11 @@ Examples:
 ```
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD).
-The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game. After 7 seconds of inactivity it runs the Snake demo with a simple AI.
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must define the symbol `USE_SERIAL_CONTROL` or outcomment line 33 in `MatrixSnake.h`.
+The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br\>
+After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
-**With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code in the computeSnakeDirection() function.**
+**With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
 
 
 NeoPatterns on breadboard

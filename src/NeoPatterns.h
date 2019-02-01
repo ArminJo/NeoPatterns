@@ -50,11 +50,19 @@
 extern char VERSION_NEOPATTERNS[4];
 
 // Pattern types supported:
-enum pattern {
-    NONE, RAINBOW_CYCLE, THEATER_CHASE, COLOR_WIPE, SCANNER, FADE,
-    /* extensions */
-    FIRE, CYLON, DELAY, MOVE, PROCESS_SELECTIVE, FADE_SELECTIVE, MOVING_PICTURE, TICKER, SNAKE, PATTERN1, PATTERN2,
-};
+#define PATTERN_NONE                0
+#define PATTERN_RAINBOW_CYCLE       1
+#define PATTERN_COLOR_WIPE          2
+#define PATTERN_FADE                3
+#define PATTERN_DELAY               4
+
+#define PATTERN_SCANNER_EXTENDED    6
+#define PATTERN_STRIPES             7 // includes the old THEATER_CHASE
+#define PATTERN_PROCESS_SELECTIVE   9
+#define PATTERN_FIRE               10
+
+#define PATTERN_USER_PATTERN1      16
+#define PATTERN_USER_PATTERN2      17
 
 /*
  * Values for Direction
@@ -64,7 +72,14 @@ enum pattern {
 #define DIRECTION_DOWN 2
 #define DIRECTION_RIGHT 3
 #define NUMBER_OF_DIRECTIONS 4
-#define DIRECTION_NONE 4    // No button pressed
+#define DIRECTION_IMPOSSIBLE NUMBER_OF_DIRECTIONS   // No direction possible (for AI)
+#define DIRECTION_NONE 5                            // No button pressed until now
+const char DirectionUp[] = "up";
+const char DirectionLeft[] = "left";
+const char DirectionDown[] = "down";
+const char DirectionRight[] = "right";
+const char DirectionNo[] = "no";
+const char* DirectionToString(uint8_t aDirection);
 
 // only for Backwards compatibility
 #define FORWARD DIRECTION_UP
@@ -75,14 +90,28 @@ uint8_t Green(color32_t color);
 uint8_t Blue(color32_t color);
 
 // NeoPattern Class - derived from the Adafruit_NeoPixel class
-class NeoPatterns: public Adafruit_NeoPixel {
+class NeoPatterns {
 public:
     NeoPatterns(uint16_t pixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+    NeoPatterns(Adafruit_NeoPixel * aNeoPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+
+    /*
+     * convenience functions which basically call the corresponding Adafruit_NeoPixel functions
+     */
+    bool begin(void);
+    void clear(void);
+    void show(void);
+    uint16_t numPixels(void);
+    void setPixelColor(uint16_t aPixelIndex, color32_t aPixelColor, bool aAddValue = false);
+    void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, bool aAddValue = false);
+
     void setCallback(void (*callback)(NeoPatterns*));
     //
-    bool Update();
-    void Increment();
-    void Reverse();
+    bool CheckForUpdate();
+    bool UpdateOrRedraw();
+    bool Update(bool doShow = true);
+    void DecrementTotalStepCounter();
+    void NextIndexAndDecrementTotalStepCounter();
     void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t totalSteps);
     uint32_t DimColor(color32_t color);
     void ColorSet(color32_t color);
@@ -91,65 +120,77 @@ public:
      * PATTERNS
      */
     void RainbowCycle(uint8_t interval, uint8_t aDirection = DIRECTION_UP);
-    void TheaterChase(color32_t color1, color32_t color2, uint8_t interval, uint8_t aDirection = DIRECTION_UP);
-    void ColorWipe(color32_t color, uint8_t interval, uint8_t aDirection = DIRECTION_UP);
-    void Scanner(color32_t color1, uint8_t interval, uint8_t mode = 0);
-    void Fade(color32_t color1, color32_t color2, uint16_t steps, uint8_t interval, uint8_t aDirection = DIRECTION_UP);
+    void ColorWipe(color32_t color, uint8_t interval, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void Fade(color32_t color1, color32_t color2, uint16_t steps, uint8_t interval);
 
     /*
      * PATTERN extensions
      */
+    void ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aInterval, uint16_t aNumberOfBouncings = 0, uint8_t aMode = 0,
+            uint8_t aDirection = DIRECTION_UP);
     void Fire(uint16_t interval, uint16_t repetitions = 100);
-    void Cylon(color32_t color1, uint16_t interval, uint8_t repetitions = 1);
     void Delay(uint16_t aMillis);
-    void ProcessSelectiveColor(uint32_t (*aSingleLEDProcessingFunction)(NeoPatterns*), uint16_t steps, uint16_t interval);
-    void FadeSelectiveColor(color32_t color1, color32_t color2, uint16_t steps, uint16_t interval);
-
-    /*
-     * Template for your own extensions
-     */
-    void Pattern1(color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection = DIRECTION_UP);
-    void Pattern2(color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection = DIRECTION_UP);
+    void ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
+            uint16_t steps, uint16_t interval);
+    void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint8_t aInterval,
+            uint16_t aNumberOfSteps, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
 
     /*
      * UPDATE functions
      */
-    void RainbowCycleUpdate();
-    void TheaterChaseUpdate();
-    void ColorWipeUpdate();
-    void ScannerUpdate();
-    void FadeUpdate();
+    void RainbowCycleUpdate(bool aDoUpdate = true);
+    void ColorWipeUpdate(bool aDoUpdate = true);
+    void FadeUpdate(bool aDoUpdate = true);
 
     /*
      * Extensions
      */
-    void FireUpdate();
-    void CylonUpdate();
-    void DelayUpdate();
-    void ProcessSelectiveColorUpdate();
-    void ProcessSelectiveColorForAllPixelAndShow();
-    void FadeSelectiveUpdate();
-    void Pattern1Update();
-    void Pattern2Update();
+    void ScannerExtendedUpdate(bool aDoUpdate = true);
+    void StripesUpdate(bool aDoUpdate = true);
+    void FireUpdate(bool aDoUpdate = true);
+    void DelayUpdate(bool aDoUpdate = true);
+    void ProcessSelectiveColorUpdate(bool aDoUpdate = true);
+    void ProcessSelectiveColorForAllPixel();
+    void Pattern1Update(bool aDoUpdate = true);
+    void Pattern2Update(bool aDoUpdate = true);
+
+    void Debug(bool aFullInfo = true);
+    void TestWS2812Resolution();
 
     // Static functions
-    static uint32_t Wheel(byte WheelPos);
-    static uint32_t HeatColor(uint8_t aTemperature);
+    static color32_t Wheel(uint8_t WheelPos);
+    static color32_t HeatColor(uint8_t aTemperature);
+    static uint8_t getLedBrightnessValue32(uint8_t aLinearValue);
 
-    // Member Variables:
-    pattern ActivePattern;  // which pattern is running
-    int8_t Direction;     // direction to run the pattern
+    /*
+     * Variables for almost each pattern
+     */
+    uint16_t TotalStepCounter; // total number of steps in the pattern including repetitions.
+    uint16_t Index; // or Position. Counter for basic pattern. Current step within the pattern. Counter for basic patterns. Step counter of snake.
+    color32_t Color1;       // Main pattern color
 
-    color32_t Color1, Color2;  // What colors are in use
-#define PIXEL_NEEDS_3_BYTES 3
-#define PIXEL_NEEDS_4_BYTES 4 // has also a byte for white
-    uint8_t PixelColorStorageSize; // can be 3 or 4
+    /*
+     * Variables use by individual patterns
+     */
+    color32_t Color2;       // second pattern color | Number of bounces for scanner
+    int8_t Direction;       // direction to run the pattern
+    uint8_t PatternLength;  // the length of a (scanner) pattern
 
+    /*
+     * Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
+     * Delta for each step for extended scanner and rainbow cycle
+     */
+    color32_t ColorTmp;
+
+    Adafruit_NeoPixel * NeoPixel; // to allow multiple patterns on the same hardware
+    uint8_t BytesPerPixel;  // can be 3 or 4
+
+    /*
+     * Internal control variables
+     */
+    uint8_t ActivePattern;  // which pattern is running
     unsigned long Interval;   // milliseconds between updates
-    unsigned long lastUpdate; // last update of position
-
-    uint16_t TotalSteps;  // total number of steps in the pattern. will be compared with Index for basic patterns.
-    uint16_t Index; // Counter for basic pattern. Current step within the pattern. Counter for basic patterns. Step counter of snake.
+    unsigned long lastUpdate; // millis of last update of pattern
 
     void (*OnPatternComplete)(NeoPatterns*);  // Callback on completion of pattern
 
@@ -159,38 +200,40 @@ public:
 #define GEOMETRY_BAR 1
     uint8_t PatternsGeometry; // fire pattern makes no sense on circles
 
-    // For scanner extensions
-    // Flags 0 -> old scanner starting at 0 - 2 passes
-    // Flags 1 -> old scanner but starting at numPixels() -1 - one pass (falling star pattern)
-    // Flags +2 -> starting at both ends
-    // Flags +4 -> let scanner vanish complete (>=7 additional steps at the end)
-#define FLAG_SCANNER_ONE_PASS               0x01
-#define FLAG_SCANNER_STARTING_AT_BOTH_ENDS  0x02
-#define FLAG_SCANNER_VANISH_COMPLETE        0x04
-#define FLAG_SCANNER_FALLING_STAR           0x05
+    // For scanner_extended
+    // Flags 0 -> one pass scanner (rocket or falling star)
+    // Flags +1 -> cylon -> mirror pattern (effective length is 2*length -1)
+    // Flags +2 -> start and end scanner vanishing complete e.g. first and last pattern are empty
+    // Flags +0x10 -> use add-color instead off set-color
+#define FLAG_SCANNER_EXT_ROCKET             0x00
+#define FLAG_SCANNER_EXT_CYLON              0x01
+#define FLAG_SCANNER_EXT_VANISH_COMPLETE    0x02
+#define FLAG_SCANNER_EXT_START_AT_BOTH_ENDS 0x04
+
+#define FLAG_ADD_COLOR                      0x10
+#define FLAG_DO_NOT_CLEAR                   0x20 // do not write black pixels - for colorWipe
 
     uint8_t Flags;  // special behavior of the pattern
     // for Cylon, Fire, multipleHandler
     uint16_t Repetitions; // counter for multipleHandler
 
-    color32_t ColorForSelection; // for FadeSelectiveColor, ProcessSelectiveColor
     uint32_t (*SingleLEDProcessingFunction)(NeoPatterns*); // for ProcessSelectiveColor
     /*
      * for multiple pattern extensions
      */
-    uint8_t Duration;
+    uint8_t MultipleExtension; // for delay of multiple falling stars and snake flags
     void (*NextOnPatternCompleteHandler)(NeoPatterns*);  // Next callback after completion of multiple pattern
 };
 
 //  Sample processing functions for ProcessSelectiveColor()
-uint32_t FadeColor(NeoPatterns* aLedPtr);
-uint32_t DimColor(NeoPatterns* aLedPtr);
-uint32_t LightenColor(NeoPatterns* aLedPtr);
+color32_t FadeColor(NeoPatterns* aLedPtr);
+color32_t DimColor(NeoPatterns* aLedPtr);
+color32_t LightenColor(NeoPatterns* aLedPtr);
 
 // multiple pattern example
-void initFallingStar(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aDuration, uint8_t aRepetitions,
+void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aDuration, uint8_t aRepetitions,
         void (*aNextOnCompleteHandler)(NeoPatterns*));
-void multipleFallingStarCompleteHandler(NeoPatterns * aLedsPtr);
+void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 
 void allPatternsRandomExample(NeoPatterns * aLedsPtr);
 

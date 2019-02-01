@@ -1,7 +1,7 @@
 /*
- *  NeoPatterns144.cpp
+ *  NeoPatternsSimpleDemo.cpp
  *
- *  Shows all patterns included in the NeoPixel library for NeoPixel stripes.
+ *  Shows all patterns included in the NeoPixel library for NeoPixel strips.
  *
  *  Just add your pattern code to the functions Pattern[1,2]() and Pattern[1,2]Update() in Neopatterns.cpp (line 588ff.)
  *  to realize and see your own patterns.
@@ -35,40 +35,108 @@
 
 #define VERSION_EXAMPLE "1.0"
 
-//#define TEST_OWN_PATTERNS
+// Uncomment this to test your own pattern implementation on line 70 ff.
+//#define TEST_USER_PATTERNS
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN_STRIPE_16          8
+#define PIN_NEOPIXEL_BAR_16          3
 
 // onComplete callback functions
 void allPatterns(NeoPatterns * aLedsPtr);
-void ownPatterns(NeoPatterns * aLedsPtr);
 
 // construct the NeoPatterns instances
-#ifdef TEST_OWN_PATTERNS
-NeoPatterns stripe16 = NeoPatterns(16, PIN_STRIPE_16, NEO_GRB + NEO_KHZ800, &ownPatterns);
+#ifdef TEST_USER_PATTERNS
+void ownPatterns(NeoPatterns * aLedsPtr);
+NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &ownPatterns);
 #else
-NeoPatterns stripe16 = NeoPatterns(16, PIN_STRIPE_16, NEO_GRB + NEO_KHZ800, &allPatterns);
+NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatterns);
 #endif
 
 void setup() {
     Serial.begin(115200);
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-    stripe16.begin(); // This initializes the NeoPixel library.
-    stripe16.ColorWipe(COLOR32(0, 0, 02), 50, REVERSE); // Blue
-
-    randomSeed(12345);
+    bar16.begin(); // This initializes the NeoPixel library.
+    bar16.ColorWipe(COLOR32(0, 0, 02), 50, REVERSE); // light Blue
 
     Serial.println("started");
 }
 
 void loop() {
-    stripe16.Update();
+    bar16.Update();
+}
+
+#ifdef TEST_USER_PATTERNS
+/*
+ * The user may specify its own implementation here
+ */
+
+// Initialize for Pattern1
+// set all pixel to aColor1 and let a pixel of color2 move through
+void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection) {
+    aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
+    aNeoPatterns->Interval = aInterval;
+    aNeoPatterns->Color1 = aColor1;
+    aNeoPatterns->Color2 = aColor2;
+    aNeoPatterns->Direction = aDirection;
+    aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels();
+}
+
+void UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+    /*
+     * Sample implementation
+     */
+    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
+        if (i == aNeoPatterns->Index) {
+            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color2);
+        } else {
+            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
+        }
+    }
+    if (aDoUpdate) {
+        aNeoPatterns->NextIndexAndDecrementTotalStepCounter();
+    }
+}
+
+// clear all pixel and let a pixel of color2 move up and down
+void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection) {
+    /*
+     * Sample implementation
+     */
+    aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN2;
+    aNeoPatterns->Interval = aInterval;
+    aNeoPatterns->Color1 = aColor1;
+    aNeoPatterns->Color2 = aColor2;
+    aNeoPatterns->Direction = aDirection;
+    aNeoPatterns->Index = 0;
+    aNeoPatterns->TotalStepCounter = (2 * aNeoPatterns->numPixels()) - 1; // up and down but do nor use upper pixel twice
+}
+
+void UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+    /*
+     * Sample implementation
+     */
+    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
+        if (i == aNeoPatterns->Index) {
+            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color2);
+        } else {
+            aNeoPatterns->setPixelColor(i, COLOR32_BLACK);
+        }
+    }
+
+    if (aDoUpdate) {
+        aNeoPatterns->NextIndexAndDecrementTotalStepCounter();
+        if (aNeoPatterns->Index == aNeoPatterns->numPixels()) {
+            // change direction
+            aNeoPatterns->Direction = DIRECTION_DOWN;
+            // do nor use upper pixel twice
+            aNeoPatterns->Index--;
+        }
+    }
 }
 
 /*
- * Handler for testing your patterns
+ * Handler for testing your own patterns
  */
 void ownPatterns(NeoPatterns * aLedsPtr) {
     static int8_t sState = 0;
@@ -78,11 +146,11 @@ void ownPatterns(NeoPatterns * aLedsPtr) {
 
     switch (sState) {
     case 0:
-        aLedsPtr->Pattern1(COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        UserPattern1(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
         break;
 
     case 1:
-        aLedsPtr->Pattern2(COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        UserPattern2(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
         sState = -1; // Start from beginning
         break;
 
@@ -93,6 +161,7 @@ void ownPatterns(NeoPatterns * aLedsPtr) {
 
     sState++;
 }
+#endif // TEST_USER_PATTERNS
 
 /*
  * Handler for all pattern
@@ -105,37 +174,46 @@ void allPatterns(NeoPatterns * aLedsPtr) {
 
     switch (sState) {
     case 0:
-        aLedsPtr->Cylon(NeoPatterns::Wheel(tColor), tDuration, 2);
+        // simple scanner
+        aLedsPtr->clear();
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 2, FLAG_SCANNER_EXT_CYLON);
         break;
     case 1:
-        aLedsPtr->Scanner(NeoPatterns::Wheel(tColor), tDuration);
+        // rocket and falling star - 2 times bouncing
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
+        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, (tDuration & DIRECTION_DOWN));
         break;
     case 2:
-        // Falling star
-        aLedsPtr->Scanner(COLOR32_WHITE_HALF, tDuration / 2, 5);
+        // 1 times rocket or falling star
+        aLedsPtr->clear();
+        aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 7, tDuration / 2, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE,
+                (tDuration & DIRECTION_DOWN));
         break;
     case 3:
         aLedsPtr->RainbowCycle(20);
         break;
     case 4:
-        aLedsPtr->TheaterChase(COLOR32_WHITE_HALF, COLOR32_BLACK, tDuration + tDuration / 2); // White on Black
+        aLedsPtr->Stripes(COLOR32_WHITE_HALF, 5, NeoPatterns::Wheel(tColor), 3, tDuration, 2 * aLedsPtr->numPixels(), 0,
+                (tDuration & DIRECTION_DOWN));
         break;
     case 5:
-        aLedsPtr->TheaterChase(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), tDuration + tDuration / 2); //
+        // old TheaterChase
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, tDuration, 2 * aLedsPtr->numPixels(),
+                0, (tDuration & DIRECTION_DOWN));
         break;
     case 6:
-        aLedsPtr->Fade(COLOR32_RED, COLOR32_BLUE, 32, tDuration, REVERSE);
+        aLedsPtr->Fade(COLOR32_RED, COLOR32_BLUE, 32, tDuration);
         break;
     case 7:
         aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration);
         break;
     case 8:
-        // start at both end
-        aLedsPtr->Scanner(NeoPatterns::Wheel(tColor), tDuration / 2, 6);
+        // clear pattern
+        aLedsPtr->ColorWipe(COLOR32_BLACK, tDuration, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
         break;
     case 9:
         // Multiple falling star
-        initFallingStar(aLedsPtr, COLOR32_WHITE_HALF, tDuration / 2, 3, &allPatterns);
+        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, tDuration / 2, 3, &allPatterns);
         break;
     case 10:
         if (aLedsPtr->PatternsGeometry == GEOMETRY_BAR) {
@@ -143,7 +221,8 @@ void allPatterns(NeoPatterns * aLedsPtr) {
             aLedsPtr->Fire(tDuration / 2, 150);
         } else {
             // start at both end
-            aLedsPtr->Scanner(NeoPatterns::Wheel(tColor), tDuration, 6);
+            aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 0,
+            FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE);
         }
 
         sState = -1; // Start from beginning
@@ -152,6 +231,15 @@ void allPatterns(NeoPatterns * aLedsPtr) {
         Serial.println("ERROR");
         break;
     }
+
+    Serial.print("Pin=");
+    Serial.print(aLedsPtr->NeoPixel->getPin());
+    Serial.print(" Length=");
+    Serial.print(aLedsPtr->numPixels());
+    Serial.print(" ActivePattern=");
+    Serial.print(aLedsPtr->ActivePattern);
+    Serial.print(" State=");
+    Serial.println(sState);
 
     sState++;
 }

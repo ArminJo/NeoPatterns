@@ -32,6 +32,10 @@
 
 #define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH
 
+#define PATTERN_TICKER              32
+#define PATTERN_MOVE                33
+#define PATTERN_MOVING_PICTURE      34
+
 extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
 #define NUMBERS_FONT_WIDTH 4
 #define NUMBERS_FONT_HEIGHT 6
@@ -69,6 +73,8 @@ public:
             uint8_t aDirection =
             DIRECTION_LEFT, uint8_t aFlags = 0);
 
+    void drawQuarterPattern(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
+
     void loadPicturePGM(const uint8_t* aGraphicsrrayPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
             color32_t aForegroundColor, color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0,
             bool doPaddingRight = false, bool doPadding = false);
@@ -76,7 +82,7 @@ public:
     void MovingPicturePGM(const uint8_t* aGraphics8x8Array, color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset,
             int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     //
-    bool Update();
+    bool Update(bool doShow = true);
     void Move(uint8_t aDirection, uint16_t aSteps = 1, uint16_t aIntervalMillis = 70, bool aMoveDirect = true,
             color32_t aBackgroundColor = COLOR32_BLACK);
     void moveArrayContent(uint8_t aDirection);
@@ -146,5 +152,6 @@ extern const uint8_t heart8x8[] PROGMEM;
 void MatrixPatternsDemo(NeoPatterns * aLedsPtr);
 
 void myLoadTest(MatrixNeoPatterns* aLedsPtr);
+void mySnowflakeTest(MatrixNeoPatterns* aLedsPtr);
 
 #endif /* MATRIXNEOPATTERNS_H_ */

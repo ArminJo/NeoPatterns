@@ -2,7 +2,7 @@
  * SnakeAutorun.cpp
  *
  *
- *  It runs the snake game using your AI code in the computeSnakeDirection() function.
+ *  It runs the snake game using your AI code in the findBestSnakeDirection() function.
  *
  *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
  *
@@ -34,7 +34,7 @@
 // Delay between two SNAKE moves / Speed of game
 #define GAME_REFRESH_INTERVAL   200
 
-#define PIN_AREA_SNAKE       8
+#define PIN_NEOPIXEL_MATRIX_SNAKE 8
 
 #define RIGHT_BUTTON_PIN     2
 #define LEFT_BUTTON_PIN      3
@@ -49,7 +49,7 @@
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrixSnake = MatrixSnake(8, 8, PIN_AREA_SNAKE,
+MatrixSnake NeoPixelMatrixSnake = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX_SNAKE,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800);
 
 /********************************************
@@ -66,61 +66,79 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
  *                  and: computeDirection(position aStartPosition, position aEndPosition)
  *
  ********************************************/
-uint8_t computeSnakeDirection(MatrixSnake * aSnake, uint8_t aColumns, uint8_t aRows, position aSnakeHeadPosition,
-        position aApplePosition, uint8_t aActualDirection, uint16_t aSnakeLength, position * aSnakeBodyArray) {
+uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
 
-    Serial.print(F("computeSnakeDirection aActualDirection="));
-    Serial.print(aActualDirection);
+    /*
+     * Call internal solver
+     * Comment this to enable your own code
+     */
+    return aSnake->getNextSnakeDir();
+
+    Serial.print(F("getSnakeDirection CurrentDirection="));
+    Serial.print(DirectionToString(aSnake->Direction));
     Serial.print(F(" head=("));
-    Serial.print(aSnakeHeadPosition.x);
+    Serial.print(aSnake->SnakePixelList[0].x);
     Serial.print(',');
-    Serial.print(aSnakeHeadPosition.y);
+    Serial.print(aSnake->SnakePixelList[0].y);
     Serial.println(')');
 
-    uint8_t tNewDirection = aActualDirection;
+    uint8_t tNewDirection = aSnake->Direction;
 
-    int8_t tDeltaX = aApplePosition.x - aSnakeHeadPosition.x;
-    int8_t tDeltaY = aApplePosition.y - aSnakeHeadPosition.y;
+    int8_t tDeltaX = aSnake->Apple.x - aSnake->SnakePixelList[0].x;
+    int8_t tDeltaY = aSnake->Apple.y - aSnake->SnakePixelList[0].y;
 
     Serial.print(F("DeltaX="));
     Serial.print(tDeltaX);
     Serial.print(F(" DeltaY="));
     Serial.println(tDeltaY);
 
-// Simple example
+    /*
+     *  Simple example, go towards the apple.
+     */
 
     /*
      * Avoid going to opposite direction, because this is invalid.
      * Eg. if actual direction is UP, we must not change to DOWN.
      */
-    if (tDeltaX > 0 && aActualDirection != DIRECTION_LEFT) {
+    if (tDeltaX > 0 && aSnake->Direction != DIRECTION_LEFT) {
         tNewDirection = DIRECTION_RIGHT;
+    } else if (tDeltaX < 0 && aSnake->Direction != DIRECTION_RIGHT) {
+        tNewDirection = DIRECTION_LEFT;
     }
-    /*
-     * And so on...
-     */
+    if (tDeltaY > 0 && aSnake->Direction != DIRECTION_UP) {
+        tNewDirection = DIRECTION_DOWN;
+    } else if (tDeltaY < 0 && aSnake->Direction != DIRECTION_DOWN) {
+        tNewDirection = DIRECTION_UP;
+    }
 
     // check new direction...
     if (aSnake->checkDirection(tNewDirection) != 0) {
-        // take next direction
-        tNewDirection = (tNewDirection + 1) % NUMBER_OF_DIRECTIONS;
+        /*
+         * check was not successful just check all available directions
+         */
+        for (tNewDirection = 0; tNewDirection < NUMBER_OF_DIRECTIONS; ++tNewDirection) {
+            if (aSnake->checkDirection(tNewDirection) == 0) {
+                break;
+            }
+        }
     }
 
 // End of dummy example
     Serial.print(F("NewDirection="));
-    Serial.println(tNewDirection);
+    Serial.println(DirectionToString(tNewDirection));
 
     return tNewDirection;
 }
 
 void setup() {
     Serial.begin(115200);
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
     NeoPixelMatrixSnake.begin(); // This initializes the NeoPixel library.
+    if (NeoPixelMatrixSnake.numPixels() == 0) {
+        Serial.println(F("ERROR Not enough free memory available!"));
+    }
     initSnakeAutorun(&NeoPixelMatrixSnake, GAME_REFRESH_INTERVAL, COLOR32_BLUE);
-
-    randomSeed(12345);
 }
 
 void loop() {

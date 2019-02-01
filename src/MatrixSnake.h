@@ -30,19 +30,23 @@
 
 #include "MatrixNeoPatterns.h"
 
+//#define USE_SERIAL_CONTROL // Accepts direction commands over the serial line
+
+#define PATTERN_SNAKE 64
+
 #define APPLE_COLOR COLOR32_RED
 
 #define MILLIS_FOR_BUTTON_DEBOUNCING 100
 
 #define FLAG_USE_4_BUTTONS 0x01             // will be set if PinOfUpButton != 0 and up or down button was at least pressed once
 #define FLAG_SNAKE_AUTORUN 0x02             // autorun mode - will be set if no left buttons is defined
-#define FLAG_SNAKE_IS_MOVING 0x10
-#define FLAG_SNAKE_SHOW_LENGTH 0x20         // signal number shown -> enables delay
+#define FLAG_SNAKE_SHOW_LENGTH_SCORE 0x20   // signal number shown -> enables delay
 #define FLAG_SNAKE_SHOW_END 0x40            // signal end of snake shown -> enables delay
-#define SHOW_END_INTERVAL_MILLIS 6000
+#define SHOW_END_INTERVAL_MILLIS 3000
 #define SHOW_NUMBER_INTERVAL_MILLIS 2000
 
 #define TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS 7000
+//#define TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS 2000
 
 // stores a 2d position TopLeft coordinates are 0,0
 struct position {
@@ -62,30 +66,43 @@ public:
     void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);
 
-    bool Update();
+    bool Update(bool doShow = true);
 
     void SnakeUpdate();
-    void SnakeInputHandler();
-    void SnakeDefaultHandler();
+    uint8_t SnakeInputHandler();
+    void SnakeEndHandler();
     void showScore();
 
     void newApple();
+    void drawApple();
     void drawSnake();
-    void resetAndDrawSnake();
+    void clearAndResetSnake();
     void rotateRight();
     void rotateLeft();
     //
     bool isPositionInArea(position aPositionToCheck);
+    uint16_t getIndexOfPositionInSnake(uint8_t aPositionToCheckX, uint8_t aPositionToCheckY);
     uint16_t getIndexOfPositionInSnake(position aPositionToCheck);
     uint16_t getIndexOfPositionInSnakeTail(position aPositionToCheck);
     uint16_t checkDirection(uint8_t aDirectionToCheck);
     //
     bool computeNewHeadPosition(uint8_t aActualDirection, position * aSnakeNewHeadPosition);
+    bool moveSnakeAndCheckApple(position tSnakeNewHeadPosition);
+
+    /*
+     * internal auto solver functions
+     */
+    uint8_t findNextDir();
+    uint8_t runAndCheckIfAppleCanBeReached();
+    uint8_t getNextSnakeDir();
 
     // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
     // SnakePixelList[0] is head of snake
     position * SnakePixelList;
     uint16_t SnakeLength;
+
+#define AUTOSOLVER_CLOCKWISE_FLAG 0x01 // if set choose directions from 3 to 0
+    uint8_t SnakeAutoSolverMode; // The mode for findNextDir()
 
     // the apple the snake chases after
     position Apple;
@@ -95,13 +112,14 @@ public:
     /*
      * Snake input stuff
      */
-    uint8_t PinOfRightButton;
+    uint8_t PinOfRightButton; // if not set (==0), snake runs in autorun mode
     uint8_t PinOfLeftButton;
     uint8_t PinOfUpButton;
     uint8_t PinOfDownButton;
     uint8_t DirectionOfLastButtonPressed;  // for debouncing
     uint32_t MillisOfLastButtonChange; // for debouncing
 
+private:
 };
 
 uint8_t computeDirection(position aStartPosition, position aEndPosition);
@@ -109,8 +127,8 @@ uint8_t computeDirection(position aStartPosition, position aEndPosition);
 void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr);
 
 void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions = 1);
-uint8_t computeSnakeDirection(MatrixSnake * aSnake, uint8_t aColumns, uint8_t aRows, position aSnakeHeadPosition,
-        position aApplePosition, uint8_t aActualDirection, uint16_t aSnakeLength, position * aSnakeBodyArray);
+uint8_t getNextSnakeDirectionSimple(MatrixSnake * aSnake);
+uint8_t getNextSnakeDirection(MatrixSnake * aSnake);
 void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr);
 
 #endif /* MATRIXSNAKE_H_ */

@@ -2,7 +2,7 @@
  * MatrixDemo.cpp
  *
  *
- *  Simply runs the snake game.
+ *  Simply runs the MatrixAndSnakePatternsDemo for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
  *
  *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
  *
@@ -24,43 +24,36 @@
 #include <Arduino.h>
 #include <MatrixSnake.h>
 
-#define PIN_NEO_PIXEL_MATRIX   8
-
-#define RIGHT_BUTTON_PIN     2
-#define LEFT_BUTTON_PIN      3
-/*
- * if connected, use up or down button first after reset to enable 4 button direct direction input
- */
-#define UP_BUTTON_PIN        4
-#define DOWN_BUTTON_PIN      5
+#define PIN_NEOPIXEL_MATRIX   8
 
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrix = MatrixSnake(8, 8, PIN_NEO_PIXEL_MATRIX,
+MatrixSnake NeoPixelMatrix = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemo);
 
 void setup() {
     Serial.begin(115200);
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
     NeoPixelMatrix.begin(); // This initializes the NeoPixel library.
-
-//        myLoadTest(&NeoPixelMatrix);
+    if (NeoPixelMatrix.numPixels() == 0) {
+        Serial.println(F("ERROR Not enough free memory available!"));
+    }
+//    mySnowflakeTest(&NeoPixelMatrix);
     MatrixAndSnakePatternsDemo(&NeoPixelMatrix);
-
-    randomSeed(12345);
-
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
 void loop() {
+//    mySnowflakeTest(&NeoPixelMatrix);
+
     if (NeoPixelMatrix.Update()) {
-        if (NeoPixelMatrix.ActivePattern == TICKER) {
+        if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
             // change color of ticker after each update
             NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
             sWheelPosition += 4;
