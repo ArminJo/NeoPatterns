@@ -64,6 +64,8 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 
 void setup() {
     Serial.begin(115200);
+    while (!Serial); //delay for Leonardo
+    // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
     bar16.begin(); // This initializes the NeoPixel library.

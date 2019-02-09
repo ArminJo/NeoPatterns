@@ -54,6 +54,8 @@ NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &
 
 void setup() {
     Serial.begin(115200);
+    while (!Serial); //delay for Leonardo
+    // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
     bar16.begin(); // This initializes the NeoPixel library.
