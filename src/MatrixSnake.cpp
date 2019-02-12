@@ -195,9 +195,9 @@ void MatrixSnake::drawSnake() {
         position tPosition = SnakePixelList[i];
         // linear color interpolation over the body of the snake between tail and head
         // Optimize order of operations to minimize truncation error
-        uint8_t red = getLedBrightnessValue32((Red(Color1) * (SnakeLength - i)) / SnakeLength);
-        uint8_t green = getLedBrightnessValue32((Green(Color1) * (SnakeLength - i)) / SnakeLength);
-        uint8_t blue = getLedBrightnessValue32((Blue(Color1) * (SnakeLength - i)) / SnakeLength);
+        uint8_t red = gamma5Special((Red(Color1) * (SnakeLength - i)) / SnakeLength);
+        uint8_t green = gamma5Special((Green(Color1) * (SnakeLength - i)) / SnakeLength);
+        uint8_t blue = gamma5Special((Blue(Color1) * (SnakeLength - i)) / SnakeLength);
 #ifdef TRACE
         Serial.print(F("snake color red="));
         Serial.print(red);
@@ -768,6 +768,9 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     return tResult;
 }
 
+/*
+ * The weak standard implementation. Can be be overridden by the users own implementation.
+ */
 uint8_t
 __attribute__((weak)) getNextSnakeDirection(MatrixSnake * aSnake) {
     return aSnake->getNextSnakeDir();
@@ -911,7 +914,9 @@ void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr) {
 /*
  * Sample callback handler for MatrixNeoPatterns + MatrixSnake
  * 1 loop lasts ca. 50 seconds
- * snake shows up on the odd loops, fire on the even ones
+ * 1. Runs ticker "I love Neopixel" from right to left / from bottom to top
+ * 2. Moves heart in from top / bottom, show 2 heart beats, and move heart out
+ * 3. Show 2 snake runs / fire. Snake shows up on the odd loops, fire on the even ones
  */
 void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
     MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
@@ -958,14 +963,14 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
         break;
     case 3:
         // get last color from dim function
-        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &LightenColor, 6, 40);
+        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &BrightenColor, 6, 40);
         break;
     case 4:
         aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &DimColor, 6, 40);
         break;
     case 5:
-//        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &LightenColor, 6, 40);
-        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &LightenColor, 6, 40);
+//        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &BrightenColor, 6, 40);
+        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &BrightenColor, 6, 40);
         break;
 
     case 6:
@@ -990,7 +995,7 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
                 tLedsPtr->Fire(100, 500);
             }
         } else {
-            initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 3);
+            initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 2);
         }
         break;
     case 9:

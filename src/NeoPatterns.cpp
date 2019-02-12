@@ -46,99 +46,100 @@ char VERSION_NEOPATTERNS[] = "1.2";
  **********************************************************************************/
 /*
  * Constructor - get and call Adafruit_NeoPixel constructor to initialize strip
+ * NeoPatterns id not derived from Adafruit_NeoPixel to enable running more than one pattern on the same NeoPixel object.
+ * In this case it avoids doubling the big pixel buffer.
  */
-NeoPatterns::NeoPatterns(uint16_t pixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) { // @suppress("Class members should be properly initialized")
+NeoPatterns::NeoPatterns(uint16_t pixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) : // @suppress("Class members should be properly initialized")
+        Adafruit_NeoPixel(pixels, aPin, aTypeOfPixel) {
     uint8_t twOffset = (aTypeOfPixel >> 6) & 0b11; // See notes in header file Adafruit_NeoPixel.h regarding R/G/B/W offsets
     uint8_t trOffset = (aTypeOfPixel >> 4) & 0b11;
+    //TODO
     BytesPerPixel = ((twOffset == trOffset) ? 3 : 4);
 
-    NeoPixel = new Adafruit_NeoPixel(pixels, aPin, aTypeOfPixel);
-//    NeoPixel = this;
     OnPatternComplete = aPatternCompletionCallback;
 }
 
 /*
- * Constructor with Adafruit_NeoPixel as parameter
+ *
+ * Free old pixel buffer and set new value.
+ * Needed if you want to have more than one patterns on the same strip.
  */
-NeoPatterns::NeoPatterns(Adafruit_NeoPixel * aNeoPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) { // @suppress("Class members should be properly initialized")
-    NeoPixel = aNeoPixel;
-    OnPatternComplete = aPatternCompletionCallback;
+void NeoPatterns::setPixelBuffer(uint8_t * aNewPixelBufferPointer) {
+    if (pixels) {
+        free(pixels);
+    }
+    pixels = aNewPixelBufferPointer;
 }
 
-bool NeoPatterns::begin() {
-    NeoPixel->begin();
-    if (numPixels() == 0) {
+///*
+// * Constructor with Adafruit_NeoPixel as parameter
+// */
+//NeoPatterns::NeoPatterns(Adafruit_NeoPixel * aNeoPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) { // @suppress("Class members should be properly initialized")
+//    NeoPixel = aNeoPixel;
+//    OnPatternComplete = aPatternCompletionCallback;
+//}
+
 #ifdef ERROR
+bool NeoPatterns::begin() {
+    Adafruit_NeoPixel::begin();
+    if (numLEDs == 0) {
         Serial.print(F("ERROR Not enough free memory available for Pattern at pin "));
-        Serial.println(NeoPixel->getPin());
-#endif
+        Serial.println(getPin());
         return false;
     }
     return true;
 }
+#endif
 
-void NeoPatterns::clear() {
-    NeoPixel->clear();
-}
-
-void NeoPatterns::show() {
-    NeoPixel->show();
-}
-
-uint16_t NeoPatterns::numPixels() {
-    return NeoPixel->numPixels();
-}
-
-void NeoPatterns::setPixelColor(uint16_t aPixelIndex, color32_t aPixelColor, bool aAddValue) {
-    if (aAddValue) {
-        color32_t tOldColor = NeoPixel->getPixelColor(aPixelIndex);
-        if (tOldColor != 0) {
-            uint8_t tRed = Red(tOldColor) + Red(aPixelColor);
-            if (tRed < Red(aPixelColor)) {
-                // clip overflow
-                tRed = 255;
-            }
-            uint8_t tGreen = Green(tOldColor) + Green(aPixelColor);
-            if (tGreen < Green(aPixelColor)) {
-                tGreen = 255;
-            }
-            uint8_t tBlue = Blue(tOldColor) + Blue(aPixelColor);
-            if (tBlue < Blue(aPixelColor)) {
-                tBlue = 255;
-            }
-            NeoPixel->setPixelColor(aPixelIndex, tRed, tGreen, tBlue);
-            return;
+/*
+ * adds color to existing one and clip to white (255)
+ */
+color32_t NeoPatterns::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
+    color32_t tOldColor = getPixelColor(aPixelIndex);
+    if (tOldColor != 0) {
+        uint8_t tRed = Red(tOldColor) + aRed;
+        if (tRed < aRed) {
+            // clip overflow
+            tRed = 255;
         }
-    }
-    NeoPixel->setPixelColor(aPixelIndex, aPixelColor);
-}
-
-void NeoPatterns::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, bool aAddValue) {
-    if (aAddValue) {
-        color32_t tOldColor = NeoPixel->getPixelColor(aPixelIndex);
-        if (tOldColor != 0) {
-            uint8_t tRed = Red(tOldColor) + aRed;
-            if (tRed < aRed) {
-                // clip overflow
-                tRed = 255;
-            }
-            uint8_t tGreen = Green(tOldColor) + aGreen;
-            if (tGreen < aGreen) {
-                tGreen = 255;
-            }
-            uint8_t tBlue = Blue(tOldColor) + aBlue;
-            if (tBlue < aBlue) {
-                tBlue = 255;
-            }
-            NeoPixel->setPixelColor(aPixelIndex, tRed, tGreen, tBlue);
-            return;
+        uint8_t tGreen = Green(tOldColor) + aGreen;
+        if (tGreen < aGreen) {
+            tGreen = 255;
         }
+        uint8_t tBlue = Blue(tOldColor) + aBlue;
+        if (tBlue < aBlue) {
+            tBlue = 255;
+        }
+        return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
     }
-    NeoPixel->setPixelColor(aPixelIndex, aRed, aGreen, aBlue);
+    return Adafruit_NeoPixel::Color(aRed, aGreen, aBlue);
 }
 
 void NeoPatterns::setCallback(void (*callback)(NeoPatterns*)) {
     OnPatternComplete = callback;
+}
+
+void NeoPatterns::resetBrightnessValue() {
+    brightness = 0;
+}
+
+uint8_t NeoPatterns::getBytesPerPixel() {
+    return BytesPerPixel;
+}
+
+uint16_t NeoPatterns::getPixelBufferSize() {
+    return numBytes;
+}
+
+void NeoPatterns::storePixelBuffer(uint8_t * aPixelBufferPointerDestination) {
+    memcpy(aPixelBufferPointerDestination, pixels, numBytes);
+}
+
+void NeoPatterns::restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness) {
+    memcpy(pixels, aPixelBufferPointerSource, numBytes);
+    if (aResetBrightness) {
+        brightness = 0;
+    }
 }
 
 bool NeoPatterns::CheckForUpdate() {
@@ -282,7 +283,7 @@ void NeoPatterns::setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t
 void NeoPatterns::RainbowCycle(uint8_t interval, uint8_t aDirection) {
     ActivePattern = PATTERN_RAINBOW_CYCLE;
     Interval = interval;
-    ColorTmp = 0x10000 / numPixels();
+    ColorTmp = 0x10000 / numLEDs;
     setDirectionAndTotalStepsAndIndex(aDirection, 255);
 }
 
@@ -291,7 +292,7 @@ void NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
     uint16_t tWheelIndexHighResolution = 0; // = 0x10000->max. upper byte is the integer part used for setBrightness, lower byte is the fractional part
     uint16_t tWheelIndexHighDelta = ColorTmp;
 
-    for (uint16_t i = 0; i < numPixels(); i++) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
         setPixelColor(i, Wheel(Index + (tWheelIndexHighResolution >> 8)));
         tWheelIndexHighResolution += tWheelIndexHighDelta;
     }
@@ -306,12 +307,12 @@ void NeoPatterns::ColorWipe(color32_t color, uint8_t interval, uint8_t aMode, ui
     Interval = interval;
     Color1 = color;
     Flags = aMode;
-    setDirectionAndTotalStepsAndIndex(aDirection, numPixels());
+    setDirectionAndTotalStepsAndIndex(aDirection, numLEDs);
 }
 
 // Update the Color Wipe Pattern. Fill with color.
 void NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
-    for (uint16_t i = 0; i < numPixels(); i++) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
         if ((Direction == DIRECTION_UP && i <= Index) || (Direction == DIRECTION_DOWN && i >= Index)) {
             setPixelColor(i, Color1);
         } else if (!(Flags & FLAG_DO_NOT_CLEAR)) {
@@ -349,7 +350,7 @@ void NeoPatterns::FadeUpdate(bool aDoUpdate) {
     }
 }
 
-// Calculate 50% dimmed version of a color (used by ScannerUpdate)
+// Calculate 50% dimmed version of a color
 uint32_t NeoPatterns::DimColor(color32_t color) {
 // Shift R, G and B components one bit to the right
     uint32_t dimColor = Adafruit_NeoPixel::Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
@@ -358,7 +359,7 @@ uint32_t NeoPatterns::DimColor(color32_t color) {
 
 // Set all pixels to a color (synchronously)
 void NeoPatterns::ColorSet(color32_t color) {
-    for (uint16_t i = 0; i < numPixels(); i++) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
         setPixelColor(i, color);
     }
 }
@@ -381,13 +382,34 @@ color32_t NeoPatterns::Wheel(uint8_t WheelPos) {
  * START OF EXTENSIONS
  ****************************************************************************/
 
-const uint8_t LedBrightnessTable[32] PROGMEM = { 1, 1, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 9, 10, 12, 15, 17, 21, 25, 30, 36, 43, 51, 61,
-        73, 87, 104, 125, 149, 178, 213, 255 };
-uint8_t NeoPatterns::getLedBrightnessValue32(uint8_t aLinearValue) {
-    if (aLinearValue == 0) {
-        return 0;
+// from https://www.mikrocontroller.net/articles/LED-Fading
+const uint8_t _gammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
+        91, 108, 128, 152, 181, 215, 255 };
+
+/*
+ * use mapping table with 32 entries (using 5 MSbits)
+ */
+uint8_t NeoPatterns::gamma5(uint8_t aLinearBrightnessValue) {
+    return pgm_read_byte(&_gammaTable32[(aLinearBrightnessValue / 8)]);
+}
+
+/*
+ * Returns only 0 if value is 0.
+ * Returns 1 for input 1 to 7.
+ * used for snake tail, not to blank out the last elements of a tail with more than 32 elements
+ */
+uint8_t NeoPatterns::gamma5Special(uint8_t aLinearBrightnessValue) {
+    if (aLinearBrightnessValue <= 7 && aLinearBrightnessValue >= 1) {
+        return 1;
     }
-    return pgm_read_byte(&LedBrightnessTable[(aLinearValue / 8)]);
+    return pgm_read_byte(&_gammaTable32[(aLinearBrightnessValue / 8)]);
+}
+
+color32_t NeoPatterns::gamma5FromColor(color32_t aLinearBrightnessColor) {
+    uint8_t tRed = pgm_read_byte(&_gammaTable32[(Red(aLinearBrightnessColor) / 8)]);
+    uint8_t tGreen = pgm_read_byte(&_gammaTable32[(Green(aLinearBrightnessColor) / 8)]);
+    uint8_t tBlue = pgm_read_byte(&_gammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
 }
 
 /*
@@ -406,10 +428,10 @@ void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t a
     PatternLength = aLength;
     Flags = aMode;
     Direction = aDirection;
-    TotalStepCounter = numPixels() - aLength; // pattern is completely visible at start and end
+    TotalStepCounter = numLEDs - aLength; // pattern is completely visible at start and end
     Index = aLength - 1; // start position pattern is completely visible at start
 
-    uint16_t tStepsForBounce = numPixels() - 1;
+    uint16_t tStepsForBounce = numLEDs - 1;
 
     if (aMode & FLAG_SCANNER_EXT_VANISH_COMPLETE) {
         // invisible at start and end
@@ -418,13 +440,13 @@ void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t a
         if (aMode & FLAG_SCANNER_EXT_CYLON) {
             Index -= aLength - 1;
             TotalStepCounter += aLength - 1; // since the brightest led is not doubled and total length is (length + length -1)
-            tStepsForBounce = numPixels() - 2 * (aLength - 1) - 1;
+            tStepsForBounce = numLEDs - 2 * (aLength - 1) - 1;
         }
     } else {
         if (aMode & FLAG_SCANNER_EXT_CYLON) {
             // cylon visible at start and end
             TotalStepCounter -= aLength - 1; // since the brightest led is not doubled and total length is (length + length -1)
-            tStepsForBounce = numPixels() - 2 * (aLength - 1) - 1;
+            tStepsForBounce = numLEDs - 2 * (aLength - 1) - 1;
         }
     }
 
@@ -432,7 +454,7 @@ void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t a
         TotalStepCounter += (tStepsForBounce * aNumberOfBouncings);
     }
     if (aDirection == DIRECTION_DOWN) {
-        Index = (numPixels() - 1) - Index;
+        Index = (numLEDs - 1) - Index;
     }
 
     TotalStepCounter++; // since first step just shows the start pattern
@@ -465,7 +487,7 @@ void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
         /*
          * compute new dimmed color value
          */
-        tBrightness = getLedBrightnessValue32(tBrightness);
+        tBrightness = gamma5(tBrightness);
         if (tBrightness) {
             // (tRed + 1) since (255 *1) >> 8 gives 0 (and not 1)
             tRedDimmed = ((tRed + 1) * tBrightness) >> 8;
@@ -484,19 +506,17 @@ void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
         } else {
             tOffset = -tPatternIndex; // deliberate use unsigned here!
         }
-        setPixelColor(Index - tOffset, tRedDimmed, tGreenDimmed, tBlueDimmed, bool(Flags & FLAG_ADD_COLOR));
+        setPixelColor(Index - tOffset, tRedDimmed, tGreenDimmed, tBlueDimmed);
         if (Flags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
             // draw at other end too
-            setPixelColor((numPixels() - 1) - (Index - tOffset), tRedDimmed, tGreenDimmed, tBlueDimmed,
-                    bool(Flags & FLAG_ADD_COLOR));
+            setPixelColor((numLEDs - 1) - (Index - tOffset), tRedDimmed, tGreenDimmed, tBlueDimmed);
         }
         if (Flags & FLAG_SCANNER_EXT_CYLON) {
             // mirror pattern
-            setPixelColor(Index + tOffset, tRedDimmed, tGreenDimmed, tBlueDimmed, bool(Flags & FLAG_ADD_COLOR));
+            setPixelColor(Index + tOffset, tRedDimmed, tGreenDimmed, tBlueDimmed);
             if (Flags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
                 // draw at other end too
-                setPixelColor((numPixels() - 1) - (Index + tOffset), tRedDimmed, tGreenDimmed, tBlueDimmed,
-                        bool(Flags & FLAG_ADD_COLOR));
+                setPixelColor((numLEDs - 1) - (Index + tOffset), tRedDimmed, tGreenDimmed, tBlueDimmed);
 
             }
         }
@@ -528,21 +548,21 @@ void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
             /*
              * Cleanup last tail pixel from old pattern
              */
-            NeoPixel->setPixelColor(Index - tPatternIndex, COLOR32_BLACK);
+            setPixelColor(Index - tPatternIndex, COLOR32_BLACK);
             if (Flags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
-                NeoPixel->setPixelColor((numPixels() - 1) - (Index - tPatternIndex), COLOR32_BLACK);
+                setPixelColor((numLEDs - 1) - (Index - tPatternIndex), COLOR32_BLACK);
             }
 
             /*
              * check for bouncing condition
              */
             if (tNumberOfBouncings > 0) {
-                if (Index == numPixels() - 1) {
+                if (Index == numLEDs - 1) {
                     Direction = DIRECTION_DOWN;
                     tNumberOfBouncings--;
                 }
                 if (Flags & FLAG_SCANNER_EXT_CYLON) {
-                    if (Index + PatternLength == numPixels()) {
+                    if (Index + PatternLength == numLEDs) {
                         Direction = DIRECTION_DOWN;
                         tNumberOfBouncings--;
                     }
@@ -552,9 +572,9 @@ void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
             /*
              * DIRECTION_DOWN - Cleanup last tail pixel from old pattern
              */
-            NeoPixel->setPixelColor(Index + tPatternIndex, COLOR32_BLACK);
+            setPixelColor(Index + tPatternIndex, COLOR32_BLACK);
             if (Flags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
-                NeoPixel->setPixelColor((numPixels() - 1) - (Index + tPatternIndex), COLOR32_BLACK);
+                setPixelColor((numLEDs - 1) - (Index + tPatternIndex), COLOR32_BLACK);
             }
 
             /*
@@ -599,13 +619,19 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
 
 void NeoPatterns::StripesUpdate(bool aDoUpdate) {
     uint8_t tRunningIndex = Index;
-    for (uint16_t i = 0; i < numPixels(); i++) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        /*
+         * draw 1 pattern
+         */
         if (tRunningIndex < PatternLength) {
-            setPixelColor(i, Color1, bool(Flags & FLAG_ADD_COLOR));
+            // first part
+            setPixelColor(i, Color1);
         } else {
-            setPixelColor(i, Color2, bool(Flags & FLAG_ADD_COLOR));
+            // second part
+            setPixelColor(i, Color2);
         }
         tRunningIndex++;
+        // check for end of pattern
         if (tRunningIndex >= PatternLength + MultipleExtension) {
             tRunningIndex = 0;
         }
@@ -636,34 +662,34 @@ void NeoPatterns::TestWS2812Resolution() {
 
     uint8_t tPosition = 0;
     for (int i = 0; i < 4; ++i) {
-        NeoPixel->setPixelColor(tPosition++, i, 0, 0);
+        setPixelColor(tPosition++, i, 0, 0);
     }
     uint8_t tExponentialValue = 4;
     for (int i = 0; i < 6; ++i) {
-        NeoPixel->setPixelColor(tPosition++, tExponentialValue, 0, 0);
+        setPixelColor(tPosition++, tExponentialValue, 0, 0);
         tExponentialValue = tExponentialValue << 1;
     }
-    NeoPixel->setPixelColor(tPosition++, 255, 0, 0);
+    setPixelColor(tPosition++, 255, 0, 0);
 
     for (int i = 0; i < 4; ++i) {
-        NeoPixel->setPixelColor(tPosition++, 0, i, 0);
+        setPixelColor(tPosition++, 0, i, 0);
     }
     tExponentialValue = 4;
     for (int i = 0; i < 6; ++i) {
-        NeoPixel->setPixelColor(tPosition++, 0, tExponentialValue, 0);
+        setPixelColor(tPosition++, 0, tExponentialValue, 0);
         tExponentialValue = tExponentialValue << 1;
     }
-    NeoPixel->setPixelColor(tPosition++, 0, 255, 0);
+    setPixelColor(tPosition++, 0, 255, 0);
 
     for (int i = 0; i < 4; ++i) {
-        NeoPixel->setPixelColor(tPosition++, 0, 0, i);
+        setPixelColor(tPosition++, 0, 0, i);
     }
     tExponentialValue = 4;
     for (int i = 0; i < 6; ++i) {
-        NeoPixel->setPixelColor(tPosition++, 0, 0, tExponentialValue);
+        setPixelColor(tPosition++, 0, 0, tExponentialValue);
         tExponentialValue = tExponentialValue << 1;
     }
-    NeoPixel->setPixelColor(tPosition++, 0, 0, 255);
+    setPixelColor(tPosition++, 0, 0, 255);
     show();
 }
 
@@ -700,8 +726,8 @@ void NeoPatterns::FireUpdate(bool aDoUpdate) {
 
     if (aDoUpdate) {
         // Step 1.  Cool down every cell a little
-        for (uint16_t i = 0; i < numPixels(); i++) {
-            uint8_t tChill = random(((COOLING * 20) / numPixels()) + 2);
+        for (uint16_t i = 0; i < numLEDs; i++) {
+            uint8_t tChill = random(((COOLING * 20) / numLEDs) + 2);
             if (tChill >= heat[i]) {
                 heat[i] = 0;
             } else {
@@ -710,13 +736,13 @@ void NeoPatterns::FireUpdate(bool aDoUpdate) {
         }
 
         // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-        for (uint16_t k = numPixels() - 1; k >= 2; k--) {
+        for (uint16_t k = numLEDs - 1; k >= 2; k--) {
             heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
         }
 
         // Step 3.  Randomly ignite one new 'spark' of heat near the bottom
         if (random(255) < SPARKING) {
-            int y = random(numPixels() / 4);
+            int y = random(numLEDs / 4);
             uint8_t tNewHeat = random(160, 255);
             if (heat[y] + tNewHeat < heat[y]) {
                 heat[y] = 0xFF;
@@ -726,7 +752,7 @@ void NeoPatterns::FireUpdate(bool aDoUpdate) {
         }
     }
     // Step 4.  Map from heat cells to LED colors
-    for (uint16_t j = 0; j < numPixels(); j++) {
+    for (uint16_t j = 0; j < numLEDs; j++) {
         setPixelColor(j, HeatColor(heat[j]));
     }
 
@@ -817,8 +843,8 @@ void NeoPatterns::ProcessSelectiveColor(color32_t aColorForSelection, color32_t 
 void NeoPatterns::ProcessSelectiveColorForAllPixel() {
 
     color32_t tNewColor = SingleLEDProcessingFunction(this);
-    for (uint16_t i = 0; i < numPixels(); i++) {
-        color32_t tOldColor = NeoPixel->getPixelColor(i);
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        color32_t tOldColor = getPixelColor(i);
         if (tOldColor == ColorTmp) {
             setPixelColor(i, tNewColor);
         }
@@ -865,7 +891,7 @@ color32_t DimColor(NeoPatterns * aLedPtr) {
 /*
  * works on Color2
  */
-color32_t LightenColor(NeoPatterns * aLedPtr) {
+color32_t BrightenColor(NeoPatterns * aLedPtr) {
     color32_t tColor = aLedPtr->ColorTmp;
     uint8_t red = Red(tColor) << 1;
     uint8_t green = Green(tColor) << 1;
@@ -904,7 +930,7 @@ void NeoPatterns::Debug(bool aFullInfo) {
     if (Index != sLastSteps) {
         sLastSteps = TotalStepCounter;
         Serial.print("Pin=");
-        Serial.print(NeoPixel->getPin());
+        Serial.print(getPin());
 
         Serial.print(" TotalSteps=");
         Serial.print(TotalStepCounter);
@@ -939,7 +965,7 @@ void NeoPatterns::Pattern1Update(bool aDoUpdate) {
     /*
      * Sample implementation
      */
-    for (uint16_t i = 0; i < numPixels(); i++) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
         if (i == Index) {
             setPixelColor(i, Color2);
         } else {
@@ -1059,15 +1085,6 @@ uint8_t Blue(color32_t color) {
     return color & 0xFF;
 }
 
-int8_t checkAndTruncateParamValue(int8_t aParam, int8_t aParamMax, int8_t aParamMin) {
-    if (aParam > aParamMax) {
-        aParam = aParamMax;
-    } else if (aParam < aParamMin) {
-        aParam = aParamMin;
-    }
-    return aParam;
-}
-
 const char* DirectionToString(uint8_t aDirection) {
     switch (aDirection) {
     case DIRECTION_UP:
@@ -1158,7 +1175,7 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
 
 #ifdef INFO
     Serial.print("Pin=");
-    Serial.print(aLedsPtr->NeoPixel->getPin());
+    Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");

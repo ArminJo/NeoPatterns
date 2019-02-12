@@ -23,7 +23,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
-
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
@@ -235,7 +235,7 @@ void allPatterns(NeoPatterns * aLedsPtr) {
     }
 
     Serial.print("Pin=");
-    Serial.print(aLedsPtr->NeoPixel->getPin());
+    Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");

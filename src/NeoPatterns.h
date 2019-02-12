@@ -90,22 +90,30 @@ uint8_t Green(color32_t color);
 uint8_t Blue(color32_t color);
 
 // NeoPattern Class - derived from the Adafruit_NeoPixel class
-class NeoPatterns {
+class NeoPatterns: public Adafruit_NeoPixel {
 public:
     NeoPatterns(uint16_t pixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
-    NeoPatterns(Adafruit_NeoPixel * aNeoPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
-    /*
-     * convenience functions which basically call the corresponding Adafruit_NeoPixel functions
-     */
+    // To enable more than one pattern on the same strip
+    void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
+
+    color32_t addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+
+#ifdef ERROR
+    // Version with error message
     bool begin(void);
-    void clear(void);
-    void show(void);
-    uint16_t numPixels(void);
-    void setPixelColor(uint16_t aPixelIndex, color32_t aPixelColor, bool aAddValue = false);
-    void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, bool aAddValue = false);
+#endif
 
     void setCallback(void (*callback)(NeoPatterns*));
+    /*
+     * Extensions to Adafruit_NeoPixel functions
+     */
+    void resetBrightnessValue(); // resets internal brightness control value to full to support restoring of patterns while brightening
+    uint8_t getBytesPerPixel();
+    uint16_t getPixelBufferSize();
+    void storePixelBuffer(uint8_t * aPixelBufferPointerDestination);
+    void restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness = true);
+
     //
     bool CheckForUpdate();
     bool UpdateOrRedraw();
@@ -160,8 +168,9 @@ public:
     // Static functions
     static color32_t Wheel(uint8_t WheelPos);
     static color32_t HeatColor(uint8_t aTemperature);
-    static uint8_t getLedBrightnessValue32(uint8_t aLinearValue);
-
+    static uint8_t gamma5(uint8_t aLinearBrightnessValue);
+    static uint8_t gamma5Special(uint8_t aLinearBrightnessValue);
+    static color32_t gamma5FromColor(color32_t aLinearBrightnessColor);
     /*
      * Variables for almost each pattern
      */
@@ -182,7 +191,6 @@ public:
      */
     color32_t ColorTmp;
 
-    Adafruit_NeoPixel * NeoPixel; // to allow multiple patterns on the same hardware
     uint8_t BytesPerPixel;  // can be 3 or 4
 
     /*
@@ -210,8 +218,7 @@ public:
 #define FLAG_SCANNER_EXT_VANISH_COMPLETE    0x02
 #define FLAG_SCANNER_EXT_START_AT_BOTH_ENDS 0x04
 
-#define FLAG_ADD_COLOR                      0x10
-#define FLAG_DO_NOT_CLEAR                   0x20 // do not write black pixels - for colorWipe
+#define FLAG_DO_NOT_CLEAR                   0x10 // do not write black pixels - for colorWipe
 
     uint8_t Flags;  // special behavior of the pattern
     // for Cylon, Fire, multipleHandler
@@ -221,14 +228,14 @@ public:
     /*
      * for multiple pattern extensions
      */
-    uint8_t MultipleExtension; // for delay of multiple falling stars and snake flags
+    uint8_t MultipleExtension; // for delay of multiple falling stars and snake flags and length of stripes
     void (*NextOnPatternCompleteHandler)(NeoPatterns*);  // Next callback after completion of multiple pattern
 };
 
 //  Sample processing functions for ProcessSelectiveColor()
 color32_t FadeColor(NeoPatterns* aLedPtr);
 color32_t DimColor(NeoPatterns* aLedPtr);
-color32_t LightenColor(NeoPatterns* aLedPtr);
+color32_t BrightenColor(NeoPatterns* aLedPtr);
 
 // multiple pattern example
 void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aDuration, uint8_t aRepetitions,
@@ -236,7 +243,5 @@ void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t 
 void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 
 void allPatternsRandomExample(NeoPatterns * aLedsPtr);
-
-int8_t checkAndTruncateParamValue(int8_t aParam, int8_t aParamMax, int8_t aParamMin);
 
 #endif // NEOPATTERNS_H

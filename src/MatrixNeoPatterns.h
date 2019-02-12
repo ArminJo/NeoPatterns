@@ -73,11 +73,19 @@ public:
             uint8_t aDirection =
             DIRECTION_LEFT, uint8_t aFlags = 0);
 
-    void drawQuarterPattern(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
+    void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
+    void drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
 
-    void loadPicturePGM(const uint8_t* aGraphicsrrayPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+    void drawAllColors();
+    void drawAllColors2();
+
+    void loadPicturePGM(const uint8_t* aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
             color32_t aForegroundColor, color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0,
             bool doPaddingRight = false, bool doPadding = false);
+
+    void loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
+            color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
+            bool doPadding = false, bool IsPGMData = false);
 
     void MovingPicturePGM(const uint8_t* aGraphics8x8Array, color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset,
             int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
@@ -94,8 +102,9 @@ public:
     void TickerUpdate();
 
     color32_t getMatrixPixelColor(uint8_t x, uint8_t y);
-    //
-    bool setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32BitColor);
+    void setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32BitColor);
+    void setMatrixPixelColor(uint8_t x, uint8_t y, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+
     void showNumberOnMatrix(uint8_t aNumber, color32_t aColor);
 
     // Geometry of Matrix
@@ -152,6 +161,5 @@ extern const uint8_t heart8x8[] PROGMEM;
 void MatrixPatternsDemo(NeoPatterns * aLedsPtr);
 
 void myLoadTest(MatrixNeoPatterns* aLedsPtr);
-void mySnowflakeTest(MatrixNeoPatterns* aLedsPtr);
 
 #endif /* MATRIXNEOPATTERNS_H_ */

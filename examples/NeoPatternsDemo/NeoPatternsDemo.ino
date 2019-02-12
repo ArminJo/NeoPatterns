@@ -84,8 +84,8 @@ void setup() {
     bar24.Stripes(COLOR32_BLUE, 5, COLOR32_RED, 3, 50, 48);
 //    bar24.ScannerExtended(COLOR32_BLUE, 5, 50, 1,
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
-    NeoPixelMatrix.NeoPixel->clear(); // Clear matrix
-    NeoPixelMatrix.NeoPixel->show();
+    NeoPixelMatrix.clear(); // Clear matrix
+    NeoPixelMatrix.show();
     NeoPixelMatrix.Delay(5000); // start later
     Serial.println("started");
 }
@@ -155,7 +155,7 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
     }
 
     Serial.print("Pin=");
-    Serial.print(aLedsPtr->NeoPixel->getPin());
+    Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");
