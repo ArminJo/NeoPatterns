@@ -59,7 +59,7 @@ Youtube Video of MatrixDemo on a 10x10 matrix
 [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ)
 
 ## Travis CI
-The Talkie library examples are built on Travis CI for the following boards:
+The NeoPatterns library examples are built on Travis CI for the following boards:
 
 - Arduino Uno
 - Arduino Leonardo

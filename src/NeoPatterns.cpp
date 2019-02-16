@@ -53,9 +53,7 @@ NeoPatterns::NeoPatterns(uint16_t pixels, uint8_t aPin, uint8_t aTypeOfPixel, vo
         Adafruit_NeoPixel(pixels, aPin, aTypeOfPixel) {
     uint8_t twOffset = (aTypeOfPixel >> 6) & 0b11; // See notes in header file Adafruit_NeoPixel.h regarding R/G/B/W offsets
     uint8_t trOffset = (aTypeOfPixel >> 4) & 0b11;
-    //TODO
     BytesPerPixel = ((twOffset == trOffset) ? 3 : 4);
-
     OnPatternComplete = aPatternCompletionCallback;
 }
 
@@ -110,9 +108,9 @@ color32_t NeoPatterns::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t
         if (tBlue < aBlue) {
             tBlue = 255;
         }
-        return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
+        return Color(tRed, tGreen, tBlue);
     }
-    return Adafruit_NeoPixel::Color(aRed, aGreen, aBlue);
+    return Color(aRed, aGreen, aBlue);
 }
 
 void NeoPatterns::setCallback(void (*callback)(NeoPatterns*)) {
@@ -344,7 +342,7 @@ void NeoPatterns::FadeUpdate(bool aDoUpdate) {
     uint8_t green = ((Green(Color1) * (PatternLength - Index)) + (Green(Color2) * Index)) / PatternLength;
     uint8_t blue = ((Blue(Color1) * (PatternLength - Index)) + (Blue(Color2) * Index)) / PatternLength;
 
-    ColorSet(Adafruit_NeoPixel::Color(red, green, blue));
+    ColorSet(Color(red, green, blue));
     if (aDoUpdate) {
         NextIndexAndDecrementTotalStepCounter();
     }
@@ -353,7 +351,7 @@ void NeoPatterns::FadeUpdate(bool aDoUpdate) {
 // Calculate 50% dimmed version of a color
 uint32_t NeoPatterns::DimColor(color32_t color) {
 // Shift R, G and B components one bit to the right
-    uint32_t dimColor = Adafruit_NeoPixel::Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
+    uint32_t dimColor = Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
     return dimColor;
 }
 
@@ -369,13 +367,13 @@ void NeoPatterns::ColorSet(color32_t color) {
 color32_t NeoPatterns::Wheel(uint8_t WheelPos) {
     WheelPos = 255 - WheelPos;
     if (WheelPos < 85) {
-        return Adafruit_NeoPixel::Color(255 - (WheelPos * 3), 0, WheelPos * 3);
+        return Color(255 - (WheelPos * 3), 0, WheelPos * 3);
     } else if (WheelPos < 170) {
         WheelPos -= 85;
-        return Adafruit_NeoPixel::Color(0, WheelPos * 3, 255 - (WheelPos * 3));
+        return Color(0, WheelPos * 3, 255 - (WheelPos * 3));
     } else {
         WheelPos -= 170;
-        return Adafruit_NeoPixel::Color(WheelPos * 3, 255 - (WheelPos * 3), 0);
+        return Color(WheelPos * 3, 255 - (WheelPos * 3), 0);
     }
 }
 /****************************************************************************
@@ -409,7 +407,7 @@ color32_t NeoPatterns::gamma5FromColor(color32_t aLinearBrightnessColor) {
     uint8_t tRed = pgm_read_byte(&_gammaTable32[(Red(aLinearBrightnessColor) / 8)]);
     uint8_t tGreen = pgm_read_byte(&_gammaTable32[(Green(aLinearBrightnessColor) / 8)]);
     uint8_t tBlue = pgm_read_byte(&_gammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
-    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
+    return Color(tRed, tGreen, tBlue);
 }
 
 /*
@@ -781,21 +779,21 @@ uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
 // now figure out which third of the spectrum we're in:
     if (t192 & 0x80) {
         // we're in the hottest third
-        return Adafruit_NeoPixel::Color(255, 255, heatramp);
+        return Color(255, 255, heatramp);
 //        heatcolor.r = 255; // full red
 //        heatcolor.g = 255; // full green
 //        heatcolor.b = heatramp; // ramp up blue
 
     } else if (t192 & 0x40) {
         // we're in the middle third
-        return Adafruit_NeoPixel::Color(255, heatramp, 0);
+        return Color(255, heatramp, 0);
 //        heatcolor.r = 255; // full red
 //        heatcolor.g = heatramp; // ramp up green
 //        heatcolor.b = 0; // no blue
 
     } else {
         // we're in the coolest third
-        return Adafruit_NeoPixel::Color(heatramp, 0, 0);
+        return Color(heatramp, 0, 0);
 //        heatcolor.r = heatramp; // ramp up red
 //        heatcolor.g = 0; // no green
 //        heatcolor.b = 0; // no blue
@@ -872,11 +870,10 @@ color32_t FadeColor(NeoPatterns * aLedPtr) {
     uint8_t green = ((Green(tColor1) * (tTotalSteps - tIndex)) + (Green(tColor2) * tIndex)) / tTotalSteps;
     uint8_t blue = ((Blue(tColor1) * (tTotalSteps - tIndex)) + (Blue(tColor2) * tIndex)) / tTotalSteps;
     return Adafruit_NeoPixel::Color(red, green, blue);
-// return COLOR(red, green, blue);
 }
 
 /*
- * works on Color2
+ * works on ColorTmp
  */
 color32_t DimColor(NeoPatterns * aLedPtr) {
     color32_t tColor = aLedPtr->ColorTmp;
@@ -889,7 +886,7 @@ color32_t DimColor(NeoPatterns * aLedPtr) {
 }
 
 /*
- * works on Color2
+ * works on ColorTmp
  */
 color32_t BrightenColor(NeoPatterns * aLedPtr) {
     color32_t tColor = aLedPtr->ColorTmp;

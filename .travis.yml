@@ -18,6 +18,7 @@ script:
 - build_platform uno
 - build_platform leonardo
 - build_platform cplayClassic
+- build_platform mega2560
 notifications:
   email:
     on_success: always

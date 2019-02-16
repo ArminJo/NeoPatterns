@@ -86,9 +86,9 @@ typedef uint32_t color32_t;
 #define COLOR32_GREEN_HALF     COLOR32(0,127,0)
 #define COLOR32_BLUE           COLOR32(0,0,255)
 #define COLOR32_BLUE_HALF      COLOR32(0,0,127)
-#define COLOR32_YELLOW    COLOR32(255,255,0)
-#define COLOR32_ORANGE    COLOR32(255,255,0)
-#define COLOR32_PURPLE   COLOR32(255,0,255)
-#define COLOR32_CYAN      COLOR32(0,255,255)
+#define COLOR32_YELLOW         COLOR32(255,200,0) // value was visually determined
+#define COLOR32_ORANGE         COLOR32(255,64,0)  // value was visually determined
+#define COLOR32_PURPLE         COLOR32(255,0,255)
+#define COLOR32_CYAN           COLOR32(0,255,255)
 
 #endif /* COLORS_H_ */
