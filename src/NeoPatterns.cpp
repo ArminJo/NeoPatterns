@@ -49,95 +49,16 @@ char VERSION_NEOPATTERNS[] = "1.2";
  * NeoPatterns id not derived from Adafruit_NeoPixel to enable running more than one pattern on the same NeoPixel object.
  * In this case it avoids doubling the big pixel buffer.
  */
-NeoPatterns::NeoPatterns(uint16_t pixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) : // @suppress("Class members should be properly initialized")
-        Adafruit_NeoPixel(pixels, aPin, aTypeOfPixel) {
-    uint8_t twOffset = (aTypeOfPixel >> 6) & 0b11; // See notes in header file Adafruit_NeoPixel.h regarding R/G/B/W offsets
-    uint8_t trOffset = (aTypeOfPixel >> 4) & 0b11;
-    BytesPerPixel = ((twOffset == trOffset) ? 3 : 4);
+
+NeoPatterns::NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
+        void (*aPatternCompletionCallback)(NeoPatterns*)) :
+        NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
+
     OnPatternComplete = aPatternCompletionCallback;
-}
-
-/*
- *
- * Free old pixel buffer and set new value.
- * Needed if you want to have more than one patterns on the same strip.
- */
-void NeoPatterns::setPixelBuffer(uint8_t * aNewPixelBufferPointer) {
-    if (pixels) {
-        free(pixels);
-    }
-    pixels = aNewPixelBufferPointer;
-}
-
-///*
-// * Constructor with Adafruit_NeoPixel as parameter
-// */
-//NeoPatterns::NeoPatterns(Adafruit_NeoPixel * aNeoPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) { // @suppress("Class members should be properly initialized")
-//    NeoPixel = aNeoPixel;
-//    OnPatternComplete = aPatternCompletionCallback;
-//}
-
-#ifdef ERROR
-bool NeoPatterns::begin() {
-    Adafruit_NeoPixel::begin();
-    if (numLEDs == 0) {
-        Serial.print(F("ERROR Not enough free memory available for Pattern at pin "));
-        Serial.println(getPin());
-        return false;
-    }
-    return true;
-}
-#endif
-
-/*
- * adds color to existing one and clip to white (255)
- */
-color32_t NeoPatterns::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
-    color32_t tOldColor = getPixelColor(aPixelIndex);
-    if (tOldColor != 0) {
-        uint8_t tRed = Red(tOldColor) + aRed;
-        if (tRed < aRed) {
-            // clip overflow
-            tRed = 255;
-        }
-        uint8_t tGreen = Green(tOldColor) + aGreen;
-        if (tGreen < aGreen) {
-            tGreen = 255;
-        }
-        uint8_t tBlue = Blue(tOldColor) + aBlue;
-        if (tBlue < aBlue) {
-            tBlue = 255;
-        }
-        return Color(tRed, tGreen, tBlue);
-    }
-    return Color(aRed, aGreen, aBlue);
 }
 
 void NeoPatterns::setCallback(void (*callback)(NeoPatterns*)) {
     OnPatternComplete = callback;
-}
-
-void NeoPatterns::resetBrightnessValue() {
-    brightness = 0;
-}
-
-uint8_t NeoPatterns::getBytesPerPixel() {
-    return BytesPerPixel;
-}
-
-uint16_t NeoPatterns::getPixelBufferSize() {
-    return numBytes;
-}
-
-void NeoPatterns::storePixelBuffer(uint8_t * aPixelBufferPointerDestination) {
-    memcpy(aPixelBufferPointerDestination, pixels, numBytes);
-}
-
-void NeoPatterns::restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness) {
-    memcpy(pixels, aPixelBufferPointerSource, numBytes);
-    if (aResetBrightness) {
-        brightness = 0;
-    }
 }
 
 bool NeoPatterns::CheckForUpdate() {
@@ -348,67 +269,9 @@ void NeoPatterns::FadeUpdate(bool aDoUpdate) {
     }
 }
 
-// Calculate 50% dimmed version of a color
-uint32_t NeoPatterns::DimColor(color32_t color) {
-// Shift R, G and B components one bit to the right
-    uint32_t dimColor = Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
-    return dimColor;
-}
-
-// Set all pixels to a color (synchronously)
-void NeoPatterns::ColorSet(color32_t color) {
-    for (uint16_t i = 0; i < numLEDs; i++) {
-        setPixelColor(i, color);
-    }
-}
-
-// Input a value 0 to 255 to get a color value.
-// The colors are a transition r - g - b - back to r.
-color32_t NeoPatterns::Wheel(uint8_t WheelPos) {
-    WheelPos = 255 - WheelPos;
-    if (WheelPos < 85) {
-        return Color(255 - (WheelPos * 3), 0, WheelPos * 3);
-    } else if (WheelPos < 170) {
-        WheelPos -= 85;
-        return Color(0, WheelPos * 3, 255 - (WheelPos * 3));
-    } else {
-        WheelPos -= 170;
-        return Color(WheelPos * 3, 255 - (WheelPos * 3), 0);
-    }
-}
 /****************************************************************************
  * START OF EXTENSIONS
  ****************************************************************************/
-
-// from https://www.mikrocontroller.net/articles/LED-Fading
-const uint8_t _gammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
-        91, 108, 128, 152, 181, 215, 255 };
-
-/*
- * use mapping table with 32 entries (using 5 MSbits)
- */
-uint8_t NeoPatterns::gamma5(uint8_t aLinearBrightnessValue) {
-    return pgm_read_byte(&_gammaTable32[(aLinearBrightnessValue / 8)]);
-}
-
-/*
- * Returns only 0 if value is 0.
- * Returns 1 for input 1 to 7.
- * used for snake tail, not to blank out the last elements of a tail with more than 32 elements
- */
-uint8_t NeoPatterns::gamma5Special(uint8_t aLinearBrightnessValue) {
-    if (aLinearBrightnessValue <= 7 && aLinearBrightnessValue >= 1) {
-        return 1;
-    }
-    return pgm_read_byte(&_gammaTable32[(aLinearBrightnessValue / 8)]);
-}
-
-color32_t NeoPatterns::gamma5FromColor(color32_t aLinearBrightnessColor) {
-    uint8_t tRed = pgm_read_byte(&_gammaTable32[(Red(aLinearBrightnessColor) / 8)]);
-    uint8_t tGreen = pgm_read_byte(&_gammaTable32[(Green(aLinearBrightnessColor) / 8)]);
-    uint8_t tBlue = pgm_read_byte(&_gammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
-    return Color(tRed, tGreen, tBlue);
-}
 
 /*
  * Code for scanner default is: pattern completely visible at start and end
@@ -652,45 +515,6 @@ void NeoPatterns::StripesUpdate(bool aDoUpdate) {
     }
 }
 
-/*
- * Test WS2812 resolution
- * outputs the 11 values 0,1,2,3,4,8,16,32,64,128,255
- */
-void NeoPatterns::TestWS2812Resolution() {
-
-    uint8_t tPosition = 0;
-    for (int i = 0; i < 4; ++i) {
-        setPixelColor(tPosition++, i, 0, 0);
-    }
-    uint8_t tExponentialValue = 4;
-    for (int i = 0; i < 6; ++i) {
-        setPixelColor(tPosition++, tExponentialValue, 0, 0);
-        tExponentialValue = tExponentialValue << 1;
-    }
-    setPixelColor(tPosition++, 255, 0, 0);
-
-    for (int i = 0; i < 4; ++i) {
-        setPixelColor(tPosition++, 0, i, 0);
-    }
-    tExponentialValue = 4;
-    for (int i = 0; i < 6; ++i) {
-        setPixelColor(tPosition++, 0, tExponentialValue, 0);
-        tExponentialValue = tExponentialValue << 1;
-    }
-    setPixelColor(tPosition++, 0, 255, 0);
-
-    for (int i = 0; i < 4; ++i) {
-        setPixelColor(tPosition++, 0, 0, i);
-    }
-    tExponentialValue = 4;
-    for (int i = 0; i < 6; ++i) {
-        setPixelColor(tPosition++, 0, 0, tExponentialValue);
-        tExponentialValue = tExponentialValue << 1;
-    }
-    setPixelColor(tPosition++, 0, 0, 255);
-    show();
-}
-
 /********************************************************
  * The original Fire code is from: Fire2012 by Mark Kriegsman, July 2012
  * https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
@@ -699,12 +523,12 @@ void NeoPatterns::TestWS2812Resolution() {
 
 // COOLING: How much does the air cool as it rises?
 // Less cooling = taller flames.  More cooling = shorter flames.
-// Default 55, suggested range 20-100
+// Default 40, suggested range 30-60
 #define COOLING  40
 
 // SPARKING: What chance (out of 255) is there that a new spark will be lit?
 // Higher chance = more roaring fire.  Lower chance = more flickery fire.
-// Default 120, suggested range 50-200.
+// Default 120, suggested range 60-200.
 #define SPARKING 120
 
 // initialize for fire -> set all to zero
@@ -769,34 +593,24 @@ uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
 // Scale 'heat' down from 0-255 to 0-191,
 // which can then be easily divided into three
 // equal 'thirds' of 64 units each.
-    uint8_t t192 = (aTemperature == 0) ? 0 : (((int) aTemperature * (int) (192)) >> 8) + 1;
+    uint8_t t192 = (aTemperature == 0) ? 0 : ((aTemperature * (uint16_t) (192)) >> 8) + 1;
 
 // calculate a value that ramps up from
 // zero to 255 in each 'third' of the scale.
     uint8_t heatramp = t192 & 0x3F; // 0..63
     heatramp <<= 2; // scale up to 0..252
+    heatramp = gamma8(heatramp);
 
-// now figure out which third of the spectrum we're in:
+    // now figure out which third of the spectrum we're in:
     if (t192 & 0x80) {
-        // we're in the hottest third
+        // we're in the hottest third, ramp from yellow to white
         return Color(255, 255, heatramp);
-//        heatcolor.r = 255; // full red
-//        heatcolor.g = 255; // full green
-//        heatcolor.b = heatramp; // ramp up blue
-
     } else if (t192 & 0x40) {
-        // we're in the middle third
+        // we're in the middle third, ramp from red to yellow
         return Color(255, heatramp, 0);
-//        heatcolor.r = 255; // full red
-//        heatcolor.g = heatramp; // ramp up green
-//        heatcolor.b = 0; // no blue
-
     } else {
-        // we're in the coolest third
+        // we're in the coolest third, ramp from black to red
         return Color(heatramp, 0, 0);
-//        heatcolor.r = heatramp; // ramp up red
-//        heatcolor.g = 0; // no green
-//        heatcolor.b = 0; // no blue
     }
 }
 
@@ -898,49 +712,47 @@ color32_t BrightenColor(NeoPatterns * aLedPtr) {
 //    return COLOR(red, green, blue);
 }
 
-#ifdef DEBUG
-void NeoPatterns::Debug(bool aFullInfo) {
+void NeoPatterns::Debug(HardwareSerial * aSerial, bool aFullInfo) {
     static uint16_t sLastSteps;
     if (aFullInfo) {
         sLastSteps = 0x9000;
-        Serial.print("ActivePattern=");
-        Serial.print(ActivePattern);
-        Serial.print(" Interval=");
-        Serial.print(Interval);
-        Serial.print(" Color1=0x");
-        Serial.print(Color1, HEX);
-        Serial.print(" Color2=0x");
-        Serial.print(Color2, HEX);
-        Serial.print("|");
-        Serial.print(Color2);
-        Serial.print(" ColorTmp=0x");
-        Serial.print(ColorTmp, HEX);
-        Serial.print("|");
-        Serial.print(ColorTmp);
-        Serial.print(" Flags=0x");
-        Serial.print(Flags, HEX);
-        Serial.print(' ');
+        aSerial->print("ActivePattern=");
+        aSerial->print(ActivePattern);
+        aSerial->print(" Interval=");
+        aSerial->print(Interval);
+        aSerial->print(" Color1=0x");
+        aSerial->print(Color1, HEX);
+        aSerial->print(" Color2=0x");
+        aSerial->print(Color2, HEX);
+        aSerial->print("|");
+        aSerial->print(Color2);
+        aSerial->print(" ColorTmp=0x");
+        aSerial->print(ColorTmp, HEX);
+        aSerial->print("|");
+        aSerial->print(ColorTmp);
+        aSerial->print(" Flags=0x");
+        aSerial->print(Flags, HEX);
+        aSerial->print(' ');
     }
     /*
      * only print if TotalSteps changed
      */
     if (Index != sLastSteps) {
         sLastSteps = TotalStepCounter;
-        Serial.print("Pin=");
-        Serial.print(getPin());
+        aSerial->print("Pin=");
+        aSerial->print(getPin());
 
-        Serial.print(" TotalSteps=");
-        Serial.print(TotalStepCounter);
-        Serial.print(" Index=");
-        Serial.print((int16_t) Index);
-        Serial.print(" Direction=");
-        Serial.print(Direction);
-        Serial.print(" Repetitions=");
-        Serial.print(Repetitions);
-        Serial.println();
+        aSerial->print(" TotalSteps=");
+        aSerial->print(TotalStepCounter);
+        aSerial->print(" Index=");
+        aSerial->print((int16_t) Index);
+        aSerial->print(" Direction=");
+        aSerial->print(Direction);
+        aSerial->print(" Repetitions=");
+        aSerial->print(Repetitions);
+        aSerial->println();
     }
 }
-#endif
 
 /******************************
  * Code for pattern extensions
@@ -1065,21 +877,6 @@ void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr) {
         }
         aLedsPtr->Repetitions--;
     }
-}
-
-// Returns the Red component of a 32-bit color
-uint8_t Red(color32_t color) {
-    return (color >> 16) & 0xFF;
-}
-
-// Returns the Green component of a 32-bit color
-uint8_t Green(color32_t color) {
-    return (color >> 8) & 0xFF;
-}
-
-// Returns the Blue component of a 32-bit color
-uint8_t Blue(color32_t color) {
-    return color & 0xFF;
 }
 
 const char* DirectionToString(uint8_t aDirection) {

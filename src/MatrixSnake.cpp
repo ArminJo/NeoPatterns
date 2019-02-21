@@ -46,7 +46,8 @@ EEMEM uint16_t HighScoreEEPROM; // is reset if both right and left button are pr
 // Constructor - calls base-class constructor to initialize strip
 MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
         void (*aPatternCompletionCallback)(NeoPatterns*)) :
-        MatrixNeoPatterns(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel, aPatternCompletionCallback) {
+        NeoPixel(aColumns * aRows, aPin, aTypeOfPixel), MatrixNeoPatterns(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel,
+                aPatternCompletionCallback) {
 }
 
 /*
@@ -195,9 +196,9 @@ void MatrixSnake::drawSnake() {
         position tPosition = SnakePixelList[i];
         // linear color interpolation over the body of the snake between tail and head
         // Optimize order of operations to minimize truncation error
-        uint8_t red = gamma5Special((Red(Color1) * (SnakeLength - i)) / SnakeLength);
-        uint8_t green = gamma5Special((Green(Color1) * (SnakeLength - i)) / SnakeLength);
-        uint8_t blue = gamma5Special((Blue(Color1) * (SnakeLength - i)) / SnakeLength);
+        uint8_t red = gamma5WithSpecialZero((Red(Color1) * (SnakeLength - i)) / SnakeLength);
+        uint8_t green = gamma5WithSpecialZero((Green(Color1) * (SnakeLength - i)) / SnakeLength);
+        uint8_t blue = gamma5WithSpecialZero((Blue(Color1) * (SnakeLength - i)) / SnakeLength);
 #ifdef TRACE
         Serial.print(F("snake color red="));
         Serial.print(red);

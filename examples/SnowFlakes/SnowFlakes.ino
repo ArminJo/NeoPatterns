@@ -47,6 +47,8 @@ uint8_t * sPixelBuffer;
 #define TEST_DELAY_MILLIS 2000
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+
     Serial.begin(115200);
     while (!Serial)
         ; //delay for Leonardo
@@ -54,9 +56,15 @@ void setup() {
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
 //    bar24.begin();
-    NeoPixelMatrix.begin(); // This initializes the NeoPixel library.
-    if (NeoPixelMatrix.numPixels() == 0) {
-        Serial.println(F("ERROR Not enough free memory available!"));
+    // This initializes the NeoPixel library and checks if enough memory was available
+    if (!NeoPixelMatrix.begin(&Serial)) {
+        // Blink forever
+        while (true) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
     }
 
     /*

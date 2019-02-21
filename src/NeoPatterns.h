@@ -44,7 +44,7 @@
 #define ERROR
 #endif
 
-#include "Adafruit_NeoPixel.h"
+#include "NeoPixel.h"
 #include "Colors.h"
 
 extern char VERSION_NEOPATTERNS[4];
@@ -85,44 +85,20 @@ const char* DirectionToString(uint8_t aDirection);
 #define FORWARD DIRECTION_UP
 #define REVERSE DIRECTION_DOWN
 
-uint8_t Red(color32_t color);
-uint8_t Green(color32_t color);
-uint8_t Blue(color32_t color);
-
-// NeoPattern Class - derived from the Adafruit_NeoPixel class
-class NeoPatterns: public Adafruit_NeoPixel {
+// NeoPattern Class - derived from the NeoPixel and Adafruit_NeoPixel class
+// virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
+class NeoPatterns: public virtual NeoPixel {
 public:
-    NeoPatterns(uint16_t pixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
-
-    // To enable more than one pattern on the same strip
-    void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
-
-    color32_t addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
-
-#ifdef ERROR
-    // Version with error message
-    bool begin(void);
-#endif
+    NeoPatterns(uint16_t aNumberOfPixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*));
 
     void setCallback(void (*callback)(NeoPatterns*));
-    /*
-     * Extensions to Adafruit_NeoPixel functions
-     */
-    void resetBrightnessValue(); // resets internal brightness control value to full to support restoring of patterns while brightening
-    uint8_t getBytesPerPixel();
-    uint16_t getPixelBufferSize();
-    void storePixelBuffer(uint8_t * aPixelBufferPointerDestination);
-    void restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness = true);
 
-    //
     bool CheckForUpdate();
     bool UpdateOrRedraw();
     bool Update(bool doShow = true);
     void DecrementTotalStepCounter();
     void NextIndexAndDecrementTotalStepCounter();
     void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t totalSteps);
-    uint32_t DimColor(color32_t color);
-    void ColorSet(color32_t color);
 
     /*
      * PATTERNS
@@ -137,6 +113,8 @@ public:
     void ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aInterval, uint16_t aNumberOfBouncings = 0, uint8_t aMode = 0,
             uint8_t aDirection = DIRECTION_UP);
     void Fire(uint16_t interval, uint16_t repetitions = 100);
+    color32_t HeatColor(uint8_t aTemperature);
+
     void Delay(uint16_t aMillis);
     void ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
             uint16_t steps, uint16_t interval);
@@ -162,15 +140,8 @@ public:
     void Pattern1Update(bool aDoUpdate = true);
     void Pattern2Update(bool aDoUpdate = true);
 
-    void Debug(bool aFullInfo = true);
-    void TestWS2812Resolution();
+    void Debug(HardwareSerial * aSerial, bool aFullInfo = true);
 
-    // Static functions
-    static color32_t Wheel(uint8_t WheelPos);
-    static color32_t HeatColor(uint8_t aTemperature);
-    static uint8_t gamma5(uint8_t aLinearBrightnessValue);
-    static uint8_t gamma5Special(uint8_t aLinearBrightnessValue);
-    static color32_t gamma5FromColor(color32_t aLinearBrightnessColor);
     /*
      * Variables for almost each pattern
      */
@@ -183,15 +154,13 @@ public:
      */
     color32_t Color2;       // second pattern color | Number of bounces for scanner
     int8_t Direction;       // direction to run the pattern
-    uint8_t PatternLength;  // the length of a (scanner) pattern
+    uint8_t PatternLength;  // the length of a (scanner) pattern, cooling parameter for fire
 
     /*
      * Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
      * Delta for each step for extended scanner and rainbow cycle
      */
     color32_t ColorTmp;
-
-    uint8_t BytesPerPixel;  // can be 3 or 4
 
     /*
      * Internal control variables

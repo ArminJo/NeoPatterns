@@ -42,15 +42,29 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemo);
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+
     Serial.begin(115200);
-    while (!Serial); //delay for Leonardo
+    while (!Serial)
+        ; //delay for Leonardo
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-    NeoPixelMatrix.begin(); // This initializes the NeoPixel library.
-    if (NeoPixelMatrix.numPixels() == 0) {
-        Serial.println(F("ERROR Not enough free memory available!"));
+    // This initializes the NeoPixel library and checks if enough memory was available
+    if (!NeoPixelMatrix.begin(&Serial)) {
+        // Blink forever
+        while (true) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
     }
+
+    extern void *__brkval;
+    Serial.print(F("Free Ram/Stack[bytes]="));
+    Serial.println(SP - (uint16_t) __brkval);
+
     MatrixAndSnakePatternsDemo(&NeoPixelMatrix);
 }
 

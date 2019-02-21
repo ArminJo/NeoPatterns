@@ -50,7 +50,6 @@
 #define DELAY_MILLIS_FAST_MOVES_MIN 4000
 uint16_t sSpeed; // goes from 1 to 10k in exponential scale
 
-
 // onComplete callback functions
 void PatternsBackground(NeoPatterns * aLedsPtr);
 void PatternsFastMoves(NeoPatterns * aLedsPtr);
@@ -75,13 +74,30 @@ void getSpeed() {
 }
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+
     Serial.begin(115200);
-    while (!Serial); //delay for Leonardo
+    while (!Serial)
+        ; //delay for Leonardo
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
 
     NeoPatternsBackground.begin(); // This initializes the NeoPixel library.
-    NeoPatternsFastMoves.begin(); // This initializes the NeoPixel library.
+    // This initializes the NeoPixel library and checks if enough memory was available
+    if (!NeoPatternsFastMoves.begin(&Serial)) {
+        // Blink forever
+        while (true) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
+    }
+
+    extern void *__brkval;
+    Serial.print(F("Free Ram/Stack[bytes]="));
+    Serial.println(SP - (uint16_t) __brkval);
+
     // replace the NeoPatternsFastMoves pixel buffer with the NeoPatternsBackground buffer in order to have 2 Patterns on the same strip
     NeoPatternsFastMoves.setPixelBuffer(NeoPatternsBackground.getPixels());
 

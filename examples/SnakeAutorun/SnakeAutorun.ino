@@ -130,14 +130,23 @@ uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
 }
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+
     Serial.begin(115200);
-    while (!Serial); //delay for Leonardo
+    while (!Serial)
+        ; //delay for Leonardo
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-    NeoPixelMatrixSnake.begin(); // This initializes the NeoPixel library.
-    if (NeoPixelMatrixSnake.numPixels() == 0) {
-        Serial.println(F("ERROR Not enough free memory available!"));
+    // This initializes the NeoPixel library and checks if enough memory was available
+    if (!NeoPixelMatrixSnake.begin(&Serial)) {
+        // Blink forever
+        while (true) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
     }
     initSnakeAutorun(&NeoPixelMatrixSnake, GAME_REFRESH_INTERVAL, COLOR32_BLUE);
 }

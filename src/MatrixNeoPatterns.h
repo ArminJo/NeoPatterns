@@ -28,6 +28,7 @@
 #ifndef MATRIXNEOPATTERNS_H_
 #define MATRIXNEOPATTERNS_H_
 
+#include "MatrixNeoPixel.h"
 #include "NeoPatterns.h"
 
 #define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH
@@ -40,7 +41,7 @@ extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
 #define NUMBERS_FONT_WIDTH 4
 #define NUMBERS_FONT_HEIGHT 6
 
-#define COOLING  20
+#define MATRIX_FIRE_COOLING  20  // 10 to 25 are sensible with optimum around 19
 /*
  * The sum SHOULD be 0!!!
  * The Matrix which describes the contribution of each surrounding pixel to the next heat value.
@@ -49,18 +50,13 @@ extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
 float const convolutionMatrix[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] =
         { { 0.02, 0.02, 0.02 } /*weights of values above*/, { 0.05, -1 /*own value*/, 0.05 }, { 0.05, 0.74, 0.05 }/*weights of values below*/};
 
-#define mapXYToArray(x, y, XRowLength) (((y) * (XRowLength)) + (x))
-
 // extension of NeoPattern Class approximately 85 Byte / object
-class MatrixNeoPatterns: public NeoPatterns {
+class MatrixNeoPatterns: public MatrixNeoPixel, public NeoPatterns {
 public:
     MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
-    void setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t));
-
-    uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);
 
     void Fire(uint16_t aIntervalMillis, uint16_t repetitions = 100);
 
@@ -72,20 +68,6 @@ public:
     void TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
             uint8_t aDirection =
             DIRECTION_LEFT, uint8_t aFlags = 0);
-
-    void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
-    void drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
-
-    void drawAllColors();
-    void drawAllColors2();
-
-    void loadPicturePGM(const uint8_t* aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0,
-            bool doPaddingRight = false, bool doPadding = false);
-
-    void loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
-            color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
-            bool doPadding = false, bool IsPGMData = false);
 
     void MovingPicturePGM(const uint8_t* aGraphics8x8Array, color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset,
             int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
@@ -101,62 +83,18 @@ public:
     void MovingPicturePGMUpdate();
     void TickerUpdate();
 
-    color32_t getMatrixPixelColor(uint8_t x, uint8_t y);
-    void setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32BitColor);
-    void setMatrixPixelColor(uint8_t x, uint8_t y, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
-
     void showNumberOnMatrix(uint8_t aNumber, color32_t aColor);
 
-    // Geometry of Matrix
-    uint8_t Rows;       // Y Direction
-    uint8_t Columns;    // X Direction
-
-    // Two arrays for double buffering
+    // Two arrays for double buffering. Used for fire pattern
     uint8_t * MatrixNew;
     uint8_t * MatrixOld;
 
-    // for picture and ticker extension
+    // for movingPicture and Ticker patterns
     const uint8_t* DataPtr; // can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
     int8_t GraphicsYOffset;
     int8_t GraphicsXOffset;
 
-    uint16_t (*LayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t); // Pointer to function, which implements the mapping between X/Y and pixel number
-
-    /*
-     * Defines from Adafruit_NeoMatrix.h
-     */
-    // Matrix layout information is passed in the 'matrixType' parameter for
-    // each constructor (the parameter immediately following is the LED type
-    // from NeoPixel.h).
-    // These define the layout for a single 'unified' matrix (e.g. one made
-    // from NeoPixel strips, or a single NeoPixel shield), or for the pixels
-    // within each matrix of a tiled display (e.g. multiple NeoPixel shields).
-#define NEO_MATRIX_TOP         0x00 // Pixel 0 is at top of matrix
-#define NEO_MATRIX_BOTTOM      0x01 // Pixel 0 is at bottom of matrix
-#define NEO_MATRIX_LEFT        0x00 // Pixel 0 is at left of matrix
-#define NEO_MATRIX_RIGHT       0x02 // Pixel 0 is at right of matrix
-#define NEO_MATRIX_CORNER      0x03 // Bitmask for pixel 0 matrix corner
-#define NEO_MATRIX_ROWS        0x00 // Matrix is row major (horizontal)
-#define NEO_MATRIX_COLUMNS     0x04 // Matrix is column major (vertical)
-#define NEO_MATRIX_AXIS        0x04 // Bitmask for row/column layout
-#define NEO_MATRIX_PROGRESSIVE 0x00 // Same pixel order across each line
-#define NEO_MATRIX_ZIGZAG      0x08 // Pixel order reverses between lines
-#define NEO_MATRIX_SEQUENCE    0x08 // Bitmask for pixel line order
-    uint8_t Geometry;    // Flags for geometry
-
 };
-
-/*
- * Example (fast) custom mapping functions
- */
-uint16_t ProgressiveTypeBottomRightMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aColumnsTotal, uint8_t aRowsTotal);
-uint16_t ProgressiveTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aColumnsTotal, uint8_t aRowsTotal);
-uint16_t ZigzagTypeBottomRightMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aColumnsTotal, uint8_t aRowsTotal);
-uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aColumnsTotal, uint8_t aRowsTotal);
-
-#define HEART_WIDTH 8
-#define HEART_HEIGHT 8
-extern const uint8_t heart8x8[] PROGMEM;
 
 void MatrixPatternsDemo(NeoPatterns * aLedsPtr);
 
