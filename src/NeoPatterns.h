@@ -140,7 +140,7 @@ public:
     void Pattern1Update(bool aDoUpdate = true);
     void Pattern2Update(bool aDoUpdate = true);
 
-    void Debug(HardwareSerial * aSerial, bool aFullInfo = true);
+    void Debug(Stream * aSerial, bool aFullInfo = true);
 
     /*
      * Variables for almost each pattern

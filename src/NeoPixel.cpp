@@ -22,7 +22,7 @@ void NeoPixel::begin() {
  * Prints error message if aSerial is not NULL
  * Returns false if no memory available
  */
-bool NeoPixel::begin(HardwareSerial * aSerial) {
+bool NeoPixel::begin(Stream * aSerial) {
     Adafruit_NeoPixel::begin();
     if (numLEDs == 0) {
         if (aSerial != NULL) {

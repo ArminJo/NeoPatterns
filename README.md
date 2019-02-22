@@ -42,7 +42,7 @@ Examples:
 ```
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must define the symbol `USE_SERIAL_CONTROL` or outcomment line 33 in `MatrixSnake.h`.
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must define the symbol `USE_SERIAL_CONTROL` or comment out line 33 in `MatrixSnake.h`.
 The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br\>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example

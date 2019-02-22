@@ -11,10 +11,6 @@
 #include "Adafruit_NeoPixel.h"
 #include "Colors.h"
 
-#if defined(__AVR_ATmega32U4__)
-#define HardwareSerial Serial_
-#endif
-
 uint8_t Red(color32_t color);
 uint8_t Green(color32_t color);
 uint8_t Blue(color32_t color);
@@ -31,7 +27,7 @@ public:
      */
     void begin();
     // Version with error message
-    bool begin(HardwareSerial * aSerial);
+    bool begin(Stream * aSerial);
 
     void ColorSet(color32_t color);
     uint32_t DimColor(color32_t color);

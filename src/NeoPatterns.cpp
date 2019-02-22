@@ -712,7 +712,7 @@ color32_t BrightenColor(NeoPatterns * aLedPtr) {
 //    return COLOR(red, green, blue);
 }
 
-void NeoPatterns::Debug(HardwareSerial * aSerial, bool aFullInfo) {
+void NeoPatterns::Debug(Stream * aSerial, bool aFullInfo) {
     static uint16_t sLastSteps;
     if (aFullInfo) {
         sLastSteps = 0x9000;
