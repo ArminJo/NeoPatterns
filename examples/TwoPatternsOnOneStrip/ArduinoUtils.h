@@ -20,4 +20,6 @@ bool wasButtonJustToggled(uint8_t aButtonPin);
 
 void blinkLed(uint8_t aLedPin, uint8_t aNumberOfBlinks, uint16_t aBlinkDelay);
 
+void initINT0();
+
 #endif // ARDUINO_UTILS_H_

@@ -35,8 +35,6 @@
 //#define INFO
 //#define WARN
 
-EEMEM uint16_t sHighScoreEEPROM; // is reset if both right and left button are pressed at startup.
-
 #include "MatrixNeoPatterns.h"
 
 // used for Ticker - modify line 12 of fonts.h to change font sizes

@@ -52,7 +52,6 @@
 //    }
 //    Serial.println(F(" seconds."));
 //}
-
 /*
  * Check if button input has just changed from HIGH to LOW
  */
@@ -119,5 +118,34 @@ void blinkLed(uint8_t aLedPin, uint8_t aNumberOfBlinks, uint16_t aBlinkDelay) {
         delay(aBlinkDelay);
         digitalWrite(aLedPin, LOW);
         delay(aBlinkDelay);
+    }
+}
+
+void initINT0() {
+    pinMode(2, INPUT_PULLUP);
+    // interrupt on falling
+    EICRA |= (1 << ISC01);
+    // clear interrupt bit
+    EIFR |= 1 << INTF0;
+    // enable interrupt on next change
+    EIMSK |= 1 << INT0;
+}
+
+/*
+ * Prints PC from stack
+ */
+ISR(INT0_vect) {
+    uint8_t * tStackPtr = (uint8_t *) SP;
+    // We have 19 pushs and pops for this function so add 19+1
+    uint16_t tPC = *(tStackPtr + 20);
+    tPC <<= 8;
+    tPC |= *(tStackPtr + 21);
+    tPC <<= 1;
+
+    static uint32_t sMillisOfLastCall;
+    if (millis() - sMillisOfLastCall > 200) {
+        sMillisOfLastCall = millis();
+        Serial.print(F("PC=0x"));
+        Serial.println(tPC, HEX);
     }
 }

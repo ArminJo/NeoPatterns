@@ -32,7 +32,7 @@
 
 #include <Arduino.h>
 
-#include "ArduinoUtils.h"
+//#include "ArduinoUtils.h"
 #include <NeoPatterns.h>
 
 #define VERSION_EXAMPLE "1.0"
