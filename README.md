@@ -21,8 +21,7 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 
 # Installation
 First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
-Then download NeoPatterns.zip file or use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
-
+Then use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
 
 ### All pixel mappings except NEO_MATRIX_COLUMNS supported
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
