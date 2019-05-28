@@ -4,7 +4,7 @@
  * Implements a snake game on NeoPixel matrix.
  * High-Score is reset if both RightButton and Left Button are pressed at start of game by calling Snake().
  *
- *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys...  Use "neoPixel" as filter string.
+ *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
  *
  *  SUMMARY
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.

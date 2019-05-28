@@ -3,7 +3,7 @@
  *
  *  Simply runs the MatrixAndSnakePatternsDemo for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
  *
- *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
+ *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
  *  Copyright (C) 2018  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com

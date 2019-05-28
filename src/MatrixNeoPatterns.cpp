@@ -4,7 +4,7 @@
  * Implements functions especially for 8x8 NeoPixel matrix.
  *
  *  SUMMARY
- *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... Use "neoPixel" as filter string.
+ *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
  *  Extension are made to include more patterns and combined patterns
  *  and patterns for nxn NeoPixel matrix (tested with 8x8 and 10x10).
  *

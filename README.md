@@ -6,6 +6,12 @@
 This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
 New Patterns are added, a snake game running on a matrix is included and you can run multiple patterns simultaneously on the same strip.
 
+| Youtube Video of NeoPatternsDemo | Youtube Video of MatrixDemo on a 10x10 matrix |
+| :-: | :-: |
+| [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | 
+[![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
+
+
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
 **RAINBOW_CYCLE**, **COLOR_WIPE**, **FADE**
@@ -20,8 +26,8 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 **Just put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in NeoPatternsSimpleDemo.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 39 to test them.**
 
 # Installation
-First you need to install "Adafruit NeoPixel" library with *Sketch -> Include Library -> Manage Librarys...*. Use "neoPixel" as filter string.  
-Then use the GitHub *clone or download -> Download ZIP* button, and add the .zip file with *Sketch -> Include Library -> add .ZIP Library...*.  
+First you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
+Then install this "NeoPatterns" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "NeoPatterns" as filter string.
 
 ### All pixel mappings except NEO_MATRIX_COLUMNS supported
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
@@ -47,15 +53,9 @@ After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
 **With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
 
-
 NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
-Youtube Video of NeoPatternsDemo
-[![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ)
-
-Youtube Video of MatrixDemo on a 10x10 matrix 
-[![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ)
 
 ## Travis CI
 The NeoPatterns library examples are built on Travis CI for the following boards:

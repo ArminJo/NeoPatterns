@@ -4,7 +4,7 @@
  *  SUMMARY
  *  This is an extended version version of the NeoPattern Example by Adafruit
  *  https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all
- *  You need to install "Adafruit NeoPixel" library under Sketch -> Include Library -> Manage Librarys... -> use "neoPixel" as filter string
+ *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
  *  Copyright (C) 2018  Armin Joachimsmeyer
