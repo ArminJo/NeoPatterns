@@ -62,19 +62,16 @@ public:
 
     void TickerPGM(const char* aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
             uint8_t aDirection = DIRECTION_LEFT);
-    void Ticker(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
-            uint8_t aDirection =
-            DIRECTION_LEFT);
-    void TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
-            uint8_t aDirection =
-            DIRECTION_LEFT, uint8_t aFlags = 0);
+    void Ticker(__FlashStringHelper* aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
+    void Ticker(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
+    void TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT, uint8_t aFlags = 0);
 
     void MovingPicturePGM(const uint8_t* aGraphics8x8Array, color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset,
-            int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+    int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     //
     bool Update(bool doShow = true);
     void Move(uint8_t aDirection, uint16_t aSteps = 1, uint16_t aIntervalMillis = 70, bool aMoveDirect = true,
-            color32_t aBackgroundColor = COLOR32_BLACK);
+    color32_t aBackgroundColor = COLOR32_BLACK);
     void moveArrayContent(uint8_t aDirection);
     void moveArrayContent(uint8_t aDirection, color32_t aBackgroundColor);
 
@@ -90,7 +87,7 @@ public:
     uint8_t * MatrixOld;
 
     // for movingPicture and Ticker patterns
-    const uint8_t* DataPtr; // can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
+    const uint8_t* DataPtr;// can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
     int8_t GraphicsYOffset;
     int8_t GraphicsXOffset;
 

@@ -30,7 +30,7 @@
 
 #include "MatrixNeoPatterns.h"
 
-//#define USE_SERIAL_CONTROL // Accepts direction commands over the serial line
+//#define USE_SERIAL_CONTROL // Accepts snake direction commands over the serial line
 
 #define PATTERN_SNAKE 64
 
@@ -124,10 +124,12 @@ private:
 
 uint8_t computeDirection(position aStartPosition, position aEndPosition);
 
+extern const char sDefaultTickerText[] PROGMEM;// = "I love Neopixel"
+extern const char * sTickerTextPtr;// = sDefaultTickerText;
+void setMatrixAndSnakePatternsDemoTickerText(const __FlashStringHelper * aTextForTicker);
 void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr);
 
 void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions = 1);
-uint8_t getNextSnakeDirectionSimple(MatrixSnake * aSnake);
 uint8_t getNextSnakeDirection(MatrixSnake * aSnake);
 void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr);
 

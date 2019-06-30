@@ -25,14 +25,21 @@
  *
  */
 
-#define VERSION_EXAMPLE "1.1"
+// Version 1.2 Added low battery voltage shutdown
+#define VERSION_EXAMPLE "1.2"
 
 #include <Arduino.h>
 
 #include <MatrixSnake.h>
 #ifdef __AVR__
+#include "ADCUtils.h"
 #include <avr/power.h>
 #include <avr/pgmspace.h>
+
+#define VOLTAGE_CHECK_THRESHOLD_MILLIVOLT 3600
+#define VOLTAGE_CHECK_PERIOD_MILLIS 2000
+#define VOLTAGE_CHECK_PERIOD_REPETITIONS 9
+#define FALLING_STAR_DURATION 12
 #endif
 
 // Which pin on the Arduino is connected to the NeoPixels?
@@ -83,6 +90,9 @@ void setup() {
         }
     }
 
+    // setup ADC reference and channel
+    getVCCVoltageMillivoltSimple();
+
     extern void *__brkval;
     Serial.print(F("Free Ram/Stack[bytes]="));
     Serial.println(SP - (uint16_t) __brkval);
@@ -105,12 +115,71 @@ void setup() {
     NeoPixelMatrix.clear(); // Clear matrix
     NeoPixelMatrix.show();
     NeoPixelMatrix.Delay(5000); // start later
+    setMatrixAndSnakePatternsDemoTickerText(F("I love R&C4Kids"));
     Serial.println("started");
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
 void loop() {
+#ifdef __AVR__
+    /*
+     * Check VCC every 2 seconds
+     */
+    static long sLastMillisOfVoltageCheck;
+    static uint8_t sVoltageTooLowCounter;
+    static bool sVoltageTooLow = false;
+    static char sStringBufferForVCC[7] = "xxxxmV";
+
+    if (millis() - sLastMillisOfVoltageCheck >= VOLTAGE_CHECK_PERIOD_MILLIS) {
+        sLastMillisOfVoltageCheck = millis();
+        uint16_t tVCC = getVCCVoltageMillivoltSimple();
+        Serial.print(F("VCC="));
+        Serial.print(tVCC);
+        Serial.println(F("mV"));
+
+        /*
+         * Print voltage once on matrix
+         */
+        if (millis() < 3000 && tVCC < 4300) {
+            itoa(tVCC, sStringBufferForVCC, 10);
+            NeoPixelMatrix.Ticker(sStringBufferForVCC, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, DIRECTION_LEFT);
+        }
+
+        if (!sVoltageTooLow) {
+            if (tVCC < VOLTAGE_CHECK_THRESHOLD_MILLIVOLT) {
+                /*
+                 * Voltage too low, wait VOLTAGE_CHECK_PERIOD_REPETITIONS (5) times and then shut down.
+                 */
+                sVoltageTooLowCounter++;
+                if (sVoltageTooLowCounter == VOLTAGE_CHECK_PERIOD_REPETITIONS) {
+                    Serial.println(F("Voltage < 3.6 Volt detected, shut down NeoPixel"));
+                    sVoltageTooLow = true;
+
+                    initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, FALLING_STAR_DURATION, 1, NULL);
+                    bar24.clear();
+                    bar24.show();
+                    ring12.clear();
+                    ring12.show();
+                    ring16.clear();
+                    ring16.show();
+                    ring24.clear();
+                    ring24.show();
+                    NeoPixelMatrix.clear();
+                    NeoPixelMatrix.show();
+                    return;
+                }
+            } else {
+                sVoltageTooLowCounter = 0;
+            }
+        }
+    }
+    if (sVoltageTooLow) {
+        bar16.Update();
+        delay(FALLING_STAR_DURATION);
+        return;
+    }
+#endif
     bar16.Update();
     bar24.Update();
     ring12.Update();
@@ -163,7 +232,7 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
         aLedsPtr->Fire(30, 260); // OK
         break;
     case 8:
-        // switches to random
+        // switch to random
         initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 30, 3, &allPatternsRandomExample);
         sState = -1; // Start from beginning
         break;
@@ -172,7 +241,7 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
         break;
     }
 
-    Serial.print("Pin=");
+    Serial.print("TestPatterns: Pin=");
     Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());

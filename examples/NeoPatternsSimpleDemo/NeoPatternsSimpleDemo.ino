@@ -70,7 +70,7 @@ void loop() {
 
 #ifdef TEST_USER_PATTERNS
 /*
- * The user may specify its own implementation here
+ * Put your own pattern code here
  */
 
 // Initialize for Pattern1

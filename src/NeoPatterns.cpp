@@ -835,13 +835,18 @@ void NeoPatterns::Pattern2Update(bool aDoUpdate) {
  * COMBINED PATTERN EXAMPLE
  * overwrites the OnComplete Handler pointer and sets it
  * to aNextOnComplete after completion of combined patterns
+ * If aNextOnCompleteHandler == NULL, run falling star forever with random delay
  *****************************************************************/
 // initialize for falling star (scanner with delay after pattern)
 void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aDuration, uint8_t aRepetitions,
         void (*aNextOnCompleteHandler)(NeoPatterns*)) {
 
     aLedsPtr->MultipleExtension = aDuration;
-    aLedsPtr->Repetitions = (aRepetitions * 2) - 1;
+    if (aRepetitions < (0xFF / 2)) {
+        aLedsPtr->Repetitions = (aRepetitions * 2) - 1; // get an odd number
+    } else {
+        aLedsPtr->Repetitions = 0xFF;
+    }
     aLedsPtr->OnPatternComplete = &multipleFallingStarsCompleteHandler;
     aLedsPtr->NextOnPatternCompleteHandler = aNextOnCompleteHandler;
 
@@ -855,14 +860,21 @@ void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t 
 /*
  * start delay pattern and then a new falling star
  * if all falling stars are completed switch back to NextOnComplete
+ * if NextOnPatternCompleteHandler == NULL, run falling star forever with random delay
  */
 void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr) {
     uint8_t tDuration = aLedsPtr->MultipleExtension;
     uint16_t tRepetitions = aLedsPtr->Repetitions;
     if (tRepetitions == 1) {
         // perform delay and then switch back to NextOnComplete
-        aLedsPtr->Delay(tDuration * 2);
-        aLedsPtr->OnPatternComplete = aLedsPtr->NextOnPatternCompleteHandler;
+        if (aLedsPtr->NextOnPatternCompleteHandler != NULL) {
+            aLedsPtr->OnPatternComplete = aLedsPtr->NextOnPatternCompleteHandler;
+            aLedsPtr->Delay(tDuration * 2);
+        } else {
+            // do it forever but with random delay
+            aLedsPtr->Repetitions = 2; // set to even;
+            aLedsPtr->Delay(random(tDuration * 10, tDuration * 1000));
+        }
     } else {
         /*
          * Next falling star

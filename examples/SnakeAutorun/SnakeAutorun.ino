@@ -61,8 +61,13 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
  * aSnakeBodyArray[0] is head position of snake
  * aSnakeBodyArray[aSnakeLength-1] is tail position of snake
  *
+ * Apple.x, Apple.y is position of the apple
+ *
  * Useful functions are: aSnake->checkDirection(uint8_t aDirectionToCheck)
- *                  and: computeDirection(position aStartPosition, position aEndPosition)
+ *                       computeDirection(position aStartPosition, position aEndPosition)
+ *                       computeNewHeadPosition(uint8_t aDirection, position * aSnakeNewHeadPosition)
+ *
+ * More functions can be found in MatrixSnake.h / .cpp
  *
  ********************************************/
 uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
@@ -73,6 +78,9 @@ uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
      */
     return aSnake->getNextSnakeDir();
 
+    /*
+     * Debug output
+     */
     Serial.print(F("getSnakeDirection CurrentDirection="));
     Serial.print(DirectionToString(aSnake->Direction));
     Serial.print(F(" head=("));
@@ -81,8 +89,6 @@ uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
     Serial.print(aSnake->SnakePixelList[0].y);
     Serial.println(')');
 
-    uint8_t tNewDirection = aSnake->Direction;
-
     int8_t tDeltaX = aSnake->Apple.x - aSnake->SnakePixelList[0].x;
     int8_t tDeltaY = aSnake->Apple.y - aSnake->SnakePixelList[0].y;
 
@@ -90,6 +96,8 @@ uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
     Serial.print(tDeltaX);
     Serial.print(F(" DeltaY="));
     Serial.println(tDeltaY);
+
+    uint8_t tNewDirection = aSnake->Direction;
 
     /*
      *  Simple example, go towards the apple.

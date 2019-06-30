@@ -441,8 +441,13 @@ void MatrixNeoPatterns::Ticker(const char* aStringPtr, color32_t aForegroundColo
 }
 void MatrixNeoPatterns::TickerPGM(const char* aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
-    TickerInit(aStringPtrPGM, aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection,
-    FLAG_TICKER_DATA_IN_FLASH);
+    TickerInit(aStringPtrPGM, aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection, FLAG_TICKER_DATA_IN_FLASH);
+}
+
+void MatrixNeoPatterns::Ticker(__FlashStringHelper * aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
+        uint16_t aIntervalMillis, uint8_t aDirection) {
+    TickerInit(reinterpret_cast<const char*>(aStringPtrPGM), aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection,
+            FLAG_TICKER_DATA_IN_FLASH);
 }
 
 void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,

@@ -10,7 +10,6 @@ New Patterns are added, a snake game running on a matrix is included and you can
 | :-: | :-: |
 | [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
 
-
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
 **RAINBOW_CYCLE**, **COLOR_WIPE**, **FADE**
@@ -55,6 +54,9 @@ After 7 seconds of inactivity the Snake demo with a simple AI is started.
 NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
+# Revision History
+### Version 1.0.0
+Initial Arduino library version
 
 ## Travis CI
 The NeoPatterns library examples are built on Travis CI for the following boards:

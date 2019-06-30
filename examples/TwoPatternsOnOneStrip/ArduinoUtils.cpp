@@ -124,11 +124,19 @@ void blinkLed(uint8_t aLedPin, uint8_t aNumberOfBlinks, uint16_t aBlinkDelay) {
 void initINT0() {
     pinMode(2, INPUT_PULLUP);
     // interrupt on falling
+#if defined(EICRA)
     EICRA |= (1 << ISC01);
     // clear interrupt bit
     EIFR |= 1 << INTF0;
     // enable interrupt on next change
     EIMSK |= 1 << INT0;
+#elif defined(__AVR_ATtiny85__)
+    MCUCR |= (1 << ISC01);
+    // clear interrupt bit
+    GIFR |= 1 << INTF0;
+    // enable interrupt on next change
+    GIMSK |= 1 << INT0;
+#endif
 }
 
 /*

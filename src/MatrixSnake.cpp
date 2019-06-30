@@ -778,25 +778,6 @@ __attribute__((weak)) getNextSnakeDirection(MatrixSnake * aSnake) {
 }
 
 /*
- * SNAKE SOLVER SIMPLE EXAMPLE
- * First try to reduce shortest (of x or y) distance, then go longer one
- */
-uint8_t getNextSnakeDirectionSimple(MatrixSnake * aSnake) {
-
-#ifdef DEBUG
-    Serial.print(F("Direction="));
-    Serial.print(DirectionToString(aSnake->Direction));
-    Serial.print(F(" head=("));
-    Serial.print(aSnake->SnakePixelList[0].x);
-    Serial.print(',');
-    Serial.print(aSnake->SnakePixelList[0].y);
-    Serial.println(')');
-#endif
-
-    return aSnake->findNextDir();
-}
-
-/*
  * SNAKE SOLVER EXAMPLE
  * This example test-plays the game with the standard moving algorithm (findNextDir()) to decide if it gets an apple.
  * If it has no chance to get the apple it changes the behavior of the solver.
@@ -912,6 +893,13 @@ void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr) {
     tLedsPtr->MultipleExtension = tStep;
 }
 
+const char sDefaultTickerText[] PROGMEM = "I love Neopixel";
+const char * sTickerTextPtr = sDefaultTickerText;
+
+void setMatrixAndSnakePatternsDemoTickerText(const __FlashStringHelper * aTextForTicker) {
+    sTickerTextPtr = reinterpret_cast<const char*>(aTextForTicker);
+}
+
 /*
  * Sample callback handler for MatrixNeoPatterns + MatrixSnake
  * 1 loop lasts ca. 50 seconds
@@ -942,7 +930,7 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
     switch (tState) {
     case 0:
 //        myLoadTest(tLedsPtr);
-        tLedsPtr->TickerPGM(PSTR("I love Neopixel"), NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection);
+        tLedsPtr->TickerPGM(sTickerTextPtr, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection);
         sTickerDirection--;
         if (sTickerDirection < 0) {
             sTickerDirection = DIRECTION_LEFT;
