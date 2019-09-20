@@ -184,7 +184,7 @@ void MatrixNeoPatterns::FireMatrixUpdate() {
 
         }
     }
-// takes 11 millis with float or 4 ms with integer
+// takes 11 milli seconds with float or 4 ms with integer
 
 // toggle areas
     uint8_t * tPtr = MatrixNew;

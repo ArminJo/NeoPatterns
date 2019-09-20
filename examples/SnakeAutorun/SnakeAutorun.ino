@@ -148,7 +148,8 @@ void setup() {
 
     // This initializes the NeoPixel library and checks if enough memory was available
     if (!NeoPixelMatrixSnake.begin(&Serial)) {
-        // Blink forever
+        Serial.println(F("Not enough memory for Snake matrix"));
+        // Blink forever as error indicator
         while (true) {
             digitalWrite(LED_BUILTIN, HIGH);
             delay(500);

@@ -25,11 +25,25 @@
 
 #include "NeoPixel.h"
 
-NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) :
+NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
-    uint8_t twOffset = (aTypeOfPixel >> 6) & 0b11; // See notes in header file Adafruit_NeoPixel.h regarding R/G/B/W offsets
-    uint8_t trOffset = (aTypeOfPixel >> 4) & 0b11;
-    BytesPerPixel = ((twOffset == trOffset) ? 3 : 4);
+    BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
+//    PixelOffset = 0;  // 10 byte Flash
+}
+
+/*
+ * Used to create a NeoPixel, which operates on a segment of the existing NeoPixel object.
+ * This creates a new Adafruit_NeoPixel object and replaces the new pixel buffer with the existing one.
+ * ATTENTION! show() will set only the FIRST aNumberOfPixels of the aExistingNeoPixelObject and NOT the
+ */
+NeoPixel::NeoPixel(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels) :
+        Adafruit_NeoPixel(aNumberOfPixels, aExistingNeoPixelObject->getPin(), aExistingNeoPixelObject->getType()) {
+    BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
+    PixelOffset = aPixelOffset;
+    /*
+     * Replace buffer with existing one
+     */
+    setPixelBuffer(aExistingNeoPixelObject->getPixels());
 }
 
 void NeoPixel::begin() {
@@ -60,6 +74,18 @@ uint8_t NeoPixel::getBytesPerPixel() {
     return BytesPerPixel;
 }
 
+neoPixelType NeoPixel::getType() {
+#ifdef NEO_KHZ400
+    neoPixelType tReturnValue = (wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
+    if (is800KHz) {
+        tReturnValue |= 0x100;
+    }
+#else
+    neoPixelType tReturnValue=(wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
+#endif
+    return tReturnValue;
+}
+
 /*
  *
  * Free old pixel buffer and set new value.
@@ -84,6 +110,78 @@ void NeoPixel::restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aRes
     memcpy(pixels, aPixelBufferPointerSource, numBytes);
     if (aResetBrightness) {
         brightness = 0;
+    }
+}
+
+void NeoPixel::clear(void) {
+    memset(pixels + (BytesPerPixel * PixelOffset), 0, numBytes);
+}
+
+void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
+    // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
+    if (n < numLEDs) {
+        n += PixelOffset; // added line
+        if (brightness) { // See notes in setBrightness()
+            r = (r * brightness) >> 8;
+            g = (g * brightness) >> 8;
+            b = (b * brightness) >> 8;
+        }
+        uint8_t *p;
+        if (wOffset == rOffset) { // Is an RGB-type strip
+            p = &pixels[n * 3];    // 3 bytes per pixel
+        } else {                 // Is a WRGB-type strip
+            p = &pixels[n * 4];    // 4 bytes per pixel
+            p[wOffset] = 0;        // But only R,G,B passed -- set W to 0
+        }
+        p[rOffset] = r;          // R,G,B always stored
+        p[gOffset] = g;
+        p[bOffset] = b;
+    }
+}
+
+void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
+    // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
+    if (n < numLEDs) {
+        n += PixelOffset; // added line
+        if (brightness) { // See notes in setBrightness()
+            r = (r * brightness) >> 8;
+            g = (g * brightness) >> 8;
+            b = (b * brightness) >> 8;
+            w = (w * brightness) >> 8;
+        }
+        uint8_t *p;
+        if (wOffset == rOffset) { // Is an RGB-type strip
+            p = &pixels[n * 3];    // 3 bytes per pixel (ignore W)
+        } else {                 // Is a WRGB-type strip
+            p = &pixels[n * 4];    // 4 bytes per pixel
+            p[wOffset] = w;        // Store W
+        }
+        p[rOffset] = r;          // Store R,G,B
+        p[gOffset] = g;
+        p[bOffset] = b;
+    }
+}
+
+void NeoPixel::setPixelColor(uint16_t n, uint32_t c) {
+    // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
+    if (n < numLEDs) {
+        n += PixelOffset; // added line
+        uint8_t *p, r = (uint8_t) (c >> 16), g = (uint8_t) (c >> 8), b = (uint8_t) c;
+        if (brightness) { // See notes in setBrightness()
+            r = (r * brightness) >> 8;
+            g = (g * brightness) >> 8;
+            b = (b * brightness) >> 8;
+        }
+        if (wOffset == rOffset) {
+            p = &pixels[n * 3];
+        } else {
+            p = &pixels[n * 4];
+            uint8_t w = (uint8_t) (c >> 24);
+            p[wOffset] = brightness ? ((w * brightness) >> 8) : w;
+        }
+        p[rOffset] = r;
+        p[gOffset] = g;
+        p[bOffset] = b;
     }
 }
 
@@ -145,6 +243,7 @@ const uint8_t _gammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 
 
 /*
  * use mapping table with 32 entries (using 5 MSbits)
+ * @param aLinearBrightnessValue - from 0 to 255
  */
 uint8_t NeoPixel::gamma5(uint8_t aLinearBrightnessValue) {
     return pgm_read_byte(&_gammaTable32[(aLinearBrightnessValue / 8)]);

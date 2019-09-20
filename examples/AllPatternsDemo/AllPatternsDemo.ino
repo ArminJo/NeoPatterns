@@ -36,9 +36,10 @@
 #include <avr/power.h>
 #include <avr/pgmspace.h>
 
-#define VOLTAGE_CHECK_THRESHOLD_MILLIVOLT 3600
-#define VOLTAGE_CHECK_PERIOD_MILLIS 2000
-#define VOLTAGE_CHECK_PERIOD_REPETITIONS 9
+#define VCC_STOP_THRESHOLD_MILLIVOLT 3400   // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
+#define VCC_STOP_MIN_MILLIVOLT 3200         // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
+#define VCC_STOP_PERIOD_MILLIS 2000         // Period of VCC checks
+#define VCC_STOP_PERIOD_REPETITIONS 9       // Shutdown after 9 times (18 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_STOP_MIN_MILLIVOLT
 #define FALLING_STAR_DURATION 12
 #endif
 
@@ -106,20 +107,48 @@ void setup() {
     bar16.PatternsGeometry = GEOMETRY_BAR;
     bar24.PatternsGeometry = GEOMETRY_BAR;
     ring12.ColorWipe(COLOR32_PURPLE, 50);
-    ring16.ColorWipe(COLOR32_RED, 50, DIRECTION_DOWN);
+    ring16.ColorWipe(COLOR32_RED, 50, 0, DIRECTION_DOWN);
     ring24.ColorWipe(COLOR32_GREEN, 50);
-    bar16.ColorWipe(COLOR32_BLUE, 50, DIRECTION_DOWN);
+    bar16.ColorWipe(COLOR32_BLUE, 50, 0, DIRECTION_DOWN);
     bar24.Stripes(COLOR32_BLUE, 5, COLOR32_RED, 3, 50, 48);
 //    bar24.ScannerExtended(COLOR32_BLUE, 5, 50, 1,
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
     NeoPixelMatrix.clear(); // Clear matrix
     NeoPixelMatrix.show();
     NeoPixelMatrix.Delay(5000); // start later
-    setMatrixAndSnakePatternsDemoTickerText(F("I love R&C4Kids"));
+    setMatrixAndSnakePatternsDemoTickerText(F("I love NeoPixel"));
     Serial.println("started");
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
+
+/*
+ * Returns true if shutdown
+ */
+bool checkVCC(uint16_t aVCC) {
+    static uint8_t sVoltageTooLowCounter;
+
+    if (aVCC < VCC_STOP_THRESHOLD_MILLIVOLT) {
+        /*
+         * Voltage too low, wait VCC_STOP_PERIOD_REPETITIONS (9) times and then shut down.
+         */
+        if (aVCC < VCC_STOP_MIN_MILLIVOLT) {
+            // emergency shutdown
+            sVoltageTooLowCounter = VCC_STOP_PERIOD_REPETITIONS;
+            Serial.println(F("Voltage < 3.2 Volt detected"));
+        } else {
+            sVoltageTooLowCounter++;
+            Serial.println(F("Voltage < 3.4 Volt detected"));
+        }
+        if (sVoltageTooLowCounter == VCC_STOP_PERIOD_REPETITIONS) {
+            Serial.println(F("Shut down"));
+            return true;
+        }
+    } else {
+        sVoltageTooLowCounter = 0;
+    }
+    return false;
+}
 
 void loop() {
 #ifdef __AVR__
@@ -127,11 +156,10 @@ void loop() {
      * Check VCC every 2 seconds
      */
     static long sLastMillisOfVoltageCheck;
-    static uint8_t sVoltageTooLowCounter;
-    static bool sVoltageTooLow = false;
+    static bool sVoltageTooLow = false; // one time flag
     static char sStringBufferForVCC[7] = "xxxxmV";
 
-    if (millis() - sLastMillisOfVoltageCheck >= VOLTAGE_CHECK_PERIOD_MILLIS) {
+    if (millis() - sLastMillisOfVoltageCheck >= VCC_STOP_PERIOD_MILLIS) {
         sLastMillisOfVoltageCheck = millis();
         uint16_t tVCC = getVCCVoltageMillivoltSimple();
         Serial.print(F("VCC="));
@@ -147,35 +175,26 @@ void loop() {
         }
 
         if (!sVoltageTooLow) {
-            if (tVCC < VOLTAGE_CHECK_THRESHOLD_MILLIVOLT) {
-                /*
-                 * Voltage too low, wait VOLTAGE_CHECK_PERIOD_REPETITIONS (5) times and then shut down.
-                 */
-                sVoltageTooLowCounter++;
-                if (sVoltageTooLowCounter == VOLTAGE_CHECK_PERIOD_REPETITIONS) {
-                    Serial.println(F("Voltage < 3.6 Volt detected, shut down NeoPixel"));
-                    sVoltageTooLow = true;
+            if (checkVCC(tVCC)) {
+                sVoltageTooLow = true;
 
-                    initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, FALLING_STAR_DURATION, 1, NULL);
-                    bar24.clear();
-                    bar24.show();
-                    ring12.clear();
-                    ring12.show();
-                    ring16.clear();
-                    ring16.show();
-                    ring24.clear();
-                    ring24.show();
-                    NeoPixelMatrix.clear();
-                    NeoPixelMatrix.show();
-                    return;
-                }
-            } else {
-                sVoltageTooLowCounter = 0;
+                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, FALLING_STAR_DURATION, 1, NULL);
+                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, FALLING_STAR_DURATION, 1, NULL);
+                ring12.clear();
+                ring12.show();
+                ring16.clear();
+                ring16.show();
+                ring24.clear();
+                ring24.show();
+                NeoPixelMatrix.clear();
+                NeoPixelMatrix.show();
+                return;
             }
         }
     }
     if (sVoltageTooLow) {
         bar16.Update();
+        bar24.Update();
         delay(FALLING_STAR_DURATION);
         return;
     }

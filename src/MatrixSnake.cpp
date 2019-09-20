@@ -51,8 +51,9 @@ MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t 
 }
 
 /*
- * Update the pattern returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
- * Calls snake input handler and after each interval calls snake update routine or the other patterns update routines.
+ * Update the pattern.
+ * Returns true if update has really happened in order to give the caller a chance to manually change parameters after each update (like color etc.)
+ * Calls snake input handler and after each interval calls snake update routine or MatrixNeoPatterns::Update().
  */
 bool MatrixSnake::Update(bool doShow) {
 
@@ -113,8 +114,8 @@ void MatrixSnake::rotateRight() {
     }
 }
 
-// resets the playing field
-void MatrixSnake::clearAndResetSnake() {
+// Resets the game area, init snake to start position and gets new apple
+void MatrixSnake::clearResetAndShowSnakeAndNewApple() {
 #ifdef DEBUG
     Serial.println(F("Reset snake"));
 #endif
@@ -128,10 +129,14 @@ void MatrixSnake::clearAndResetSnake() {
     clear();
     // sets the beginning of the snake to init_snake
     memcpy(SnakePixelList, SnakeInitialPixels, sizeof(SnakeInitialPixels));
+    newApple();
+    drawApple();
+    drawSnake();
 }
+
 /*
- * TotalSteps holds the steps the snake is gone
- * if aPinOfRightButton is 0, then snake starts in autorun mode
+ * IF PinOfUpButton is 0, then snake runs in 2 button mode.
+ * if aPinOfRightButton is 0, then snake starts in autorun mode.
  */
 void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton, uint8_t aPinOfLeftButton,
         uint8_t aPinOfUpButton, uint8_t aPinOfDownButton) {
@@ -168,10 +173,7 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     Serial.println(HighScore);
 #endif
 
-    clearAndResetSnake();
-    newApple();
-    drawApple();
-    drawSnake();
+    clearResetAndShowSnakeAndNewApple();
 
     if (PinOfRightButton != 0) {
         pinMode(aPinOfRightButton, INPUT_PULLUP);
@@ -179,8 +181,10 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
         if (PinOfUpButton != 0) {
             pinMode(aPinOfUpButton, INPUT_PULLUP);
             pinMode(aPinOfDownButton, INPUT_PULLUP);
+            Flags = FLAG_USE_4_BUTTONS;
+        } else {
+            Flags = 0; // 2 button mode
         }
-        Flags = 0; // start with 2 button mode unless up or down button is pressed
     } else {
         Flags = FLAG_SNAKE_AUTORUN; // start in autorun mode
     }
@@ -238,7 +242,9 @@ uint8_t MatrixSnake::SnakeInputHandler() {
     }
 
     if (Flags & FLAG_USE_4_BUTTONS) {
-        // four buttons direct direction input
+        /*
+         * 4 buttons direct direction input
+         */
         if (digitalRead(PinOfRightButton) == LOW) {
             tNewDirection = DIRECTION_RIGHT;
         } else if (digitalRead(PinOfLeftButton) == LOW) {
@@ -246,7 +252,7 @@ uint8_t MatrixSnake::SnakeInputHandler() {
         }
     } else {
         /*
-         * 2 buttons turn direction input, debouncing needed
+         * 2 buttons turn direction input, debouncing needed to avoid multiple turns
          */
         uint32_t tMillisSinceLastButtonChanged = millis() - MillisOfLastButtonChange;
         if (tMillisSinceLastButtonChanged > MILLIS_FOR_BUTTON_DEBOUNCING) {
@@ -421,7 +427,6 @@ bool MatrixSnake::moveSnakeAndCheckApple(position tSnakeNewHeadPosition) {
  * The button input is acquired before by the global update routine.
  */
 void MatrixSnake::SnakeUpdate() {
-    static bool sSnakeHasMoved = false; // flag for timeout detection to start autorun demo
 
     if (Flags & FLAG_SNAKE_AUTORUN) {
         // this calls the AI to simulate button presses which leads to a direction
@@ -443,30 +448,17 @@ void MatrixSnake::SnakeUpdate() {
             // show score until index gets 0, then reset snake
             Index--;
             if (Index == 0) {
-                clearAndResetSnake();
-                drawSnake();
+                clearResetAndShowSnakeAndNewApple();
             }
             return;
         }
     }
 
-    if (Direction == DIRECTION_NONE && !sSnakeHasMoved) {
-        /*
-         * Just wait for TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS and then start snake autorun mode.
-         */
-        long tMillis = millis();
-        // +1000 since we are called only each "Interval" millis
-        if (tMillis > TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS && tMillis < (TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS + 1000)) {
-            // switch to demo mode after switching delay if snake has not moved
-            initSnakeAutorun(this, Interval / 2, Color1);
-        }
-
-    } else {
+    if (Direction != DIRECTION_NONE) {
         /*
          * move the snake
          * for autorun, check if direction is valid
          */
-        sSnakeHasMoved = true;
         position tSnakeNewHeadPosition;
         bool tHeadPositionIsInAreaAndDirectionIsValid = computeNewHeadPosition(Direction, &tSnakeNewHeadPosition);
 #ifdef INFO
@@ -1026,7 +1018,7 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
 
 #ifdef INFO
     Serial.print("Pin=");
-    Serial.print(aLedsPtr->NeoPixel->getPin());
+    Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");

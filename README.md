@@ -6,7 +6,7 @@
 This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
 New Patterns are added, a snake game running on a matrix is included and you can run multiple patterns simultaneously on the same strip.
 
-| Youtube Video of NeoPatternsDemo | Youtube Video of MatrixDemo on a 10x10 matrix |
+| YouTube Video of NeoPatternsDemo | YouTube Video of MatrixDemo on a 10x10 matrix |
 | :-: | :-: |
 | [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
 
@@ -55,6 +55,8 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 1.0.1
+Support of segments of NeoPixel bars etc.
 ### Version 1.0.0
 Initial Arduino library version
 

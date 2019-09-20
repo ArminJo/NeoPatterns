@@ -77,18 +77,24 @@ typedef uint32_t color32_t;
 #define BLUE(color)  (color 0xFF)
 
 #define COLOR32_WHITE          COLOR32(255,255,255)
-#define COLOR32_WHITE_HALF     COLOR32(127,127,127) // to reduce power consumption
-#define COLOR32_WHITE_QUARTER  COLOR32(63,63,63)    // to reduce power consumption
+#define COLOR32_WHITE_HALF     COLOR32(128,128,128) // to reduce power consumption
+#define COLOR32_WHITE_QUARTER  COLOR32(64,64,64)    // to reduce power consumption
 #define COLOR32_BLACK          COLOR32(0,0,0)
 #define COLOR32_RED            COLOR32(255,0,0)
-#define COLOR32_RED_HALF       COLOR32(127,0,0)
+#define COLOR32_RED_HALF       COLOR32(128,0,0)
+#define COLOR32_RED_QUARTER    COLOR32(64,0,0)
 #define COLOR32_GREEN          COLOR32(0,255,0)
-#define COLOR32_GREEN_HALF     COLOR32(0,127,0)
+#define COLOR32_GREEN_HALF     COLOR32(0,128,0)
+#define COLOR32_GREEN_QUARTER  COLOR32(0,64,0)
 #define COLOR32_BLUE           COLOR32(0,0,255)
-#define COLOR32_BLUE_HALF      COLOR32(0,0,127)
+#define COLOR32_BLUE_HALF      COLOR32(0,0,128)
+#define COLOR32_BLUE_QUARTER   COLOR32(0,0,64)
 #define COLOR32_YELLOW         COLOR32(255,200,0) // value was visually determined
 #define COLOR32_ORANGE         COLOR32(255,64,0)  // value was visually determined
 #define COLOR32_PURPLE         COLOR32(255,0,255)
 #define COLOR32_CYAN           COLOR32(0,255,255)
 
 #endif /* COLORS_H_ */
+
+#pragma once
+

@@ -25,6 +25,12 @@
  *
  */
 
+/* Class inheritance diagram
+ *                                     ,o--> MatrixNeoPixel \
+ * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    /
+ */
+
 #ifndef MATRIXNEOPATTERNS_H_
 #define MATRIXNEOPATTERNS_H_
 
@@ -98,3 +104,6 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr);
 void myLoadTest(MatrixNeoPatterns* aLedsPtr);
 
 #endif /* MATRIXNEOPATTERNS_H_ */
+
+#pragma once
+

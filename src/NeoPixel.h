@@ -23,6 +23,12 @@
  *
  */
 
+/* Class inheritance diagram
+ *                                     ,o--> MatrixNeoPixel \
+ * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    /
+ */
+
 #ifndef SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
 #define SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
 
@@ -36,6 +42,7 @@ uint8_t Blue(color32_t color);
 class NeoPixel: public Adafruit_NeoPixel {
 public:
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
+    NeoPixel(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels);
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
@@ -51,9 +58,16 @@ public:
     uint32_t DimColor(color32_t color);
     void resetBrightnessValue(); // resets internal brightness control value to full to support restoring of patterns while brightening
     uint8_t getBytesPerPixel();
+    neoPixelType getType();
     uint16_t getPixelBufferSize();
     void storePixelBuffer(uint8_t * aPixelBufferPointerDestination);
     void restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness = true);
+
+    // Functions to support PixelOffset
+    void clear(void);
+    void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
+    void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
+    void setPixelColor(uint16_t n, uint32_t c);
 
     color32_t addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     // Static functions
@@ -65,7 +79,9 @@ public:
     void TestWS2812Resolution();
 
     uint8_t BytesPerPixel;  // can be 3 or 4
-
+    uint16_t PixelOffset; // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
 };
 
 #endif /* SRC_LIB_NEOPATTERNS_NEOPIXEL_H_ */
+
+#pragma once

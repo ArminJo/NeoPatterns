@@ -46,13 +46,29 @@ char VERSION_NEOPATTERNS[] = "1.2";
  **********************************************************************************/
 /*
  * Constructor - get and call Adafruit_NeoPixel constructor to initialize strip
- * NeoPatterns id not derived from Adafruit_NeoPixel to enable running more than one pattern on the same NeoPixel object.
+ * NeoPatterns is not derived from Adafruit_NeoPixel to enable running more than one pattern
+ * on the same NeoPixel object by using NeoPixel::setPixelBuffer().
  * In this case it avoids doubling the big pixel buffer.
  */
 
 NeoPatterns::NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
         void (*aPatternCompletionCallback)(NeoPatterns*)) :
         NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
+
+    OnPatternComplete = aPatternCompletionCallback;
+}
+
+/*
+ * Used to create a NeoPattern, which runs on a segment of the existing NeoPattern object.
+ * This creates a new NeoPixel object and replaces the new pixel buffer with the existing one.
+ * ATTENTION. Use only aExistingNeoPixelObject->show().
+ * if(PartialNeoPixelBar.update()){
+ *   aExistingNeoPixelObject->show();
+ * }
+ */
+NeoPatterns::NeoPatterns(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
+        void (*aPatternCompletionCallback)(NeoPatterns*)) :
+        NeoPixel(aExistingNeoPixelObject, aPixelOffset, aNumberOfPixels) {
 
     OnPatternComplete = aPatternCompletionCallback;
 }
@@ -68,7 +84,34 @@ bool NeoPatterns::CheckForUpdate() {
     return false;
 }
 
-// Update the pattern returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
+/*
+ * Just sets ActivePattern to PATTERN_NONE. This can be used as indicator, that pattern has stopped.
+ */
+void waitForPatternToStopHelper(NeoPatterns * aLedsPtr) {
+    aLedsPtr->ActivePattern = PATTERN_NONE;
+}
+
+void NeoPatterns::updateAndWaitForPatternToStop() {
+    void (*tOnPatternCompleteBackup)(NeoPatterns*) = OnPatternComplete;
+    OnPatternComplete = &waitForPatternToStopHelper;
+    while (ActivePattern != PATTERN_NONE) {
+        update();
+        yield();
+    }
+    OnPatternComplete = tOnPatternCompleteBackup;
+}
+
+/*
+ * Lower case function alias
+ */
+bool NeoPatterns::update(bool doShow) {
+    return Update(doShow);
+}
+
+/*
+ * @brief   Updates the pattern if update interval has expired.
+ * @return  Returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
+ */
 bool NeoPatterns::Update(bool doShow) {
     if ((millis() - lastUpdate) > Interval) {
 
@@ -106,8 +149,10 @@ bool NeoPatterns::Update(bool doShow) {
         default:
             break;
         }
-
-        if (doShow) {
+        /*
+         * Do not try to show partial patterns, since show only sets FIRST n pixel
+         */
+        if (doShow && PixelOffset == 0) {
             show();
         }
         // remember last time of update
@@ -117,9 +162,16 @@ bool NeoPatterns::Update(bool doShow) {
     return false;
 }
 
-// Update the pattern returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
+/*
+ * Always redraws the pattern!
+ * Updates the pattern if update interval has expired.
+ * Returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
+ */
 bool NeoPatterns::UpdateOrRedraw() {
 
+    /*
+     * If tDoUpdate is true,
+     */
     bool tDoUpdate = (millis() - lastUpdate) > Interval;
 
     switch (ActivePattern) {
@@ -220,7 +272,11 @@ void NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
     }
 }
 
-// Initialize for a ColorWipe.
+/**
+ * @brief   Initialize for a ColorWipe.
+ * @param  aMode can be 0 (default) or FLAG_DO_NOT_CLEAR - before
+ * @param  aDirection can be DIRECTION_UP (default) or DIRECTION_DOWN
+ */
 void NeoPatterns::ColorWipe(color32_t color, uint8_t interval, uint8_t aMode, uint8_t aDirection) {
     ActivePattern = PATTERN_COLOR_WIPE;
     Interval = interval;
@@ -276,6 +332,11 @@ void NeoPatterns::FadeUpdate(bool aDoUpdate) {
 /*
  * Code for scanner default is: pattern completely visible at start and end
  * Starts at position 0 with DIRECTION_UP
+ * @param   aNumberOfBouncings - 0 = no bouncing, one time pattern.
+ * @param   aMode - see NeoPatterns.h line 195
+ *                  FLAG_SCANNER_EXT_ROCKET, FLAG_SCANNER_EXT_CYLON, FLAG_SCANNER_EXT_VANISH_COMPLETE, FLAG_SCANNER_EXT_START_AT_BOTH_ENDS
+ *                  FLAG_DO_NOT_CLEAR
+ * @param   aDirection - DIRECTION_UP (default) or DIRECTION_DOWN
  */
 void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aInterval, uint16_t aNumberOfBouncings,
         uint8_t aMode, uint8_t aDirection) {
@@ -293,6 +354,10 @@ void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t a
     Index = aLength - 1; // start position pattern is completely visible at start
 
     uint16_t tStepsForBounce = numLEDs - 1;
+
+    if (!(aMode & FLAG_DO_NOT_CLEAR)) {
+        clear();
+    }
 
     if (aMode & FLAG_SCANNER_EXT_VANISH_COMPLETE) {
         // invisible at start and end
@@ -459,6 +524,9 @@ void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
     } //  if (aDoUpdate)
 }
 
+/**
+ * @param aMode - not used yet
+ */
 void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint8_t aInterval,
         uint16_t aNumberOfSteps, uint8_t aMode, uint8_t aDirection) {
     ActivePattern = PATTERN_STRIPES;
@@ -853,7 +921,6 @@ void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t 
     /*
      * Start with one scanner
      */
-    aLedsPtr->clear();
     aLedsPtr->ScannerExtended(aColor, 7, aDuration, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, DIRECTION_DOWN);
 }
 
@@ -885,7 +952,7 @@ void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr) {
             aLedsPtr->Delay(tDuration * 2);
         } else {
             // for even Repetitions 2,4,6, etc. -> do scanner
-            aLedsPtr->ScannerExtended(aLedsPtr->Color1, 7, tDuration, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, DIRECTION_DOWN);
+            aLedsPtr->ScannerExtended(aLedsPtr->Color1, 7, tDuration, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
         }
         aLedsPtr->Repetitions--;
     }
@@ -923,18 +990,16 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
     switch (tState) {
     case 0:
         //aLedsPtr->Cylon(NeoPatterns::Wheel(tColor), tDuration, 2);
-        aLedsPtr->clear();
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 3,
         FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE, (tDuration & DIRECTION_DOWN));
         break;
     case 1:
         // rocket 2 times bouncing
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
-        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE, (tDuration & DIRECTION_DOWN));
+        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, (tDuration & DIRECTION_DOWN));
         break;
     case 2:
         // 1 times rocket or falling star
-        aLedsPtr->clear();
         aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 7, tDuration / 2, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE,
                 (tDuration & DIRECTION_DOWN));
         break;
@@ -972,7 +1037,7 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
         } else {
             // start at both end
             aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 0,
-            FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE);
+            FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR);
         }
         break;
     default:

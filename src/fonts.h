@@ -68,8 +68,9 @@
 # warning No font defined
 #endif
 
-
 extern const uint8_t font_PGM[];
 
-
 #endif //fonts_h
+
+#pragma once
+

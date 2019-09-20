@@ -27,6 +27,12 @@
  *
  */
 
+/* Class inheritance diagram
+ *                                     ,o--> MatrixNeoPixel \
+ * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    /
+ */
+
 #ifndef NEOPATTERNS_H
 #define NEOPATTERNS_H
 
@@ -89,16 +95,21 @@ const char* DirectionToString(uint8_t aDirection);
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
 class NeoPatterns: public virtual NeoPixel {
 public:
-    NeoPatterns(uint16_t aNumberOfPixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*));
+    NeoPatterns(uint16_t aNumberOfPixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+    NeoPatterns(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void setCallback(void (*callback)(NeoPatterns*));
 
     bool CheckForUpdate();
     bool UpdateOrRedraw();
     bool Update(bool doShow = true);
+    bool update(bool doShow = true);
     void DecrementTotalStepCounter();
     void NextIndexAndDecrementTotalStepCounter();
     void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t totalSteps);
+
+    void updateAndWaitForPatternToStop();
 
     /*
      * PATTERNS
@@ -177,17 +188,18 @@ public:
 #define GEOMETRY_BAR 1
     uint8_t PatternsGeometry; // fire pattern makes no sense on circles
 
-    // For scanner_extended
+    // For ScannerExtended()
     // Flags 0 -> one pass scanner (rocket or falling star)
     // Flags +1 -> cylon -> mirror pattern (effective length is 2*length -1)
     // Flags +2 -> start and end scanner vanishing complete e.g. first and last pattern are empty
-    // Flags +0x10 -> use add-color instead off set-color
+    // Flags +4 -> start pattern at both ends i.e. direction is irrelevant
 #define FLAG_SCANNER_EXT_ROCKET             0x00
 #define FLAG_SCANNER_EXT_CYLON              0x01
 #define FLAG_SCANNER_EXT_VANISH_COMPLETE    0x02
 #define FLAG_SCANNER_EXT_START_AT_BOTH_ENDS 0x04
 
-#define FLAG_DO_NOT_CLEAR                   0x10 // do not write black pixels - for colorWipe
+    // Flags +0x10 -> clear before or at first draw
+#define FLAG_DO_NOT_CLEAR                   0x10 // do not write black pixels - for colorWipe() and ScannerExtended()
 
     uint8_t Flags;  // special behavior of the pattern
     // for Cylon, Fire, multipleHandler
@@ -214,3 +226,6 @@ void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 void allPatternsRandomExample(NeoPatterns * aLedsPtr);
 
 #endif // NEOPATTERNS_H
+
+#pragma once
+

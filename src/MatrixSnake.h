@@ -25,6 +25,12 @@
  *
  */
 
+/* Class inheritance diagram
+ *                                     ,o--> MatrixNeoPixel \
+ * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    /
+ */
+
 #ifndef MATRIXSNAKE_H_
 #define MATRIXSNAKE_H_
 
@@ -76,7 +82,7 @@ public:
     void newApple();
     void drawApple();
     void drawSnake();
-    void clearAndResetSnake();
+    void clearResetAndShowSnakeAndNewApple();
     void rotateRight();
     void rotateLeft();
     //
@@ -124,8 +130,8 @@ private:
 
 uint8_t computeDirection(position aStartPosition, position aEndPosition);
 
-extern const char sDefaultTickerText[] PROGMEM;// = "I love Neopixel"
-extern const char * sTickerTextPtr;// = sDefaultTickerText;
+extern const char sDefaultTickerText[] PROGMEM; // = "I love Neopixel"
+extern const char * sTickerTextPtr; // = sDefaultTickerText;
 void setMatrixAndSnakePatternsDemoTickerText(const __FlashStringHelper * aTextForTicker);
 void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr);
 
@@ -134,3 +140,6 @@ uint8_t getNextSnakeDirection(MatrixSnake * aSnake);
 void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr);
 
 #endif /* MATRIXSNAKE_H_ */
+
+#pragma once
+
