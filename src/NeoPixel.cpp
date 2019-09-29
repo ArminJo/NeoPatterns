@@ -70,7 +70,7 @@ void NeoPixel::begin() {
 }
 
 /*
- * Prints error message if aSerial is not NULL
+ * begin function, which prints error message if aSerial is not NULL
  * Returns false if no memory available
  */
 bool NeoPixel::begin(Stream * aSerial) {
