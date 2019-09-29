@@ -65,7 +65,7 @@ bool MatrixNeoPatterns::Update(bool doShow) {
             MovingPicturePGMUpdate();
             break;
         default:
-            NeoPatterns::Update(false);
+            NeoPatterns::update(false);
             break;
         }
         if (doShow) {
@@ -201,6 +201,7 @@ void MatrixNeoPatterns::FireMatrixUpdate() {
         free(MatrixNew);
         MatrixNew = NULL;
 
+        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         if (OnPatternComplete != NULL) {
             OnPatternComplete(this); // call the completion callback
         }
@@ -245,6 +246,7 @@ void MatrixNeoPatterns::MovingPicturePGMUpdate() {
     }
     Index++;
     if (Index >= TotalStepCounter) {
+        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         if (OnPatternComplete != NULL) {
             OnPatternComplete(this); // call the completion callback
         }
@@ -426,6 +428,7 @@ void MatrixNeoPatterns::MoveUpdate() {
     moveArrayContent(Direction, Color2);
     Index--;
     if (Index == 0) {
+        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         if (OnPatternComplete != NULL) {
             OnPatternComplete(this); // call the completion callback
         }
@@ -453,7 +456,7 @@ void MatrixNeoPatterns::Ticker(__FlashStringHelper * aStringPtrPGM, color32_t aF
 void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection, uint8_t aFlags) {
     ActivePattern = PATTERN_TICKER;
-    Flags = aFlags;
+    PatternFlags = aFlags;
     Interval = aIntervalMillis;
 
     DataPtr = (const uint8_t*) aStringPtr;
@@ -465,7 +468,7 @@ void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForeground
     Serial.print(F("Starting Ticker with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Text=\""));
-    if (Flags & FLAG_TICKER_DATA_IN_FLASH) {
+    if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
         Serial.print(reinterpret_cast<const __FlashStringHelper *>(aStringPtr));
     } else {
         Serial.print(aStringPtr);
@@ -495,7 +498,7 @@ void MatrixNeoPatterns::TickerUpdate() {
     char tChar;
     char tNextChar;
 // left character
-    if (Flags & FLAG_TICKER_DATA_IN_FLASH) {
+    if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
         tChar = pgm_read_byte(DataPtr);
         tNextChar = pgm_read_byte(DataPtr + 1);
     } else {
@@ -517,7 +520,7 @@ void MatrixNeoPatterns::TickerUpdate() {
         // check if next character is moving in
         if (Direction == DIRECTION_LEFT && (GraphicsXOffset + FONT_WIDTH) < Columns) {
             char tNextNextChar;
-            if (Flags & FLAG_TICKER_DATA_IN_FLASH) {
+            if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
                 tNextNextChar = pgm_read_byte(DataPtr + 2);
             } else {
                 tNextNextChar = *(DataPtr + 2);
@@ -550,6 +553,7 @@ void MatrixNeoPatterns::TickerUpdate() {
     if (GraphicsXOffset == -FONT_WIDTH || GraphicsYOffset == FONT_HEIGHT) {
 
         if (tNextChar == '\0') {
+            ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
             if (OnPatternComplete != NULL) {
                 OnPatternComplete(this); // call the completion callback
                 return;

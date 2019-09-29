@@ -4,9 +4,12 @@
  *  STILL EXPERIMENTAL
  *  Runs 2 patterns simultaneously on a 144 NeoPixel strip. One is the main background pattern
  *  and the other is the fast moves pattern intended to be more random and quite seldom.
+ *  First the background pattern is completely generated
+ *  Then the fast moves pattern overwrites the background. Therefore we can only use small patterns here which do not draw black pixels
  *
- *  The speed is controlled by a potentiometer at pin A0.
+ *  The delay between patterns is controlled by a potentiometer at pin A0.
  *  The pattern stops if the button at pin 2 is pressed.
+ *
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -39,16 +42,16 @@
 
 #define PIN_STOP_BUTTON     4
 #define PIN_TIMING_BUTTON   3
-#define PIN_SPEED_POTI     A0
+#define PIN_DELAY_POTI     A0
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_STRIP  2
 
 #define INTERVAL_BACKGROUND_MIN 10
-#define INTERVAL_FAST_MOVES_MIN 2 // measured 4.3 ms for 144 pixel, but the 1ms clock interrupt is disabled while sending so 2-3 interrupts/ms-ticks are lost.
+#define INTERVAL_FAST_MOVES_MIN 2 // measured 4.3 ms for 144 pixel, but the 1 ms clock interrupt is disabled while sending so 2-3 interrupts/ms-ticks are lost.
 
 #define DELAY_MILLIS_BACKGROUND_MIN 500
 #define DELAY_MILLIS_FAST_MOVES_MIN 4000
-uint16_t sSpeed; // goes from 1 to 10k in exponential scale
+uint16_t sDelay; // goes from 1 to 10k in exponential scale
 
 // onComplete callback functions
 void PatternsBackground(NeoPatterns * aLedsPtr);
@@ -56,21 +59,21 @@ void PatternsFastMoves(NeoPatterns * aLedsPtr);
 
 // construct the NeoPatterns instances
 NeoPatterns NeoPatternsBackground = NeoPatterns(144, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsBackground);
-NeoPatterns NeoPatternsFastMoves = NeoPatterns(144, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsFastMoves);
+NeoPatterns NeoPatternsFastMoves = NeoPatterns(&NeoPatternsBackground, 0, 144, &PatternsFastMoves, false);
 
 /*
  * converts value read at analog pin into exponential scale between 1 and 28
  */
-void getSpeed() {
+void getDelay() {
 
     // convert linear to logarithmic scale
-    float tSpeedValue = analogRead(PIN_SPEED_POTI);
-    Serial.print("SpeedValue=");
-    Serial.print(tSpeedValue);
-    tSpeedValue /= 700; // 700 gives value 0.0 to 1.46
-    sSpeed = pow(10, tSpeedValue); // gives value 1 to 28
+    float tDelayValue = analogRead(PIN_DELAY_POTI);
+    Serial.print("DelayRawValue=");
+    Serial.print(tDelayValue);
+    tDelayValue /= 700; // 700 gives value 0.0 to 1.46
+    sDelay = pow(10, tDelayValue); // gives value 1 to 28
     Serial.print(" -> ");
-    Serial.println(sSpeed);
+    Serial.println(sDelay);
 }
 
 void setup() {
@@ -98,9 +101,6 @@ void setup() {
     Serial.print(F("Free Ram/Stack[bytes]="));
     Serial.println(SP - (uint16_t) __brkval);
 
-    // replace the NeoPatternsFastMoves pixel buffer with the NeoPatternsBackground buffer in order to have 2 Patterns on the same strip
-    NeoPatternsFastMoves.setPixelBuffer(NeoPatternsBackground.getPixels());
-
     pinMode(PIN_STOP_BUTTON, INPUT_PULLUP);
     pinMode(PIN_TIMING_BUTTON, OUTPUT);
     NeoPatternsBackground.ColorWipe(COLOR32_GREEN_HALF, 8); // start the pattern
@@ -113,12 +113,19 @@ bool sRunning = true;
 
 void loop() {
     if (sRunning) {
+        /*
+         * Cannot do this in one if statement, because evaluation will stop after the first true.
+         */
         bool tMustUpdate = NeoPatternsBackground.CheckForUpdate();
         tMustUpdate |= NeoPatternsFastMoves.CheckForUpdate();
         if (tMustUpdate) {
 #ifdef DEBUG
             uint32_t tStartMillis = millis();
 #endif
+            /*
+             * First the background pattern is completely generated
+             * Then the fast moves pattern overwrites the background. Therefore we can only use small patterns which do not draw black pixels
+             */
             NeoPatternsBackground.UpdateOrRedraw();
             NeoPatternsFastMoves.UpdateOrRedraw();
 #ifdef DEBUG
@@ -152,14 +159,14 @@ void PatternsBackground(NeoPatterns * aLedsPtr) {
     /*
      * implement a random delay between each case
      */
-    getSpeed();
-    long tRandomDelay = random(DELAY_MILLIS_BACKGROUND_MIN * sSpeed, DELAY_MILLIS_BACKGROUND_MIN * sSpeed * 4);
+    getDelay();
+    long tRandomDelay = random(DELAY_MILLIS_BACKGROUND_MIN * sDelay, DELAY_MILLIS_BACKGROUND_MIN * sDelay * 4);
     uint16_t tInterval = random(INTERVAL_BACKGROUND_MIN, INTERVAL_BACKGROUND_MIN * 2);
 
     if ((sState & 1) == 1) {
         /*
          * Insert a random delay if sState is odd
-         * is disabled by "sNoDelay"
+         * Can be disabled by patterns using "sNoDelay"
          */
         sState++;
         if (!sNoDelay) {
@@ -213,9 +220,11 @@ void PatternsBackground(NeoPatterns * aLedsPtr) {
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");
+    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    Serial.print("|");
     Serial.print(aLedsPtr->ActivePattern);
-    Serial.print(" Speed=");
-    Serial.print(sSpeed);
+    Serial.print(" Delay=");
+    Serial.print(sDelay);
     Serial.print(" Interval=");
     Serial.print(tInterval);
     Serial.print(" sNoDelay=");
@@ -225,8 +234,9 @@ void PatternsBackground(NeoPatterns * aLedsPtr) {
 
     sState++;
 }
+
 /*
- * Handler for test pattern
+ * Handler for fast and seldom patterns
  * since sState starts with (0++) scanner is the first pattern you see
  */
 void PatternsFastMoves(NeoPatterns * aLedsPtr) {
@@ -235,8 +245,8 @@ void PatternsFastMoves(NeoPatterns * aLedsPtr) {
     /*
      * implement a random delay between each case
      */
-    getSpeed();
-    long tRandomDelay = random(DELAY_MILLIS_FAST_MOVES_MIN * sSpeed, DELAY_MILLIS_FAST_MOVES_MIN * sSpeed * 4);
+    getDelay();
+    long tRandomDelay = random(DELAY_MILLIS_FAST_MOVES_MIN * sDelay, DELAY_MILLIS_FAST_MOVES_MIN * sDelay * 4);
     uint16_t tInterval = random(INTERVAL_FAST_MOVES_MIN, INTERVAL_FAST_MOVES_MIN * 2);
 
     if ((sState & 1) == 1) {
@@ -284,9 +294,11 @@ void PatternsFastMoves(NeoPatterns * aLedsPtr) {
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");
+    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    Serial.print("|");
     Serial.print(aLedsPtr->ActivePattern);
-    Serial.print(" Speed=");
-    Serial.print(sSpeed);
+    Serial.print(" Delay=");
+    Serial.print(sDelay);
     Serial.print(" Interval=");
     Serial.print(tInterval);
     Serial.print(" StateFast=");

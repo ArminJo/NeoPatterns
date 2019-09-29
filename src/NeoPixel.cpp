@@ -25,25 +25,44 @@
 
 #include "NeoPixel.h"
 
+//#define TRACE
+
 NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
-//    PixelOffset = 0;  // 10 byte Flash
+    /* not really needed
+     PixelOffset = 0;  // 8 byte Flash
+     UnderlyingNeoPixelObject = NULL;
+     PixelFlags = 0;
+     */
 }
 
 /*
- * Used to create a NeoPixel, which operates on a segment of the existing NeoPixel object.
- * This creates a new Adafruit_NeoPixel object and replaces the new pixel buffer with the existing one.
- * ATTENTION! show() will set only the FIRST aNumberOfPixels of the aExistingNeoPixelObject and NOT the
+ * Used to create a NeoPixel, which operates on a segment of the underlying NeoPixel object.
+ * This creates a new Adafruit_NeoPixel object and replaces the new pixel buffer with the underlying existing one.
+ * ATTENTION!
+ * @param aShowAllPixel - true = calls show function of the existing NeoPixel object (compatibility mode)
+ *                        false = suppress calling the show function, since it makes no sense because show() would
+ *                                set only the FIRST aNumberOfPixels of the underlying NeoPixelObject
+ * ATTENTION. To save a lot of CPU time set aShowAllPixel to false and use only ExistingNeoPixelObject->show().
+ * if(PartialNeoPixelBar.update()){
+ *   UnderlyingNeoPixelObject->show();
+ * }
  */
-NeoPixel::NeoPixel(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels) :
-        Adafruit_NeoPixel(aNumberOfPixels, aExistingNeoPixelObject->getPin(), aExistingNeoPixelObject->getType()) {
-    BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
+NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+        bool aEnableShowOfUnderlyingPixel) :
+        Adafruit_NeoPixel(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
+    UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
+    BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
     PixelOffset = aPixelOffset;
+    PixelFlags = IS_PARTIAL_PIXEL;
+    if (!aEnableShowOfUnderlyingPixel) {
+        PixelFlags = IS_PARTIAL_PIXEL | DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+    }
     /*
      * Replace buffer with existing one
      */
-    setPixelBuffer(aExistingNeoPixelObject->getPixels());
+    setPixelBuffer(aUnderlyingNeoPixelObject->getPixels());
 }
 
 void NeoPixel::begin() {
@@ -117,10 +136,23 @@ void NeoPixel::clear(void) {
     memset(pixels + (BytesPerPixel * PixelOffset), 0, numBytes);
 }
 
+/*
+ * Checks for valid index / skips invalid ones
+ */
 void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
+#ifdef TRACE
+    Serial.print("N=");
+    Serial.print(n);
+    Serial.print(" Color=");
+    Serial.print(r);
+    Serial.print("|");
+    Serial.print(g);
+    Serial.print("|");
+    Serial.println(b);
+#endif
     // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
     if (n < numLEDs) {
-        n += PixelOffset; // added line
+        n += PixelOffset; // added line to support offsets
         if (brightness) { // See notes in setBrightness()
             r = (r * brightness) >> 8;
             g = (g * brightness) >> 8;
@@ -140,9 +172,21 @@ void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
+#ifdef TRACE
+    Serial.print("N=");
+    Serial.print(n);
+    Serial.print(" Color=");
+    Serial.print(r);
+    Serial.print("|");
+    Serial.print(g);
+    Serial.print("|");
+    Serial.print(b);
+    Serial.print("|");
+    Serial.println(w);
+#endif
     // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
     if (n < numLEDs) {
-        n += PixelOffset; // added line
+        n += PixelOffset; // added lineto support offsets
         if (brightness) { // See notes in setBrightness()
             r = (r * brightness) >> 8;
             g = (g * brightness) >> 8;
@@ -163,9 +207,15 @@ void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_
 }
 
 void NeoPixel::setPixelColor(uint16_t n, uint32_t c) {
+#ifdef TRACE
+    Serial.print("N=");
+    Serial.print(n);
+    Serial.print(" Color=0x");
+    Serial.println(c, HEX);
+#endif
     // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
     if (n < numLEDs) {
-        n += PixelOffset; // added line
+        n += PixelOffset; // added line to support offsets
         uint8_t *p, r = (uint8_t) (c >> 16), g = (uint8_t) (c >> 8), b = (uint8_t) c;
         if (brightness) { // See notes in setBrightness()
             r = (r * brightness) >> 8;

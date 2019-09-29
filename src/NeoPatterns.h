@@ -51,9 +51,14 @@
 #endif
 
 #include "NeoPixel.h"
-#include "Colors.h"
+
+#if !defined(__AVR__) && ! defined(PROGMEM)
+#define PROGMEM void
+#endif
 
 extern char VERSION_NEOPATTERNS[4];
+
+extern const char * const PatternNamesArray[] PROGMEM;
 
 // Pattern types supported:
 #define PATTERN_NONE                0
@@ -62,13 +67,13 @@ extern char VERSION_NEOPATTERNS[4];
 #define PATTERN_FADE                3
 #define PATTERN_DELAY               4
 
-#define PATTERN_SCANNER_EXTENDED    6
-#define PATTERN_STRIPES             7 // includes the old THEATER_CHASE
-#define PATTERN_PROCESS_SELECTIVE   9
-#define PATTERN_FIRE               10
+#define PATTERN_SCANNER_EXTENDED    5
+#define PATTERN_STRIPES             6 // includes the old THEATER_CHASE
+#define PATTERN_PROCESS_SELECTIVE   7
+#define PATTERN_FIRE                8
 
-#define PATTERN_USER_PATTERN1      16
-#define PATTERN_USER_PATTERN2      17
+#define PATTERN_USER_PATTERN1       9
+#define PATTERN_USER_PATTERN2      10
 
 /*
  * Values for Direction
@@ -77,6 +82,8 @@ extern char VERSION_NEOPATTERNS[4];
 #define DIRECTION_LEFT 1
 #define DIRECTION_DOWN 2
 #define DIRECTION_RIGHT 3
+#define DIRECTION_MASK  0x03
+#define OppositeDirection(aDirection) (((aDirection) + 2) & DIRECTION_MASK)
 #define NUMBER_OF_DIRECTIONS 4
 #define DIRECTION_IMPOSSIBLE NUMBER_OF_DIRECTIONS   // No direction possible (for AI)
 #define DIRECTION_NONE 5                            // No button pressed until now
@@ -95,9 +102,10 @@ const char* DirectionToString(uint8_t aDirection);
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
 class NeoPatterns: public virtual NeoPixel {
 public:
-    NeoPatterns(uint16_t aNumberOfPixels, uint8_t pin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
-    NeoPatterns(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+    NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+    NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+            void (*aPatternCompletionCallback)(NeoPatterns*) = NULL, bool aEnableShowOfUnderlyingPixel = true);
 
     void setCallback(void (*callback)(NeoPatterns*));
 
@@ -105,32 +113,33 @@ public:
     bool UpdateOrRedraw();
     bool Update(bool doShow = true);
     bool update(bool doShow = true);
-    void DecrementTotalStepCounter();
+    bool DecrementTotalStepCounter();
+    void NextIndex();
     void NextIndexAndDecrementTotalStepCounter();
-    void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t totalSteps);
+    void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t aTotalSteps);
 
     void updateAndWaitForPatternToStop();
 
     /*
      * PATTERNS
      */
-    void RainbowCycle(uint8_t interval, uint8_t aDirection = DIRECTION_UP);
-    void ColorWipe(color32_t color, uint8_t interval, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void Fade(color32_t color1, color32_t color2, uint16_t steps, uint8_t interval);
+    void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+    void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void Fade(color32_t aColor1, color32_t aColor2, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
 
     /*
      * PATTERN extensions
      */
-    void ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aInterval, uint16_t aNumberOfBouncings = 0, uint8_t aMode = 0,
+    void ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0, uint8_t aMode = 0,
             uint8_t aDirection = DIRECTION_UP);
     void Fire(uint16_t interval, uint16_t repetitions = 100);
     color32_t HeatColor(uint8_t aTemperature);
 
     void Delay(uint16_t aMillis);
     void ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
-            uint16_t steps, uint16_t interval);
-    void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint8_t aInterval,
-            uint16_t aNumberOfSteps, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+            uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
+    void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aIntervalMillis,
+            uint16_t aNumberOfSteps, uint8_t aDirection = DIRECTION_UP);
 
     /*
      * UPDATE functions
@@ -151,12 +160,18 @@ public:
     void Pattern1Update(bool aDoUpdate = true);
     void Pattern2Update(bool aDoUpdate = true);
 
+#if defined(__AVR__)
+    void getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t aBuffersize);
+#else
+    // use PatternNamesArray[aPatternNumber] on other platforms
+#endif
+    void printPatternName(uint8_t aPatternNumber, Stream * aSerial);
     void Debug(Stream * aSerial, bool aFullInfo = true);
 
     /*
      * Variables for almost each pattern
      */
-    uint16_t TotalStepCounter; // total number of steps in the pattern including repetitions.
+    uint16_t TotalStepCounter; // total number of steps in the pattern including repetitions and the last delay step to show the end result.
     uint16_t Index; // or Position. Counter for basic pattern. Current step within the pattern. Counter for basic patterns. Step counter of snake.
     color32_t Color1;       // Main pattern color
 
@@ -177,8 +192,8 @@ public:
      * Internal control variables
      */
     uint8_t ActivePattern;  // which pattern is running
-    unsigned long Interval;   // milliseconds between updates
-    unsigned long lastUpdate; // millis of last update of pattern
+    uint16_t Interval;   // milliseconds between updates
+    unsigned long lastUpdate; // milliseconds of last update of pattern
 
     void (*OnPatternComplete)(NeoPatterns*);  // Callback on completion of pattern
 
@@ -189,19 +204,19 @@ public:
     uint8_t PatternsGeometry; // fire pattern makes no sense on circles
 
     // For ScannerExtended()
-    // Flags 0 -> one pass scanner (rocket or falling star)
-    // Flags +1 -> cylon -> mirror pattern (effective length is 2*length -1)
-    // Flags +2 -> start and end scanner vanishing complete e.g. first and last pattern are empty
-    // Flags +4 -> start pattern at both ends i.e. direction is irrelevant
+    // PatternFlags 0 -> one pass scanner (rocket or falling star)
+    // PatternFlags +1 -> cylon -> mirror pattern (effective length is 2*length -1)
+    // PatternFlags +2 -> start and end scanner vanishing complete e.g. first and last pattern are empty
+    // PatternFlags +4 -> start pattern at both ends i.e. direction is irrelevant
 #define FLAG_SCANNER_EXT_ROCKET             0x00
 #define FLAG_SCANNER_EXT_CYLON              0x01
 #define FLAG_SCANNER_EXT_VANISH_COMPLETE    0x02
 #define FLAG_SCANNER_EXT_START_AT_BOTH_ENDS 0x04
 
-    // Flags +0x10 -> clear before or at first draw
-#define FLAG_DO_NOT_CLEAR                   0x10 // do not write black pixels - for colorWipe() and ScannerExtended()
+// Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
+#define FLAG_DO_NOT_CLEAR                   0x10
 
-    uint8_t Flags;  // special behavior of the pattern
+    uint8_t PatternFlags;  // special behavior of the pattern
     // for Cylon, Fire, multipleHandler
     uint16_t Repetitions; // counter for multipleHandler
 
@@ -219,8 +234,8 @@ color32_t DimColor(NeoPatterns* aLedPtr);
 color32_t BrightenColor(NeoPatterns* aLedPtr);
 
 // multiple pattern example
-void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aDuration, uint8_t aRepetitions,
-        void (*aNextOnCompleteHandler)(NeoPatterns*));
+void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
+        void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection = DIRECTION_DOWN);
 void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 
 void allPatternsRandomExample(NeoPatterns * aLedsPtr);

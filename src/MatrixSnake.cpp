@@ -123,7 +123,7 @@ void MatrixSnake::clearResetAndShowSnakeAndNewApple() {
     SnakeLength = sizeof(SnakeInitialPixels) / sizeof(position);
     Index = 0; // steps already gone
     Direction = DIRECTION_NONE;
-    Flags &= ~FLAG_SNAKE_SHOW_LENGTH_SCORE;
+    PatternFlags &= ~FLAG_SNAKE_SHOW_LENGTH_SCORE;
 
     // Clear all pixels
     clear();
@@ -181,12 +181,12 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
         if (PinOfUpButton != 0) {
             pinMode(aPinOfUpButton, INPUT_PULLUP);
             pinMode(aPinOfDownButton, INPUT_PULLUP);
-            Flags = FLAG_USE_4_BUTTONS;
+            PatternFlags = FLAG_USE_4_BUTTONS;
         } else {
-            Flags = 0; // 2 button mode
+            PatternFlags = 0; // 2 button mode
         }
     } else {
-        Flags = FLAG_SNAKE_AUTORUN; // start in autorun mode
+        PatternFlags = FLAG_SNAKE_AUTORUN; // start in autorun mode
     }
 }
 
@@ -234,14 +234,14 @@ uint8_t MatrixSnake::SnakeInputHandler() {
          */
         if (digitalRead(PinOfUpButton) == LOW) {
             tNewDirection = DIRECTION_UP;
-            Flags = FLAG_USE_4_BUTTONS;
+            PatternFlags = FLAG_USE_4_BUTTONS;
         } else if (digitalRead(PinOfDownButton) == LOW) {
             tNewDirection = DIRECTION_DOWN;
-            Flags = FLAG_USE_4_BUTTONS;
+            PatternFlags = FLAG_USE_4_BUTTONS;
         }
     }
 
-    if (Flags & FLAG_USE_4_BUTTONS) {
+    if (PatternFlags & FLAG_USE_4_BUTTONS) {
         /*
          * 4 buttons direct direction input
          */
@@ -428,7 +428,7 @@ bool MatrixSnake::moveSnakeAndCheckApple(position tSnakeNewHeadPosition) {
  */
 void MatrixSnake::SnakeUpdate() {
 
-    if (Flags & FLAG_SNAKE_AUTORUN) {
+    if (PatternFlags & FLAG_SNAKE_AUTORUN) {
         // this calls the AI to simulate button presses which leads to a direction
         Direction = getNextSnakeDirection(this);
     } else {
@@ -436,7 +436,7 @@ void MatrixSnake::SnakeUpdate() {
          * Handling of showing end and score for plain snake pattern.
          * For Autorun, this is done in the SnakeAutorunCompleteHandler()
          */
-        if (Flags & FLAG_SNAKE_SHOW_END) {
+        if (PatternFlags & FLAG_SNAKE_SHOW_END) {
             // show last state until index gets 0, then show score
             Index--;
             if (Index == 0) {
@@ -444,7 +444,7 @@ void MatrixSnake::SnakeUpdate() {
                 showScore();
             }
             return;
-        } else if (Flags & FLAG_SNAKE_SHOW_LENGTH_SCORE) {
+        } else if (PatternFlags & FLAG_SNAKE_SHOW_LENGTH_SCORE) {
             // show score until index gets 0, then reset snake
             Index--;
             if (Index == 0) {
@@ -499,6 +499,7 @@ void MatrixSnake::SnakeUpdate() {
             } else {
                 free(SnakePixelList);
                 SnakePixelList = NULL;
+                ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
                 OnPatternComplete(this); // call the completion callback
             }
             return;
@@ -546,8 +547,8 @@ void MatrixSnake::SnakeEndHandler() {
 #endif
 
     Index = SHOW_END_INTERVAL_MILLIS / Interval;
-    Flags |= FLAG_SNAKE_SHOW_END; // signal end shown -> enables delay
-    Flags &= ~FLAG_SNAKE_SHOW_LENGTH_SCORE;
+    PatternFlags |= FLAG_SNAKE_SHOW_END; // signal end shown -> enables delay
+    PatternFlags &= ~FLAG_SNAKE_SHOW_LENGTH_SCORE;
 }
 
 /*
@@ -564,8 +565,8 @@ void MatrixSnake::showScore() {
      * set delay for number display
      */
     Index = SHOW_NUMBER_INTERVAL_MILLIS / Interval;
-    Flags |= FLAG_SNAKE_SHOW_LENGTH_SCORE; // signal number shown -> enables delay
-    Flags &= ~FLAG_SNAKE_SHOW_END;
+    PatternFlags |= FLAG_SNAKE_SHOW_LENGTH_SCORE; // signal number shown -> enables delay
+    PatternFlags &= ~FLAG_SNAKE_SHOW_END;
 }
 
 uint8_t computeDirection(position aStartPosition, position aEndPosition) {

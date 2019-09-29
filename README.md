@@ -55,10 +55,17 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 1.1.0
+- Fuction `getPatternName()` added.
+- Fuction `printPatternName()` added.
+- Improved support for pattern running on parts of NeoPixel bars etc.
+- New example for 3 pattern running on parts of one NeoPixel bar.
+- New simple example.
+- Changed signature of `Stripes()` and reset `ActivePattern` to `PATTERN_NONE` at the end of each pattern.
 ### Version 1.0.1
-Support of segments of NeoPixel bars etc.
+- Support of pattern running on parts of NeoPixel bars etc.
 ### Version 1.0.0
-Initial Arduino library version
+- Initial Arduino library version
 
 ## Travis CI
 The NeoPatterns library examples are built on Travis CI for the following boards:

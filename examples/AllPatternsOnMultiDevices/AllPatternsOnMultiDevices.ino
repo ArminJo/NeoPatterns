@@ -1,5 +1,5 @@
 /*
- *  NeoPatternsDemo.cpp
+ *  AllPatternsOnMultiDevices.cpp
  *
  *  Shows all patterns for strips rings and matrixes included in the NeoPattern MatrixNeoPattern and Snake library.
  *
@@ -25,7 +25,8 @@
  *
  */
 
-// Version 1.2 Added low battery voltage shutdown
+// Version 1.2
+// - Added low battery voltage shutdown
 #define VERSION_EXAMPLE "1.2"
 
 #include <Arduino.h>
@@ -35,6 +36,8 @@
 #include "ADCUtils.h"
 #include <avr/power.h>
 #include <avr/pgmspace.h>
+
+//#define ALL_PATTERN_ON_ONE_STRIP
 
 #define VCC_STOP_THRESHOLD_MILLIVOLT 3400   // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
 #define VCC_STOP_MIN_MILLIVOLT 3200         // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
@@ -55,13 +58,23 @@
 
 // onComplete callback functions
 void TestPatterns(NeoPatterns * aLedsPtr);
-
+#ifdef ALL_PATTERN_ON_ONE_STRIP
+#define PIN_NEOPIXEL_ALL        2
+NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
+NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, &allPatternsRandomExample);
+NeoPatterns bar24 = NeoPatterns(&allPixel, 19, 24, &TestPatterns);
+NeoPatterns ring12 = NeoPatterns(&allPixel, 46, 12, &allPatternsRandomExample);
+NeoPatterns ring16 = NeoPatterns(&allPixel, 61, 16, &allPatternsRandomExample);
+NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, &allPatternsRandomExample);
+#else
 // construct the NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &TestPatterns);
 NeoPatterns ring12 = NeoPatterns(12, PIN_NEOPIXEL_RING_12, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring16 = NeoPatterns(16, PIN_NEOPIXEL_RING_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
+#endif
+
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
@@ -115,8 +128,19 @@ void setup() {
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
     NeoPixelMatrix.clear(); // Clear matrix
     NeoPixelMatrix.show();
-    NeoPixelMatrix.Delay(5000); // start later
+    NeoPixelMatrix.Delay(7000); // start later
     setMatrixAndSnakePatternsDemoTickerText(F("I love NeoPixel"));
+
+    /*
+     * Print voltage once on matrix
+     */
+    char sStringBufferForVCC[7] = "xxxxmV";
+    uint16_t tVCC = getVCCVoltageMillivoltSimple();
+    if (tVCC < 4300) {
+        itoa(tVCC, sStringBufferForVCC, 10);
+        NeoPixelMatrix.Ticker(sStringBufferForVCC, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, DIRECTION_LEFT);
+    }
+
     Serial.println("started");
 }
 
@@ -157,7 +181,6 @@ void loop() {
      */
     static long sLastMillisOfVoltageCheck;
     static bool sVoltageTooLow = false; // one time flag
-    static char sStringBufferForVCC[7] = "xxxxmV";
 
     if (millis() - sLastMillisOfVoltageCheck >= VCC_STOP_PERIOD_MILLIS) {
         sLastMillisOfVoltageCheck = millis();
@@ -166,20 +189,12 @@ void loop() {
         Serial.print(tVCC);
         Serial.println(F("mV"));
 
-        /*
-         * Print voltage once on matrix
-         */
-        if (millis() < 3000 && tVCC < 4300) {
-            itoa(tVCC, sStringBufferForVCC, 10);
-            NeoPixelMatrix.Ticker(sStringBufferForVCC, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, DIRECTION_LEFT);
-        }
-
         if (!sVoltageTooLow) {
             if (checkVCC(tVCC)) {
                 sVoltageTooLow = true;
 
-                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, FALLING_STAR_DURATION, 1, NULL);
-                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, FALLING_STAR_DURATION, 1, NULL);
+                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, NULL);
+                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, NULL);
                 ring12.clear();
                 ring12.show();
                 ring16.clear();
@@ -252,7 +267,7 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
         break;
     case 8:
         // switch to random
-        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 30, 3, &allPatternsRandomExample);
+        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, 30, 3, &allPatternsRandomExample);
         sState = -1; // Start from beginning
         break;
     default:
@@ -265,6 +280,8 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");
+    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    Serial.print("|");
     Serial.print(aLedsPtr->ActivePattern);
     Serial.print(" State=");
     Serial.println(sState);

@@ -42,7 +42,7 @@ uint8_t Blue(color32_t color);
 class NeoPixel: public Adafruit_NeoPixel {
 public:
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
-    NeoPixel(NeoPixel * aExistingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels);
+    NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, bool aEnableShowOfUnderlyingPixel = true);
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
@@ -79,7 +79,11 @@ public:
     void TestWS2812Resolution();
 
     uint8_t BytesPerPixel;  // can be 3 or 4
+#define IS_PARTIAL_PIXEL                        0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
+#define DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT 0x02 // use negative logic because evaluation is simpler then
+    uint8_t PixelFlags;
     uint16_t PixelOffset; // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
+    NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
 };
 
 #endif /* SRC_LIB_NEOPATTERNS_NEOPIXEL_H_ */
