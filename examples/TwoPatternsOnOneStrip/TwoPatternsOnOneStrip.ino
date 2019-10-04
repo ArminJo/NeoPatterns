@@ -35,16 +35,19 @@
 
 #include <Arduino.h>
 
-#include "ArduinoUtils.h"
 #include <NeoPatterns.h>
+
+#define USE_BUTTON_1
+#include "EasyButtonAtInt01.h"
 
 #define VERSION_EXAMPLE "1.0"
 
-#define PIN_STOP_BUTTON     4
-#define PIN_TIMING_BUTTON   3
+EasyButton Button0AtPin3(false);
+
+#define PIN_TIMING_DEBUG_BUTTON   6
 #define PIN_DELAY_POTI     A0
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN_NEOPIXEL_STRIP  2
+#define PIN_NEOPIXEL_STRIP  5
 
 #define INTERVAL_BACKGROUND_MIN 10
 #define INTERVAL_FAST_MOVES_MIN 2 // measured 4.3 ms for 144 pixel, but the 1 ms clock interrupt is disabled while sending so 2-3 interrupts/ms-ticks are lost.
@@ -101,8 +104,7 @@ void setup() {
     Serial.print(F("Free Ram/Stack[bytes]="));
     Serial.println(SP - (uint16_t) __brkval);
 
-    pinMode(PIN_STOP_BUTTON, INPUT_PULLUP);
-    pinMode(PIN_TIMING_BUTTON, OUTPUT);
+    pinMode(PIN_TIMING_DEBUG_BUTTON, OUTPUT);
     NeoPatternsBackground.ColorWipe(COLOR32_GREEN_HALF, 8); // start the pattern
 //    NeoPatternsBackground.ColorSet(COLOR32_RED); // start the pattern
     NeoPatternsFastMoves.ScannerExtended(COLOR32_BLUE_HALF, 16, 8, 0, 0, DIRECTION_DOWN); // start the pattern
@@ -136,16 +138,14 @@ void loop() {
                 Serial.println((tEndMillis - tStartMillis));
             }
 #endif
-//        digitalWrite(PIN_TIMING_BUTTON, HIGH);
+//        digitalWrite(PIN_TIMING_DEBUG_BUTTON, HIGH);
             NeoPatternsBackground.show(); // 4.5 ms for 144 pixel
-//        digitalWrite(PIN_TIMING_BUTTON, LOW);
+//        digitalWrite(PIN_TIMING_DEBUG_BUTTON, LOW);
         }
     }
 //    NeoPixelTest.Debug(false);
-    if (wasButtonJustPressed(PIN_STOP_BUTTON)) {
-        sRunning = !sRunning;
-    }
 
+    sRunning = !Button0AtPin3.ButtonToggleState;
 }
 
 /*
