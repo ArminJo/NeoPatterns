@@ -58,8 +58,9 @@ NeoPatterns on breadboard
 
 # Revision History
 ### Version 1.1.0
-- Fuction `getPatternName()` added.
-- Fuction `printPatternName()` added.
+- Function `getPatternName()` added.
+- Function `printPatternName()` added.
+- Function `drawBar()` added.
 - Improved support for pattern running on parts of NeoPixel bars etc.
 - New example for 3 pattern running on parts of one NeoPixel bar.
 - New simple example.

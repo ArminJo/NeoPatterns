@@ -137,96 +137,142 @@ void NeoPixel::clear(void) {
 }
 
 /*
+ * @param aDrawFromBottom - false: Bar is top down, i.e. it starts at the highest pixel index
+ */
+void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        bool tDrawPixel;
+        if (aDrawFromBottom) {
+            tDrawPixel = (i < aBarLength);
+        } else {
+            tDrawPixel = (i >= (numLEDs - aBarLength));
+        }
+        if (tDrawPixel) {
+            setPixelColor(i, aColor);
+        } else {
+            // Clear pixel
+            setPixelColor(i, 0, 0, 0);
+        }
+    }
+}
+
+/*
+ * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
+ * @param aDrawFromBottom - false: Bar is top down, i.e. it starts at the highest pixel index
+ */
+void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t * aColorArrayPtr, bool aDrawFromBottom) {
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        bool tDrawPixel;
+        if (aDrawFromBottom) {
+            tDrawPixel = (i < aBarLength);
+        } else {
+            tDrawPixel = (i >= (numLEDs - aBarLength));
+        }
+        if (tDrawPixel) {
+            if (aDrawFromBottom) {
+                setPixelColor(i, aColorArrayPtr[(numLEDs - 1) - i]);
+            } else {
+                setPixelColor(i, aColorArrayPtr[i]);
+            }
+            setPixelColor(i, aColorArrayPtr[i]);
+        } else {
+            // Clear pixel
+            setPixelColor(i, 0, 0, 0);
+        }
+    }
+}
+
+/*
  * Checks for valid index / skips invalid ones
  */
-void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
+void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
 #ifdef TRACE
-    Serial.print("N=");
-    Serial.print(n);
+    Serial.print("Index=");
+    Serial.print(aPixelIndex);
     Serial.print(" Color=");
-    Serial.print(r);
+    Serial.print(aRed);
     Serial.print("|");
-    Serial.print(g);
+    Serial.print(aGreen);
     Serial.print("|");
-    Serial.println(b);
+    Serial.println(aBlue);
 #endif
     // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
-    if (n < numLEDs) {
-        n += PixelOffset; // added line to support offsets
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // added line to support offsets
         if (brightness) { // See notes in setBrightness()
-            r = (r * brightness) >> 8;
-            g = (g * brightness) >> 8;
-            b = (b * brightness) >> 8;
+            aRed = (aRed * brightness) >> 8;
+            aGreen = (aGreen * brightness) >> 8;
+            aBlue = (aBlue * brightness) >> 8;
         }
         uint8_t *p;
         if (wOffset == rOffset) { // Is an RGB-type strip
-            p = &pixels[n * 3];    // 3 bytes per pixel
+            p = &pixels[aPixelIndex * 3];    // 3 bytes per pixel
         } else {                 // Is a WRGB-type strip
-            p = &pixels[n * 4];    // 4 bytes per pixel
+            p = &pixels[aPixelIndex * 4];    // 4 bytes per pixel
             p[wOffset] = 0;        // But only R,G,B passed -- set W to 0
         }
-        p[rOffset] = r;          // R,G,B always stored
-        p[gOffset] = g;
-        p[bOffset] = b;
+        p[rOffset] = aRed;          // R,G,B always stored
+        p[gOffset] = aGreen;
+        p[bOffset] = aBlue;
     }
 }
 
-void NeoPixel::setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
+void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
 #ifdef TRACE
-    Serial.print("N=");
-    Serial.print(n);
+    Serial.print("Index=");
+    Serial.print(aPixelIndex);
     Serial.print(" Color=");
-    Serial.print(r);
+    Serial.print(aRed);
     Serial.print("|");
-    Serial.print(g);
+    Serial.print(aGreen);
     Serial.print("|");
-    Serial.print(b);
+    Serial.print(aBlue);
     Serial.print("|");
-    Serial.println(w);
+    Serial.println(aWhite);
 #endif
     // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
-    if (n < numLEDs) {
-        n += PixelOffset; // added lineto support offsets
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // added lineto support offsets
         if (brightness) { // See notes in setBrightness()
-            r = (r * brightness) >> 8;
-            g = (g * brightness) >> 8;
-            b = (b * brightness) >> 8;
-            w = (w * brightness) >> 8;
+            aRed = (aRed * brightness) >> 8;
+            aGreen = (aGreen * brightness) >> 8;
+            aBlue = (aBlue * brightness) >> 8;
+            aWhite = (aWhite * brightness) >> 8;
         }
         uint8_t *p;
         if (wOffset == rOffset) { // Is an RGB-type strip
-            p = &pixels[n * 3];    // 3 bytes per pixel (ignore W)
+            p = &pixels[aPixelIndex * 3];    // 3 bytes per pixel (ignore W)
         } else {                 // Is a WRGB-type strip
-            p = &pixels[n * 4];    // 4 bytes per pixel
-            p[wOffset] = w;        // Store W
+            p = &pixels[aPixelIndex * 4];    // 4 bytes per pixel
+            p[wOffset] = aWhite;        // Store W
         }
-        p[rOffset] = r;          // Store R,G,B
-        p[gOffset] = g;
-        p[bOffset] = b;
+        p[rOffset] = aRed;          // Store R,G,B
+        p[gOffset] = aGreen;
+        p[bOffset] = aBlue;
     }
 }
 
-void NeoPixel::setPixelColor(uint16_t n, uint32_t c) {
+void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
 #ifdef TRACE
-    Serial.print("N=");
-    Serial.print(n);
+    Serial.print("Index=");
+    Serial.print(aPixelIndex);
     Serial.print(" Color=0x");
-    Serial.println(c, HEX);
+    Serial.println(aColor, HEX);
 #endif
     // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
-    if (n < numLEDs) {
-        n += PixelOffset; // added line to support offsets
-        uint8_t *p, r = (uint8_t) (c >> 16), g = (uint8_t) (c >> 8), b = (uint8_t) c;
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // added line to support offsets
+        uint8_t *p, r = (uint8_t) (aColor >> 16), g = (uint8_t) (aColor >> 8), b = (uint8_t) aColor;
         if (brightness) { // See notes in setBrightness()
             r = (r * brightness) >> 8;
             g = (g * brightness) >> 8;
             b = (b * brightness) >> 8;
         }
         if (wOffset == rOffset) {
-            p = &pixels[n * 3];
+            p = &pixels[aPixelIndex * 3];
         } else {
-            p = &pixels[n * 4];
-            uint8_t w = (uint8_t) (c >> 24);
+            p = &pixels[aPixelIndex * 4];
+            uint8_t w = (uint8_t) (aColor >> 24);
             p[wOffset] = brightness ? ((w * brightness) >> 8) : w;
         }
         p[rOffset] = r;
@@ -259,31 +305,31 @@ color32_t NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aG
     return Color(aRed, aGreen, aBlue);
 }
 // Calculate 50% dimmed version of a color
-uint32_t NeoPixel::DimColor(color32_t color) {
+uint32_t NeoPixel::DimColor(color32_t aColor) {
 // Shift R, G and B components one bit to the right
-    uint32_t dimColor = Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
+    uint32_t dimColor = Color(Red(aColor) >> 1, Green(aColor) >> 1, Blue(aColor) >> 1);
     return dimColor;
 }
 
 // Set all pixels to a color (synchronously)
-void NeoPixel::ColorSet(color32_t color) {
+void NeoPixel::ColorSet(color32_t aColor) {
     for (uint16_t i = 0; i < numLEDs; i++) {
-        setPixelColor(i, color);
+        setPixelColor(i, aColor);
     }
 }
 
 // Input a value 0 to 255 to get a color value.
 // The colors are a transition r - g - b - back to r.
-color32_t NeoPixel::Wheel(uint8_t WheelPos) {
-    WheelPos = 255 - WheelPos;
-    if (WheelPos < 85) {
-        return Color(255 - (WheelPos * 3), 0, WheelPos * 3);
-    } else if (WheelPos < 170) {
-        WheelPos -= 85;
-        return Color(0, WheelPos * 3, 255 - (WheelPos * 3));
+color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
+    aWheelPos = 255 - aWheelPos;
+    if (aWheelPos < 85) {
+        return Color(255 - (aWheelPos * 3), 0, aWheelPos * 3);
+    } else if (aWheelPos < 170) {
+        aWheelPos -= 85;
+        return Color(0, aWheelPos * 3, 255 - (aWheelPos * 3));
     } else {
-        WheelPos -= 170;
-        return Color(WheelPos * 3, 255 - (WheelPos * 3), 0);
+        aWheelPos -= 170;
+        return Color(aWheelPos * 3, 255 - (aWheelPos * 3), 0);
     }
 }
 

@@ -28,6 +28,8 @@
 
 #include "MatrixNeoPixel.h"
 
+//#define DEBUG
+
 // Demo 8x8 heart graphics
 const uint8_t heart8x8[] PROGMEM = { 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18, 0x00 };
 
@@ -43,62 +45,66 @@ void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)
     LayoutMappingFunction = aLayoutMappingFunction;
 }
 
-void MatrixNeoPixel::setMatrixPixelColor(uint8_t x, uint8_t y, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
+void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
 #ifdef DEBUG
     Serial.print(F("set x="));
-    Serial.print(x);
+    Serial.print(aColumnX);
     Serial.print(F(" y="));
-    Serial.print(y);
+    Serial.print(aRowY);
     Serial.print(F(" n="));
-    Serial.print(LayoutMapping(x, y));
-    Serial.print(F(" color="));
-    Serial.println(a32BitColor, HEX);
+    Serial.print(LayoutMapping(aColumnX, aRowY));
+    Serial.print(" Color=");
+    Serial.print(aRed);
+    Serial.print("|");
+    Serial.print(aGreen);
+    Serial.print("|");
+    Serial.println(aBlue);
 #endif
     if (LayoutMappingFunction == NULL) {
-        setPixelColor(LayoutMapping(x, y), aRed, aGreen, aBlue);
+        setPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
     } else {
-        setPixelColor(LayoutMappingFunction(x, y, Columns, Rows), aRed, aGreen, aBlue);
+        setPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), aRed, aGreen, aBlue);
     }
 }
 
 /*
  * If LayoutMappingFunction is not set, use ZTypeMapping.
  */
-void MatrixNeoPixel::setMatrixPixelColor(uint8_t x, uint8_t y, color32_t a32BitColor) {
+void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
 #ifdef DEBUG
     Serial.print(F("set x="));
-    Serial.print(x);
+    Serial.print(aColumnX);
     Serial.print(F(" y="));
-    Serial.print(y);
+    Serial.print(aRowY);
     Serial.print(F(" n="));
-    Serial.print(LayoutMapping(x, y));
+    Serial.print(LayoutMapping(aColumnX, aRowY));
     Serial.print(F(" color="));
     Serial.println(a32BitColor, HEX);
 #endif
     if (LayoutMappingFunction == NULL) {
-        setPixelColor(LayoutMapping(x, y), a32BitColor);
+        setPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
     } else {
-        setPixelColor(LayoutMappingFunction(x, y, Columns, Rows), a32BitColor);
+        setPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), a32BitColor);
     }
 }
 
 /*
  * If LayoutMappingFunction is not set, use ZTypeMapping.
  */
-uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t x, uint8_t y) {
+uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
     uint32_t tColor;
     if (LayoutMappingFunction == NULL) {
-        tColor = getPixelColor(LayoutMapping(x, y));
+        tColor = getPixelColor(LayoutMapping(aColumnX, aRowY));
     } else {
-        tColor = getPixelColor(LayoutMappingFunction(x, y, Columns, Rows));
+        tColor = getPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows));
     }
 #ifdef DEBUG
     Serial.print(F("set x="));
-    Serial.print(x);
+    Serial.print(aColumnX);
     Serial.print(F(" y="));
-    Serial.print(y);
+    Serial.print(aRowY);
     Serial.print(F(" n="));
-    Serial.print(LayoutMapping(x, y));
+    Serial.print(LayoutMapping(aColumnX, aRowY));
     Serial.print(F(" color="));
     Serial.println(tColor, HEX);
 #endif
@@ -159,6 +165,60 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
         }
     }
     return tRetvalue;
+}
+
+/*
+ * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
+ */
+void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom) {
+
+    for (uint8_t i = 0; i < Rows; i++) {
+        bool tDrawPixel;
+         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
+        if (aDrawFromBottom) {
+            tDrawPixel = (i >= (Rows - aBarLength));
+        } else {
+            tDrawPixel = (i < aBarLength);
+        }
+        if (tDrawPixel) {
+            setMatrixPixelColor(aColumnX, i, aColor);
+        } else {
+            // Clear pixel
+            setMatrixPixelColor(aColumnX, i, 0, 0, 0);
+        }
+
+    }
+}
+
+/*
+ * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
+ * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
+ */
+void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t * aColorArrayPtr,
+        bool aDrawFromBottom) {
+
+    uint8_t j = Rows - 1;
+    for (uint8_t i = 0; i < Rows; i++) {
+        bool tDrawPixel;
+
+        // Since top left is (0,0) draw from top is like draw from bottom for simple bars
+        if (aDrawFromBottom) {
+            tDrawPixel = (i >= (Rows - aBarLength));
+        } else {
+            tDrawPixel = (i < aBarLength);
+        }
+        if (tDrawPixel) {
+            if (aDrawFromBottom) {
+                setMatrixPixelColor(aColumnX, i, aColorArrayPtr[j]);
+            } else {
+                setMatrixPixelColor(aColumnX, i, aColorArrayPtr[i]);
+            }
+        } else {
+            // Clear pixel
+            setMatrixPixelColor(aColumnX, i, 0, 0, 0);
+        }
+        j--;
+    }
 }
 
 /*

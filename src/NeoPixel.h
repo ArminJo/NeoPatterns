@@ -42,7 +42,8 @@ uint8_t Blue(color32_t color);
 class NeoPixel: public Adafruit_NeoPixel {
 public:
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
-    NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, bool aEnableShowOfUnderlyingPixel = true);
+    NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+            bool aEnableShowOfUnderlyingPixel = true);
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
@@ -54,8 +55,8 @@ public:
     // Version with error message
     bool begin(Stream * aSerial);
 
-    void ColorSet(color32_t color);
-    uint32_t DimColor(color32_t color);
+    void ColorSet(color32_t aColor);
+    uint32_t DimColor(color32_t aColor);
     void resetBrightnessValue(); // resets internal brightness control value to full to support restoring of patterns while brightening
     uint8_t getBytesPerPixel();
     neoPixelType getType();
@@ -65,13 +66,15 @@ public:
 
     // Functions to support PixelOffset
     void clear(void);
-    void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
-    void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
-    void setPixelColor(uint16_t n, uint32_t c);
+    void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
+    void setPixelColor(uint16_t aPixelIndex, uint32_t aColor);
+    void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
+    void drawBarFromColorArray(uint16_t aBarLength, color32_t * aColorArrayPtr, bool aDrawFromBottom = true);
 
     color32_t addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     // Static functions
-    static color32_t Wheel(uint8_t WheelPos);
+    static color32_t Wheel(uint8_t aWheelPos);
     static uint8_t gamma5(uint8_t aLinearBrightnessValue);
     static uint8_t gamma5WithSpecialZero(uint8_t aLinearBrightnessValue);
     static color32_t gamma5FromColor(color32_t aLinearBrightnessColor);
