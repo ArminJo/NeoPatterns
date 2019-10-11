@@ -79,6 +79,7 @@ typedef uint32_t color32_t;
 #define COLOR32_WHITE          COLOR32(255,255,255)
 #define COLOR32_WHITE_HALF     COLOR32(128,128,128) // to reduce power consumption
 #define COLOR32_WHITE_QUARTER  COLOR32(64,64,64)    // to reduce power consumption
+#define COLOR32_WHITE_EIGHTH   COLOR32(32,32,32)    // to reduce power consumption
 #define COLOR32_BLACK          COLOR32(0,0,0)
 #define COLOR32_RED            COLOR32(255,0,0)
 #define COLOR32_RED_HALF       COLOR32(128,0,0)
@@ -90,9 +91,17 @@ typedef uint32_t color32_t;
 #define COLOR32_BLUE_HALF      COLOR32(0,0,128)
 #define COLOR32_BLUE_QUARTER   COLOR32(0,0,64)
 #define COLOR32_YELLOW         COLOR32(255,200,0) // value was visually determined
+#define COLOR32_YELLOW_HALF    COLOR32(128,100,0)
+#define COLOR32_YELLOW_QUARTER COLOR32(64,50,0)
 #define COLOR32_ORANGE         COLOR32(255,64,0)  // value was visually determined
+#define COLOR32_ORANGE_HALF    COLOR32(128,32,0)
+#define COLOR32_ORANGE_QUARTER COLOR32(64,16,0)
 #define COLOR32_PURPLE         COLOR32(255,0,255)
+#define COLOR32_PURPLE_HALF    COLOR32(128,0,128)
+#define COLOR32_PURPLE_QUARTER COLOR32(64,0,64)
 #define COLOR32_CYAN           COLOR32(0,255,255)
+#define COLOR32_CYAN_HALF      COLOR32(0,128,128)
+#define COLOR32_CYAN_QUARTER   COLOR32(0,64,64)
 
 #endif /* COLORS_H_ */
 
