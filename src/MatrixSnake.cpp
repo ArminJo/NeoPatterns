@@ -814,7 +814,7 @@ uint8_t MatrixSnake::getNextSnakeDir() {
 
 /****************************************************
  * SNAKE AUTORUN
- * Uses build in or user supplied auto solver
+ * Uses built in or user supplied auto solver
  * SnakeAutorun is implemented as a COMBINED PATTERN
  ****************************************************/
 #define AUTORUN_MODE_SHOW_END 0

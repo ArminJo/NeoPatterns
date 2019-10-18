@@ -41,7 +41,7 @@
 
 #define VCC_STOP_THRESHOLD_MILLIVOLT 3400   // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
 #define VCC_STOP_MIN_MILLIVOLT 3200         // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
-#define VCC_STOP_PERIOD_MILLIS 2000         // Period of VCC checks
+#define VCC_CHECK_PERIOD_MILLIS 2000         // Period of VCC checks
 #define VCC_STOP_PERIOD_REPETITIONS 9       // Shutdown after 9 times (18 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_STOP_MIN_MILLIVOLT
 #define FALLING_STAR_DURATION 12
 #endif
@@ -159,10 +159,10 @@ bool checkVCC(uint16_t aVCC) {
         if (aVCC < VCC_STOP_MIN_MILLIVOLT) {
             // emergency shutdown
             sVoltageTooLowCounter = VCC_STOP_PERIOD_REPETITIONS;
-            Serial.println(F("Voltage < 3.2 Volt detected"));
+            Serial.println(F("Voltage < 3.2 volt detected"));
         } else {
             sVoltageTooLowCounter++;
-            Serial.println(F("Voltage < 3.4 Volt detected"));
+            Serial.println(F("Voltage < 3.4 volt detected"));
         }
         if (sVoltageTooLowCounter == VCC_STOP_PERIOD_REPETITIONS) {
             Serial.println(F("Shut down"));
@@ -182,7 +182,7 @@ void loop() {
     static long sLastMillisOfVoltageCheck;
     static bool sVoltageTooLow = false; // one time flag
 
-    if (millis() - sLastMillisOfVoltageCheck >= VCC_STOP_PERIOD_MILLIS) {
+    if (millis() - sLastMillisOfVoltageCheck >= VCC_CHECK_PERIOD_MILLIS) {
         sLastMillisOfVoltageCheck = millis();
         uint16_t tVCC = getVCCVoltageMillivoltSimple();
         Serial.print(F("VCC="));

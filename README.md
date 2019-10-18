@@ -2,6 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
+[![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/NeoPatterns/latest)](https://github.com/ArminJo/NeoPatterns/commits/master)
 [![Build Status](https://travis-ci.org/ArminJo/NeoPatterns.svg?branch=master)](https://travis-ci.org/ArminJo/NeoPatterns)
 [![Hit Counter](https://hitcounter.pythonanywhere.com/count/tag.svg?url=https%3A%2F%2Fgithub.com%2FArminJo%2FNeoPatterns)](https://github.com/brentvollebregt/hit-counter)
 
@@ -48,7 +49,7 @@ Examples:
 # SNAKE GAME
 ## SnakeGame Example
 The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must define the symbol `USE_SERIAL_CONTROL` or comment out line 33 in `MatrixSnake.h`.
-The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br\>
+The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
 **With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
@@ -57,10 +58,11 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 1.1.1
+- Function `drawBar()` added.
 ### Version 1.1.0
 - Function `getPatternName()` added.
 - Function `printPatternName()` added.
-- Function `drawBar()` added.
 - Improved support for pattern running on parts of NeoPixel bars etc.
 - New example for 3 pattern running on parts of one NeoPixel bar.
 - New simple example.
