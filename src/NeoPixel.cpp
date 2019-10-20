@@ -357,10 +357,10 @@ uint8_t NeoPixel::gamma5WithSpecialZero(uint8_t aLinearBrightnessValue) {
     return pgm_read_byte(&_gammaTable32[(aLinearBrightnessValue / 8)]);
 }
 
-color32_t NeoPixel::gamma5FromColor(color32_t aLinearBrightnessColor) {
-    uint8_t tRed = pgm_read_byte(&_gammaTable32[(Red(aLinearBrightnessColor) / 8)]);
-    uint8_t tGreen = pgm_read_byte(&_gammaTable32[(Green(aLinearBrightnessColor) / 8)]);
-    uint8_t tBlue = pgm_read_byte(&_gammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
+color32_t NeoPixel::gamma5FromColor(color32_t aAllColorsSameBrightnessColor) {
+    uint8_t tRed = pgm_read_byte(&_gammaTable32[(Red(aAllColorsSameBrightnessColor) / 8)]);
+    uint8_t tGreen = pgm_read_byte(&_gammaTable32[(Green(aAllColorsSameBrightnessColor) / 8)]);
+    uint8_t tBlue = pgm_read_byte(&_gammaTable32[(Blue(aAllColorsSameBrightnessColor) / 8)]);
     return Color(tRed, tGreen, tBlue);
 }
 

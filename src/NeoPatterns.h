@@ -71,9 +71,10 @@ extern const char * const PatternNamesArray[] PROGMEM;
 #define PATTERN_STRIPES             6 // includes the old THEATER_CHASE
 #define PATTERN_PROCESS_SELECTIVE   7
 #define PATTERN_FIRE                8
+#define PATTERN_HEARTBEAT           9
 
-#define PATTERN_USER_PATTERN1       9
-#define PATTERN_USER_PATTERN2      10
+#define PATTERN_USER_PATTERN1      10
+#define PATTERN_USER_PATTERN2      11
 
 /*
  * Values for Direction
@@ -140,6 +141,8 @@ public:
             uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aIntervalMillis,
             uint16_t aNumberOfSteps, uint8_t aDirection = DIRECTION_UP);
+    void Heartbeat(color32_t aColor1, uint16_t aIntervalMillis, uint16_t aRepetitions);
+
 
     /*
      * UPDATE functions
@@ -153,6 +156,7 @@ public:
      */
     void ScannerExtendedUpdate(bool aDoUpdate = true);
     void StripesUpdate(bool aDoUpdate = true);
+    void HeartbeatUpdate(bool aDoUpdate = true);
     void FireUpdate(bool aDoUpdate = true);
     void DelayUpdate(bool aDoUpdate = true);
     void ProcessSelectiveColorUpdate(bool aDoUpdate = true);

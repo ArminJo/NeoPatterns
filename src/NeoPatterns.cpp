@@ -49,6 +49,7 @@ static const char PatternScannerExtended[] PROGMEM ="Scanner extended";
 static const char PatternStripes[] PROGMEM ="Stripes";
 static const char PatternProcessSelective[] PROGMEM ="Process selective";
 static const char PatternFire[] PROGMEM ="Fire";
+static const char PatternHeartbeat[] PROGMEM ="Heartbeat";
 static const char PatternUserPattern1[] PROGMEM ="User pattern 1";
 static const char PatternUserPattern2[] PROGMEM ="User pattern 2";
 const char * const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
@@ -150,6 +151,9 @@ bool NeoPatterns::update(bool doShow) {
         case PATTERN_STRIPES:
             StripesUpdate();
             break;
+        case PATTERN_HEARTBEAT:
+            HeartbeatUpdate();
+            break;
         case PATTERN_USER_PATTERN1:
             Pattern1Update();
             break;
@@ -217,6 +221,9 @@ bool NeoPatterns::UpdateOrRedraw() {
     case PATTERN_STRIPES:
         StripesUpdate(tDoUpdate);
         break;
+    case PATTERN_HEARTBEAT:
+        HeartbeatUpdate(tDoUpdate);
+        break;
     case PATTERN_USER_PATTERN1:
         Pattern1Update(tDoUpdate);
         break;
@@ -241,6 +248,8 @@ bool NeoPatterns::DecrementTotalStepCounter() {
     TotalStepCounter--;
     if (TotalStepCounter == 0) {
         ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
+        // disable brightness before eventual calling generation of next pattern
+        brightness = 255;
         if (OnPatternComplete != NULL) {
             OnPatternComplete(this); // call the completion callback
             return false;
@@ -672,6 +681,45 @@ void NeoPatterns::StripesUpdate(bool aDoUpdate) {
 // must be last action before return
         DecrementTotalStepCounter();
     }
+}
+
+/*
+ * brighten and dim color using 15 values from the gamma5 table
+ */
+void NeoPatterns::Heartbeat(color32_t aColor1, uint16_t aIntervalMillis, uint16_t aRepetitions) {
+    ActivePattern = PATTERN_HEARTBEAT;
+    Color1 = aColor1;
+    Interval = aIntervalMillis;
+    Repetitions = aRepetitions;
+    TotalStepCounter = (30 * aRepetitions) - 1;
+    Direction = DIRECTION_UP; // shift index is counting down
+    setBrightness(pgm_read_byte(&_gammaTable32[2]));
+    Index = 4;
+}
+
+void NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
+//#ifdef DEBUG
+    Serial.print("Index=");
+    Serial.print(Index);
+    Serial.print(" Brightness=");
+    Serial.println(pgm_read_byte(&_gammaTable32[Index]));
+//#endif
+    setBrightness(pgm_read_byte(&_gammaTable32[Index]));
+    ColorSet(Color1);
+    if (Direction == DIRECTION_UP) {
+        if (Index >= 30) {
+            Direction = DIRECTION_DOWN;
+        } else {
+            Index += 2;
+        }
+    } else {
+        if (Index <= 2) {
+            Direction = DIRECTION_UP;
+        } else {
+            Index -= 2;
+        }
+    }
+    DecrementTotalStepCounter();
 }
 
 /********************************************************
@@ -1106,7 +1154,7 @@ const char* DirectionToString(uint8_t aDirection) {
  * Sample handler for random pattern
  */
 void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
-    uint8_t tState = random(11);
+    uint8_t tState = random(12);
 
     uint8_t tDuration = random(40, 81);
     uint8_t tColor = random(255);
@@ -1151,10 +1199,13 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
         FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
         break;
     case 9:
+        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), 50, 5);
+        break;
+    case 10:
 // Multiple falling star
         initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration, 3, &allPatternsRandomExample);
         break;
-    case 10:
+    case 11:
         if (aLedsPtr->PatternsGeometry == GEOMETRY_BAR) {
             //Fire
             aLedsPtr->Fire(tDuration / 2, 100);

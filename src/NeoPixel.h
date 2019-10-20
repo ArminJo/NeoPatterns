@@ -77,7 +77,7 @@ public:
     static color32_t Wheel(uint8_t aWheelPos);
     static uint8_t gamma5(uint8_t aLinearBrightnessValue);
     static uint8_t gamma5WithSpecialZero(uint8_t aLinearBrightnessValue);
-    static color32_t gamma5FromColor(color32_t aLinearBrightnessColor);
+    static color32_t gamma5FromColor(color32_t aAllColorsSameBrightnessColor);
 
     void TestWS2812Resolution();
 
@@ -88,6 +88,8 @@ public:
     uint16_t PixelOffset; // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
     NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
 };
+
+extern const uint8_t _gammaTable32[32] PROGMEM;
 
 #endif /* SRC_LIB_NEOPATTERNS_NEOPIXEL_H_ */
 
