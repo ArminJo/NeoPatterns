@@ -17,22 +17,35 @@ New Patterns are added, a snake game running on a matrix is included and you can
 ## Patterns from [Adafruit](https://www.adafruit.com/)
 **RAINBOW_CYCLE**, **COLOR_WIPE**, **FADE**
 ## New patterns
-**SCANNER**. **STRIPES**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**<br/>
+**SCANNER**. **STRIPES**, **HEARTBEAT**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**<br/>
 The original **SCANNER** pattern is extended and includes the **CYLON** as well as the **ROCKET** or **FALLING_STAR** pattern. The more versatile **STRIPES** pattern replaces the old **THEATER_CHASE** one.
 ## Pattern from [FastLed](https://github.com/FastLED/FastLED)
 **FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
 ## Patterns only for nxn Matrix
 **MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
 ## Your own patterns
-**Just put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in NeoPatternsSimpleDemo.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 39 to test them.**
+**Just put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in AllPatternOnOneStrip.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 39 to test them.**
+
+# NeoPixel library
+the included NeoPixel library is an extensions of the Adafruit NeoPixel library and supports multiple virtual NeoPixel (and NeoPattern) objects on one physical strip. It also contains a lot of useful functions like:
+- ColorSet()
+- drawBar() 
+- drawBarFromColorArray() - uses a color array for the different colors of the bar pixel.
+- dimColor() - by 50%.
+- gamma5() - returns gamma brightness value from a linear input.
+- gamma5WithSpecialZero()
+- gamma5FromColor() - returns the gamma corrected color.
+- Wheel() - returns colors from a color wheel starting ar red.
+as well as functions for getting color parts
+- Red()
+- Green()
+- Blue()
 
 # Installation
 First you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
 Then install this "NeoPatterns" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "NeoPatterns" as filter string.
 
-### All pixel mappings except NEO_MATRIX_COLUMNS supported
-In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
-
+## Matrix pixel mappings
 Pixel mappings definitions and semantics are taken from https://github.com/adafruit/Adafruit_NeoMatrix/blob/master/Adafruit_NeoMatrix.h
 Here you find also mappings for tiled display with multiple matrices.
 
@@ -46,6 +59,10 @@ Examples:
     7  6  5  4     4  5  6  7         4  5  6  7     7  6  5  4    
     3  2  1  0     0  1  2  3         3  2  1  0     0  1  2  3   
 ```
+
+**All matrix pixel mappings except NEO_MATRIX_COLUMNS are supported**
+In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
+
 # SNAKE GAME
 ## SnakeGame Example
 The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must define the symbol `USE_SERIAL_CONTROL` or comment out line 33 in `MatrixSnake.h`.
@@ -58,8 +75,13 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
-### Version 1.1.1
-- Function `drawBar()` added.
+### Version 2.0.0
+- Rewrite of most patterns control logic.
+- Function `drawBar()` in NeoPixel.cpp added.
+- Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
+- Pattern `HEARTBEAT` added.
+- Swapped first parameter and added parameter aDirection to `Fire()`.
+
 ### Version 1.1.0
 - Function `getPatternName()` added.
 - Function `printPatternName()` added.
@@ -67,8 +89,10 @@ NeoPatterns on breadboard
 - New example for 3 pattern running on parts of one NeoPixel bar.
 - New simple example.
 - Changed signature of `Stripes()` and reset `ActivePattern` to `PATTERN_NONE` at the end of each pattern.
+
 ### Version 1.0.1
 - Support of pattern running on parts of NeoPixel bars etc.
+
 ### Version 1.0.0
 - Initial Arduino library version
 

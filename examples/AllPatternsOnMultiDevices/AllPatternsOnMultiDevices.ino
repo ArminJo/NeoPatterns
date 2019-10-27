@@ -27,7 +27,7 @@
 
 // Version 1.2
 // - Added low battery voltage shutdown
-#define VERSION_EXAMPLE "1.2"
+#define VERSION_EXAMPLE "2.0"
 
 #include <Arduino.h>
 
@@ -69,7 +69,7 @@ NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, &allPatternsRandomExample);
 #else
 // construct the NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &TestPatterns);
+NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring12 = NeoPatterns(12, PIN_NEOPIXEL_RING_12, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring16 = NeoPatterns(16, PIN_NEOPIXEL_RING_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
 NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
@@ -119,11 +119,15 @@ void setup() {
 
     bar16.PatternsGeometry = GEOMETRY_BAR;
     bar24.PatternsGeometry = GEOMETRY_BAR;
+
+
+    delay(300); // to avoid partial patterns at power up
+
     ring12.ColorWipe(COLOR32_PURPLE, 50);
     ring16.ColorWipe(COLOR32_RED, 50, 0, DIRECTION_DOWN);
     ring24.ColorWipe(COLOR32_GREEN, 50);
     bar16.ColorWipe(COLOR32_BLUE, 50, 0, DIRECTION_DOWN);
-    bar24.Stripes(COLOR32_BLUE, 5, COLOR32_RED, 3, 50, 48);
+    bar24.Stripes(COLOR32_BLUE, 5, COLOR32_RED, 3, 48, 50);
 //    bar24.ScannerExtended(COLOR32_BLUE, 5, 50, 1,
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
     NeoPixelMatrix.clear(); // Clear matrix
@@ -208,18 +212,18 @@ void loop() {
         }
     }
     if (sVoltageTooLow) {
-        bar16.Update();
-        bar24.Update();
+        bar16.update();
+        bar24.update();
         delay(FALLING_STAR_DURATION);
         return;
     }
 #endif
-    bar16.Update();
-    bar24.Update();
-    ring12.Update();
-    ring16.Update();
-    ring24.Update();
-    if (NeoPixelMatrix.Update()) {
+    bar16.update();
+    bar24.update();
+    ring12.update();
+    ring16.update();
+    ring24.update();
+    if (NeoPixelMatrix.update()) {
         if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
             // change color of ticker after each update
             NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
@@ -235,26 +239,26 @@ void loop() {
 }
 
 /*
- * Handler for testing fire patterns
+ * Handler for testing patterns
  */
 void TestPatterns(NeoPatterns * aLedsPtr) {
     static int8_t sState = 0;
 
     switch (sState) {
     case 0:
-        aLedsPtr->Delay(10);
+        aLedsPtr->ColorWipe(COLOR32_RED_HALF, 50);
         break;
     case 1:
-        aLedsPtr->Delay(10);
+        aLedsPtr->Delay(500);
         break;
     case 2:
-        aLedsPtr->ColorWipe(COLOR32_GREEN, 5);
+        aLedsPtr->Heartbeat(COLOR32_GREEN, 50, 0);
         break;
     case 3:
-        aLedsPtr->Delay(400);
+        aLedsPtr->Delay(500);
         break;
     case 4:
-        aLedsPtr->Fire(20, 400); // OK
+        aLedsPtr->Heartbeat(COLOR32_RED, 50, 1);
         break;
     case 5:
         aLedsPtr->ColorWipe(COLOR32_GREEN, 5);
@@ -263,7 +267,7 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
         aLedsPtr->Delay(400);
         break;
     case 7:
-        aLedsPtr->Fire(30, 260); // OK
+        aLedsPtr->Fire(20, 400); // OK Fire(30, 260)is also OK
         break;
     case 8:
         // switch to random

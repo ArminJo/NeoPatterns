@@ -161,6 +161,6 @@ void setup() {
 }
 
 void loop() {
-    NeoPixelMatrixSnake.Update();
+    NeoPixelMatrixSnake.update();
 }
 

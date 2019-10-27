@@ -49,31 +49,30 @@ MatrixNeoPatterns::MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aP
 }
 
 // Update the pattern returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
-bool MatrixNeoPatterns::Update(bool doShow) {
+bool MatrixNeoPatterns::update() {
     if ((millis() - lastUpdate) > Interval) {
+        bool tPatternEnded = true;
+
         switch (ActivePattern) {
         case PATTERN_FIRE:
-            FireMatrixUpdate();
+            tPatternEnded = FireMatrixUpdate();
             break;
         case PATTERN_TICKER:
-            TickerUpdate();
+            tPatternEnded = TickerUpdate();
             break;
         case PATTERN_MOVE:
-            MoveUpdate();
+            tPatternEnded = MoveUpdate();
             break;
         case PATTERN_MOVING_PICTURE:
-            MovingPicturePGMUpdate();
+            tPatternEnded = MovingPicturePGMUpdate();
             break;
         default:
-            NeoPatterns::update(false);
+            NeoPatterns::update();
             break;
         }
-        if (doShow) {
+        if (!tPatternEnded) {
             show();
         }
-
-        // remember last time of update
-        lastUpdate = millis();
         return true;
     }
     return false;
@@ -92,19 +91,24 @@ void setInitHeat() {
     }
 }
 
-// initialize for fire -> set all to zero
-void MatrixNeoPatterns::Fire(uint16_t aIntervalMillis, uint16_t aRepetitions) {
-    ActivePattern = PATTERN_FIRE;
+/*
+ * initialize for fire -> set all to zero
+ */
+void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
     Interval = aIntervalMillis;
     Direction = DIRECTION_UP;
-    Index = aRepetitions;
-// plus 1 pixel padding on each side
+    TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
+    Index = 3; // to call setInitHeat(); at startup
+
+    // just to be sure
     if (MatrixNew) {
         free(MatrixNew);
     }
     if (MatrixOld) {
         free(MatrixOld);
     }
+
+    // plus 1 pixel padding on each side
     MatrixNew = (uint8_t *) calloc((Rows + 2) * (Columns + 2), 1);
     MatrixOld = (uint8_t *) calloc((Rows + 2) * (Columns + 2), 1);
 
@@ -113,9 +117,9 @@ void MatrixNeoPatterns::Fire(uint16_t aIntervalMillis, uint16_t aRepetitions) {
     Serial.println(aIntervalMillis);
 #endif
 #ifdef DEBUG
-    Serial.print("MatrixNew=0x");
+    Serial.print(F("MatrixNew=0x"));
     Serial.println((uint16_t) MatrixNew, HEX);
-    Serial.print("MatrixOld=0x");
+    Serial.print(F("MatrixOld=0x"));
     Serial.println((uint16_t) MatrixOld, HEX);
 #endif
 
@@ -124,7 +128,11 @@ void MatrixNeoPatterns::Fire(uint16_t aIntervalMillis, uint16_t aRepetitions) {
             convolutionMatrixIntegerTimes256[cx][cy] = convolutionMatrix[cx][cy] * 256;
         }
     }
-    setInitHeat();
+
+    FireMatrixUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_FIRE;
 }
 
 /*
@@ -132,10 +140,25 @@ void MatrixNeoPatterns::Fire(uint16_t aIntervalMillis, uint16_t aRepetitions) {
  * Every 4 updates a new bottom heat line is generated.
  * Then the new matrix is computed with convolution from the old one.
  */
-void MatrixNeoPatterns::FireMatrixUpdate() {
-    if (Index % 4 == 0) {
-        setInitHeat();
+bool MatrixNeoPatterns::FireMatrixUpdate() {
+    if (TotalStepCounter == 1) {
+        /*
+         * End of fire pattern -> cleanup before calling callback
+         */
+        free(MatrixOld);
+        MatrixOld = NULL;
+        free(MatrixNew);
+        MatrixNew = NULL;
     }
+    if (decrementTotalStepCounterAndSetNextIndex()) {
+        return true;
+    }
+
+    if (Index == 4) {
+        setInitHeat();
+        Index = 0;
+    }
+
     // First refresh (invisible) bottom line on every update
     for (int i = 1; i < Rows + 1; i++) {
         MatrixOld[mapXYToArray(i, Columns + 1, Rows + 2)] = sInitialHeat[i - 1];
@@ -147,7 +170,7 @@ void MatrixNeoPatterns::FireMatrixUpdate() {
      */
     for (uint8_t y = 1; y < Columns + 1; y++) {
         for (uint8_t x = 1; x < Rows + 1; x++) {
-            // Convolution
+            // Convolution takes 11 milli seconds with float or 4 ms with integer
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms
             int * convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
@@ -174,38 +197,22 @@ void MatrixNeoPatterns::FireMatrixUpdate() {
             // Heat color mapping
             setMatrixPixelColor(x - 1, y - 1, HeatColor(tNewHeatValue));
 #ifdef DEBUG
-            Serial.print("x=");
+            Serial.print(F("x="));
             Serial.print(x);
-            Serial.print(" y=");
+            Serial.print(F(" y="));
             Serial.print(y);
-            Serial.print(" map=");
+            Serial.print(F(" map="));
             Serial.println(mapXYToArray(x, y, Rows + 2));
 #endif
 
         }
     }
-// takes 11 milli seconds with float or 4 ms with integer
 
 // toggle areas
     uint8_t * tPtr = MatrixNew;
     MatrixNew = MatrixOld;
     MatrixOld = tPtr;
-
-    Index--;
-    if (Index == 0) {
-        /*
-         * End of fire pattern -> cleanup
-         */
-        free(MatrixOld);
-        MatrixOld = NULL;
-        free(MatrixNew);
-        MatrixNew = NULL;
-
-        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
-        if (OnPatternComplete != NULL) {
-            OnPatternComplete(this); // call the completion callback
-        }
-    }
+    return false;
 }
 
 /*
@@ -215,16 +222,19 @@ void MatrixNeoPatterns::FireMatrixUpdate() {
 void MatrixNeoPatterns::MovingPicturePGM(const uint8_t* aGraphics8x8ArrayPGM, color32_t aForegroundColor,
         color32_t aBackgroundColor, int8_t aGraphicsXOffset, int8_t aGraphicsYOffset, uint16_t aSteps, uint16_t aIntervalMillis,
         uint8_t aDirection) {
-    ActivePattern = PATTERN_MOVING_PICTURE;
     DataPtr = aGraphics8x8ArrayPGM;
     Color1 = aForegroundColor;
     Color2 = aBackgroundColor;
     GraphicsXOffset = constrain(aGraphicsXOffset, -Rows, Rows);
     GraphicsYOffset = constrain(aGraphicsYOffset, -Columns, Columns);
     Interval = aIntervalMillis;
-    TotalStepCounter = aSteps;
-    Index = 0;
+    TotalStepCounter = aSteps + 1; // for the last pattern to show
     Direction = aDirection;
+
+    MovingPicturePGMUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_MOVING_PICTURE;
 #ifdef INFO
     Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -233,7 +243,10 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t* aGraphics8x8ArrayPGM, co
 #endif
 }
 
-void MatrixNeoPatterns::MovingPicturePGMUpdate() {
+bool MatrixNeoPatterns::MovingPicturePGMUpdate() {
+    if (decrementTotalStepCounter()) {
+        return true;
+    }
     loadPicturePGM(DataPtr, 8, 8, Color1, Color2, GraphicsXOffset, GraphicsYOffset, false, true);
     if (Direction == DIRECTION_UP) {
         GraphicsYOffset++;
@@ -244,13 +257,7 @@ void MatrixNeoPatterns::MovingPicturePGMUpdate() {
     } else if (Direction == DIRECTION_RIGHT) {
         GraphicsXOffset--;
     }
-    Index++;
-    if (Index >= TotalStepCounter) {
-        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
-        if (OnPatternComplete != NULL) {
-            OnPatternComplete(this); // call the completion callback
-        }
-    }
+    return false;
 }
 
 void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
@@ -267,6 +274,7 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
             break;
         }
     }
+    show();
 }
 
 /*
@@ -284,13 +292,13 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
 #ifdef TRACE
-        Serial.print("moveArrayContent aDirection=");
+        Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
-        Serial.print(" tNumPixels=");
+        Serial.print(F(" NumPixels="));
         Serial.print(numPixels());
-        Serial.print(" BytesPerPixel=");
+        Serial.print(F(" BytesPerPixel="));
         Serial.print(BytesPerPixel);
-        Serial.print(" tBytesToSkipForOneRow=");
+        Serial.print(F(" BytesToSkipForOneRow="));
         Serial.println(tBytesToSkipForOneRow);
 #endif
 
@@ -328,13 +336,13 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
 #ifdef TRACE
-        Serial.print("moveArrayContent aDirection=");
+        Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
-        Serial.print(" tNumPixels=");
+        Serial.print(F(" NumPixels="));
         Serial.print(numLEDs);
-        Serial.print(" PixelColorStorageSize=");
+        Serial.print(F(" PixelColorStorageSize="));
         Serial.print(BytesPerPixel);
-        Serial.print(" tBytesToSkipForOneRow=");
+        Serial.print(F(" BytesToSkipForOneRow="));
         Serial.println(tBytesToSkipForOneRow);
 #endif
         if (aDirection == DIRECTION_UP) {
@@ -399,40 +407,35 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
  * Moving for arrays with 0 at lower right and horizontal rows
  * aSteps == 1 is equivalent to just calling moveArrayContent()
  */
-void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aSteps, uint16_t aIntervalMillis, bool aMoveDirect,
-        color32_t aBackgroundColor) {
-    if (aMoveDirect) {
-        moveArrayContent(aDirection, aBackgroundColor);
-        aSteps--;
-    }
-    if (aSteps > 0) {
-        Color2 = aBackgroundColor;
-        Direction = aDirection;
-        Interval = aIntervalMillis;
-        Index = aSteps;
-        ActivePattern = PATTERN_MOVE;
+void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16_t aIntervalMillis, color32_t aBackgroundColor) {
+    Color2 = aBackgroundColor;
+    Direction = aDirection;
+    Interval = aIntervalMillis;
+    TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
+
+    MoveUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_MOVE;
 #ifdef INFO
         Serial.print(F("Starting Move with refresh interval="));
         Serial.print(aIntervalMillis);
         Serial.print(F("ms. Direction="));
         Serial.println(aDirection);
 #endif
-    }
+
 }
 
-void MatrixNeoPatterns::MoveUpdate() {
+bool MatrixNeoPatterns::MoveUpdate() {
 #ifdef DEBUG
-    Serial.print("MoveUpdate TotalSteps=");
+    Serial.print(F("MoveUpdate TotalSteps="));
     Serial.println(TotalStepCounter);
 #endif
-    moveArrayContent(Direction, Color2);
-    Index--;
-    if (Index == 0) {
-        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
-        if (OnPatternComplete != NULL) {
-            OnPatternComplete(this); // call the completion callback
-        }
+    if (decrementTotalStepCounter()) {
+        return true;
     }
+    moveArrayContent(Direction, Color2);
+    return false;
 }
 
 /*
@@ -450,7 +453,7 @@ void MatrixNeoPatterns::TickerPGM(const char* aStringPtrPGM, color32_t aForegrou
 void MatrixNeoPatterns::Ticker(__FlashStringHelper * aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
     TickerInit(reinterpret_cast<const char*>(aStringPtrPGM), aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection,
-            FLAG_TICKER_DATA_IN_FLASH);
+    FLAG_TICKER_DATA_IN_FLASH);
 }
 
 void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
@@ -494,26 +497,28 @@ void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForeground
     }
 }
 
-void MatrixNeoPatterns::TickerUpdate() {
-    char tChar;
+bool MatrixNeoPatterns::TickerUpdate() {
+    char tLeftChar;
     char tNextChar;
+    lastUpdate = millis();
+
 // left character
     if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
-        tChar = pgm_read_byte(DataPtr);
+        tLeftChar = pgm_read_byte(DataPtr);
         tNextChar = pgm_read_byte(DataPtr + 1);
     } else {
-        tChar = *DataPtr;
+        tLeftChar = *DataPtr;
         tNextChar = *(DataPtr + 1);
     }
 
 #ifdef DEBUG
-    Serial.print(F("tChar="));
-    Serial.print(tChar);
-    Serial.print(F(" tNextChar="));
+    Serial.print(F("Char="));
+    Serial.print(tLeftChar);
+    Serial.print(F(" NextChar="));
     Serial.println(tNextChar);
 #endif
 
-    const uint8_t* tGraphics8x8ArrayPtr = &font_PGM[(tChar - FONT_START) * FONT_HEIGHT];
+    const uint8_t* tGraphics8x8ArrayPtr = &font_PGM[(tLeftChar - FONT_START) * FONT_HEIGHT];
     loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, Color2, GraphicsXOffset, GraphicsYOffset,
             (tNextChar == '\0'));
     if (tNextChar != '\0') {
@@ -553,11 +558,12 @@ void MatrixNeoPatterns::TickerUpdate() {
     if (GraphicsXOffset == -FONT_WIDTH || GraphicsYOffset == FONT_HEIGHT) {
 
         if (tNextChar == '\0') {
-            ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
             if (OnPatternComplete != NULL) {
                 OnPatternComplete(this); // call the completion callback
-                return;
+            } else {
+                ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
             }
+            return true;
         }
         // switch to next character
         DataPtr++;
@@ -574,6 +580,7 @@ void MatrixNeoPatterns::TickerUpdate() {
     } else if (Direction == DIRECTION_UP) {
         GraphicsYOffset++;
     }
+    return false;
 }
 
 /*
@@ -586,7 +593,7 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
 #ifdef INFO
-    Serial.print("sState=");
+    Serial.print(F("State="));
     Serial.println(sState);
 #endif
     /*
@@ -636,7 +643,7 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
 
     case 6:
         // move out
-        tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100, true);
+        tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100);
 // change direction for next time
         if (sHeartDirection == DIRECTION_DOWN) {
             sHeartDirection = DIRECTION_UP;
@@ -680,9 +687,9 @@ void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
     default:
         aLedsPtr->Delay(1);
 #ifdef WARN
-        Serial.print("case ");
+        Serial.print(F("case "));
         Serial.print(tState);
-        Serial.println(" not implemented");
+        Serial.println(F(" not implemented"));
 #endif
         break;
     }

@@ -64,7 +64,7 @@ public:
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
 
-    void Fire(uint16_t aIntervalMillis, uint16_t repetitions = 100);
+    void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30);
 
     void TickerPGM(const char* aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
             uint8_t aDirection = DIRECTION_LEFT);
@@ -75,16 +75,15 @@ public:
     void MovingPicturePGM(const uint8_t* aGraphics8x8Array, color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset,
     int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     //
-    bool Update(bool doShow = true);
-    void Move(uint8_t aDirection, uint16_t aSteps = 1, uint16_t aIntervalMillis = 70, bool aMoveDirect = true,
-    color32_t aBackgroundColor = COLOR32_BLACK);
+    bool update();
+    void Move(uint8_t aDirection, uint16_t aNumberOfSteps = 1, uint16_t aIntervalMillis = 70, color32_t aBackgroundColor = COLOR32_BLACK);
     void moveArrayContent(uint8_t aDirection);
     void moveArrayContent(uint8_t aDirection, color32_t aBackgroundColor);
 
-    void MoveUpdate();
-    void FireMatrixUpdate();
-    void MovingPicturePGMUpdate();
-    void TickerUpdate();
+    bool MoveUpdate();
+    bool FireMatrixUpdate();
+    bool MovingPicturePGMUpdate();
+    bool TickerUpdate();
 
     void showNumberOnMatrix(uint8_t aNumber, color32_t aColor);
 

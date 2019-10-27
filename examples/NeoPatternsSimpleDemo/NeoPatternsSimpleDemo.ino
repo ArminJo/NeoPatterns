@@ -27,7 +27,7 @@
 
 #include <NeoPatterns.h>
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "2.0"
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_BAR_16          3
@@ -66,9 +66,8 @@ void setup() {
     /*
      * Third pattern - rocket
      */
-    bar16.clear(); // to clear the rainbow
     Serial.println("Rocket");
-    bar16.ScannerExtended(COLOR32_WHITE_HALF, 7, 40 / 2, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE);
+    bar16.ScannerExtended(COLOR32_WHITE_HALF, 7, 20, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE);
     bar16.updateAndWaitForPatternToStop();
     delay(500);
 
@@ -82,7 +81,7 @@ void setup() {
 }
 
 void loop() {
-    bar16.Update();
+    bar16.update();
     delay(10);
 }
 
@@ -99,14 +98,17 @@ void TwoPatterns(NeoPatterns * aLedsPtr) {
 
     switch (sState) {
     case 0:
-        // simple scanner
-        aLedsPtr->clear();
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 2, FLAG_SCANNER_EXT_CYLON);
+        // Scanner - use random mode and direction
+
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 2,
+                (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
+                        | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
         break;
 
     case 1:
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor1), 5, NeoPatterns::Wheel(tColor2), 3, tDuration, 2 * aLedsPtr->numPixels(),
-                (tDuration & DIRECTION_DOWN));
+        // Stripes - use random direction
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor1), 5, NeoPatterns::Wheel(tColor2), 3, 2 * aLedsPtr->numPixels(), tDuration,
+                (tRandom & DIRECTION_DOWN));
         break;
 
     case 2:

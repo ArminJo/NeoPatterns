@@ -103,5 +103,5 @@ void loop() {
     } else {
         sButtonWasPressed = true;
     }
-    NeoPixelMatrixSnake.Update();
+    NeoPixelMatrixSnake.update();
 }

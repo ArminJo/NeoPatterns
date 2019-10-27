@@ -40,7 +40,7 @@
 #define USE_BUTTON_1
 #include "EasyButtonAtInt01.h"
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "2.0"
 
 EasyButton Button0AtPin3(false);
 
@@ -118,8 +118,8 @@ void loop() {
         /*
          * Cannot do this in one if statement, because evaluation will stop after the first true.
          */
-        bool tMustUpdate = NeoPatternsBackground.CheckForUpdate();
-        tMustUpdate |= NeoPatternsFastMoves.CheckForUpdate();
+        bool tMustUpdate = NeoPatternsBackground.checkForUpdate();
+        tMustUpdate |= NeoPatternsFastMoves.checkForUpdate();
         if (tMustUpdate) {
 #ifdef DEBUG
             uint32_t tStartMillis = millis();
@@ -128,8 +128,8 @@ void loop() {
              * First the background pattern is completely generated
              * Then the fast moves pattern overwrites the background. Therefore we can only use small patterns which do not draw black pixels
              */
-            NeoPatternsBackground.UpdateOrRedraw();
-            NeoPatternsFastMoves.UpdateOrRedraw();
+            NeoPatternsBackground.updateOrRedraw();
+            NeoPatternsFastMoves.updateOrRedraw();
 #ifdef DEBUG
 
             uint32_t tEndMillis = millis();

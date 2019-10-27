@@ -72,7 +72,7 @@ public:
     void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);
 
-    bool Update(bool doShow = true);
+    bool update();
 
     void SnakeUpdate();
     uint8_t SnakeInputHandler();

@@ -55,7 +55,7 @@ MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t 
  * Returns true if update has really happened in order to give the caller a chance to manually change parameters after each update (like color etc.)
  * Calls snake input handler and after each interval calls snake update routine or MatrixNeoPatterns::Update().
  */
-bool MatrixSnake::Update(bool doShow) {
+bool MatrixSnake::update() {
 
     if (ActivePattern == PATTERN_SNAKE) {
         // do it on every call in order not to miss any button press
@@ -66,15 +66,12 @@ bool MatrixSnake::Update(bool doShow) {
         // time to update
         if (ActivePattern == PATTERN_SNAKE) {
             SnakeUpdate();
-            if (doShow) {
-                show();
-            }
+            show();
+            // remember last time of update
+            lastUpdate = millis();
         } else {
-            MatrixNeoPatterns::Update(doShow);
+            MatrixNeoPatterns::update();
         }
-
-        // remember last time of update
-        lastUpdate = millis();
         return true;
     }
     return false;
@@ -610,9 +607,9 @@ uint8_t MatrixSnake::findNextDir() {
     int8_t tDeltaY = Apple.y - SnakePixelList[0].y;
 
 #ifdef TRACE
-    Serial.print(F("tDeltaX="));
+    Serial.print(F("DeltaX="));
     Serial.print(tDeltaX);
-    Serial.print(F(" tDeltaY="));
+    Serial.print(F(" DeltaY="));
     Serial.println(tDeltaY);
 #endif
 
@@ -703,7 +700,7 @@ uint8_t MatrixSnake::findNextDir() {
         }
     }
 #ifdef DEBUG
-    Serial.print(F("tNewDirection="));
+    Serial.print(F("NewDirection="));
     Serial.println(DirectionToString(tNewDirection));
 #endif
     return tNewDirection;
@@ -849,7 +846,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr) {
     uint8_t tStep = tLedsPtr->MultipleExtension;
 
 #ifdef DEBUG
-    Serial.print(F("SnakeAutorunCompleteHandler tStep="));
+    Serial.print(F("SnakeAutorunCompleteHandler Step="));
     Serial.println(tStep);
 #endif
 
@@ -957,7 +954,7 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
 
     case 6:
         // move out
-        tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100, true);
+        tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100);
         // change direction for next time
         if (sHeartDirection == DIRECTION_DOWN) {
             sHeartDirection = DIRECTION_UP;
@@ -1018,13 +1015,13 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
     }
 
 #ifdef INFO
-    Serial.print("Pin=");
+    Serial.print(F("Pin="));
     Serial.print(aLedsPtr->getPin());
-    Serial.print(" Length=");
+    Serial.print(F(" Length="));
     Serial.print(aLedsPtr->numPixels());
-    Serial.print(" ActivePattern=");
+    Serial.print(F(" ActivePattern="));
     Serial.print(aLedsPtr->ActivePattern);
-    Serial.print(" State=");
+    Serial.print(F(" State="));
     Serial.println(tState);
 #endif
 

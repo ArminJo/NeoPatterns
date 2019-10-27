@@ -9,6 +9,15 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
+ *  TIMING
+ *  Calling the pattern function sets all parameters ready for generating the pattern, and immediately does a refresh to show the first pattern step.
+ *  If the refresh should not happen if called asynchronously i.e. should only happen at update time (which in turn
+ *  can call a pattern function by calling the callback function) you can set the parameter aShowOnlyAtUpdate to true at the constructor.
+ *  The parameters were changed by the update before drawing the next pattern step. This allows arbitrary refresh (doUpdate = false) for the specified period.
+ *  The very last step only does termination and calls the callback function, which will show the next pattern, but does not call show by itself,
+ *  thus allowing to see the last pattern step for the specified period.
+ *  Therefore a pattern with 4 different pattern steps needs 4 updates, the last updates only switches to next pattern or sets ActivePattern to PATTERN_NONE.
+ *
  *  Copyright (C) 2018  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
@@ -38,22 +47,29 @@
 
 #include "NeoPatterns.h"
 
-char VERSION_NEOPATTERNS[] = "1.2";
-
-static const char PatternNone[] PROGMEM ="None";
-static const char PatternRainbowCycle[] PROGMEM ="Rainbow cycle";
-static const char PatternColorWipe[] PROGMEM ="Color wipe";
-static const char PatternFade[] PROGMEM ="Fade";
-static const char PatternDelay[] PROGMEM ="Delay";
-static const char PatternScannerExtended[] PROGMEM ="Scanner extended";
-static const char PatternStripes[] PROGMEM ="Stripes";
-static const char PatternProcessSelective[] PROGMEM ="Process selective";
-static const char PatternFire[] PROGMEM ="Fire";
-static const char PatternHeartbeat[] PROGMEM ="Heartbeat";
-static const char PatternUserPattern1[] PROGMEM ="User pattern 1";
-static const char PatternUserPattern2[] PROGMEM ="User pattern 2";
+const char PatternNone[] PROGMEM ="None";
+const char PatternRainbowCycle[] PROGMEM ="Rainbow cycle";
+const char PatternColorWipe[] PROGMEM ="Color wipe";
+const char PatternFade[] PROGMEM ="Fade";
+const char PatternDelay[] PROGMEM ="Delay";
+const char PatternScannerExtended[] PROGMEM ="Scanner extended";
+const char PatternStripes[] PROGMEM ="Stripes";
+const char PatternProcessSelectiveColor[] PROGMEM ="Process selective color";
+const char PatternFire[] PROGMEM ="Fire";
+const char PatternHeartbeat[] PROGMEM ="Heartbeat";
+const char PatternPattern1[] PROGMEM ="User pattern 1";
+const char PatternPattern2[] PROGMEM ="User pattern 2";
 const char * const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
-        PatternScannerExtended, PatternStripes, PatternProcessSelective, PatternFire, PatternUserPattern1, PatternUserPattern2 };
+        PatternScannerExtended, PatternStripes, PatternProcessSelectiveColor, PatternFire, PatternHeartbeat, PatternPattern1,
+        PatternPattern2 };
+
+// array of update function pointer, not used since it needs 150 bytes more :-(
+//bool (NeoPatterns::*sUpdateFunctionPointerArray[])(
+//        bool) = {&NeoPatterns::RainbowCycleUpdate, &NeoPatterns::ColorWipeUpdate, &NeoPatterns::FadeUpdate, &NeoPatterns::DelayUpdate,
+//            &NeoPatterns::ScannerExtendedUpdate, &NeoPatterns::StripesUpdate, &NeoPatterns::ProcessSelectiveColorUpdate, &NeoPatterns::FireUpdate,
+//            &NeoPatterns::HeartbeatUpdate, &NeoPatterns::Pattern1Update, &NeoPatterns::Pattern2Update};
+// call it with: bool tPatternEnded = (this->*sUpdateFunctionPointerArray[ActivePattern])(true);
+
 /**********************************************************************************
  * Code inspired by https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all
  * Changed and extended for added functionality
@@ -66,10 +82,13 @@ const char * const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCy
  */
 
 NeoPatterns::NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
-        void (*aPatternCompletionCallback)(NeoPatterns*)) :
+        void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) :
         NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
 
     OnPatternComplete = aPatternCompletionCallback;
+    if (aShowOnlyAtUpdate) {
+        PixelFlags |= SHOW_ONLY_AT_UPDATE;
+    }
 }
 
 /*
@@ -83,17 +102,20 @@ NeoPatterns::NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOf
  * }
  */
 NeoPatterns::NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
-        void (*aPatternCompletionCallback)(NeoPatterns*), bool aEnableShowOfUnderlyingPixel) :
+        void (*aPatternCompletionCallback)(NeoPatterns*), bool aEnableShowOfUnderlyingPixel, bool aShowOnlyAtUpdate) :
         NeoPixel(aUnderlyingNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfUnderlyingPixel) {
 
     OnPatternComplete = aPatternCompletionCallback;
+    if (aShowOnlyAtUpdate) {
+        PixelFlags |= SHOW_ONLY_AT_UPDATE;
+    }
 }
 
 void NeoPatterns::setCallback(void (*callback)(NeoPatterns*)) {
     OnPatternComplete = callback;
 }
 
-bool NeoPatterns::CheckForUpdate() {
+bool NeoPatterns::checkForUpdate() {
     if ((millis() - lastUpdate) > Interval) {
         return true;
     }
@@ -111,74 +133,75 @@ void NeoPatterns::updateAndWaitForPatternToStop() {
 }
 
 /*
- * Upper case function alias
+ * Checks for asynchronously calling and sets the timestamp of lastUpdate
  */
-bool NeoPatterns::Update(bool doShow) {
-    return update(doShow);
+void NeoPatterns::showPatternInitially() {
+    if ((ActivePattern == PATTERN_NONE) || (PixelFlags & SHOW_ONLY_AT_UPDATE) == 0) {
+        show();
+        lastUpdate = millis();
+#ifdef TRACE
+        Serial.print(F("Init lastUpdate to "));
+        Serial.println(lastUpdate);
+#endif
+    }
+#ifdef INFO
+    else {
+        Serial.println(F("Called asynchronously -> do not show"));
+    }
+#endif
 }
 
 /*
  * @brief   Updates the pattern if update interval has expired.
  * @return  Returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
  */
-bool NeoPatterns::update(bool doShow) {
+bool NeoPatterns::update() {
     if ((millis() - lastUpdate) > Interval) {
+        bool tPatternEnded;
         switch (ActivePattern) {
         case PATTERN_NONE:
             return false;
             break;
         case PATTERN_RAINBOW_CYCLE:
-            RainbowCycleUpdate();
+            tPatternEnded = RainbowCycleUpdate();
             break;
         case PATTERN_COLOR_WIPE:
-            ColorWipeUpdate();
+            tPatternEnded = ColorWipeUpdate();
             break;
         case PATTERN_FADE:
-            FadeUpdate();
+            tPatternEnded = FadeUpdate();
             break;
         case PATTERN_PROCESS_SELECTIVE:
-            ProcessSelectiveColorUpdate();
+            tPatternEnded = ProcessSelectiveColorUpdate();
             break;
         case PATTERN_FIRE:
-            FireUpdate();
+            tPatternEnded = FireUpdate();
             break;
         case PATTERN_DELAY:
-            DelayUpdate();
+            tPatternEnded = DelayUpdate();
             break;
         case PATTERN_SCANNER_EXTENDED:
-            ScannerExtendedUpdate();
+            tPatternEnded = ScannerExtendedUpdate();
             break;
         case PATTERN_STRIPES:
-            StripesUpdate();
+            tPatternEnded = StripesUpdate();
             break;
         case PATTERN_HEARTBEAT:
-            HeartbeatUpdate();
+            tPatternEnded = HeartbeatUpdate();
             break;
         case PATTERN_USER_PATTERN1:
-            Pattern1Update();
+            tPatternEnded = Pattern1Update();
             break;
         case PATTERN_USER_PATTERN2:
-            Pattern2Update();
+            tPatternEnded = Pattern2Update();
             break;
         default:
             break;
         }
 
-        if (doShow && (PixelFlags & DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
-            if (PixelFlags & IS_PARTIAL_PIXEL) {
-#ifdef TRACE
-                Serial.println("Underlying->show");
-#endif
-                UnderlyingNeoPixelObject->show();
-            } else {
-#ifdef TRACE
-                Serial.println("show");
-#endif
-                show();
-            }
+        if (!tPatternEnded) {
+            show();
         }
-// remember last time of update
-        lastUpdate = millis();
         return true;
     }
     return false;
@@ -189,7 +212,7 @@ bool NeoPatterns::update(bool doShow) {
  * Updates the pattern if update interval has expired.
  * Returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
  */
-bool NeoPatterns::UpdateOrRedraw() {
+bool NeoPatterns::updateOrRedraw() {
 
     /*
      * If tDoUpdate is true,
@@ -243,25 +266,35 @@ bool NeoPatterns::UpdateOrRedraw() {
 
 /*
  * Decrement TotalSteps and call callback
+ * @return - true if pattern has ended, false if pattern has NOT ended
  */
-bool NeoPatterns::DecrementTotalStepCounter() {
+bool NeoPatterns::decrementTotalStepCounter() {
     TotalStepCounter--;
     if (TotalStepCounter == 0) {
-        ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         // disable brightness before eventual calling generation of next pattern
-        brightness = 255;
+        brightness = 0;
         if (OnPatternComplete != NULL) {
             OnPatternComplete(this); // call the completion callback
-            return false;
+        } else {
+            ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         }
+        return true;
     }
-    return true;
+    /*
+     * Next step is computing the index for the next pattern step, so store the timestamp here.
+     */
+    lastUpdate = millis();
+#ifdef TRACE
+    Serial.print(F("lastUpdate="));
+    Serial.println(lastUpdate);
+#endif
+    return false;
 }
 
 /*
  * Decrement TotalSteps and call callback
  */
-void NeoPatterns::NextIndex() {
+void NeoPatterns::setNextIndex() {
     if (Direction == DIRECTION_UP) {
         Index++;
     } else {
@@ -271,121 +304,240 @@ void NeoPatterns::NextIndex() {
 
 /*
  * Decrement TotalSteps and call callback
+ * @return - true if pattern has ended, false if pattern has NOT ended
  */
-void NeoPatterns::NextIndexAndDecrementTotalStepCounter() {
-    if (DecrementTotalStepCounter()) {
-        /*
-         * If only one step left (the last delay step to show the result), do not update index
-         */
-        if (TotalStepCounter > 1) {
-            if (Direction == DIRECTION_UP) {
-                Index++;
-            } else {
-                Index--;
-            }
-        }
+bool NeoPatterns::decrementTotalStepCounterAndSetNextIndex() {
+    if (decrementTotalStepCounter()) {
+        return true;
     }
+    setNextIndex();
+    return false;
 }
 
-// Helper to set index accordingly to direction
-void NeoPatterns::setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t totalSteps) {
+/*
+ * Initialize for a RainbowCycle
+ * First of 256 steps is last pixel = Wheel(0) = RED going up over yellow and green to BLUE or backwards if DIRECTION_DOWN
+ */
+void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection) {
+    Interval = aIntervalMillis;
+    ColorTmp = 0x10000 / numLEDs;
     Direction = aDirection;
-    TotalStepCounter = totalSteps;
+    TotalStepCounter = 256;
     if (Direction == DIRECTION_UP) {
         Index = 0;
     } else {
-        Index = totalSteps - 2;
+        Index = 255;
     }
-}
 
-// Initialize for a RainbowCycle
-void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection) {
+    RainbowCycleUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
     ActivePattern = PATTERN_RAINBOW_CYCLE;
-    Interval = aIntervalMillis;
-    ColorTmp = 0x10000 / numLEDs;
-    setDirectionAndTotalStepsAndIndex(aDirection, 256);
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
 /*
  * Update the Rainbow Cycle Pattern starting with a color that is next position in wheel
+ * @return - true if pattern has ended, false if pattern has NOT ended
  */
-void NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
-    if (!aDoUpdate || TotalStepCounter > 1) {
-        /*
-         * Draw if just redraw requested and NOT the last delay step to show the result and where we stop the pattern.
-         */
-        uint16_t tWheelIndexHighResolution = 0; // = 0x10000->max. upper byte is the integer part used for setBrightness, lower byte is the fractional part
-        uint16_t tWheelIndexHighDelta = ColorTmp;
-        for (uint16_t i = 0; i < numLEDs; i++) {
-            setPixelColor(i, Wheel(Index + (tWheelIndexHighResolution >> 8)));
-            tWheelIndexHighResolution += tWheelIndexHighDelta;
+bool NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
         }
     }
-    if (aDoUpdate) {
-        NextIndexAndDecrementTotalStepCounter();
+    /*
+     * Refresh pattern
+     */
+    uint16_t tWheelIndexHighResolution = 0; // = 0x10000->max. upper byte is the integer part used for setBrightness, lower byte is the fractional part
+    uint16_t tWheelIndexHighDelta = ColorTmp;
+    for (int16_t i = numLEDs - 1; i >= 0; i--) {
+        // Do loop from above to have the impression, that a color is moving upwards for DIRECTION_UP
+        setPixelColor(i, Wheel(Index + (tWheelIndexHighResolution >> 8)));
+        tWheelIndexHighResolution += tWheelIndexHighDelta;
     }
+    return false;
 }
 
 /**
- * @brief   Initialize for a ColorWipe.
+ * @brief   Initialize for a ColorWipe. First step is one pixel set, last step is all pixel set.
  * @param  aMode can be 0 (default) or FLAG_DO_NOT_CLEAR(_before)
  * @param  aDirection can be DIRECTION_UP (default) or DIRECTION_DOWN
  */
 void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode, uint8_t aDirection) {
-    ActivePattern = PATTERN_COLOR_WIPE;
     Interval = aIntervalMillis;
     Color1 = aColor;
     PatternFlags = aMode;
-    // numLEDs drawing steps and 1 step for the last delay step
-    setDirectionAndTotalStepsAndIndex(aDirection, numLEDs + 1);
+    Direction = aDirection;
+    TotalStepCounter = numLEDs;
+    if (aDirection == DIRECTION_UP) {
+        Index = 0;
+    } else {
+        Index = numLEDs - 1;
+    }
+
+    ColorWipeUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_COLOR_WIPE;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
 /*
  * Update the Color Wipe Pattern. Fill with color.
  * @param aDoUpdate - false just redraw actual pattern
+ * @return - true if pattern has ended, false if pattern has NOT ended
  */
-void NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
-    if (!aDoUpdate || TotalStepCounter > 1) {
-        /*
-         * Draw if just redraw requested and NOT the last delay step to show the result and where we stop the pattern.
-         */
-        for (uint16_t i = 0; i < numLEDs; i++) {
-            if ((Direction == DIRECTION_UP && i <= Index) || (Direction == DIRECTION_DOWN && i >= Index)) {
-                setPixelColor(i, Color1);
-            } else if (!(PatternFlags & FLAG_DO_NOT_CLEAR)) {
-                setPixelColor(i, COLOR32_BLACK);
-            }
+bool NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
         }
     }
-    if (aDoUpdate) {
-        NextIndexAndDecrementTotalStepCounter();
+    /*
+     * Refresh pattern
+     */
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        if ((Direction == DIRECTION_UP && i <= Index) || (Direction == DIRECTION_DOWN && i >= Index)) {
+            setPixelColor(i, Color1);
+        } else if (!(PatternFlags & FLAG_DO_NOT_CLEAR)) {
+            setPixelColor(i, COLOR32_BLACK);
+        }
     }
+    return false;
 }
 
-// Initialize for a Fade from color1 to color2
-void NeoPatterns::Fade(color32_t aColor1, color32_t aColor2, uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
-    ActivePattern = PATTERN_FADE;
+/*
+ * Initialize for a Fade from aColorStart to aColorEnd
+ * First step is aColorStart, last step is aColorEnd
+ */
+void NeoPatterns::Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
     Interval = aIntervalMillis;
-    TotalStepCounter = aNumberOfSteps + 1; // +1 for the last delay step to show the result
+    TotalStepCounter = aNumberOfSteps + 1; // + 1 for the last step to show Color2
     PatternLength = aNumberOfSteps;
-    Color1 = aColor1;
-    Color2 = aColor2;
+    Color1 = aColorStart;
+    Color2 = aColorEnd;
     Index = 0;
     Direction = DIRECTION_UP;
+
+    FadeUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_FADE;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
 // Update the Fade pattern
-void NeoPatterns::FadeUpdate(bool aDoUpdate) {
+bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
+        }
+        /*
+         * Refresh pattern
+         */
 // Calculate linear interpolation between Color1 and Color2
 // Optimize order of operations to minimize truncation error
-    uint8_t red = ((Red(Color1) * (PatternLength - Index)) + (Red(Color2) * Index)) / PatternLength;
-    uint8_t green = ((Green(Color1) * (PatternLength - Index)) + (Green(Color2) * Index)) / PatternLength;
-    uint8_t blue = ((Blue(Color1) * (PatternLength - Index)) + (Blue(Color2) * Index)) / PatternLength;
-
-    ColorSet(Color(red, green, blue));
-    if (aDoUpdate) {
-        NextIndexAndDecrementTotalStepCounter();
+        uint8_t red = ((Red(Color1) * (PatternLength - Index)) + (Red(Color2) * Index)) / PatternLength;
+        uint8_t green = ((Green(Color1) * (PatternLength - Index)) + (Green(Color2) * Index)) / PatternLength;
+        uint8_t blue = ((Blue(Color1) * (PatternLength - Index)) + (Blue(Color2) * Index)) / PatternLength;
+        ColorSet(Color(red, green, blue));
     }
+    return false;
+}
+
+/*
+ * brighten and dim color
+ * Using 16 values from the gamma5 table starting with index 1 ending with index 31
+ * First step is all at gamma[1], last step of pattern is all at gamma[1], last (extra) step after all repetitions is all black.
+ * @param   aMode - see NeoPatterns.h line 232. If FLAG_DO_NOT_CLEAR, last extra step is skipped
+ */
+void NeoPatterns::Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode) {
+    Color1 = aColor;
+    Interval = aIntervalMillis;
+    Repetitions = aRepetitions;
+    TotalStepCounter = (2 * 16 * aRepetitions) + 1; // 2 times 16 values plus the last clear step
+    PatternFlags = aMode;
+    if (aMode & FLAG_DO_NOT_CLEAR) {
+        TotalStepCounter--;
+    }
+    Direction = DIRECTION_UP;
+    Index = 1;
+
+    HeartbeatUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_HEARTBEAT;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
+}
+
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
+    color32_t tRawPixel;
+    do {
+        if (aDoUpdate) {
+            if (decrementTotalStepCounter()) {
+                return true;
+            }
+            /*
+             * Next index
+             */
+            if (Direction == DIRECTION_UP) {
+                if (Index >= 31) {
+                    // show index 31 twice
+                    Direction = DIRECTION_DOWN;
+                } else {
+                    Index += 2; // up to 31
+                }
+            } else {
+                if (Index <= 1) {
+                    // show index 1 twice
+                    Direction = DIRECTION_UP;
+                } else {
+                    Index -= 2;
+                }
+            }
+        }
+        /*
+         * Refresh pattern
+         */
+        if (TotalStepCounter == 1 && (PatternFlags & FLAG_DO_NOT_CLEAR) == 0) {
+            clear(); // last pattern -> clear pattern
+        } else {
+            setBrightness(pgm_read_byte(&GammaTable32[Index]));
+            ColorSet(Color1);
+//          uint32_t tRawPixel= getPixelColor(0);
+            // get raw/scrambled color, which is sufficient, since we check for 0
+            tRawPixel = *((color32_t*) &pixels[(PixelOffset) * 3]) & 0xFFFFFF;
+            if (tRawPixel == 0) {
+                // now we have black, which should be skipped
+                aDoUpdate = true; // enable next index for next loop
+#ifdef TRACE
+                Serial.print(F("Skip "));
+#endif
+            }
+        }
+#ifdef DEBUG
+        Serial.print(F("Index="));
+        Serial.print(Index);
+        Serial.print(F(" Brightness="));
+        Serial.print(pgm_read_byte(&GammaTable32[Index]));
+        Serial.print(F(" RawColor==0x"));
+        Serial.println(getPixelColor(0), HEX);
+#endif
+    } while (tRawPixel == 0);
+
+    return false;
 }
 
 /****************************************************************************
@@ -394,26 +546,25 @@ void NeoPatterns::FadeUpdate(bool aDoUpdate) {
 
 /*
  * Code for scanner default is: pattern completely visible at start and end
- * Starts at position 0 with DIRECTION_UP
+ * If FLAG_SCANNER_EXT_VANISH_COMPLETE then first and last pattern are clear
  * @param   aNumberOfBouncings - 0 = no bouncing, one time pattern.
- * @param   aMode - see NeoPatterns.h line 195
+ * @param   aMode - see NeoPatterns.h line 220
  *                  FLAG_SCANNER_EXT_ROCKET, FLAG_SCANNER_EXT_CYLON, FLAG_SCANNER_EXT_VANISH_COMPLETE, FLAG_SCANNER_EXT_START_AT_BOTH_ENDS
  *                  FLAG_DO_NOT_CLEAR
  * @param   aDirection - DIRECTION_UP (default) or DIRECTION_DOWN
  */
-void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings,
+void NeoPatterns::ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings,
         uint8_t aMode, uint8_t aDirection) {
 // The variables MultipleExtension, Repetitions and NextOnPatternCompleteHandler are used by MultipleFallingStars and cannot be used here
-    ActivePattern = PATTERN_SCANNER_EXTENDED;
     Interval = aIntervalMillis;
-    Color1 = aColor1;
+    Color1 = aColor;
     Color2 = aNumberOfBouncings; // Abuse Color2 as storage
     ColorTmp = 0x10000 / aLength; // Delta for each step. Abuse ColorTmp as storage
 
     PatternLength = aLength;
     PatternFlags = aMode;
     Direction = aDirection;
-    TotalStepCounter = numLEDs - aLength; // pattern is completely visible at start and endp
+    TotalStepCounter = numLEDs - aLength; // pattern is completely visible at start and end
     Index = aLength - 1; // start position pattern is completely visible at start
 
     uint16_t tStepsForBounce = numLEDs - 1;
@@ -423,35 +574,90 @@ void NeoPatterns::ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t a
     }
 
     if (aMode & FLAG_SCANNER_EXT_VANISH_COMPLETE) {
-// invisible at start and end
+        // invisible at start and end
         Index -= aLength;
         TotalStepCounter += 2 * aLength;
         if (aMode & FLAG_SCANNER_EXT_CYLON) {
+            // Cylon has just another side to hide :-)
+            TotalStepCounter += 2 * (aLength - 1);
             Index -= aLength - 1;
-            TotalStepCounter += aLength - 1; // since the brightest led is not doubled and total length is (length + length -1)
-            tStepsForBounce = numLEDs - 2 * (aLength - 1) - 1;
         }
-    } else {
-        if (aMode & FLAG_SCANNER_EXT_CYLON) {
-            // cylon visible at start and end
-            TotalStepCounter -= aLength - 1; // since the brightest led is not doubled and total length is (length + length -1)
-            tStepsForBounce = numLEDs - 2 * (aLength - 1) - 1;
-        }
+    }
+    if (aMode & FLAG_SCANNER_EXT_CYLON) {
+        TotalStepCounter -= aLength - 1; // subtract for pattern is completely visible at start and end
+        tStepsForBounce = numLEDs - (2 * aLength - 1); // since the brightest led is not doubled total length is (length + length - 1)
     }
 
     if (aNumberOfBouncings > 0) {
         TotalStepCounter += (tStepsForBounce * aNumberOfBouncings);
     }
+
     if (aDirection == DIRECTION_DOWN) {
         Index = (numLEDs - 1) - Index;
     }
 
-    TotalStepCounter += 2; // since first step just shows the start pattern and 1 for last delay step
+    TotalStepCounter += 1; // + 1 for last pattern
+
+    ScannerExtendedUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_SCANNER_EXTENDED;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
-void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
+        }
+        /*
+         * check for bouncing condition if at least one bouncing is left
+         */
+        uint16_t tNumberOfBouncings = Color2;
+        if (tNumberOfBouncings > 0) {
+            if (Direction == DIRECTION_UP) {
+                // show pattern for index == numLEDs-1 still in old direction!
+                if (Index == numLEDs) {
+                    Index -= 2;
+                    Direction = DIRECTION_DOWN;
+                    tNumberOfBouncings--;
+                }
+                if (PatternFlags & FLAG_SCANNER_EXT_CYLON) {
+                    if (Index + PatternLength == numLEDs + 1) {
+                        Index -= 2;
+                        Direction = DIRECTION_DOWN;
+                        tNumberOfBouncings--;
+                    }
+                }
+            } else {
+// The original condition: if (Index == -1) {
+                if (Index > numLEDs) {
+                    Index = 1;
+                    Direction = DIRECTION_UP;
+                    tNumberOfBouncings--;
+                }
+                if (PatternFlags & FLAG_SCANNER_EXT_CYLON) {
+                    if (Index - (PatternLength - 2) == 0) {
+                        Index = PatternLength;
+                        Direction = DIRECTION_UP;
+                        tNumberOfBouncings--;
+                    }
+                }
+            }
+            Color2 = tNumberOfBouncings;
+        }
+    }
     /*
-     * index is starting position of brightest led (middle of pattern if mode is bubble)
+     * Refresh pattern
+     */
+
+    /*
+     * index is starting position of brightest led (middle of pattern if mode is cylon)
      */
     uint16_t tBrightnessHighResolution = 0; // = 0x10000->max. upper byte is the integer part used for setBrightness, lower byte is the fractional part
     uint16_t tBrightnessDelta = ColorTmp;
@@ -500,119 +706,93 @@ void NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
             if (PatternFlags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
                 // draw at other end too
                 setPixelColor((numLEDs - 1) - (Index + tOffset), tRedDimmed, tGreenDimmed, tBlueDimmed);
-
             }
         }
 
 #ifdef DEBUG
-        Serial.print("Index=");
+        Serial.print(F("ScannerExtendedUpdate: Index="));
         Serial.print(Index);
-        Serial.print(" Loop=");
+        Serial.print(F(" Loop="));
         Serial.print(tPatternIndex);
-        Serial.print(" Pixel=");
+        Serial.print(F(" Pixel="));
         Serial.print(int16_t(Index - tOffset));
-        Serial.print(" Direction=");
+        Serial.print(F(" Direction="));
         Serial.print(Direction);
-        if (aDoUpdate) {
-            Serial.print(" Brightness=");
-            Serial.print(tBrightness);
-            Serial.print(" r=");
-            Serial.print(tRedDimmed);
-            Serial.print(" g=");
-            Serial.print(tGreenDimmed);
-            Serial.print(" b=");
-            Serial.print(tBlueDimmed);
-        }
+
+        Serial.print(F(" Brightness="));
+        Serial.print(tBrightness);
+        Serial.print(F(" r="));
+        Serial.print(tRedDimmed);
+        Serial.print(F(" g="));
+        Serial.print(tGreenDimmed);
+        Serial.print(F(" b="));
+        Serial.print(tBlueDimmed);
+
         Serial.println();
 #endif
 // compute next brightness
         tBrightnessHighResolution -= tBrightnessDelta;
     }
 
-    /*
-     * tPatternIndex is PatternLength except if dimmed color is black
-     */
     if (aDoUpdate) {
 #ifdef DEBUG
-        Serial.println("clear");
+        Serial.println(F("clear tail"));
 #endif
-
-        uint16_t tNumberOfBouncings = Color2;
+        /*
+         * Clear tail. This needs only be done at update.
+         * tPatternIndex is PatternLength except if dimmed color is black
+         */
         if (Direction == DIRECTION_UP) {
             /*
              * DIRECTION_UP - Cleanup last tail pixel from old pattern
              */
             if (PatternFlags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
+                /*
+                 * Check if both pattern are not at the middle of the strip i.e. they touch each other
+                 * Since we have integer comparison we must use (numLEDs - 1) / 2) as limit to be valid for odd numLEDs
+                 */
                 if ((Index - (tPatternIndex / 2) <= (numLEDs - 1) / 2) || (Index - tPatternIndex) >= numLEDs / 2) {
-                    setPixelColor(Index - tPatternIndex, COLOR32_BLACK);
                     setPixelColor((numLEDs - 1) - (Index - tPatternIndex), COLOR32_BLACK);
+                    setPixelColor(Index - tPatternIndex, COLOR32_BLACK);
                 }
             } else {
                 setPixelColor(Index - tPatternIndex, COLOR32_BLACK);
             }
 
-            /*
-             * check for bouncing condition
-             */
-            if (tNumberOfBouncings > 0) {
-                if (Index == numLEDs - 1) {
-                    Direction = DIRECTION_DOWN;
-                    tNumberOfBouncings--;
-                }
-                if (PatternFlags & FLAG_SCANNER_EXT_CYLON) {
-                    if (Index + PatternLength == numLEDs) {
-                        Direction = DIRECTION_DOWN;
-                        tNumberOfBouncings--;
-                    }
-                }
-            }
         } else {
             /*
              * DIRECTION_DOWN - Cleanup last tail pixel from old pattern
              */
             if (PatternFlags & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS) {
-                // Since we have integer comparison we must use (numLEDs - 1) / 2) as limit
+                // Since we have integer comparison we must use (numLEDs - 1) / 2) as limit to be valid for odd numLEDs
                 if ((Index + (tPatternIndex / 2) >= numLEDs / 2) || (Index + tPatternIndex) <= (numLEDs - 1) / 2) {
-                    setPixelColor(Index + tPatternIndex, COLOR32_BLACK);
                     setPixelColor((numLEDs - 1) - (Index + tPatternIndex), COLOR32_BLACK);
+                    setPixelColor(Index + tPatternIndex, COLOR32_BLACK);
                 }
             } else {
                 setPixelColor(Index + tPatternIndex, COLOR32_BLACK);
             }
-
-            /*
-             * check for bouncing condition
-             */
-            if (tNumberOfBouncings > 0) {
-                if (Index == 0) {
-                    Direction = DIRECTION_UP;
-                    tNumberOfBouncings--;
-                }
-                if (PatternFlags & FLAG_SCANNER_EXT_CYLON) {
-                    if (Index - (PatternLength - 1) == 0) {
-                        Direction = DIRECTION_UP;
-                        tNumberOfBouncings--;
-                    }
-                }
-            }
         }
-        Color2 = tNumberOfBouncings;
-        NextIndexAndDecrementTotalStepCounter();
     } //  if (aDoUpdate)
+    return false;
 }
 
-void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aIntervalMillis,
-        uint16_t aNumberOfSteps, uint8_t aDirection) {
-    ActivePattern = PATTERN_STRIPES;
+/*
+ * Start with aLength1 pixel of aLength1 followed by aLength2 pixel of aColor2 and then starting with aColor1 again until Strip ends.
+ * If DIRECTION_DOWN the same pattern starts from the other end.
+ * If aNumberOfSteps == (aLength1 + aLength2) the last pattern is equal first pattern
+ */
+void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
+        uint16_t aIntervalMillis, uint8_t aDirection) {
     Color1 = aColor1;
     PatternLength = aLength1;
     Color2 = aColor2;
     MultipleExtension = aLength2;     // abuse it for Length2
     Interval = aIntervalMillis;
-    TotalStepCounter = aNumberOfSteps + 1;  // +1 step for the last delay step
-    // The direction of index has the opposite direction of pattern
+    TotalStepCounter = aNumberOfSteps + 1;     // + 1 step for the last pattern to show
+// The direction of index has the opposite direction of pattern
     Direction = OppositeDirection(aDirection);
-    // start index (in pattern) running from 0 to (aLength1 + aLength2)
+// start index (in pattern) running from 0 to (aLength1 + aLength2)
     if (aDirection == DIRECTION_UP) {
         Index = 0;
     } else {
@@ -629,44 +809,37 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
         }
     }
 #ifdef DEBUG
-    Serial.print("Index=");
+    Serial.print(F("Index="));
     Serial.print(Index);
-    Serial.print(" Length1=");
+    Serial.print(F(" Length1="));
     Serial.print(PatternLength);
-    Serial.print(" Length2=");
+    Serial.print(F(" Length2="));
     Serial.print(MultipleExtension);
-    Serial.print(" Direction=");
+    Serial.print(F(" Direction="));
     Serial.print(Direction);
     Serial.println();
 #endif
+
+    StripesUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_STRIPES;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
-void NeoPatterns::StripesUpdate(bool aDoUpdate) {
-    if (!aDoUpdate || TotalStepCounter > 1) {
-        /*
-         * Draw if just redraw requested and NOT the last delay step to show the result and where we stop the pattern.
-         */
-        uint8_t tRunningIndex = Index;
-        for (uint16_t i = 0; i < numLEDs; i++) {
-            /*
-             * draw 1 pattern
-             */
-            if (tRunningIndex < PatternLength) {
-                // first part
-                setPixelColor(i, Color1);
-            } else {
-                // second part
-                setPixelColor(i, Color2);
-            }
-            tRunningIndex++;
-            // check for end of pattern - MultipleExtension is Length2
-            if (tRunningIndex >= PatternLength + MultipleExtension) {
-                tRunningIndex = 0;
-            }
-        }
-    }
-
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
     if (aDoUpdate) {
+        if (decrementTotalStepCounter()) {
+            return true;
+        }
+        /*
+         * Next index
+         */
         if (Direction == DIRECTION_UP) {
             Index++;
             if (Index >= PatternLength + MultipleExtension) {
@@ -678,48 +851,27 @@ void NeoPatterns::StripesUpdate(bool aDoUpdate) {
                 Index = PatternLength + MultipleExtension - 1;
             }
         }
-// must be last action before return
-        DecrementTotalStepCounter();
     }
-}
 
-/*
- * brighten and dim color using 15 values from the gamma5 table
- */
-void NeoPatterns::Heartbeat(color32_t aColor1, uint16_t aIntervalMillis, uint16_t aRepetitions) {
-    ActivePattern = PATTERN_HEARTBEAT;
-    Color1 = aColor1;
-    Interval = aIntervalMillis;
-    Repetitions = aRepetitions;
-    TotalStepCounter = (30 * aRepetitions) - 1;
-    Direction = DIRECTION_UP; // shift index is counting down
-    setBrightness(pgm_read_byte(&_gammaTable32[2]));
-    Index = 4;
-}
-
-void NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
-//#ifdef DEBUG
-    Serial.print("Index=");
-    Serial.print(Index);
-    Serial.print(" Brightness=");
-    Serial.println(pgm_read_byte(&_gammaTable32[Index]));
-//#endif
-    setBrightness(pgm_read_byte(&_gammaTable32[Index]));
-    ColorSet(Color1);
-    if (Direction == DIRECTION_UP) {
-        if (Index >= 30) {
-            Direction = DIRECTION_DOWN;
+    /*
+     * Refresh pattern
+     */
+    uint8_t tRunningIndex = Index;
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        if (tRunningIndex < PatternLength) {
+            // first color
+            setPixelColor(i, Color1);
         } else {
-            Index += 2;
+            // second color
+            setPixelColor(i, Color2);
         }
-    } else {
-        if (Index <= 2) {
-            Direction = DIRECTION_UP;
-        } else {
-            Index -= 2;
+        tRunningIndex++;
+        // check for end of pattern - MultipleExtension is Length2
+        if (tRunningIndex >= PatternLength + MultipleExtension) {
+            tRunningIndex = 0;
         }
     }
-    DecrementTotalStepCounter();
+    return false;
 }
 
 /********************************************************
@@ -739,21 +891,34 @@ void NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
 #define SPARKING 120
 
 // initialize for fire -> set all to zero
-void NeoPatterns::Fire(uint16_t aIntervalMillisMillis, uint16_t aRepetitions) {
-    ActivePattern = PATTERN_FIRE;
-    Interval = aIntervalMillisMillis;
-    Direction = DIRECTION_UP;
+void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_t aDirection) {
+    Interval = aIntervalMillis;
+    Direction = aDirection;
     Index = 0;
-    Repetitions = aRepetitions;
-// reset colors
-    ColorSet(0);
+    TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
+    clear();
+
+    FireUpdate(false);
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_FIRE;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
 // Update the Fire Pattern
-void NeoPatterns::FireUpdate(bool aDoUpdate) {
+bool NeoPatterns::FireUpdate(bool aDoUpdate) {
     static byte heat[24];
 
     if (aDoUpdate) {
+        if (decrementTotalStepCounter()) {
+            return true;
+        }
+
+        /*
+         * Next index
+         */
 // Step 1.  Cool down every cell a little
         for (uint16_t i = 0; i < numLEDs; i++) {
             uint8_t tChill = random(((COOLING * 20) / numLEDs) + 2);
@@ -780,20 +945,18 @@ void NeoPatterns::FireUpdate(bool aDoUpdate) {
             }
         }
     }
+    /*
+     * Refresh pattern
+     */
 // Step 4.  Map from heat cells to LED colors
     for (uint16_t j = 0; j < numLEDs; j++) {
-        setPixelColor(j, HeatColor(heat[j]));
-    }
-
-    if (aDoUpdate) {
-        Repetitions--;
-        if (Repetitions == 0) {
-            ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
-            if (OnPatternComplete != NULL) {
-                OnPatternComplete(this); // call the completion callback
-            }
+        if (Direction == DIRECTION_UP) {
+            setPixelColor(j, HeatColor(heat[j]));
+        } else {
+            setPixelColor((numLEDs - 1) - j, HeatColor(heat[j]));
         }
     }
+    return false;
 }
 
 uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
@@ -805,8 +968,8 @@ uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
 
 // calculate a value that ramps up from
 // zero to 255 in each 'third' of the scale.
-    uint8_t heatramp = t192 & 0x3F; // 0..63
-    heatramp <<= 2; // scale up to 0..252
+    uint8_t heatramp = t192 & 0x3F;  // 0..63
+    heatramp <<= 2;  // scale up to 0..252
     heatramp = gamma8(heatramp);
 
 // now figure out which third of the spectrum we're in:
@@ -835,10 +998,11 @@ void NeoPatterns::Delay(uint16_t aMillis) {
 }
 
 // Update / End the Delay pattern
-void NeoPatterns::DelayUpdate(bool aDoUpdate) {
+bool NeoPatterns::DelayUpdate(bool aDoUpdate) {
     if (aDoUpdate) {
-        DecrementTotalStepCounter();
+        decrementTotalStepCounter();
     }
+    return true; // do not call show() anyway
 }
 
 /*
@@ -846,15 +1010,22 @@ void NeoPatterns::DelayUpdate(bool aDoUpdate) {
  * the last resulting color is found in Color2
  */
 void NeoPatterns::ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
-        uint16_t steps, uint16_t interval) {
-    ActivePattern = PATTERN_PROCESS_SELECTIVE;
-    Interval = interval;
-    TotalStepCounter = steps;
-    Index = 0; // needed for FadeColor
+        uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
+    Interval = aIntervalMillis;
+    TotalStepCounter = aNumberOfSteps;
     Color1 = aColorForSelection;
 // initialize temporary color
     ColorTmp = aColorForSelection;
     SingleLEDProcessingFunction = aSingleLEDProcessingFunction;
+
+    // call this direct, since it is called only at update
+    ProcessSelectiveColorForAllPixel();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_PROCESS_SELECTIVE;
+#ifdef TRACE
+    printInfo(&Serial, true);
+#endif
 }
 
 /*
@@ -872,11 +1043,17 @@ void NeoPatterns::ProcessSelectiveColorForAllPixel() {
     ColorTmp = tNewColor;
 }
 
-void NeoPatterns::ProcessSelectiveColorUpdate(bool aDoUpdate) {
+bool NeoPatterns::ProcessSelectiveColorUpdate(bool aDoUpdate) {
     if (aDoUpdate) {
+        if (decrementTotalStepCounter()) {
+            // store last color
+            Color2 = ColorTmp;
+            return true;
+        }
         ProcessSelectiveColorForAllPixel();
-        DecrementTotalStepCounter();
     }
+    // no pattern refresh possible
+    return false;
 }
 
 /***********************************************************
@@ -921,6 +1098,9 @@ color32_t BrightenColor(NeoPatterns * aLedPtr) {
 }
 
 #if defined(__AVR__)
+/*
+ * Not needed for non AVR platforms, it is then just PatternNamesArray[aPatternNumber]
+ */
 void NeoPatterns::getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t aBuffersize) {
     const char* aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
     char tPGMChar;
@@ -943,11 +1123,14 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Stream * aSerial) {
     const char* aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
     aSerial->print((const __FlashStringHelper *) aNameArrayPointerPGM);
 #else
-    aSerial->print(PatternNamesArray[aPatternNumber]);
+        aSerial->print(PatternNamesArray[aPatternNumber]);
 #endif
 }
 
-void NeoPatterns::Debug(Stream * aSerial, bool aFullInfo) {
+/*
+ * For debugging purposes
+ */
+void NeoPatterns::printInfo(Stream * aSerial, bool aFullInfo) {
     static uint16_t sLastSteps;
     if (aFullInfo) {
         sLastSteps = 0x9000; // Force debug output below
@@ -967,15 +1150,18 @@ void NeoPatterns::Debug(Stream * aSerial, bool aFullInfo) {
         aSerial->print(ColorTmp, HEX);
         aSerial->print("|");
         aSerial->print(ColorTmp);
-        aSerial->print(" Flags=0x");
+        aSerial->print(" PatternFlags=0x");
         aSerial->print(PatternFlags, HEX);
+        aSerial->print(" PixelFlags=0x");
+        aSerial->print(PixelFlags, HEX);
         aSerial->print(' ');
     }
     /*
      * only print if TotalSteps changed
      */
-    if (Index != sLastSteps) {
+    if (TotalStepCounter != sLastSteps) {
         sLastSteps = TotalStepCounter;
+
         aSerial->print("Pin=");
         aSerial->print(getPin());
         aSerial->print(" Offset=");
@@ -989,85 +1175,145 @@ void NeoPatterns::Debug(Stream * aSerial, bool aFullInfo) {
         aSerial->print(Direction);
         aSerial->print(" Repetitions=");
         aSerial->print(Repetitions);
+        aSerial->print(" lastUpdate=");
+        aSerial->print(lastUpdate);
+        aSerial->print(" brightness=");
+        aSerial->print(brightness - 1); // The effective one. Raw 0 means full brightness at the adafruit library
         aSerial->println();
     }
 }
 
-/******************************
- * Code for pattern extensions
- *****************************/
+/***********************************
+ * Code for user pattern extensions
+ ***********************************/
 
-// Initialize for Pattern1
-// set all pixel to aColor1 and let a pixel of color2 move through
-void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint8_t aIntervalMillis,
+bool __attribute__((weak)) UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate);
+
+/*
+ * Set all pixel to aColor1 and let a pixel of color2 move through.
+ * Starts with all pixel aColor1 and also ends with it.
+ */
+void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint16_t aIntervalMillis,
         uint8_t aDirection) {
+    aNeoPatterns->Interval = aIntervalMillis;
+    aNeoPatterns->Color1 = aColor1;
+    aNeoPatterns->Color2 = aColor2;
+    aNeoPatterns->Direction = aDirection;
+    aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels() + 2; // + 2 for the first and last pattern
+    if (aDirection == DIRECTION_UP) {
+        aNeoPatterns->Index = -1;
+    } else {
+        aNeoPatterns->Index = aNeoPatterns->numPixels();
+    }
+
+    aNeoPatterns->ColorSet(aColor1);
+    aNeoPatterns->showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
-    aNeoPatterns->Interval = aIntervalMillis;
-    aNeoPatterns->Color1 = aColor1;
-    aNeoPatterns->Color2 = aColor2;
-    aNeoPatterns->Direction = aDirection;
-    aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels() + 1; // +1 for the last delay step to show the result
-}
-
-void NeoPatterns::Pattern1Update(bool aDoUpdate) {
-    /*
-     * Sample implementation
-     */
-    for (uint16_t i = 0; i < numLEDs; i++) {
-        if (i == Index) {
-            setPixelColor(i, Color2);
-        } else {
-            setPixelColor(i, Color1);
-        }
-    }
-    if (aDoUpdate) {
-        NextIndexAndDecrementTotalStepCounter();
-    }
-}
-
-// clear all pixel and let a pixel of color2 move up and down
-void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint8_t aIntervalMillis,
-        uint8_t aDirection) {
-    /*
-     * Sample implementation
-     */
-    aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN2;
-    aNeoPatterns->Interval = aIntervalMillis;
-    aNeoPatterns->Color1 = aColor1;
-    aNeoPatterns->Color2 = aColor2;
-    aNeoPatterns->Direction = aDirection;
-    aNeoPatterns->Index = 0;
-    aNeoPatterns->TotalStepCounter = (2 * aNeoPatterns->numPixels()) - 1 + 1; // up and down but do not use upper pixel twice + 1 for the last delay step to show the result
+#ifdef TRACE
+    aNeoPatterns->printInfo(&Serial, true);
+#endif
 }
 
 /*
- * The user may specify its own implementation
+ * Sample implementation
  */
-void __attribute__((weak)) UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+bool __attribute__((weak)) UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
+        }
+    }
     /*
-     * Sample implementation
+     * Refresh pattern
      */
     for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
         if (i == aNeoPatterns->Index) {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color2);
         } else {
-            aNeoPatterns->setPixelColor(i, COLOR32_BLACK);
+            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
         }
     }
-
-    if (aDoUpdate) {
-        aNeoPatterns->NextIndexAndDecrementTotalStepCounter();
-        if (aNeoPatterns->Index == aNeoPatterns->numPixels()) {
-            // change direction
-            aNeoPatterns->Direction = DIRECTION_DOWN;
-            // do nor use upper pixel twice
-            aNeoPatterns->Index--;
-        }
-    }
+    return false;
 }
 
-void NeoPatterns::Pattern2Update(bool aDoUpdate) {
-    UserPattern2Update(this, aDoUpdate);
+bool NeoPatterns::Pattern1Update(bool aDoUpdate) {
+    return UserPattern1Update(this, aDoUpdate);
+}
+
+/*
+ * let a pixel of aColor move up and down
+ * starts and ends with all pixel cleared
+ */
+void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
+        uint8_t aDirection) {
+    /*
+     * Sample implementation
+     */
+    aNeoPatterns->Interval = aIntervalMillis;
+    aNeoPatterns->Color1 = aColor;
+    aNeoPatterns->Direction = aDirection;
+    aNeoPatterns->TotalStepCounter = (2 * aNeoPatterns->numPixels()) - 1 + 2; // up and down but do not use upper pixel twice + 2 for the first and last pattern
+    if (aDirection == DIRECTION_UP) {
+        aNeoPatterns->Index = -1;
+    } else {
+        aNeoPatterns->Index = aNeoPatterns->numPixels();
+    }
+
+    aNeoPatterns->clear();
+    aNeoPatterns->showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN2;
+#ifdef TRACE
+    aNeoPatterns->printInfo(&Serial, true);
+#endif
+}
+
+/*
+ * Sample implementation
+ * The user may specify its own implementation
+ */
+bool __attribute__((weak)) UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (aNeoPatterns->decrementTotalStepCounter()) {
+            return true;
+        }
+        /*
+         * Next index
+         */
+        if (aNeoPatterns->Direction == DIRECTION_UP) {
+            aNeoPatterns->Index++;
+            // do nor use upper pixel twice
+            if (aNeoPatterns->Index == (aNeoPatterns->numPixels() - 1)) {
+                aNeoPatterns->Direction = DIRECTION_DOWN;
+            }
+        } else {
+            aNeoPatterns->Index--;
+            if (aNeoPatterns->Index == 0) {
+                aNeoPatterns->Direction = DIRECTION_UP;
+            }
+        }
+    }
+    /*
+     * Refresh pattern
+     */
+    if (aNeoPatterns->TotalStepCounter == 1) {
+        // last pattern is clear
+        aNeoPatterns->clear();
+    } else {
+        for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
+            if (i == aNeoPatterns->Index) {
+                aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
+            } else {
+                aNeoPatterns->setPixelColor(i, COLOR32_BLACK);
+            }
+        }
+    }
+    return false;
+}
+
+bool NeoPatterns::Pattern2Update(bool aDoUpdate) {
+    return UserPattern2Update(this, aDoUpdate);
 }
 
 /*****************************************************************
@@ -1161,56 +1407,61 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
 
     switch (tState) {
     case 0:
-//aLedsPtr->Cylon(NeoPatterns::Wheel(tColor), tDuration, 2);
+        // Cylon 3 times bouncing
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 3,
-        FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE, (tDuration & DIRECTION_DOWN));
+        FLAG_SCANNER_EXT_CYLON | (tDuration & FLAG_SCANNER_EXT_VANISH_COMPLETE), (tColor & DIRECTION_DOWN));
         break;
     case 1:
-// rocket 2 times bouncing
+        // rocket 2 times bouncing
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
-        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, (tDuration & DIRECTION_DOWN));
+        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, (tColor & DIRECTION_DOWN));
         break;
     case 2:
-// 1 times rocket or falling star
+        // 1 times rocket or falling star
         aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 7, tDuration / 2, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE,
-                (tDuration & DIRECTION_DOWN));
+                (tColor & DIRECTION_DOWN));
         break;
     case 3:
-        aLedsPtr->RainbowCycle(20);
+        // Rainbow cycle
+        aLedsPtr->RainbowCycle(tDuration / 4, (tDuration & DIRECTION_DOWN));
         break;
     case 4:
-        aLedsPtr->Stripes(COLOR32_WHITE_HALF, 5, NeoPatterns::Wheel(tColor), 3, tDuration, 2 * aLedsPtr->numPixels(),
-                (tDuration & DIRECTION_DOWN));
+        // new Stripes
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 5, NeoPatterns::Wheel(tColor + 0x80), 3, 2 * aLedsPtr->numPixels(),
+                tDuration * 2, (tColor & DIRECTION_DOWN));
         break;
     case 5:
-// old TheaterChase
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, tDuration * 2,
-                2 * aLedsPtr->numPixels(), (tDuration & DIRECTION_DOWN));
+        // old TheaterChase
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, 2 * aLedsPtr->numPixels(),
+                tDuration * 2, (tColor & DIRECTION_DOWN));
         break;
     case 6:
-        aLedsPtr->Fade(COLOR32_RED, COLOR32_BLUE, 32, tDuration);
+        // Fade to complement
+        aLedsPtr->Fade(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), 64, tDuration);
         break;
     case 7:
-        aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration, FLAG_DO_NOT_CLEAR, (tDuration & DIRECTION_DOWN)); // switch direction
+        // Color wipe DO_NOT_CLEAR
+        aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration, FLAG_DO_NOT_CLEAR, (tColor & DIRECTION_DOWN));
         break;
     case 8:
-// rocket start at both end
+        // rocket start at both end
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration / 2, 3,
-        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
+        FLAG_SCANNER_EXT_ROCKET | (tDuration & FLAG_SCANNER_EXT_VANISH_COMPLETE) | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
         break;
     case 9:
-        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), 50, 5);
+        // 3 Heartbeats
+        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 3);
         break;
     case 10:
-// Multiple falling star
+        // Multiple falling star
         initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration, 3, &allPatternsRandomExample);
         break;
     case 11:
         if (aLedsPtr->PatternsGeometry == GEOMETRY_BAR) {
             //Fire
-            aLedsPtr->Fire(tDuration / 2, 100);
+            aLedsPtr->Fire(tDuration * 2, tDuration / 2);
         } else {
-            // start at both end
+            // rocket start at both end
             aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 0,
             FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR);
         }
@@ -1220,17 +1471,17 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
     }
 
 #ifdef INFO
-    Serial.print("Pin=");
+    Serial.print(F("Pin="));
     Serial.print(aLedsPtr->getPin());
-    Serial.print(" Length=");
+    Serial.print(F(" Length="));
     Serial.print(aLedsPtr->numPixels());
-    Serial.print(" ActivePattern=");
+    Serial.print(F(" ActivePattern="));
 #ifdef DEBUG
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
-    Serial.print("|");
+    Serial.print('|');
 #endif
     Serial.print(aLedsPtr->ActivePattern);
-    Serial.print(" State=");
+    Serial.print(F(" State="));
     Serial.println(tState);
 #endif
 }

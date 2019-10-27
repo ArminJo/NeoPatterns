@@ -29,7 +29,7 @@
 
 #include <NeoPatterns.h>
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "2.0"
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL  2

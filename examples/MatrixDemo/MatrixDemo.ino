@@ -74,7 +74,7 @@ void setup() {
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
 void loop() {
-	if (NeoPixelMatrix.Update()) {
+	if (NeoPixelMatrix.update()) {
 		if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
 			// change color of ticker after each update
 			NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);

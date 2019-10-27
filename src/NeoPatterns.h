@@ -36,6 +36,15 @@
 #ifndef NEOPATTERNS_H
 #define NEOPATTERNS_H
 
+/*
+ * Version 2.0.0
+ * - Function `drawBar()` in NeoPixel.cpp added.
+ * - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
+ * - Pattern `HEARTBEAT` added.
+ * - Added parameter aDirection to `Fire()`.
+ * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
+ */
+
 // Propagate debug level
 #ifdef TRACE
 #define DEBUG
@@ -56,7 +65,7 @@
 #define PROGMEM void
 #endif
 
-extern char VERSION_NEOPATTERNS[4];
+#define VERSION_NEOPATTERNS 1.2.0
 
 extern const char * const PatternNamesArray[] PROGMEM;
 
@@ -103,21 +112,21 @@ const char* DirectionToString(uint8_t aDirection);
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
 class NeoPatterns: public virtual NeoPixel {
 public:
-    NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+    NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
+            bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            void (*aPatternCompletionCallback)(NeoPatterns*) = NULL, bool aEnableShowOfUnderlyingPixel = true);
+            void (*aPatternCompletionCallback)(NeoPatterns*) = NULL, bool aEnableShowOfUnderlyingPixel = true,
+            bool aShowOnlyAtUpdate = false);
 
     void setCallback(void (*callback)(NeoPatterns*));
 
-    bool CheckForUpdate();
-    bool UpdateOrRedraw();
-    bool Update(bool doShow = true);
-    bool update(bool doShow = true);
-    bool DecrementTotalStepCounter();
-    void NextIndex();
-    void NextIndexAndDecrementTotalStepCounter();
-    void setDirectionAndTotalStepsAndIndex(uint8_t aDirection, uint16_t aTotalSteps);
+    bool checkForUpdate();
+    bool updateOrRedraw();
+    bool update();
+    void showPatternInitially();
+    bool decrementTotalStepCounter();
+    void setNextIndex();
+    bool decrementTotalStepCounterAndSetNextIndex();
 
     void updateAndWaitForPatternToStop();
 
@@ -126,43 +135,45 @@ public:
      */
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void Fade(color32_t aColor1, color32_t aColor2, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
+    void Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
 
     /*
      * PATTERN extensions
      */
-    void ScannerExtended(color32_t aColor1, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0, uint8_t aMode = 0,
-            uint8_t aDirection = DIRECTION_UP);
-    void Fire(uint16_t interval, uint16_t repetitions = 100);
-    color32_t HeatColor(uint8_t aTemperature);
-
+    void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
+            uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+    void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode = 0);
+    void ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0,
+            uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
     void Delay(uint16_t aMillis);
+
     void ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
             uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
-    void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aIntervalMillis,
-            uint16_t aNumberOfSteps, uint8_t aDirection = DIRECTION_UP);
-    void Heartbeat(color32_t aColor1, uint16_t aIntervalMillis, uint16_t aRepetitions);
 
+    color32_t HeatColor(uint8_t aTemperature);
 
     /*
      * UPDATE functions
+     * return true if pattern has ended, false if pattern has NOT ended
      */
-    void RainbowCycleUpdate(bool aDoUpdate = true);
-    void ColorWipeUpdate(bool aDoUpdate = true);
-    void FadeUpdate(bool aDoUpdate = true);
+    bool RainbowCycleUpdate(bool aDoUpdate = true);
+    bool ColorWipeUpdate(bool aDoUpdate = true);
+    bool FadeUpdate(bool aDoUpdate = true);
 
     /*
      * Extensions
      */
-    void ScannerExtendedUpdate(bool aDoUpdate = true);
-    void StripesUpdate(bool aDoUpdate = true);
-    void HeartbeatUpdate(bool aDoUpdate = true);
-    void FireUpdate(bool aDoUpdate = true);
-    void DelayUpdate(bool aDoUpdate = true);
-    void ProcessSelectiveColorUpdate(bool aDoUpdate = true);
+    bool ScannerExtendedUpdate(bool aDoUpdate = true);
+    bool StripesUpdate(bool aDoUpdate = true);
+    bool HeartbeatUpdate(bool aDoUpdate = true);
+    bool FireUpdate(bool aDoUpdate = true);
+    bool DelayUpdate(bool aDoUpdate = true);
+    bool ProcessSelectiveColorUpdate(bool aDoUpdate = true);
+    bool Pattern1Update(bool aDoUpdate = true);
+    bool Pattern2Update(bool aDoUpdate = true);
+
     void ProcessSelectiveColorForAllPixel();
-    void Pattern1Update(bool aDoUpdate = true);
-    void Pattern2Update(bool aDoUpdate = true);
 
 #if defined(__AVR__)
     void getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t aBuffersize);
@@ -170,7 +181,7 @@ public:
     // use PatternNamesArray[aPatternNumber] on other platforms
 #endif
     void printPatternName(uint8_t aPatternNumber, Stream * aSerial);
-    void Debug(Stream * aSerial, bool aFullInfo = true);
+    void printInfo(Stream * aSerial, bool aFullInfo = true);
 
     /*
      * Variables for almost each pattern
@@ -199,7 +210,7 @@ public:
     uint16_t Interval;   // milliseconds between updates
     unsigned long lastUpdate; // milliseconds of last update of pattern
 
-    void (*OnPatternComplete)(NeoPatterns*);  // Callback on completion of pattern
+    void (*OnPatternComplete)(NeoPatterns*);  // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
 
     /*
      * Extensions
@@ -244,6 +255,10 @@ void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 
 void allPatternsRandomExample(NeoPatterns * aLedsPtr);
 
+void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint16_t aIntervalMillis,
+        uint8_t aDirection = DIRECTION_UP);
+void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint8_t aDirection =
+DIRECTION_UP);
 #endif // NEOPATTERNS_H
 
 #pragma once

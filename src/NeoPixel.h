@@ -52,12 +52,14 @@ public:
      * Extensions to Adafruit_NeoPixel functions
      */
     void begin();
+    void show();
     // Version with error message
     bool begin(Stream * aSerial);
 
     void ColorSet(color32_t aColor);
-    uint32_t DimColor(color32_t aColor);
-    void resetBrightnessValue(); // resets internal brightness control value to full to support restoring of patterns while brightening
+    color32_t getPixelColor(uint16_t aPixelIndex);
+    uint32_t dimColor(color32_t aColor);
+    void resetBrightnessValue();
     uint8_t getBytesPerPixel();
     neoPixelType getType();
     uint16_t getPixelBufferSize();
@@ -82,14 +84,21 @@ public:
     void TestWS2812Resolution();
 
     uint8_t BytesPerPixel;  // can be 3 or 4
-#define IS_PARTIAL_PIXEL                        0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
-#define DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT 0x02 // use negative logic because evaluation is simpler then
     uint8_t PixelFlags;
     uint16_t PixelOffset; // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
     NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
 };
 
-extern const uint8_t _gammaTable32[32] PROGMEM;
+#define IS_PARTIAL_PIXEL                        0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
+#define DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT 0x02 // use negative logic because evaluation is simpler then
+/*
+ * Flag for NeoPattern. This disables the initial asynchronous show() for a new pattern, but enables show() if called by synchronous callback.
+ * This behavior is needed to avoid disturbing other libraries, which cannot handle the time when interrupt is disabled for show() e.g. the Servo library.
+ * The asynchronous call is detected by check if the current pattern is not PATTERN_NONE.
+ */
+#define SHOW_ONLY_AT_UPDATE                     0x04
+
+extern const uint8_t GammaTable32[32] PROGMEM;
 
 #endif /* SRC_LIB_NEOPATTERNS_NEOPIXEL_H_ */
 

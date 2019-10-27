@@ -53,11 +53,11 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
     Serial.print(aRowY);
     Serial.print(F(" n="));
     Serial.print(LayoutMapping(aColumnX, aRowY));
-    Serial.print(" Color=");
+    Serial.print(F(" Color="));
     Serial.print(aRed);
-    Serial.print("|");
+    Serial.print('|');
     Serial.print(aGreen);
-    Serial.print("|");
+    Serial.print('|');
     Serial.println(aBlue);
 #endif
     if (LayoutMappingFunction == NULL) {

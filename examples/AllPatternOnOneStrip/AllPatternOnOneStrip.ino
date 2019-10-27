@@ -33,9 +33,9 @@
 
 #include <NeoPatterns.h>
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "2.0"
 
-// Uncomment this to test your own pattern implementation on line 70 ff.
+// Comment this out to test your own pattern implementation on line 74 ff.
 //#define TEST_USER_PATTERNS
 
 // Which pin on the Arduino is connected to the NeoPixels?
@@ -60,37 +60,57 @@ void setup() {
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
     bar16.begin(); // This initializes the NeoPixel library.
-    bar16.ColorWipe(COLOR32(0, 0, 02), 50, REVERSE); // light Blue
+    bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, REVERSE); // light Blue
 
     Serial.println("started");
     delay(500);
 }
 
 void loop() {
-    bar16.Update();
+    bar16.update();
     delay(10);
 }
 
 #ifdef TEST_USER_PATTERNS
-/*
- * Put your own pattern code here
- */
 
-// Initialize for Pattern1
-// set all pixel to aColor1 and let a pixel of color2 move through
-void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection) {
+/************************************************************************************************************
+ * Put your own pattern code here
+ * Provided are sample implementation not supporting initial direction DIRECTION_DOWN
+ * Full implementation of this functions can be found in the NeoPatterns.cpp file of the NeoPatterns library
+ ************************************************************************************************************/
+
+/*
+ * set all pixel to aColor1 and let a pixel of color2 move through
+ * Starts with all pixel aColor1 and also ends with it.
+ */
+void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint16_t aIntervalMillis, uint8_t aDirection) {
+    /*
+     * Sample implementation not supporting DIRECTION_DOWN
+     */
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
-    aNeoPatterns->Interval = aInterval;
+    aNeoPatterns->Interval = aIntervalMillis;
     aNeoPatterns->Color1 = aColor1;
     aNeoPatterns->Color2 = aColor2;
     aNeoPatterns->Direction = aDirection;
-    aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels();
+    aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels() + 1;
+    aNeoPatterns->ColorSet(aColor1);
+    aNeoPatterns->show();
+    aNeoPatterns->lastUpdate = millis();
 }
 
-void UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
     /*
-     * Sample implementation
+     * Sample implementation not supporting initial direction DIRECTION_DOWN
      */
+    if (aDoUpdate) {
+        if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
+        }
+    }
+
     for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
         if (i == aNeoPatterns->Index) {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color2);
@@ -98,46 +118,62 @@ void UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
         }
     }
-    if (aDoUpdate) {
-        aNeoPatterns->NextIndexAndDecrementTotalStepCounter();
-    }
+
+    return false;
 }
 
-// clear all pixel and let a pixel of color2 move up and down
-void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint8_t aInterval, uint8_t aDirection) {
+/*
+ * let a pixel of aColor move up and down
+ * starts and ends with all pixel cleared
+ */
+void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint8_t aDirection) {
     /*
-     * Sample implementation
+     * Sample implementation not supporting DIRECTION_DOWN
      */
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN2;
-    aNeoPatterns->Interval = aInterval;
-    aNeoPatterns->Color1 = aColor1;
-    aNeoPatterns->Color2 = aColor2;
+    aNeoPatterns->Interval = aIntervalMillis;
+    aNeoPatterns->Color1 = aColor;
     aNeoPatterns->Direction = aDirection;
     aNeoPatterns->Index = 0;
-    aNeoPatterns->TotalStepCounter = (2 * aNeoPatterns->numPixels()) - 1; // up and down but do nor use upper pixel twice
+    aNeoPatterns->TotalStepCounter = 2 * aNeoPatterns->numPixels(); // up and down but do nor use upper pixel twice
+    aNeoPatterns->clear();
+    aNeoPatterns->show();
+    aNeoPatterns->lastUpdate = millis();
 }
 
-void UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
     /*
-     * Sample implementation
+     * Sample implementation not supporting initial direction DIRECTION_DOWN
      */
-    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
-        if (i == aNeoPatterns->Index) {
-            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color2);
-        } else {
-            aNeoPatterns->setPixelColor(i, COLOR32_BLACK);
-        }
-    }
-
     if (aDoUpdate) {
-        aNeoPatterns->NextIndexAndDecrementTotalStepCounter();
+
+        if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
+        }
+        /*
+         * Next index
+         */
         if (aNeoPatterns->Index == aNeoPatterns->numPixels()) {
             // change direction
             aNeoPatterns->Direction = DIRECTION_DOWN;
             // do nor use upper pixel twice
-            aNeoPatterns->Index--;
+            aNeoPatterns->Index -= 2;
         }
     }
+    /*
+     * Refresh pattern
+     */
+    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
+        if (i == aNeoPatterns->Index) {
+            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
+        } else {
+            aNeoPatterns->setPixelColor(i, COLOR32_BLACK);
+        }
+    }
+    return false;
 }
 
 /*
@@ -155,7 +191,7 @@ void ownPatterns(NeoPatterns * aLedsPtr) {
         break;
 
     case 1:
-        UserPattern2(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        UserPattern2(aLedsPtr, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
         sState = -1; // Start from beginning
         break;
 
@@ -186,41 +222,38 @@ void allPatterns(NeoPatterns * aLedsPtr) {
 
     switch (sState) {
     case 0:
-        // simple scanner
-        aLedsPtr->clear();
+        // Cylon
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 2, FLAG_SCANNER_EXT_CYLON);
         break;
     case 1:
+        // Heartbeat
+        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 3);
+        break;
+    case 2:
         // rocket and falling star - 2 times bouncing
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
         FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, (tDuration & DIRECTION_DOWN));
         break;
-    case 2:
-        // 1 times rocket or falling star
-        aLedsPtr->clear();
-        aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 7, tDuration / 2, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE,
-                (tDuration & DIRECTION_DOWN));
-        break;
     case 3:
-        aLedsPtr->RainbowCycle(20);
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 5, NeoPatterns::Wheel(tColor + 0x80), 3, 2 * aLedsPtr->numPixels(),
+                tDuration * 2, (tDuration & DIRECTION_DOWN));
         break;
     case 4:
-        aLedsPtr->Stripes(COLOR32_WHITE_HALF, 5, NeoPatterns::Wheel(tColor), 3, tDuration, 2 * aLedsPtr->numPixels(),
-                (tDuration & DIRECTION_DOWN));
+        aLedsPtr->RainbowCycle(tDuration / 4, (tDuration & DIRECTION_DOWN));
         break;
     case 5:
         // old TheaterChase
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, tDuration / 2,
-                2 * aLedsPtr->numPixels(), (tDuration & DIRECTION_DOWN));
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, 2 * aLedsPtr->numPixels(),
+                tDuration * 2, (tDuration & DIRECTION_DOWN));
         break;
     case 6:
-        aLedsPtr->Fade(COLOR32_RED, COLOR32_BLUE, 32, tDuration);
+        aLedsPtr->Fade(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), 64, tDuration);
         break;
     case 7:
         aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration);
         break;
     case 8:
-        // clear pattern
+        // clear existing color wipe
         aLedsPtr->ColorWipe(COLOR32_BLACK, tDuration, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
         break;
     case 9:
@@ -230,7 +263,7 @@ void allPatterns(NeoPatterns * aLedsPtr) {
     case 10:
         if (aLedsPtr->PatternsGeometry == GEOMETRY_BAR) {
             //Fire
-            aLedsPtr->Fire(tDuration / 2, 150);
+            aLedsPtr->Fire(tDuration * 2, tDuration / 2);
         } else {
             // start at both end
             aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 0,
