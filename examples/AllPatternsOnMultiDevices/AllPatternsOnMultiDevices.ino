@@ -117,8 +117,9 @@ void setup() {
     ring16.begin(); // This initializes the NeoPixel library.
     ring24.begin(); // This initializes the NeoPixel library.
 
-    bar16.PatternsGeometry = GEOMETRY_BAR;
-    bar24.PatternsGeometry = GEOMETRY_BAR;
+    ring12.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
+    ring16.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
+    ring24.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
 
 
     delay(300); // to avoid partial patterns at power up

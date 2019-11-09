@@ -184,7 +184,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
             setMatrixPixelColor(aColumnX, i, aColor);
         } else {
             // Clear pixel
-            setMatrixPixelColor(aColumnX, i, 0, 0, 0);
+            setMatrixPixelColor(aColumnX, i, COLOR32_BLACK);
         }
 
     }
@@ -215,7 +215,7 @@ void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength
             }
         } else {
             // Clear pixel
-            setMatrixPixelColor(aColumnX, i, 0, 0, 0);
+            setMatrixPixelColor(aColumnX, i, COLOR32_BLACK);
         }
         j--;
     }
@@ -507,9 +507,9 @@ void MatrixNeoPixel::drawAllColors() {
                 uint8_t red = yAscending;
 
                 // Gamma corrected values
-                uint8_t greenC = NeoPixel::gamma5(green);
-                uint8_t blueC = NeoPixel::gamma5(blue);
-                uint8_t redC = NeoPixel::gamma5(red);
+                uint8_t greenC = NeoPixel::gamma32(green);
+                uint8_t blueC = NeoPixel::gamma32(blue);
+                uint8_t redC = NeoPixel::gamma32(red);
 
 #ifdef TRACE
                 Serial.print(F("x="));

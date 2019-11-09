@@ -196,19 +196,9 @@ void MatrixSnake::drawSnake() {
     for (uint16_t i = 0; i < SnakeLength; i++) {
         position tPosition = SnakePixelList[i];
         // linear color interpolation over the body of the snake between tail and head
-        // Optimize order of operations to minimize truncation error
-        uint8_t red = gamma5WithSpecialZero((Red(Color1) * (SnakeLength - i)) / SnakeLength);
-        uint8_t green = gamma5WithSpecialZero((Green(Color1) * (SnakeLength - i)) / SnakeLength);
-        uint8_t blue = gamma5WithSpecialZero((Blue(Color1) * (SnakeLength - i)) / SnakeLength);
-#ifdef TRACE
-        Serial.print(F("snake color red="));
-        Serial.print(red);
-        Serial.print(F(" green="));
-        Serial.print(green);
-        Serial.print(F(" blue="));
-        Serial.println(blue);
-#endif
-        setMatrixPixelColor(tPosition.x, tPosition.y, COLOR32(red, green, blue));
+        uint8_t tBrightness = ((SnakeLength - i) * 255) / SnakeLength;
+        color32_t tDimmedColor = dimColorWithGamma32(Color1, tBrightness, true);
+        setMatrixPixelColor(tPosition.x, tPosition.y, tDimmedColor);
     }
     // set snake head color
     setMatrixPixelColor(SnakePixelList[0].x, SnakePixelList[0].y, COLOR32_GREEN);
@@ -942,14 +932,14 @@ void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
         break;
     case 3:
         // get last color from dim function
-        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &BrightenColor, 6, 40);
+        aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &BrightenColor, 6, 40);
         break;
     case 4:
-        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &DimColor, 6, 40);
+        aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &DimColor, 6, 40);
         break;
     case 5:
-//        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &BrightenColor, 6, 40);
-        aLedsPtr->ProcessSelectiveColor(aLedsPtr->ColorTmp, &BrightenColor, 6, 40);
+//        aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &BrightenColor, 6, 40);
+        aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &BrightenColor, 6, 40);
         break;
 
     case 6:

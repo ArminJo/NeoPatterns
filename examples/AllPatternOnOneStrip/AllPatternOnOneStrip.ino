@@ -35,6 +35,8 @@
 
 #define VERSION_EXAMPLE "2.0"
 
+#define INFO // if not defined, no Serial related code should be linked
+
 // Comment this out to test your own pattern implementation on line 74 ff.
 //#define TEST_USER_PATTERNS
 
@@ -53,16 +55,20 @@ NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &
 #endif
 
 void setup() {
+#ifdef INFO
     Serial.begin(115200);
     while (!Serial)
         ; //delay for Leonardo
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+#endif
 
     bar16.begin(); // This initializes the NeoPixel library.
     bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, REVERSE); // light Blue
 
+    #ifdef INFO
     Serial.println("started");
+#endif
     delay(500);
 }
 
@@ -213,12 +219,14 @@ void allPatterns(NeoPatterns * aLedsPtr) {
     uint8_t tDuration = random(40, 81);
     uint8_t tColor = random(255);
 
+#ifdef INFO
     Serial.print("Pin=");
     Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" State=");
     Serial.print(sState);
+#endif
 
     switch (sState) {
     case 0:
@@ -261,7 +269,7 @@ void allPatterns(NeoPatterns * aLedsPtr) {
         initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration / 2, 3, &allPatterns);
         break;
     case 10:
-        if (aLedsPtr->PatternsGeometry == GEOMETRY_BAR) {
+        if ((aLedsPtr->PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) == 0) {
             //Fire
             aLedsPtr->Fire(tDuration * 2, tDuration / 2);
         } else {
@@ -273,16 +281,19 @@ void allPatterns(NeoPatterns * aLedsPtr) {
         sState = -1; // Start from beginning
         break;
     default:
+#ifdef INFO
         Serial.println("ERROR");
+#endif
         break;
     }
 
+#ifdef INFO
     Serial.print(" ActivePattern=");
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
     Serial.print("|");
     Serial.print(aLedsPtr->ActivePattern);
-
     Serial.println();
+#endif
 
     sState++;
 }

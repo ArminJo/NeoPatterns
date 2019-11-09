@@ -224,7 +224,7 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t* aGraphics8x8ArrayPGM, co
         uint8_t aDirection) {
     DataPtr = aGraphics8x8ArrayPGM;
     Color1 = aForegroundColor;
-    Color2 = aBackgroundColor;
+    LongValue1.Color2 = aBackgroundColor;
     GraphicsXOffset = constrain(aGraphicsXOffset, -Rows, Rows);
     GraphicsYOffset = constrain(aGraphicsYOffset, -Columns, Columns);
     Interval = aIntervalMillis;
@@ -247,7 +247,7 @@ bool MatrixNeoPatterns::MovingPicturePGMUpdate() {
     if (decrementTotalStepCounter()) {
         return true;
     }
-    loadPicturePGM(DataPtr, 8, 8, Color1, Color2, GraphicsXOffset, GraphicsYOffset, false, true);
+    loadPicturePGM(DataPtr, 8, 8, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset, false, true);
     if (Direction == DIRECTION_UP) {
         GraphicsYOffset++;
     } else if (Direction == DIRECTION_DOWN) {
@@ -408,7 +408,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
  * aSteps == 1 is equivalent to just calling moveArrayContent()
  */
 void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16_t aIntervalMillis, color32_t aBackgroundColor) {
-    Color2 = aBackgroundColor;
+    LongValue1.Color2 = aBackgroundColor;
     Direction = aDirection;
     Interval = aIntervalMillis;
     TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
@@ -434,7 +434,7 @@ bool MatrixNeoPatterns::MoveUpdate() {
     if (decrementTotalStepCounter()) {
         return true;
     }
-    moveArrayContent(Direction, Color2);
+    moveArrayContent(Direction, LongValue1.Color2);
     return false;
 }
 
@@ -464,7 +464,7 @@ void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForeground
 
     DataPtr = (const uint8_t*) aStringPtr;
     Color1 = aForegroundColor;
-    Color2 = aBackgroundColor;
+    LongValue1.Color2 = aBackgroundColor;
     Direction = aDirection;
 
 #ifdef INFO
@@ -519,7 +519,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
 #endif
 
     const uint8_t* tGraphics8x8ArrayPtr = &font_PGM[(tLeftChar - FONT_START) * FONT_HEIGHT];
-    loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, Color2, GraphicsXOffset, GraphicsYOffset,
+    loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset,
             (tNextChar == '\0'));
     if (tNextChar != '\0') {
         // check if next character is moving in
@@ -534,21 +534,21 @@ bool MatrixNeoPatterns::TickerUpdate() {
              * Display next character at right
              */
             tGraphics8x8ArrayPtr = &font_PGM[(tNextChar - FONT_START) * FONT_HEIGHT];
-            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, Color2, GraphicsXOffset + FONT_WIDTH,
+            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset + FONT_WIDTH,
                     GraphicsYOffset, (tNextNextChar == '\0'));
             // check if next/next character can be displayed (needed for small font width)
             // do not check for next/next/next char != '\0' here!
             if ((GraphicsXOffset + (2 * FONT_WIDTH)) < Columns) {
                 if (tNextNextChar != '\0') {
                     tGraphics8x8ArrayPtr = &font_PGM[(tNextNextChar - FONT_START) * FONT_HEIGHT];
-                    loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, Color2,
+                    loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2,
                             GraphicsXOffset + (2 * FONT_WIDTH), GraphicsYOffset, false);
                 }
             }
         }
         if (Direction == DIRECTION_UP && (GraphicsYOffset - FONT_HEIGHT) > -Columns) {
             tGraphics8x8ArrayPtr = &font_PGM[(tNextChar - FONT_START) * FONT_HEIGHT];
-            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, Color2, GraphicsXOffset,
+            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset,
                     GraphicsYOffset - FONT_HEIGHT, false);
         }
     }

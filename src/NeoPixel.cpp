@@ -55,9 +55,9 @@ NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
     PixelOffset = aPixelOffset;
-    PixelFlags = IS_PARTIAL_PIXEL;
+    PixelFlags = PIXEL_FLAG_IS_PARTIAL_PIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
-        PixelFlags = IS_PARTIAL_PIXEL | DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+        PixelFlags = PIXEL_FLAG_IS_PARTIAL_PIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
     }
     /*
      * Replace buffer with existing one
@@ -89,8 +89,8 @@ bool NeoPixel::begin(Stream * aSerial) {
  * Handles the DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT flag
  */
 void NeoPixel::show() {
-    if ((PixelFlags & DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
-        if (PixelFlags & IS_PARTIAL_PIXEL) {
+    if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
+        if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_PIXEL) {
 #ifdef TRACE
             Serial.println("Underlying->show");
 #endif
@@ -102,10 +102,6 @@ void NeoPixel::show() {
             Adafruit_NeoPixel::show();
         }
     }
-}
-
-void NeoPixel::resetBrightnessValue() {
-    brightness = 0;
 }
 
 uint8_t NeoPixel::getBytesPerPixel() {
@@ -144,11 +140,8 @@ void NeoPixel::storePixelBuffer(uint8_t * aPixelBufferPointerDestination) {
     memcpy(aPixelBufferPointerDestination, pixels, numBytes);
 }
 
-void NeoPixel::restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness) {
+void NeoPixel::restorePixelBuffer(uint8_t * aPixelBufferPointerSource) {
     memcpy(pixels, aPixelBufferPointerSource, numBytes);
-    if (aResetBrightness) {
-        brightness = 0;
-    }
 }
 
 void NeoPixel::clear(void) {
@@ -196,8 +189,24 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t * aColorArra
             setPixelColor(i, aColorArrayPtr[i]);
         } else {
             // Clear pixel
-            setPixelColor(i, 0, 0, 0);
+            clearPixel(i);
         }
+    }
+}
+
+/*
+ * Needs 50 bytes FLASH, but is faster
+ */
+void NeoPixel::clearPixel(uint16_t aPixelIndex) {
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // added line to support offsets
+    }
+    uint8_t * tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
+    *tPixelPtr++ = 0;
+    *tPixelPtr++ = 0;
+    *tPixelPtr++ = 0;
+    if (BytesPerPixel == 4) {
+        *tPixelPtr = 0;
     }
 }
 
@@ -215,23 +224,12 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
     Serial.print('|');
     Serial.print(aGreen);
     Serial.print('|');
-    Serial.print(aBlue);
-    Serial.print(F(" Brightness="));
-    Serial.println((uint8_t) (brightness - 1));
+    Serial.println(aBlue);
 #endif
-    // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // added line to support offsets
-        if (brightness) { // See notes in setBrightness()
-            aRed = (aRed * (brightness-1)) >> 8;
-            aGreen = (aGreen * (brightness-1)) >> 8;
-            aBlue = (aBlue * (brightness-1)) >> 8;
-        }
-        uint8_t *p;
-        if (wOffset == rOffset) { // Is an RGB-type strip
-            p = &pixels[aPixelIndex * 3];    // 3 bytes per pixel
-        } else {                 // Is a WRGB-type strip
-            p = &pixels[aPixelIndex * 4];    // 4 bytes per pixel
+        uint8_t *p = &pixels[aPixelIndex * BytesPerPixel];
+        if (BytesPerPixel == 4) {
             p[wOffset] = 0;        // But only R,G,B passed -- set W to 0
         }
         p[rOffset] = aRed;          // R,G,B always stored
@@ -252,25 +250,12 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
     Serial.print(aGreen);
     Serial.print('|');
     Serial.print(aBlue);
-    Serial.print('|');
-    Serial.print(aWhite);
-    Serial.print(F(" Brightness="));
-    Serial.println((uint8_t) (brightness - 1));
+    Serial.println('|');
 #endif
-    // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
     if (aPixelIndex < numLEDs) {
-        aPixelIndex += PixelOffset; // added lineto support offsets
-        if (brightness) { // See notes in setBrightness()
-            aRed = (aRed * (brightness-1)) >> 8;
-            aGreen = (aGreen * (brightness-1)) >> 8;
-            aBlue = (aBlue * (brightness-1)) >> 8;
-            aWhite = (aWhite * (brightness-1)) >> 8;
-        }
-        uint8_t *p;
-        if (wOffset == rOffset) { // Is an RGB-type strip
-            p = &pixels[aPixelIndex * 3];    // 3 bytes per pixel (ignore W)
-        } else {                 // Is a WRGB-type strip
-            p = &pixels[aPixelIndex * 4];    // 4 bytes per pixel
+        aPixelIndex += PixelOffset; // added line to support offsets
+        uint8_t *p = &pixels[aPixelIndex * BytesPerPixel];
+        if (BytesPerPixel == 4) {
             p[wOffset] = aWhite;        // Store W
         }
         p[rOffset] = aRed;          // Store R,G,B
@@ -279,6 +264,9 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
     }
 }
 
+/*
+ *
+ */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
 #ifdef TRACE
     Serial.print(F("Pixel="));
@@ -286,34 +274,20 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
     Serial.print(F(" Offset="));
     Serial.print(PixelOffset);
     Serial.print(F(" Color=0x"));
-    Serial.print(aColor, HEX);
-    Serial.print(F(" Brightness="));
-    Serial.println((uint8_t) (brightness - 1));
+    Serial.println(aColor, HEX);
 #endif
-    // Except the added line, the code is identical with Adafruit_NeoPixel::setPixelColor
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // added line to support offsets
         uint8_t *p, r = (uint8_t) (aColor >> 16), g = (uint8_t) (aColor >> 8), b = (uint8_t) aColor;
-        if (brightness) { // See notes in setBrightness()
-            r = (r * (brightness-1)) >> 8;
-            g = (g * (brightness-1)) >> 8;
-            b = (b * (brightness-1)) >> 8;
-        }
-        if (wOffset == rOffset) {
-            p = &pixels[aPixelIndex * 3];
-        } else {
-            p = &pixels[aPixelIndex * 4];
+        p = &pixels[aPixelIndex * BytesPerPixel];
+        if (BytesPerPixel == 4) {
             uint8_t w = (uint8_t) (aColor >> 24);
-            p[wOffset] = brightness ? ((w * (brightness-1)) >> 8) : w;
+            p[wOffset] = w;
         }
         p[rOffset] = r;
         p[gOffset] = g;
         p[bOffset] = b;
     }
-#ifdef TRACE
-    Serial.print(F("RawColor=0x"));
-    Serial.println(getPixelColor(0), HEX);
-#endif
 }
 
 /*
@@ -342,22 +316,24 @@ color32_t NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aG
 
 // Set all pixels to a color (synchronously)
 void NeoPixel::ColorSet(color32_t aColor) {
-    if (wOffset == rOffset) {
-        setPixelColor(0, aColor);
-        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
-    } else {
-        for (uint16_t i = 0; i < numLEDs; i++) {
-            setPixelColor(i, aColor);
-        }
+    // This is faster but costs 82 bytes program space
+//    if (BytesPerPixel == 3) {
+//        setPixelColor(0, aColor);
+//        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
+//    } else {
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        setPixelColor(i, aColor);
     }
+//    }
 }
 
 color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
     uint8_t * tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * 3];
-    if (wOffset == rOffset) {
-        return (uint32_t)tPixelPointer[rOffset] << 16 | (uint32_t)tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
+    if (BytesPerPixel == 3) {
+        return (uint32_t) tPixelPointer[rOffset] << 16 | (uint32_t) tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
     } else {
-        return (uint32_t)tPixelPointer[wOffset] << 24 | (uint32_t)tPixelPointer[rOffset] << 16 | tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
+        return (uint32_t) tPixelPointer[wOffset] << 24 | (uint32_t) tPixelPointer[rOffset] << 16 | tPixelPointer[gOffset] << 8
+                | tPixelPointer[bOffset];
     }
 }
 
@@ -391,7 +367,7 @@ const uint8_t GammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 1
  * use mapping table with 32 entries (using 5 MSbits)
  * @param aLinearBrightnessValue - from 0 to 255
  */
-uint8_t NeoPixel::gamma5(uint8_t aLinearBrightnessValue) {
+uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
     return pgm_read_byte(&GammaTable32[(aLinearBrightnessValue / 8)]);
 }
 
@@ -400,18 +376,56 @@ uint8_t NeoPixel::gamma5(uint8_t aLinearBrightnessValue) {
  * Returns 1 for input 1 to 7.
  * used for snake tail, not to blank out the last elements of a tail with more than 32 elements
  */
-uint8_t NeoPixel::gamma5WithSpecialZero(uint8_t aLinearBrightnessValue) {
+uint8_t NeoPixel::gamma32WithSpecialZero(uint8_t aLinearBrightnessValue) {
     if (aLinearBrightnessValue <= 7 && aLinearBrightnessValue >= 1) {
         return 1;
     }
     return pgm_read_byte(&GammaTable32[(aLinearBrightnessValue / 8)]);
 }
 
-color32_t NeoPixel::gamma5FromColor(color32_t aAllColorsSameBrightnessColor) {
-    uint8_t tRed = pgm_read_byte(&GammaTable32[(Red(aAllColorsSameBrightnessColor) / 8)]);
-    uint8_t tGreen = pgm_read_byte(&GammaTable32[(Green(aAllColorsSameBrightnessColor) / 8)]);
-    uint8_t tBlue = pgm_read_byte(&GammaTable32[(Blue(aAllColorsSameBrightnessColor) / 8)]);
+/*
+ * Using gamma table with 32 entries
+ */
+color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor) {
+    uint8_t tRed = pgm_read_byte(&GammaTable32[(Red(aLinearBrightnessColor) / 8)]);
+    uint8_t tGreen = pgm_read_byte(&GammaTable32[(Green(aLinearBrightnessColor) / 8)]);
+    uint8_t tBlue = pgm_read_byte(&GammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
     return Color(tRed, tGreen, tBlue);
+}
+
+/*
+ * aBrightnessIndex 0 = black 255 = full
+ * doSpecialZero -> tGamma32Brightness is only zero if aBrightness is zero and 1 for aBrightness 1 to 16
+ */
+color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
+    uint8_t tRedDimmed = (uint8_t) (aLinearBrightnessColor >> 16);
+    uint8_t tGreenDimmed = (uint8_t) (aLinearBrightnessColor >> 8);
+    uint8_t tBlueDimmed = (uint8_t) aLinearBrightnessColor;
+
+    uint8_t tGamma32Brightness;
+    if (doSpecialZero) {
+        tGamma32Brightness = gamma32WithSpecialZero(aBrightness);
+    } else {
+        tGamma32Brightness = gamma32(aBrightness);
+    }
+
+    // (tRedDimmed + 1) since (255 * 1) >> 8 gives 0 (and not 1)
+    tRedDimmed = ((tRedDimmed + 1) * tGamma32Brightness) >> 8;
+    tGreenDimmed = ((tGreenDimmed + 1) * tGamma32Brightness) >> 8;
+    tBlueDimmed = ((tBlueDimmed + 1) * tGamma32Brightness) >> 8;
+
+#ifdef TRACE
+    Serial.print(F("dimColorWithGamma32 aBrightness="));
+    Serial.print(aBrightness);
+    Serial.print(F(" Gamma="));
+    Serial.print(tGamma32Brightness);
+    Serial.print(F(" 0x"));
+    Serial.print(aLinearBrightnessColor, HEX);
+    Serial.print(F("->0x"));
+    Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
+#endif
+
+    return ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
 }
 
 // Returns the Red component of a 32-bit color

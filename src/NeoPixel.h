@@ -64,10 +64,11 @@ public:
     neoPixelType getType();
     uint16_t getPixelBufferSize();
     void storePixelBuffer(uint8_t * aPixelBufferPointerDestination);
-    void restorePixelBuffer(uint8_t * aPixelBufferPointerSource, bool aResetBrightness = true);
+    void restorePixelBuffer(uint8_t * aPixelBufferPointerSource);
 
     // Functions to support PixelOffset
     void clear(void);
+    void clearPixel(uint16_t aPixelIndex);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
     void setPixelColor(uint16_t aPixelIndex, uint32_t aColor);
@@ -77,9 +78,10 @@ public:
     color32_t addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     // Static functions
     static color32_t Wheel(uint8_t aWheelPos);
-    static uint8_t gamma5(uint8_t aLinearBrightnessValue);
-    static uint8_t gamma5WithSpecialZero(uint8_t aLinearBrightnessValue);
-    static color32_t gamma5FromColor(color32_t aAllColorsSameBrightnessColor);
+    static uint8_t gamma32(uint8_t aLinearBrightnessValue);
+    static uint8_t gamma32WithSpecialZero(uint8_t aLinearBrightnessValue);
+    static color32_t convertLinearToGamma32Color(color32_t aLinearBrightnessColor);
+    static color32_t dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero = false);
 
     void TestWS2812Resolution();
 
@@ -89,14 +91,16 @@ public:
     NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
 };
 
-#define IS_PARTIAL_PIXEL                        0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
-#define DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT 0x02 // use negative logic because evaluation is simpler then
+#define PIXEL_FLAG_IS_PARTIAL_PIXEL                          0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
+#define PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT   0x02 // use negative logic because evaluation is simpler then
 /*
  * Flag for NeoPattern. This disables the initial asynchronous show() for a new pattern, but enables show() if called by synchronous callback.
  * This behavior is needed to avoid disturbing other libraries, which cannot handle the time when interrupt is disabled for show() e.g. the Servo library.
  * The asynchronous call is detected by check if the current pattern is not PATTERN_NONE.
  */
-#define SHOW_ONLY_AT_UPDATE                     0x04
+#define PIXEL_FLAG_SHOW_ONLY_AT_UPDATE                       0x04
+// Used for some demo handler
+#define PIXEL_FLAG_GEOMETRY_CIRCLE                           0x80 // in contrast to bar
 
 extern const uint8_t GammaTable32[32] PROGMEM;
 

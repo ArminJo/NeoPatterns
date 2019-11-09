@@ -59,13 +59,19 @@
 #define ERROR
 #endif
 
+#if !defined (DO_NOT_USE_MATH_PATTERNS)
+// Comment this out if you do NOT need the BouncingBall pattern
+// This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
+//#define DO_NOT_USE_MATH_PATTERNS
+#endif
+
 #include "NeoPixel.h"
 
 #if !defined(__AVR__) && ! defined(PROGMEM)
 #define PROGMEM void
 #endif
 
-#define VERSION_NEOPATTERNS 1.2.0
+#define VERSION_NEOPATTERNS 2.0.0
 
 extern const char * const PatternNamesArray[] PROGMEM;
 
@@ -84,6 +90,10 @@ extern const char * const PatternNamesArray[] PROGMEM;
 
 #define PATTERN_USER_PATTERN1      10
 #define PATTERN_USER_PATTERN2      11
+
+#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#define PATTERN_BOUNCING_BALL      12
+#endif
 
 /*
  * Values for Direction
@@ -153,6 +163,12 @@ public:
 
     color32_t HeatColor(uint8_t aTemperature);
 
+#if !defined (DO_NOT_USE_MATH_PATTERNS)
+    void BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint16_t aIntervalMillis = 70, int8_t aPercentageOfLossAtBounce =
+            10, uint8_t aDirection = DIRECTION_DOWN);
+    bool BouncingBallUpdate(bool aDoUpdate = true);
+#endif
+
     /*
      * UPDATE functions
      * return true if pattern has ended, false if pattern has NOT ended
@@ -186,37 +202,11 @@ public:
     /*
      * Variables for almost each pattern
      */
-    uint16_t TotalStepCounter; // total number of steps in the pattern including repetitions and the last delay step to show the end result.
-    uint16_t Index; // or Position. Counter for basic pattern. Current step within the pattern. Counter for basic patterns. Step counter of snake.
+    uint16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
+    uint16_t Index;         // - or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
     color32_t Color1;       // Main pattern color
-
-    /*
-     * Variables use by individual patterns
-     */
-    color32_t Color2;       // second pattern color | Number of bounces for scanner
-    int8_t Direction;       // direction to run the pattern
-    uint8_t PatternLength;  // the length of a (scanner) pattern, cooling parameter for fire
-
-    /*
-     * Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
-     * Delta for each step for extended scanner and rainbow cycle
-     */
-    color32_t ColorTmp;
-
-    /*
-     * Internal control variables
-     */
-    uint8_t ActivePattern;  // which pattern is running
-    uint16_t Interval;   // milliseconds between updates
-    unsigned long lastUpdate; // milliseconds of last update of pattern
-
-    void (*OnPatternComplete)(NeoPatterns*);  // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
-
-    /*
-     * Extensions
-     */
-#define GEOMETRY_BAR 1
-    uint8_t PatternsGeometry; // fire pattern makes no sense on circles
+    int8_t Direction;       // Direction to run the pattern
+    uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel
 
     // For ScannerExtended()
     // PatternFlags 0 -> one pass scanner (rocket or falling star)
@@ -230,15 +220,45 @@ public:
 
 // Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
 #define FLAG_DO_NOT_CLEAR                   0x10
+    uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce
 
-    uint8_t PatternFlags;  // special behavior of the pattern
-    // for Cylon, Fire, multipleHandler
-    uint16_t Repetitions; // counter for multipleHandler
+    /*
+     * Internal control variables
+     */
+    uint8_t ActivePattern;  // Number of pattern which is running
+    uint16_t Interval;   // Milliseconds between updates
+    unsigned long lastUpdate; // Milliseconds of last update of pattern
 
-    uint32_t (*SingleLEDProcessingFunction)(NeoPatterns*); // for ProcessSelectiveColor
+    void (*OnPatternComplete)(NeoPatterns*); // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
+
+    /*
+     * 3 Extra variables used by some patterns
+     */
+    union {
+        color32_t BackgroundColor;
+        color32_t Color2; // second pattern color
+
+        uint16_t StartIntervalMillis; // BouncingBall: interval for first step
+        uint16_t NumberOfBouncings; // ScannerExtended: Number of bounces
+    } LongValue1;
+
+    union {
+        color32_t ColorTmp; // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
+        float TopPixelIndex; // BouncingBall: float index of TopPixel
+
+        uint16_t DeltaStepsShift8; // RainbowCycle: Delta for each step for
+        uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for
+    } LongValue2;
+
+    union {
+        // for ProcessSelectiveColor could not be member of the first 2 values, since these are used by the processing functions like fadeColor()
+        uint32_t (*SingleLEDProcessingFunction)(NeoPatterns*);
+    } Value3; // can be 16 bit for AVR and 32 bit for other platforms
+
     /*
      * for multiple pattern extensions
      */
+    uint16_t Repetitions; // counter for multipleHandler
     uint8_t MultipleExtension; // for delay of multiple falling stars and snake flags and length of stripes
     void (*NextOnPatternCompleteHandler)(NeoPatterns*);  // Next callback after completion of multiple pattern
 };
@@ -255,10 +275,11 @@ void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 
 void allPatternsRandomExample(NeoPatterns * aLedsPtr);
 
-void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint16_t aIntervalMillis,
-        uint8_t aDirection = DIRECTION_UP);
-void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint8_t aDirection =
-DIRECTION_UP);
+void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
+        uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
+        uint16_t aRepetitions = 0, uint8_t aDirection =
+        DIRECTION_UP);
 #endif // NEOPATTERNS_H
 
 #pragma once

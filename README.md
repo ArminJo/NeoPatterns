@@ -17,7 +17,7 @@ New Patterns are added, a snake game running on a matrix is included and you can
 ## Patterns from [Adafruit](https://www.adafruit.com/)
 **RAINBOW_CYCLE**, **COLOR_WIPE**, **FADE**
 ## New patterns
-**SCANNER**. **STRIPES**, **HEARTBEAT**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**<br/>
+**SCANNER**. **STRIPES**, **HEARTBEAT**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**, **BOUNCING_BALL**<br/>
 The original **SCANNER** pattern is extended and includes the **CYLON** as well as the **ROCKET** or **FALLING_STAR** pattern. The more versatile **STRIPES** pattern replaces the old **THEATER_CHASE** one.
 ## Pattern from [FastLed](https://github.com/FastLED/FastLED)
 **FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
@@ -79,7 +79,7 @@ NeoPatterns on breadboard
 - Rewrite of most patterns control logic.
 - Function `drawBar()` in NeoPixel.cpp added.
 - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
-- Pattern `HEARTBEAT` added.
+- Pattern `HEARTBEAT` and `BouncinBall` added.
 - Swapped first parameter and added parameter aDirection to `Fire()`.
 
 ### Version 1.1.0

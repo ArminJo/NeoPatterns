@@ -69,18 +69,19 @@ typedef uint16_t color16_t;
  */
 typedef uint32_t color32_t;
 
-// eases constant color declarations
+// Eases constant color declarations but should not be used for non constant colors. Then better use Adafruit_NeoPixel::Color() it saves program space
 #define COLOR32(r,g,b)   ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
 
 #define RED(color)   ((color >> 16) & 0xFF)
 #define GREEN(color) ((color >> 8) & 0xFF)
 #define BLUE(color)  (color 0xFF)
 
+#define COLOR32_BLACK          COLOR32(0,0,0)
+
 #define COLOR32_WHITE          COLOR32(255,255,255)
 #define COLOR32_WHITE_HALF     COLOR32(128,128,128) // to reduce power consumption
 #define COLOR32_WHITE_QUARTER  COLOR32(64,64,64)    // to reduce power consumption
 #define COLOR32_WHITE_EIGHTH   COLOR32(32,32,32)    // to reduce power consumption
-#define COLOR32_BLACK          COLOR32(0,0,0)
 #define COLOR32_RED            COLOR32(255,0,0)
 #define COLOR32_RED_HALF       COLOR32(128,0,0)
 #define COLOR32_RED_QUARTER    COLOR32(64,0,0)
