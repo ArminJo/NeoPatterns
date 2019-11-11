@@ -1,7 +1,7 @@
 /*
  * MatrixDemo.cpp
  *
- *  Simply runs the MatrixAndSnakePatternsDemo for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
+ *  Simply runs the MatrixAndSnakePatternsDemoHandler for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -42,7 +42,7 @@
  * See MatrixNeoPatterns.h for further explanation.
  */
 MatrixSnake NeoPixelMatrix = MatrixSnake(NEOPIXEL_MATRIX_NUM_COLUMNS, NEOPIXEL_MATRIX_NUM_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemo);
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemoHandler);
 
 void setup() {
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -68,7 +68,7 @@ void setup() {
 	Serial.print(F("Free Ram/Stack[bytes]="));
 	Serial.println(SP - (uint16_t) __brkval);
 
-	MatrixAndSnakePatternsDemo(&NeoPixelMatrix);
+	MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix);
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors

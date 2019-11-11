@@ -1347,14 +1347,16 @@ bool NeoPatterns::Pattern1Update(bool aDoUpdate) {
  * starts and ends with all pixel cleared
  */
 void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
-        uint8_t aDirection) {
+        uint16_t aRepetitions, uint8_t aDirection) {
     /*
      * Sample implementation
      */
     aNeoPatterns->Interval = aIntervalMillis;
     aNeoPatterns->Color1 = aColor;
     aNeoPatterns->Direction = aDirection;
-    aNeoPatterns->TotalStepCounter = (2 * aNeoPatterns->numPixels()) - 1 + 2; // up and down but do not use upper pixel twice + 2 for the first and last pattern
+    // *2 for up and down. (aNeoPatterns->numPixels() - 1) do not use end pixel twice.
+    // +1 for the initial pattern with end pixel. + 2 for the first and last clear pattern.
+    aNeoPatterns->TotalStepCounter = ((aRepetitions + 1) * 2 * (aNeoPatterns->numPixels() - 1)) + 1 + 2;
     if (aDirection == DIRECTION_UP) {
         aNeoPatterns->Index = -1;
     } else {
@@ -1386,11 +1388,12 @@ bool __attribute__((weak)) UserPattern2Update(NeoPatterns * aNeoPatterns, bool a
          * Next index
          */
         if (aNeoPatterns->Direction == DIRECTION_UP) {
-            // do not use upper pixel twice
+            // do not use top pixel twice
             if (aNeoPatterns->Index == (aNeoPatterns->numPixels() - 1)) {
                 aNeoPatterns->Direction = DIRECTION_DOWN;
             }
         } else {
+            // do not use bottom pixel twice
             if (aNeoPatterns->Index == 0) {
                 aNeoPatterns->Direction = DIRECTION_UP;
             }
@@ -1492,7 +1495,7 @@ const char* DirectionToString(uint8_t aDirection) {
 /*
  * Sample handler for random pattern
  */
-void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
+void allPatternsRandomHandler(NeoPatterns * aLedsPtr) {
     uint8_t tState = random(13);
 
     uint8_t tDuration = random(40, 81);
@@ -1547,7 +1550,7 @@ void allPatternsRandomExample(NeoPatterns * aLedsPtr) {
         break;
     case 10:
         // Multiple falling star
-        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration, 3, &allPatternsRandomExample);
+        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration, 3, &allPatternsRandomHandler);
         break;
     case 11:
         if ((aLedsPtr->PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) == 0) {

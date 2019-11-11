@@ -17,13 +17,30 @@ MatrixSnake	KEYWORD1
 
 update	KEYWORD2
 RainbowCycle	KEYWORD2
-TheaterChase	KEYWORD2
 ColorWipe	KEYWORD2
-Scanner	KEYWORD2
+ScannerExtended	KEYWORD2
 Fade	KEYWORD2
 Fire	KEYWORD2
 Cylon	KEYWORD2
 Delay	KEYWORD2
+BouncingBall	KEYWORD2
+Heartbeat	KEYWORD2
+UserPattern1	KEYWORD2
+UserPattern2	KEYWORD2
+
+printPatternName	KEYWORD2
+printInfo	KEYWORD2
+setCallback	KEYWORD2
+showPatternInitially	KEYWORD2
+decrementTotalStepCounter	KEYWORD2
+setNextIndex	KEYWORD2
+decrementTotalStepCounterAndSetNextIndex	KEYWORD2
+updateAndWaitForPatternToStop	KEYWORD2
+
+initMultipleFallingStars	KEYWORD2
+allPatternsRandomHandler	KEYWORD2
+MatrixAndSnakePatternsDemoHandler	KEYWORD2
+
 ProcessSelectiveColor	KEYWORD2
 FadeSelectiveColor	KEYWORD2
 MovingPicturePGM	KEYWORD2
@@ -33,7 +50,7 @@ loadPicturePGM	KEYWORD2
 Wheel	KEYWORD2
 HeatColor	KEYWORD2
 Snake	KEYWORD2
-begin KEYWORD2
+begin	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
@@ -44,3 +61,9 @@ DIRECTION_LEFT	LITERAL1
 DIRECTION_UP	LITERAL1
 DIRECTION_DOWN	LITERAL1
 COLOR32	LITERAL1
+
+FLAG_SCANNER_EXT_ROCKET	LITERAL1
+FLAG_SCANNER_EXT_CYLON	LITERAL1
+FLAG_SCANNER_EXT_VANISH_COMPLETE	LITERAL1
+FLAG_SCANNER_EXT_START_AT_BOTH_ENDS	LITERAL1
+FLAG_DO_NOT_CLEAR	LITERAL1

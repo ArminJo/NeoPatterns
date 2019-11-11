@@ -132,8 +132,8 @@ uint8_t computeDirection(position aStartPosition, position aEndPosition);
 
 extern const char sDefaultTickerText[] PROGMEM; // = "I love Neopixel"
 extern const char * sTickerTextPtr; // = sDefaultTickerText;
-void setMatrixAndSnakePatternsDemoTickerText(const __FlashStringHelper * aTextForTicker);
-void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr);
+void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper * aTextForTicker);
+void MatrixAndSnakePatternsDemoHandler(NeoPatterns * aLedsPtr);
 
 void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions = 1);
 uint8_t getNextSnakeDirection(MatrixSnake * aSnake);

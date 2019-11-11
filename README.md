@@ -24,7 +24,7 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 ## Patterns only for nxn Matrix
 **MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
 ## Your own patterns
-**Just put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in AllPatternOnOneStrip.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 39 to test them.**
+**Put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in AllPatternOnOneStrip.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 41 to test them.**
 
 # NeoPixel library
 the included NeoPixel library is an extensions of the Adafruit NeoPixel library and supports multiple virtual NeoPixel (and NeoPattern) objects on one physical strip. It also contains a lot of useful functions like:
@@ -65,7 +65,7 @@ In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use 
 
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must define the symbol `USE_SERIAL_CONTROL` or comment out line 33 in `MatrixSnake.h`.
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out line 33 `#define USE_SERIAL_CONTROL` in the library file /MatrixSnake.h/ or define global symbol `USE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
 The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
@@ -81,6 +81,8 @@ NeoPatterns on breadboard
 - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
 - Pattern `HEARTBEAT` and `BouncinBall` added.
 - Swapped first parameter and added parameter aDirection to `Fire()`.
+- Changed internal functions.
+- Reworked `UserPattern`.
 
 ### Version 1.1.0
 - Function `getPatternName()` added.

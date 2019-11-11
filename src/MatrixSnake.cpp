@@ -876,7 +876,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr) {
 const char sDefaultTickerText[] PROGMEM = "I love Neopixel";
 const char * sTickerTextPtr = sDefaultTickerText;
 
-void setMatrixAndSnakePatternsDemoTickerText(const __FlashStringHelper * aTextForTicker) {
+void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper * aTextForTicker) {
     sTickerTextPtr = reinterpret_cast<const char*>(aTextForTicker);
 }
 
@@ -887,7 +887,7 @@ void setMatrixAndSnakePatternsDemoTickerText(const __FlashStringHelper * aTextFo
  * 2. Moves heart in from top / bottom, show 2 heart beats, and move heart out
  * 3. Show 2 snake runs / fire. Snake shows up on the odd loops, fire on the even ones
  */
-void MatrixAndSnakePatternsDemo(NeoPatterns * aLedsPtr) {
+void MatrixAndSnakePatternsDemoHandler(NeoPatterns * aLedsPtr) {
     MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
     static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;

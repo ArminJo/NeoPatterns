@@ -3,7 +3,7 @@
  *
  *  Shows all patterns included in the NeoPixel library for NeoPixel strips.
  *
- *  Just add your pattern code to the functions Pattern[1,2]() and Pattern[1,2]Update() in Neopatterns.cpp (line 588ff.)
+ *  Add your pattern code to the functions Pattern[1,2]() and Pattern[1,2]Update() in Neopatterns.cpp (line 588ff.)
  *  to realize and see your own patterns.
  *  Enable TEST_OWN_PATTERNS on line 38 to test your patterns.
  *
@@ -66,7 +66,7 @@ void setup() {
     bar16.begin(); // This initializes the NeoPixel library.
     bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, REVERSE); // light Blue
 
-    #ifdef INFO
+#ifdef INFO
     Serial.println("started");
 #endif
     delay(500);
@@ -89,17 +89,18 @@ void loop() {
  * set all pixel to aColor1 and let a pixel of color2 move through
  * Starts with all pixel aColor1 and also ends with it.
  */
-void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aColor1, color32_t aColor2, uint16_t aIntervalMillis, uint8_t aDirection) {
+void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
+        uint8_t aDirection) {
     /*
      * Sample implementation not supporting DIRECTION_DOWN
      */
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
     aNeoPatterns->Interval = aIntervalMillis;
-    aNeoPatterns->Color1 = aColor1;
-    aNeoPatterns->Color2 = aColor2;
+    aNeoPatterns->Color1 = aPixelColor;
+    aNeoPatterns->LongValue1.BackgroundColor = aBackgroundColor;
     aNeoPatterns->Direction = aDirection;
     aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels() + 1;
-    aNeoPatterns->ColorSet(aColor1);
+    aNeoPatterns->ColorSet(aBackgroundColor);
     aNeoPatterns->show();
     aNeoPatterns->lastUpdate = millis();
 }
@@ -119,9 +120,9 @@ bool UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
 
     for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
         if (i == aNeoPatterns->Index) {
-            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color2);
-        } else {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
+        } else {
+            aNeoPatterns->setPixelColor(i, aNeoPatterns->LongValue1.BackgroundColor);
         }
     }
 
@@ -132,7 +133,8 @@ bool UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
  * let a pixel of aColor move up and down
  * starts and ends with all pixel cleared
  */
-void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint8_t aDirection) {
+void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions,
+        uint8_t aDirection) {
     /*
      * Sample implementation not supporting DIRECTION_DOWN
      */
@@ -141,7 +143,9 @@ void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aInterv
     aNeoPatterns->Color1 = aColor;
     aNeoPatterns->Direction = aDirection;
     aNeoPatterns->Index = 0;
-    aNeoPatterns->TotalStepCounter = 2 * aNeoPatterns->numPixels(); // up and down but do nor use upper pixel twice
+    // *2 for up and down. (aNeoPatterns->numPixels() - 1) do not use end pixel twice.
+    // +1 for the initial pattern with end pixel. + 2 for the first and last clear pattern.
+    aNeoPatterns->TotalStepCounter = ((aRepetitions + 1) * 2 * (aNeoPatterns->numPixels() - 1)) + 1 + 2;
     aNeoPatterns->clear();
     aNeoPatterns->show();
     aNeoPatterns->lastUpdate = millis();
@@ -152,9 +156,11 @@ void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aInterv
  */
 bool UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
     /*
-     * Sample implementation not supporting initial direction DIRECTION_DOWN
+     * Sample implementation
      */
     if (aDoUpdate) {
+        // clear old pixel
+        aNeoPatterns->setPixelColor(aNeoPatterns->Index, COLOR32_BLACK);
 
         if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
             return true;
@@ -162,22 +168,24 @@ bool UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
         /*
          * Next index
          */
-        if (aNeoPatterns->Index == aNeoPatterns->numPixels()) {
-            // change direction
-            aNeoPatterns->Direction = DIRECTION_DOWN;
-            // do nor use upper pixel twice
-            aNeoPatterns->Index -= 2;
+        if (aNeoPatterns->Direction == DIRECTION_UP) {
+            // do not use top pixel twice
+            if (aNeoPatterns->Index == (aNeoPatterns->numPixels() - 1)) {
+                aNeoPatterns->Direction = DIRECTION_DOWN;
+            }
+        } else {
+            // do not use bottom pixel twice
+            if (aNeoPatterns->Index == 0) {
+                aNeoPatterns->Direction = DIRECTION_UP;
+            }
         }
     }
     /*
      * Refresh pattern
      */
-    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
-        if (i == aNeoPatterns->Index) {
-            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
-        } else {
-            aNeoPatterns->setPixelColor(i, COLOR32_BLACK);
-        }
+    if (aNeoPatterns->TotalStepCounter != 1) {
+        // last pattern is clear
+        aNeoPatterns->setPixelColor(aNeoPatterns->Index, aNeoPatterns->Color1);
     }
     return false;
 }
@@ -190,6 +198,7 @@ void ownPatterns(NeoPatterns * aLedsPtr) {
 
     uint8_t tDuration = random(20, 120);
     uint8_t tColor = random(255);
+    uint8_t tRepetitions = random(2);
 
     switch (sState) {
     case 0:
@@ -197,7 +206,7 @@ void ownPatterns(NeoPatterns * aLedsPtr) {
         break;
 
     case 1:
-        UserPattern2(aLedsPtr, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        UserPattern2(aLedsPtr, NeoPatterns::Wheel(tColor), tDuration, tRepetitions, FORWARD);
         sState = -1; // Start from beginning
         break;
 

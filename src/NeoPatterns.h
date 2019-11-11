@@ -273,13 +273,12 @@ void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t 
         void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection = DIRECTION_DOWN);
 void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
 
-void allPatternsRandomExample(NeoPatterns * aLedsPtr);
+void allPatternsRandomHandler(NeoPatterns * aLedsPtr);
 
 void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
 void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
-        uint16_t aRepetitions = 0, uint8_t aDirection =
-        DIRECTION_UP);
+        uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
 #endif // NEOPATTERNS_H
 
 #pragma once

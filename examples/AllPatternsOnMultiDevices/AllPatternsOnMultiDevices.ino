@@ -60,19 +60,19 @@
 void TestPatterns(NeoPatterns * aLedsPtr);
 #ifdef ALL_PATTERN_ON_ONE_STRIP
 #define PIN_NEOPIXEL_ALL        2
-NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, &allPatternsRandomExample);
+NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
+NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, &allPatternsRandomHandler);
 NeoPatterns bar24 = NeoPatterns(&allPixel, 19, 24, &TestPatterns);
-NeoPatterns ring12 = NeoPatterns(&allPixel, 46, 12, &allPatternsRandomExample);
-NeoPatterns ring16 = NeoPatterns(&allPixel, 61, 16, &allPatternsRandomExample);
-NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, &allPatternsRandomExample);
+NeoPatterns ring12 = NeoPatterns(&allPixel, 46, 12, &allPatternsRandomHandler);
+NeoPatterns ring16 = NeoPatterns(&allPixel, 61, 16, &allPatternsRandomHandler);
+NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, &allPatternsRandomHandler);
 #else
 // construct the NeoPatterns instances
-NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns ring12 = NeoPatterns(12, PIN_NEOPIXEL_RING_12, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns ring16 = NeoPatterns(16, PIN_NEOPIXEL_RING_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
-NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomExample);
+NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
+NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
+NeoPatterns ring12 = NeoPatterns(12, PIN_NEOPIXEL_RING_12, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
+NeoPatterns ring16 = NeoPatterns(16, PIN_NEOPIXEL_RING_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
+NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
 #endif
 
 /*
@@ -81,7 +81,7 @@ NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800,
  * See MatrixNeoPatterns.h for further explanation.
  */
 MatrixSnake NeoPixelMatrix = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemo);
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemoHandler);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -134,7 +134,7 @@ void setup() {
     NeoPixelMatrix.clear(); // Clear matrix
     NeoPixelMatrix.show();
     NeoPixelMatrix.Delay(7000); // start later
-    setMatrixAndSnakePatternsDemoTickerText(F("I love NeoPixel"));
+    setMatrixAndSnakePatternsDemoHandlerTickerText(F("I love NeoPixel"));
 
     /*
      * Print voltage once on matrix
@@ -272,7 +272,7 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
         break;
     case 8:
         // switch to random
-        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, 30, 3, &allPatternsRandomExample);
+        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, 30, 3, &allPatternsRandomHandler);
         sState = -1; // Start from beginning
         break;
     default:
