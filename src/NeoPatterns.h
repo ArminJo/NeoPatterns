@@ -36,15 +36,6 @@
 #ifndef NEOPATTERNS_H
 #define NEOPATTERNS_H
 
-/*
- * Version 2.0.0
- * - Function `drawBar()` in NeoPixel.cpp added.
- * - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
- * - Pattern `HEARTBEAT` added.
- * - Added parameter aDirection to `Fire()`.
- * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
- */
-
 // Propagate debug level
 #ifdef TRACE
 #define DEBUG
@@ -72,6 +63,15 @@
 #endif
 
 #define VERSION_NEOPATTERNS 2.0.0
+
+/*
+ * Version 2.0.0 - 11/2019
+ * - Function `drawBar()` in NeoPixel.cpp added.
+ * - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
+ * - Pattern `HEARTBEAT` added.
+ * - Added parameter aDirection to `Fire()`.
+ * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
+ */
 
 extern const char * const PatternNamesArray[] PROGMEM;
 
