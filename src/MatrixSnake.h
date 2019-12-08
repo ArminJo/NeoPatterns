@@ -33,6 +33,7 @@
 
 #ifndef MATRIXSNAKE_H_
 #define MATRIXSNAKE_H_
+#ifndef NO_SNAKE
 
 #include "MatrixNeoPatterns.h"
 
@@ -140,6 +141,6 @@ uint8_t getNextSnakeDirection(MatrixSnake * aSnake);
 void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr);
 
 #endif /* MATRIXSNAKE_H_ */
-
+#endif
 #pragma once
 

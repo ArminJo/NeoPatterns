@@ -30,7 +30,7 @@
  */
 
 #include <Arduino.h>
-
+#ifndef NO_SNAKE
 // Output information on Serial must be defined before #include "MatrixSnake.h"
 //#define TRACE
 //#define DEBUG
@@ -1017,4 +1017,4 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns * aLedsPtr) {
 
     sState++;
 }
-
+#endif
