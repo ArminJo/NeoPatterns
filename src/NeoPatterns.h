@@ -51,7 +51,7 @@
 #endif
 
 #if !defined (DO_NOT_USE_MATH_PATTERNS)
-// Comment this out if you do NOT need the BouncingBall pattern
+// Comment this out if you do NOT need the BOUNCING_BALL pattern
 // This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
 //#define DO_NOT_USE_MATH_PATTERNS
 #endif
@@ -65,10 +65,15 @@
 #define VERSION_NEOPATTERNS 2.0.0
 
 /*
+ * Version 2.1.0 - 12/2019
+ * - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter.
+ * - Added OpenLedRace example.
+ * - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
+ *
  * Version 2.0.0 - 11/2019
  * - Function `drawBar()` in NeoPixel.cpp added.
  * - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
- * - Pattern `HEARTBEAT` added.
+ * - Pattern `HEARTBEAT` and `BOUNCING_BALL` added.
  * - Added parameter aDirection to `Fire()`.
  * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
  */
@@ -125,7 +130,7 @@ public:
     NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
             bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            void (*aPatternCompletionCallback)(NeoPatterns*) = NULL, bool aEnableShowOfUnderlyingPixel = true,
+             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
 
     void setCallback(void (*callback)(NeoPatterns*));
@@ -218,7 +223,8 @@ public:
 #define FLAG_SCANNER_EXT_VANISH_COMPLETE    0x02
 #define FLAG_SCANNER_EXT_START_AT_BOTH_ENDS 0x04
 
-// Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
+#define FLAG_DO_CLEAR                   	0x00
+    // Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
 #define FLAG_DO_NOT_CLEAR                   0x10
     uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce
 

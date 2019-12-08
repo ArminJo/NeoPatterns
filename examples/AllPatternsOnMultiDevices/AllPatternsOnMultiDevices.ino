@@ -32,7 +32,7 @@
 #include <Arduino.h>
 
 #include <MatrixSnake.h>
-#ifdef __AVR__
+#if defined(__AVR__)
 #include "ADCUtils.h"
 #include <avr/power.h>
 #include <avr/pgmspace.h>
@@ -44,7 +44,7 @@
 #define VCC_CHECK_PERIOD_MILLIS 2000         // Period of VCC checks
 #define VCC_STOP_PERIOD_REPETITIONS 9       // Shutdown after 9 times (18 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_STOP_MIN_MILLIVOLT
 #define FALLING_STAR_DURATION 12
-#endif
+#endif // (__AVR__)
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_BAR_24     2
@@ -104,12 +104,14 @@ void setup() {
         }
     }
 
+#if defined(__AVR__)
     // setup ADC reference and channel
     getVCCVoltageMillivoltSimple();
 
     extern void *__brkval;
     Serial.print(F("Free Ram/Stack[bytes]="));
     Serial.println(SP - (uint16_t) __brkval);
+#endif
 
     bar16.begin(); // This initializes the NeoPixel library.
     bar24.begin(); // This initializes the NeoPixel library.
@@ -136,6 +138,7 @@ void setup() {
     NeoPixelMatrix.Delay(7000); // start later
     setMatrixAndSnakePatternsDemoHandlerTickerText(F("I love NeoPixel"));
 
+#if defined(__AVR__)
     /*
      * Print voltage once on matrix
      */
@@ -145,12 +148,14 @@ void setup() {
         itoa(tVCC, sStringBufferForVCC, 10);
         NeoPixelMatrix.Ticker(sStringBufferForVCC, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, DIRECTION_LEFT);
     }
+#endif // defined(__AVR__)
 
     Serial.println("started");
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
+#if defined(__AVR__)
 /*
  * Returns true if shutdown
  */
@@ -178,9 +183,10 @@ bool checkVCC(uint16_t aVCC) {
     }
     return false;
 }
+#endif // defined(__AVR__)
 
 void loop() {
-#ifdef __AVR__
+#if defined(__AVR__)
     /*
      * Check VCC every 2 seconds
      */
@@ -218,7 +224,8 @@ void loop() {
         delay(FALLING_STAR_DURATION);
         return;
     }
-#endif
+#endif // defined(__AVR__)
+
     bar16.update();
     bar24.update();
     ring12.update();

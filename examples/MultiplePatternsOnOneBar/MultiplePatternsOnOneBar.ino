@@ -1,7 +1,7 @@
 /*
  *  MultiplePatternsOnOneBar.cpp
  *
- *  Runs 3 patterns simultaneously on a 24 NeoPixel bar.
+ *  Runs 3 8-pixel patterns simultaneously on a 24 NeoPixel bar.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *

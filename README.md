@@ -1,5 +1,5 @@
-# NeoPatterns for NeoPixel strips and Snake game for NeoPixel matrix.
-
+# [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
+### Version 2.1.0
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/NeoPatterns/latest)](https://github.com/ArminJo/NeoPatterns/commits/master)
@@ -43,7 +43,7 @@ as well as functions for getting color parts
 
 # Installation
 First you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
-Then install this "NeoPatterns" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "NeoPatterns" as filter string.
+Then install this "NeoPatterns" library with *Tools -> Manage Libraries... (Ctrl+Shift+I)*. Use "NeoPatterns" as filter string.
 
 ## Matrix pixel mappings
 Pixel mappings definitions and semantics are taken from https://github.com/adafruit/Adafruit_NeoMatrix/blob/master/Adafruit_NeoMatrix.h
@@ -65,7 +65,7 @@ In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use 
 
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out line 33 `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol `USE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out line 33 `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
 The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
@@ -75,11 +75,15 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 2.1.0
+- Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter.
+- Added OpenLedRace example.
+- Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
 ### Version 2.0.0
 - Rewrite of most patterns control logic.
 - Function `drawBar()` in NeoPixel.cpp added.
 - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
-- Pattern `HEARTBEAT` and `BouncinBall` added.
+- Pattern `HEARTBEAT` and `BOUNCING_BALL` added.
 - Swapped first parameter and added parameter aDirection to `Fire()`.
 - Changed internal functions.
 - Reworked `UserPattern`.
@@ -107,3 +111,5 @@ The NeoPatterns library examples are built on Travis CI for the following boards
 
 ## Requests for modifications / extensions
 Please write me a PM including your motivation/problem if you need a modification or an extension.
+
+#### If you find this library useful, please give it a star.

@@ -108,7 +108,7 @@ NeoPatterns::NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOf
  * }
  */
 NeoPatterns::NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
-        void (*aPatternCompletionCallback)(NeoPatterns*), bool aEnableShowOfUnderlyingPixel, bool aShowOnlyAtUpdate) :
+         bool aEnableShowOfUnderlyingPixel,void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) :
         NeoPixel(aUnderlyingNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfUnderlyingPixel) {
 
     OnPatternComplete = aPatternCompletionCallback;
@@ -374,7 +374,7 @@ bool NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
 
 /**
  * @brief   Initialize for a ColorWipe. First step is one pixel set, last step is all pixel set.
- * @param  aMode can be 0 (default) or FLAG_DO_NOT_CLEAR(_before)
+ * @param  aMode can be 0 / FLAG_DO_CLEAR (default) or FLAG_DO_NOT_CLEAR(_BlackPixel)
  * @param  aDirection can be DIRECTION_UP (default) or DIRECTION_DOWN
  */
 void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode, uint8_t aDirection) {

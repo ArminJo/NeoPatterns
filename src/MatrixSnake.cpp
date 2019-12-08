@@ -41,7 +41,9 @@
 #include "MatrixSnake.h"
 #include <stdlib.h>         // for utoa() etc.
 
+#if defined(__AVR__)
 EEMEM uint16_t HighScoreEEPROM; // is reset if both right and left button are pressed at startup.
+#endif
 
 // Constructor - calls base-class constructor to initialize strip
 MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
@@ -151,6 +153,7 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     }
     SnakePixelList = new position[Rows * Columns];
 
+#if defined(__AVR__)
     /*
      * Read high score from EEPROM / reset high score
      */
@@ -162,6 +165,9 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
         eeprom_write_word(&HighScoreEEPROM, 0);
         HighScore = 0;
     }
+#else
+    HighScore = 0;
+#endif
 
 #ifdef INFO
     Serial.print(F("Starting Snake game with refresh interval="));
@@ -526,7 +532,9 @@ void MatrixSnake::SnakeEndHandler() {
         Serial.print(F(" Congratulation! New"));
 #endif
         HighScore = tSnakeLength;
+#if defined(__AVR__)
         eeprom_write_word(&HighScoreEEPROM, tSnakeLength);
+#endif
     }
 #ifdef INFO
     Serial.print(F(" High Score="));

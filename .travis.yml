@@ -11,6 +11,9 @@ env:
   global:
   - PRETTYNAME="NeoPatterns Arduino Library"
 before_install:
+# Workaround for avoiding "fork/exec /bin/xtensa-lx106-elf-g++: no such file or directory"
+- echo "Removing ESP8266 cache"
+- rm -rf ~/.arduino15/packages/esp8266
 - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
 install:
 - arduino --install-library "Adafruit NeoPixel"
@@ -19,6 +22,8 @@ script:
 - build_platform leonardo
 - build_platform cplayClassic
 - build_platform mega2560
+- build_platform esp8266
+#- build_platform esp32
 notifications:
   email:
     recipients:
