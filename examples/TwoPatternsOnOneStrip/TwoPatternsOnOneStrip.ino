@@ -62,7 +62,7 @@ void PatternsFastMoves(NeoPatterns * aLedsPtr);
 
 // construct the NeoPatterns instances
 NeoPatterns NeoPatternsBackground = NeoPatterns(144, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsBackground);
-NeoPatterns NeoPatternsFastMoves = NeoPatterns(&NeoPatternsBackground, 0, 144, &PatternsFastMoves, false);
+NeoPatterns NeoPatternsFastMoves = NeoPatterns(&NeoPatternsBackground, 0, 144, false, &PatternsFastMoves);
 
 /*
  * converts value read at analog pin into exponential scale between 1 and 28

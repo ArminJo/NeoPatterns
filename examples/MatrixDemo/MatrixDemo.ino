@@ -64,9 +64,11 @@ void setup() {
 		}
 	}
 
+#if defined(__AVR__)
 	extern void *__brkval;
 	Serial.print(F("Free Ram/Stack[bytes]="));
 	Serial.println(SP - (uint16_t) __brkval);
+#endif
 
 	MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix);
 }

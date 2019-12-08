@@ -40,9 +40,9 @@ void MultiPatterns(NeoPatterns * aLedsPtr);
 // construct the NeoPatterns instances
 NeoPatterns NeoPixelBar24 = NeoPatterns(24, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 // false -> do not allow show on partial NeoPixel bar
-NeoPatterns LowerNeoPixelBar = NeoPatterns(&NeoPixelBar24, 0, 8, &MultiPatterns, false);
-NeoPatterns MiddleNeoPixelBar = NeoPatterns(&NeoPixelBar24, 8, 8, &MultiPatterns, false);
-NeoPatterns UpperNeoPixelBar = NeoPatterns(&NeoPixelBar24, 16, 8, &MultiPatterns, false);
+NeoPatterns LowerNeoPixelBar = NeoPatterns(&NeoPixelBar24, 0, 8, false, &MultiPatterns);
+NeoPatterns MiddleNeoPixelBar = NeoPatterns(&NeoPixelBar24, 8, 8, false, &MultiPatterns);
+NeoPatterns UpperNeoPixelBar = NeoPatterns(&NeoPixelBar24, 16, 8, false, &MultiPatterns);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -101,8 +101,11 @@ void MultiPatterns(NeoPatterns * aLedsPtr) {
         }
 
         int8_t tState = sState / 2;
+#if defined(__AVR__)
         uint32_t tRandom = random();
-
+#else
+        uint32_t tRandom = random(__UINT32_MAX__);
+#endif
         switch (tState) {
         case 0:
             // falling stars

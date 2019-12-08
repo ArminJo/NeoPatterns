@@ -23,7 +23,7 @@ script:
 - build_platform cplayClassic
 - build_platform mega2560
 - build_platform esp8266
-#- build_platform esp32
+- build_platform esp32
 notifications:
   email:
     recipients:

@@ -76,7 +76,7 @@ NeoPatterns on breadboard
 
 # Revision History
 ### Version 2.1.0
-- Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter.
+- Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
 - Added OpenLedRace example.
 - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
 ### Version 2.0.0

@@ -66,7 +66,7 @@
 
 /*
  * Version 2.1.0 - 12/2019
- * - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter.
+ * - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
  * - Added OpenLedRace example.
  * - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
  *
@@ -130,7 +130,7 @@ public:
     NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
             bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
+            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
 
     void setCallback(void (*callback)(NeoPatterns*));

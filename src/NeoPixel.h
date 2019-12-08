@@ -98,7 +98,7 @@ public:
 /*
  * Flag for NeoPattern. This disables the initial asynchronous show() for a new pattern, but enables show() if called by synchronous callback.
  * This behavior is needed to avoid disturbing other libraries, which cannot handle the time when interrupt is disabled for show() e.g. the Servo library.
- * The asynchronous call is detected by check if the current pattern is not PATTERN_NONE.
+ * The asynchronous call is detected by checking if the current pattern is not PATTERN_NONE.
  */
 #define PIXEL_FLAG_SHOW_ONLY_AT_UPDATE                       0x04
 // Used for some demo handler

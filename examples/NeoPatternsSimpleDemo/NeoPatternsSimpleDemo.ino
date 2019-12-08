@@ -91,7 +91,11 @@ void loop() {
 void TwoPatterns(NeoPatterns * aLedsPtr) {
     static int8_t sState = 0;
 
+#if defined(__AVR__)
     uint32_t tRandom = random();
+#else
+    uint32_t tRandom = random(__UINT32_MAX__);
+#endif
     uint8_t tDuration = random(20, 120);
     uint8_t tColor1 = tRandom;
     uint8_t tColor2 = tRandom >> 8;

@@ -61,11 +61,11 @@ void TestPatterns(NeoPatterns * aLedsPtr);
 #ifdef ALL_PATTERN_ON_ONE_STRIP
 #define PIN_NEOPIXEL_ALL        2
 NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
-NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, &allPatternsRandomHandler);
-NeoPatterns bar24 = NeoPatterns(&allPixel, 19, 24, &TestPatterns);
-NeoPatterns ring12 = NeoPatterns(&allPixel, 46, 12, &allPatternsRandomHandler);
-NeoPatterns ring16 = NeoPatterns(&allPixel, 61, 16, &allPatternsRandomHandler);
-NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, &allPatternsRandomHandler);
+NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, true, &allPatternsRandomHandler);
+NeoPatterns bar24 = NeoPatterns(&allPixel, 19, 24, true, &TestPatterns);
+NeoPatterns ring12 = NeoPatterns(&allPixel, 46, 12, true, &allPatternsRandomHandler);
+NeoPatterns ring16 = NeoPatterns(&allPixel, 61, 16, true, &allPatternsRandomHandler);
+NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, true, &allPatternsRandomHandler);
 #else
 // construct the NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
