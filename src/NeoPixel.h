@@ -48,6 +48,8 @@ public:
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
 
+    // To move the start index of a NeoPixel object
+    void setPixelOffsetForPartialNeoPixel( uint16_t aPixelOffset);
     /*
      * Extensions to Adafruit_NeoPixel functions
      */
@@ -91,7 +93,7 @@ public:
     NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
 };
 
-#define PIXEL_FLAG_IS_PARTIAL_PIXEL                          0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
+#define PIXEL_FLAG_IS_PARTIAL_NEOPIXEL                       0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
 #define PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT   0x02 // use negative logic because evaluation is simpler then
 /*
  * Flag for NeoPattern. This disables the initial asynchronous show() for a new pattern, but enables show() if called by synchronous callback.

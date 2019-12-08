@@ -30,24 +30,28 @@
 NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
-    /* not really needed
-     PixelOffset = 0;  // 8 byte Flash
-     UnderlyingNeoPixelObject = NULL;
-     PixelFlags = 0;
-     */
+#if defined(ESP8266)
+	// On an ESP8266 it was NOT initialized to 0 :-(.
+	 PixelOffset = 0;  // 8 byte Flash
+	 UnderlyingNeoPixelObject = NULL;
+	 PixelFlags = 0;
+#endif
 }
 
 /*
  * Used to create a NeoPixel, which operates on a segment of the underlying NeoPixel object.
  * This creates a new Adafruit_NeoPixel object and replaces the new pixel buffer with the underlying existing one.
  * ATTENTION!
- * @param aShowAllPixel - true = calls show function of the existing NeoPixel object (compatibility mode)
- *                        false = suppress calling the show function, since it makes no sense because show() would
- *                                set only the FIRST aNumberOfPixels of the underlying NeoPixelObject
- * ATTENTION. To save a lot of CPU time set aShowAllPixel to false and use only ExistingNeoPixelObject->show().
+ * @param aEnableShowOfUnderlyingPixel - true = calls show function of the underlying NeoPixel object if show() is called
+ *                        				 false = suppress calling the underlying show() function
+ * It makes no sense to call show for segment because show() would set only the FIRST aNumberOfPixels of the underlying NeoPixelObject
+ *
+ * To save a lot of CPU time set aEnableShowOfUnderlyingPixel to false and use only UnderlyingNeoPixelObject->show().
  * if(PartialNeoPixelBar.update()){
  *   UnderlyingNeoPixelObject->show();
  * }
+ *
+ * To move a NeoPixel object
  */
 NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel) :
@@ -55,9 +59,9 @@ NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
     PixelOffset = aPixelOffset;
-    PixelFlags = PIXEL_FLAG_IS_PARTIAL_PIXEL;
+    PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
-        PixelFlags = PIXEL_FLAG_IS_PARTIAL_PIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+        PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
     }
     /*
      * Replace buffer with existing one
@@ -89,18 +93,18 @@ bool NeoPixel::begin(Stream * aSerial) {
  * Handles the DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT flag
  */
 void NeoPixel::show() {
-    if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
-        if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_PIXEL) {
+    if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
+        if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
 #ifdef TRACE
-            Serial.println("Underlying->show");
+			Serial.println("Underlying->show");
 #endif
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
-        } else {
-#ifdef TRACE
-            Serial.println("show");
-#endif
-            Adafruit_NeoPixel::show();
         }
+    } else {
+#ifdef TRACE
+		Serial.println("show");
+#endif
+        Adafruit_NeoPixel::show();
     }
 }
 
@@ -115,9 +119,22 @@ neoPixelType NeoPixel::getType() {
         tReturnValue |= 0x100;
     }
 #else
-    neoPixelType tReturnValue=(wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
+	neoPixelType tReturnValue=(wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
 #endif
     return tReturnValue;
+}
+
+/*
+ * Move the start index of a partial NeoPixel object
+ */
+void NeoPixel::setPixelOffsetForPartialNeoPixel(uint16_t aPixelOffset) {
+    if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
+        // clip aPixelOffset
+        if (aPixelOffset > (UnderlyingNeoPixelObject->numLEDs - numLEDs)) {
+            aPixelOffset = UnderlyingNeoPixelObject->numLEDs - numLEDs;
+        }
+        PixelOffset = aPixelOffset;
+    }
 }
 
 /*
@@ -211,23 +228,23 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
 }
 
 /*
- * Checks for valid index / skips invalid ones
+ * Checks for valid pixel index / skips invalid ones
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
 #ifdef TRACE
-    Serial.print(F("Pixel="));
-    Serial.print(aPixelIndex);
-    Serial.print(F(" Offset="));
-    Serial.print(PixelOffset);
-    Serial.print(F(" Color="));
-    Serial.print(aRed);
-    Serial.print('|');
-    Serial.print(aGreen);
-    Serial.print('|');
-    Serial.println(aBlue);
+	Serial.print(F("Pixel="));
+	Serial.print(aPixelIndex);
+	Serial.print(F(" Offset="));
+	Serial.print(PixelOffset);
+	Serial.print(F(" Color="));
+	Serial.print(aRed);
+	Serial.print('|');
+	Serial.print(aGreen);
+	Serial.print('|');
+	Serial.println(aBlue);
 #endif
     if (aPixelIndex < numLEDs) {
-        aPixelIndex += PixelOffset; // added line to support offsets
+        aPixelIndex += PixelOffset; // support offsets
         uint8_t *p = &pixels[aPixelIndex * BytesPerPixel];
         if (BytesPerPixel == 4) {
             p[wOffset] = 0;        // But only R,G,B passed -- set W to 0
@@ -240,20 +257,20 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
 #ifdef TRACE
-    Serial.print(F("Pixel="));
-    Serial.print(aPixelIndex);
-    Serial.print(F(" Offset="));
-    Serial.print(PixelOffset);
-    Serial.print(F(" Color="));
-    Serial.print(aRed);
-    Serial.print('|');
-    Serial.print(aGreen);
-    Serial.print('|');
-    Serial.print(aBlue);
-    Serial.println('|');
+	Serial.print(F("Pixel="));
+	Serial.print(aPixelIndex);
+	Serial.print(F(" Offset="));
+	Serial.print(PixelOffset);
+	Serial.print(F(" Color="));
+	Serial.print(aRed);
+	Serial.print('|');
+	Serial.print(aGreen);
+	Serial.print('|');
+	Serial.print(aBlue);
+	Serial.println('|');
 #endif
     if (aPixelIndex < numLEDs) {
-        aPixelIndex += PixelOffset; // added line to support offsets
+        aPixelIndex += PixelOffset; // support offsets
         uint8_t *p = &pixels[aPixelIndex * BytesPerPixel];
         if (BytesPerPixel == 4) {
             p[wOffset] = aWhite;        // Store W
@@ -269,15 +286,15 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
 #ifdef TRACE
-    Serial.print(F("Pixel="));
-    Serial.print(aPixelIndex);
-    Serial.print(F(" Offset="));
-    Serial.print(PixelOffset);
-    Serial.print(F(" Color=0x"));
-    Serial.println(aColor, HEX);
+	Serial.print(F("Pixel="));
+	Serial.print(aPixelIndex);
+	Serial.print(F(" Offset="));
+	Serial.print(PixelOffset);
+	Serial.print(F(" Color=0x"));
+	Serial.println(aColor, HEX);
 #endif
     if (aPixelIndex < numLEDs) {
-        aPixelIndex += PixelOffset; // added line to support offsets
+        aPixelIndex += PixelOffset; // support offsets
         uint8_t *p, r = (uint8_t) (aColor >> 16), g = (uint8_t) (aColor >> 8), b = (uint8_t) aColor;
         p = &pixels[aPixelIndex * BytesPerPixel];
         if (BytesPerPixel == 4) {
@@ -415,14 +432,14 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
     tBlueDimmed = ((tBlueDimmed + 1) * tGamma32Brightness) >> 8;
 
 #ifdef TRACE
-    Serial.print(F("dimColorWithGamma32 aBrightness="));
-    Serial.print(aBrightness);
-    Serial.print(F(" Gamma="));
-    Serial.print(tGamma32Brightness);
-    Serial.print(F(" 0x"));
-    Serial.print(aLinearBrightnessColor, HEX);
-    Serial.print(F("->0x"));
-    Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
+	Serial.print(F("dimColorWithGamma32 aBrightness="));
+	Serial.print(aBrightness);
+	Serial.print(F(" Gamma="));
+	Serial.print(tGamma32Brightness);
+	Serial.print(F(" 0x"));
+	Serial.print(aLinearBrightnessColor, HEX);
+	Serial.print(F("->0x"));
+	Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
 #endif
 
     return ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
