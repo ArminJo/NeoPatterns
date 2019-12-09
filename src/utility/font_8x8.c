@@ -1,6 +1,8 @@
 #include <inttypes.h>
-#include <avr/pgmspace.h>
 #include "fonts.h"
+#if defined(__AVR__)
+#include <avr/pgmspace.h>
+#endif
 
 #ifdef FONT_8X8
 const uint8_t font_PGM[] PROGMEM=
