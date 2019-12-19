@@ -75,11 +75,14 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 2.2.0
+- Added OpenLedRace example.
+
 ### Version 2.1.0
 - Ported to ESP8266 and ESP32.
 - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
-- Added OpenLedRace example.
 - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
+
 ### Version 2.0.0
 - Rewrite of most patterns control logic.
 - Function `drawBar()` in NeoPixel.cpp added.
@@ -109,6 +112,8 @@ The NeoPatterns library examples are built on Travis CI for the following boards
 - Arduino Uno
 - Arduino Leonardo
 - Arduino Mega 2560
+- ESP8266 boards (tested with LOLIN D1 R2 board)
+- ESP32   boards (tested with ESP32 DEVKITV1 board)
 
 ## Requests for modifications / extensions
 Please write me a PM including your motivation/problem if you need a modification or an extension.
