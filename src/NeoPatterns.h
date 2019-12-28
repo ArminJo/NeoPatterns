@@ -65,6 +65,9 @@
 #define VERSION_NEOPATTERNS 2.0.0
 
 /*
+ * Version 2.1.1
+ * - Use Print * instead of Stream *.
+ *
  * Version 2.1.0 - 12/2019
  * - Ported to ESP8266 and ESP32.
  * - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
@@ -202,8 +205,8 @@ public:
 #else
     // use PatternNamesArray[aPatternNumber] on other platforms
 #endif
-    void printPatternName(uint8_t aPatternNumber, Stream * aSerial);
-    void printInfo(Stream * aSerial, bool aFullInfo = true);
+    void printPatternName(uint8_t aPatternNumber, Print * aSerial);
+    void printInfo(Print * aSerial, bool aFullInfo = true);
 
     /*
      * Variables for almost each pattern

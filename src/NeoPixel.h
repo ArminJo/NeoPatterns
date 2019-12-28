@@ -56,7 +56,7 @@ public:
     void begin();
     void show();
     // Version with error message
-    bool begin(Stream * aSerial);
+    bool begin(Print * aSerial);
 
     void ColorSet(color32_t aColor);
     color32_t getPixelColor(uint16_t aPixelIndex);

@@ -1219,7 +1219,7 @@ void NeoPatterns::getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t
  * Prints name of the pattern e.g. "Rainbow cycle"
  * call it e.g. printPatternName(&Serial);
  */
-void NeoPatterns::printPatternName(uint8_t aPatternNumber, Stream * aSerial) {
+void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print * aSerial) {
 #if defined(__AVR__)
     const char* aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
     aSerial->print((const __FlashStringHelper *) aNameArrayPointerPGM);
@@ -1231,7 +1231,7 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Stream * aSerial) {
 /*
  * For debugging purposes
  */
-void NeoPatterns::printInfo(Stream * aSerial, bool aFullInfo) {
+void NeoPatterns::printInfo(Print * aSerial, bool aFullInfo) {
     static uint16_t sLastSteps;
     if (aFullInfo) {
         sLastSteps = 0x9000; // Force debug output below
