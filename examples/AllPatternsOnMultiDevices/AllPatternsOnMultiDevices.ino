@@ -69,7 +69,7 @@ NeoPatterns ring24 = NeoPatterns(&allPixel, 80, 24, true, &allPatternsRandomHand
 #else
 // construct the NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
-NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
+NeoPatterns bar24 = NeoPatterns(24, PIN_NEOPIXEL_BAR_24, NEO_GRB + NEO_KHZ800, &TestPatterns);
 NeoPatterns ring12 = NeoPatterns(12, PIN_NEOPIXEL_RING_12, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
 NeoPatterns ring16 = NeoPatterns(16, PIN_NEOPIXEL_RING_16, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
 NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
@@ -270,10 +270,10 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
         aLedsPtr->Delay(500);
         break;
     case 4:
-        aLedsPtr->Heartbeat(COLOR32_RED, 50, 1);
+        aLedsPtr->RainbowCycle(50, DIRECTION_UP);
         break;
     case 5:
-        aLedsPtr->ColorWipe(COLOR32_GREEN, 5);
+        aLedsPtr->RainbowCycle(50, DIRECTION_DOWN);
         break;
     case 6:
         aLedsPtr->Delay(400);

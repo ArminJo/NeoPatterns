@@ -25,10 +25,12 @@
  *
  */
 
-/* Class inheritance diagram
- *                                     ,o--> MatrixNeoPixel \
- * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
- *                                     `o--> NeoPatterns    /
+/*
+ * Class inheritance diagram. We have virtual inheritance, since MatrixNeoPatterns needs only one member set of NeoPixel
+ *
+ *                                     ,o--> MatrixNeoPixel (virtual) \
+ * MatrixSnake --> MatrixNeoPatterns  <                                o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    (virtual) /
  */
 
 #ifndef MATRIXNEOPATTERNS_H_
@@ -59,8 +61,12 @@ float const convolutionMatrix[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] 
 // extension of NeoPattern Class approximately 85 Byte / object
 class MatrixNeoPatterns: public MatrixNeoPixel, public NeoPatterns {
 public:
+    MatrixNeoPatterns();
+    void init();
     MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+                void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
 

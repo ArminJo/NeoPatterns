@@ -30,22 +30,38 @@
 
 #include <Arduino.h>
 
+#include "MatrixNeoPatterns.h"
+
 //#define TRACE
 //#define DEBUG
 //#define INFO
 //#define WARN
-
-#include "MatrixNeoPatterns.h"
+#include "DebugLevel.h"
 
 // used for Ticker - modify line 12 of fonts.h to change font sizes
 #include "fonts.h"
 
+MatrixNeoPatterns::MatrixNeoPatterns() :  // @suppress("Class members should be properly initialized")
+        MatrixNeoPixel(), NeoPatterns() {
+    OnPatternComplete = NULL;
+}
+
 // Constructor - calls base-class constructor to initialize strip
 MatrixNeoPatterns::MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
         void (*aPatternCompletionCallback)(NeoPatterns*)) :
-        NeoPixel(aColumns * aRows, aPin, aTypeOfPixel), MatrixNeoPixel(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel), NeoPatterns(
-                aColumns * aRows, aPin, aTypeOfPixel, NULL) {
+        MatrixNeoPixel(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel), NeoPatterns(aColumns * aRows, aPin, aTypeOfPixel,
+        NULL) {
+
     OnPatternComplete = aPatternCompletionCallback;
+}
+
+bool MatrixNeoPatterns::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+        void (*aPatternCompletionCallback)(NeoPatterns*)) {
+    MatrixNeoPixel::init(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel);
+    bool tRetvalue = NeoPatterns::init(aColumns * aRows, aPin, aTypeOfPixel, NULL);
+
+    OnPatternComplete = aPatternCompletionCallback;
+    return tRetvalue;
 }
 
 // Update the pattern returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)

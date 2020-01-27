@@ -38,7 +38,7 @@
 #include <NeoPatterns.h>
 
 #define USE_BUTTON_1
-#include "EasyButtonAtInt01.h"
+#include "EasyButtonAtInt01.cpp.h"
 
 #define VERSION_EXAMPLE "2.0"
 

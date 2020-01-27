@@ -36,20 +36,6 @@
 #ifndef NEOPATTERNS_H
 #define NEOPATTERNS_H
 
-// Propagate debug level
-#ifdef TRACE
-#define DEBUG
-#endif
-#ifdef DEBUG
-#define INFO
-#endif
-#ifdef INFO
-#define WARN
-#endif
-#ifdef WARN
-#define ERROR
-#endif
-
 #if !defined (DO_NOT_USE_MATH_PATTERNS)
 // Comment this out if you do NOT need the BOUNCING_BALL pattern
 // This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
@@ -62,16 +48,20 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS 2.0.0
+#define VERSION_NEOPATTERNS 2.2.0
 
 /*
- * Version 2.1.1
+ * Version 2.2.0 - 1/2020
  * - Use Print * instead of Stream *.
+ * - Changed function addPixelColor().
+ * - Added function NeoPixel::printInfo(aSerial).
+ * - Added *D functions, which take the duration of the whole pattern as argument.
+ * - Added OpenLedRace example.
+ * - Added empty constructor and init() functions.
  *
  * Version 2.1.0 - 12/2019
  * - Ported to ESP8266 and ESP32.
  * - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
- * - Added OpenLedRace example.
  * - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
  *
  * Version 2.0.0 - 11/2019
@@ -112,6 +102,7 @@ extern const char * const PatternNamesArray[] PROGMEM;
 #define DIRECTION_DOWN 2
 #define DIRECTION_RIGHT 3
 #define DIRECTION_MASK  0x03
+#define PARAMETER_IS_DURATION  0x80 // if highest bit is set for direction parameter, the intervalMillis parameter is interpreted as durationMillis.
 #define OppositeDirection(aDirection) (((aDirection) + 2) & DIRECTION_MASK)
 #define NUMBER_OF_DIRECTIONS 4
 #define DIRECTION_IMPOSSIBLE NUMBER_OF_DIRECTIONS   // No direction possible (for AI)
@@ -131,38 +122,53 @@ const char* DirectionToString(uint8_t aDirection);
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
 class NeoPatterns: public virtual NeoPixel {
 public:
+    NeoPatterns();
+    void init();
     NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
             bool aShowOnlyAtUpdate = false);
+    bool init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
+                bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
+    void init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+                bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
+                bool aShowOnlyAtUpdate = false);
 
     void setCallback(void (*callback)(NeoPatterns*));
 
     bool checkForUpdate();
     bool updateOrRedraw();
     bool update();
+    bool updateAllPartialPatterns();
     void showPatternInitially();
     bool decrementTotalStepCounter();
     void setNextIndex();
     bool decrementTotalStepCounterAndSetNextIndex();
 
     void updateAndWaitForPatternToStop();
+    void updateAllPartialPatternsAndWaitForPatternsToStop();
 
     /*
      * PATTERNS
      */
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+    void RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection = DIRECTION_UP);
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void ColorWipeD(color32_t aColor, uint16_t aDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     void Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
 
     /*
      * PATTERN extensions
      */
+    void StripesD(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
+            uint16_t aDurationMillis, uint8_t aDirection = DIRECTION_UP);
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode = 0);
     void ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0,
+            uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void ScannerExtendedD(color32_t aColor, uint8_t aLength, uint16_t aDurationMillis, uint16_t aNumberOfBouncings = 0,
             uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
     void Delay(uint16_t aMillis);
@@ -212,7 +218,7 @@ public:
      * Variables for almost each pattern
      */
     uint16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
-    uint16_t Index;         // - or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
+    uint16_t Index;         // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
     color32_t Color1;       // Main pattern color
     int8_t Direction;       // Direction to run the pattern
     uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel
@@ -247,7 +253,7 @@ public:
     union {
         color32_t BackgroundColor;
         color32_t Color2; // second pattern color
-
+        uint8_t * heatOfPixelArrayPtr; // Allocated array for current heat values for Fire pattern
         uint16_t StartIntervalMillis; // BouncingBall: interval for first step
         uint16_t NumberOfBouncings; // ScannerExtended: Number of bounces
     } LongValue1;
@@ -256,7 +262,6 @@ public:
         color32_t ColorTmp; // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
         float TopPixelIndex; // BouncingBall: float index of TopPixel
 
-        uint16_t DeltaStepsShift8; // RainbowCycle: Delta for each step for
         uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for
     } LongValue2;
 
@@ -271,6 +276,11 @@ public:
     uint16_t Repetitions; // counter for multipleHandler
     uint8_t MultipleExtension; // for delay of multiple falling stars and snake flags and length of stripes
     void (*NextOnPatternCompleteHandler)(NeoPatterns*);  // Next callback after completion of multiple pattern
+    /*
+     * List of all NeoPatterns
+     */
+    NeoPatterns * NextNeoPatternsObject; // For underlying NeoPixels, the first partial NeoPixel, else the next partial NeoPixel for the same underlying NeoPixel
+    static NeoPatterns * FirstNeoPatternsObject;
 };
 
 //  Sample processing functions for ProcessSelectiveColor()

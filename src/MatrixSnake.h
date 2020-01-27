@@ -66,8 +66,11 @@ position const SnakeInitialPixels[] = { { 4, 4 }, { 5, 4 }, { 6, 4 }, { 6, 5 } }
 // extension of NeoPattern Class approximately 85 Byte / object
 class MatrixSnake: public MatrixNeoPatterns {
 public:
+    MatrixSnake();
     MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+                void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);

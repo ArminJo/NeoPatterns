@@ -250,7 +250,7 @@ void allPatterns(NeoPatterns * aLedsPtr) {
         break;
     case 1:
         // Heartbeat
-        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 3);
+        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 2);
         break;
     case 2:
         // rocket and falling star - 2 times bouncing

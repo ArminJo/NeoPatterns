@@ -23,10 +23,14 @@
  *
  */
 
-/* Class inheritance diagram
- *                                     ,o--> MatrixNeoPixel \
- * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
- *                                     `o--> NeoPatterns    /
+/*
+ * Class inheritance diagram. We have virtual inheritance, since MatrixNeoPatterns needs only one member set of NeoPixel
+ *
+ *                    MatrixNeoPixelVU \
+ *                                     ,o--> MatrixNeoPixel (virtual) \
+ * MatrixSnake --> MatrixNeoPatterns  <                                o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    (virtual) /
+ *
  */
 
 #ifndef SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
@@ -41,9 +45,16 @@ uint8_t Blue(color32_t color);
 
 class NeoPixel: public Adafruit_NeoPixel {
 public:
+    NeoPixel();
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
+    void AdafruitNeoPixelIinit(uint16_t aNumberOfPixels, uint16_t aPin, neoPixelType aTypeOfPixel);
+    bool init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
     NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true);
+    void init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+                bool aEnableShowOfUnderlyingPixel = true);
+
+    void printInfo(Print * aSerial);
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
@@ -74,10 +85,11 @@ public:
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
     void setPixelColor(uint16_t aPixelIndex, uint32_t aColor);
+    void fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
     void drawBarFromColorArray(uint16_t aBarLength, color32_t * aColorArrayPtr, bool aDrawFromBottom = true);
 
-    color32_t addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     // Static functions
     static color32_t Wheel(uint8_t aWheelPos);
     static uint8_t gamma32(uint8_t aLinearBrightnessValue);

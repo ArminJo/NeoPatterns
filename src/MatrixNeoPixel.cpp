@@ -33,12 +33,39 @@
 // Demo 8x8 heart graphics
 const uint8_t heart8x8[] PROGMEM = { 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18, 0x00 };
 
+MatrixNeoPixel::MatrixNeoPixel() :
+        NeoPixel() {
+
+    init();
+}
+
+void MatrixNeoPixel::init() {
+    Rows = 0;
+    Columns = 0;
+    Geometry = NEO_MATRIX_DEFAULT_GEOMETRY;
+    LayoutMappingFunction = NULL;
+}
+
 MatrixNeoPixel::MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         NeoPixel(aColumns * aRows, aPin, aTypeOfPixel) {
+
     Rows = aRows;
     Columns = aColumns;
     Geometry = aMatrixGeometry;
     LayoutMappingFunction = NULL;
+}
+
+/*
+ * Returns false if no memory available
+ */
+bool MatrixNeoPixel::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel) {
+    bool tRetval = NeoPixel::init(aColumns * aRows, aPin, aTypeOfPixel);
+
+    Rows = aRows;
+    Columns = aColumns;
+    Geometry = aMatrixGeometry;
+    LayoutMappingFunction = NULL;
+    return tRetval;
 }
 
 void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t)) {
@@ -174,7 +201,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
 
     for (uint8_t i = 0; i < Rows; i++) {
         bool tDrawPixel;
-         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
+        // Since top left is (0,0) draw from top is like draw from bottom for simple bars
         if (aDrawFromBottom) {
             tDrawPixel = (i >= (Rows - aBarLength));
         } else {
@@ -247,7 +274,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidth
 
 #ifdef DEBUG
     Serial.print(F("aGraphicsPtr="));
-    Serial.print((uint16_t) aGraphicsArrayPtr, HEX);
+    Serial.print((uintptr_t) aGraphicsArrayPtr, HEX);
     Serial.print(F(" aXOffset="));
     Serial.print(aXOffset);
     Serial.print(F(" aYOffset="));
@@ -311,7 +338,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidth
 
 #ifdef TRACE
         Serial.print(F("tGraphicsPointer="));
-        Serial.print((uint16_t) tGraphicsPointer, HEX);
+        Serial.print((uintptr_t) tGraphicsPointer, HEX);
         Serial.print(F(" tLineBitPattern="));
         Serial.println(tLineBitPattern, HEX);
 #endif

@@ -23,10 +23,14 @@
  *
  */
 
-/* Class inheritance diagram
- *                                     ,o--> MatrixNeoPixel \
- * MatrixSnake --> MatrixNeoPatterns  <                      o--> NeoPixel --> Adafruit_NeoPixel
- *                                     `o--> NeoPatterns    /
+/*
+ * Class inheritance diagram. We have virtual inheritance, since MatrixNeoPatterns needs only one member set of NeoPixel
+ *
+ *                    MatrixNeoPixelVU \
+ *                                     ,o--> MatrixNeoPixel (virtual) \
+ * MatrixSnake --> MatrixNeoPatterns  <                                o--> NeoPixel --> Adafruit_NeoPixel
+ *                                     `o--> NeoPatterns    (virtual) /
+ *
  */
 
 #ifndef SRC_LIB_NEOPATTERNS_MATRIXNEOPIXEL_H_
@@ -36,7 +40,11 @@
 
 class MatrixNeoPixel: public virtual NeoPixel {
 public:
+    MatrixNeoPixel();
+    void init();
     MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
+    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
+
     void setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t));
 
     uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);
@@ -86,6 +94,7 @@ public:
 #define NEO_MATRIX_PROGRESSIVE 0x00 // Same pixel order across each line
 #define NEO_MATRIX_ZIGZAG      0x08 // Pixel order reverses between lines
 #define NEO_MATRIX_SEQUENCE    0x08 // Bitmask for pixel line order
+#define NEO_MATRIX_DEFAULT_GEOMETRY   (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)
     uint8_t Geometry;    // Flags for geometry
 
     uint16_t (*LayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t); // Pointer to function, which implements the mapping between X/Y and pixel number

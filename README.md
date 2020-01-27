@@ -1,5 +1,5 @@
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
-### Version 2.1.0
+### Version 2.2.0
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/NeoPatterns/latest)](https://github.com/ArminJo/NeoPatterns/commits/master)
@@ -65,7 +65,7 @@ In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use 
 
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out line 33 `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
 The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
@@ -76,11 +76,16 @@ NeoPatterns on breadboard
 
 # Revision History
 ### Version 2.2.0
+- Use Print * instead of Stream *.
+- Changed function `addPixelColor()`.
+- Added function `NeoPixel::printInfo(aSerial)`.
+- Added *D functions, which take the duration of the whole pattern as argument.
 - Added OpenLedRace example.
+- Added empty constructor and init() functions.
 
 ### Version 2.1.0
 - Ported to ESP8266 and ESP32.
-- Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
+- Changed signature of `NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject)`. Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
 - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
 
 ### Version 2.0.0

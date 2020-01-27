@@ -25,7 +25,7 @@
  *
  */
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "1.1"
 
 #include <Arduino.h>
 #include <MatrixSnake.h>
@@ -48,8 +48,7 @@
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrixSnake = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX_SNAKE,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800);
+MatrixSnake NeoPixelMatrixSnake = MatrixSnake();
 
 /********************************************
  * Put your Snake solver code here
@@ -150,8 +149,9 @@ void setup() {
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-    // This initializes the NeoPixel library and checks if enough memory was available
-    if (!NeoPixelMatrixSnake.begin(&Serial)) {
+    // This initializes the Snake and checks if enough memory was available
+    if (!NeoPixelMatrixSnake.init(8, 8, PIN_NEOPIXEL_MATRIX_SNAKE,
+            NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800)) {
         Serial.println(F("Not enough memory for Snake matrix"));
         // Blink forever as error indicator
         while (true) {

@@ -31,25 +31,37 @@
 
 #include <Arduino.h>
 
+#include "MatrixSnake.h"
+
 // Output information on Serial must be defined before #include "MatrixSnake.h"
 //#define TRACE
 //#define DEBUG
 //#define INFO
 //#define WARN
 //#define ERROR
+#include "DebugLevel.h"
 
-#include "MatrixSnake.h"
 #include <stdlib.h>         // for utoa() etc.
 
 #if defined(__AVR__)
 EEMEM uint16_t HighScoreEEPROM; // is reset if both right and left button are pressed at startup.
 #endif
 
+MatrixSnake::MatrixSnake() : // @suppress("Class members should be properly initialized")
+        NeoPixel(), MatrixNeoPatterns() {
+}
+
 // Constructor - calls base-class constructor to initialize strip
 MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
         void (*aPatternCompletionCallback)(NeoPatterns*)) :
         NeoPixel(aColumns * aRows, aPin, aTypeOfPixel), MatrixNeoPatterns(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel,
                 aPatternCompletionCallback) {
+}
+
+bool MatrixSnake::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+        void (*aPatternCompletionCallback)(NeoPatterns*)) {
+    NeoPixel::init(aColumns * aRows, aPin, aTypeOfPixel);
+    return MatrixNeoPatterns::init(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel, aPatternCompletionCallback);
 }
 
 /*
@@ -81,11 +93,11 @@ bool MatrixSnake::update() {
 
 // moves the goal to a new position
 void MatrixSnake::newApple() {
-    // clear old apple
+// clear old apple
     setMatrixPixelColor(Apple.x, Apple.y, COLOR32_BLACK);
 
     position tNewApplePosition;
-    // get new random position until the position is not on the snake tail and different from the actual apple position
+// get new random position until the position is not on the snake tail and different from the actual apple position
     do {
         tNewApplePosition.x = random(Columns - 1);
         tNewApplePosition.y = random(Rows - 1);
@@ -124,9 +136,9 @@ void MatrixSnake::clearResetAndShowSnakeAndNewApple() {
     Direction = DIRECTION_NONE;
     PatternFlags &= ~FLAG_SNAKE_SHOW_LENGTH_SCORE;
 
-    // Clear all pixels
+// Clear all pixels
     clear();
-    // sets the beginning of the snake to init_snake
+// sets the beginning of the snake to init_snake
     memcpy(SnakePixelList, SnakeInitialPixels, sizeof(SnakeInitialPixels));
     newApple();
     drawApple();
@@ -147,7 +159,7 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     PinOfUpButton = aPinOfUpButton;
     PinOfDownButton = aPinOfDownButton;
 
-    // just to be sure
+// just to be sure
     if (SnakePixelList != NULL) {
         free(SnakePixelList);
     }
@@ -206,7 +218,7 @@ void MatrixSnake::drawSnake() {
         color32_t tDimmedColor = dimColorWithGamma32(Color1, tBrightness, true);
         setMatrixPixelColor(tPosition.x, tPosition.y, tDimmedColor);
     }
-    // set snake head color
+// set snake head color
     setMatrixPixelColor(SnakePixelList[0].x, SnakePixelList[0].y, COLOR32_GREEN);
 }
 
@@ -302,7 +314,7 @@ uint8_t MatrixSnake::SnakeInputHandler() {
  * returns SnakeLength if position is out of area
  */
 uint16_t MatrixSnake::checkDirection(uint8_t aDirectionToCheck) {
-    // get new head position
+// get new head position
     position tNewHeadPosition;
     if (!computeNewHeadPosition(aDirectionToCheck, &tNewHeadPosition)) {
         return SnakeLength;
@@ -385,7 +397,7 @@ bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position * aSnakeNe
         return false;
         break;
     }
-    // check if position is in area
+// check if position is in area
     if (aSnakeNewHeadPosition->x >= Columns || aSnakeNewHeadPosition->y >= Rows) {
         return false;
     }
@@ -400,7 +412,7 @@ bool MatrixSnake::moveSnakeAndCheckApple(position tSnakeNewHeadPosition) {
      * move snake body except head back in array and set new head
      */
 
-    // Clear tail end before moving snake
+// Clear tail end before moving snake
     position tLastTailEnd = SnakePixelList[SnakeLength - 1];
     setMatrixPixelColor(tLastTailEnd.x, tLastTailEnd.y, COLOR32_BLACK);
 
@@ -615,7 +627,7 @@ uint8_t MatrixSnake::findNextDir() {
      * Avoid going to opposite direction, because this is invalid.
      * Eg. if actual direction is UP, we must not change to DOWN.
      */
-    // go shortest delta first
+// go shortest delta first
     if ((abs(tDeltaX) > abs(tDeltaY)) && tDeltaY != 0) {
         if (tDeltaY > 0 && Direction != DIRECTION_UP) {
             tNewDirection = DIRECTION_DOWN;

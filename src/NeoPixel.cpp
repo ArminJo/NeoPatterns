@@ -27,15 +27,45 @@
 
 //#define TRACE
 
+NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initialized")
+        Adafruit_NeoPixel() {
+
+    BytesPerPixel = 0;
+    PixelOffset = 0;
+    PixelFlags = 0;
+    numBytes = 0;
+}
+
 NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
+
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
-#if defined(ESP8266)
-	// On an ESP8266 it was NOT initialized to 0 :-(.
-	 PixelOffset = 0;  // 8 byte Flash
-	 UnderlyingNeoPixelObject = NULL;
-	 PixelFlags = 0;
-#endif
+    PixelOffset = 0;  // 8 byte Flash
+    UnderlyingNeoPixelObject = this;
+    PixelFlags = 0;
+}
+
+/*
+ * Substitute for missing init() of Adafruit_NeoPixel
+ */
+void NeoPixel::AdafruitNeoPixelIinit(uint16_t aNumberOfPixels, uint16_t aPin, neoPixelType aTypeOfPixel) {
+    Adafruit_NeoPixel::updateType(aTypeOfPixel);
+    Adafruit_NeoPixel::updateLength(aNumberOfPixels);
+    Adafruit_NeoPixel::setPin(aPin);
+}
+
+/*
+ * Returns false if no memory available
+ */
+bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) {
+    AdafruitNeoPixelIinit(aNumberOfPixels, aPin, aTypeOfPixel);
+    Adafruit_NeoPixel::begin(); // sets pin to output
+
+    BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
+    PixelOffset = 0;  // 8 byte Flash
+    UnderlyingNeoPixelObject = this;
+    PixelFlags = 0;
+    return (numLEDs != 0);
 }
 
 /*
@@ -46,22 +76,53 @@ NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel)
  *                        				 false = suppress calling the underlying show() function
  * It makes no sense to call show for segment because show() would set only the FIRST aNumberOfPixels of the underlying NeoPixelObject
  *
- * To save a lot of CPU time set aEnableShowOfUnderlyingPixel to false and use only UnderlyingNeoPixelObject->show().
+ * To save a lot of CPU time of unnecessary double updates set aEnableShowOfUnderlyingPixel to false and use only UnderlyingNeoPixelObject->show().
  * if(PartialNeoPixelBar.update()){
  *   UnderlyingNeoPixelObject->show();
  * }
- *
- * To move a NeoPixel object
  */
 NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel) :
         Adafruit_NeoPixel(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
+
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
     PixelOffset = aPixelOffset;
     PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
         PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+    }
+
+    if (numLEDs == 0) {
+        // malloc has not worked for creating Adafruit_NeoPixel.
+        // But since we do not need the malloced buffer, just set the numLEDs and numBytes to the right values.
+        numLEDs = aNumberOfPixels;
+        numBytes = aUnderlyingNeoPixelObject->BytesPerPixel * aNumberOfPixels;
+    }
+    /*
+     * Replace buffer with existing one
+     */
+    setPixelBuffer(aUnderlyingNeoPixelObject->getPixels());
+}
+
+void NeoPixel::init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+        bool aEnableShowOfUnderlyingPixel) {
+    AdafruitNeoPixelIinit(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType());
+    Adafruit_NeoPixel::begin(); // sets pin to output
+
+    UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
+    BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
+    PixelOffset = aPixelOffset;
+    PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
+    if (!aEnableShowOfUnderlyingPixel) {
+        PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+    }
+
+    if (numLEDs == 0) {
+        // malloc has not worked for creating Adafruit_NeoPixel.
+        // But since we do not need the malloced buffer, just set the numLEDs and numBytes to the right values.
+        numLEDs = aNumberOfPixels;
+        numBytes = aUnderlyingNeoPixelObject->BytesPerPixel * aNumberOfPixels;
     }
     /*
      * Replace buffer with existing one
@@ -87,6 +148,23 @@ bool NeoPixel::begin(Print * aSerial) {
         return false;
     }
     return true;
+}
+
+/*
+ * For debugging purposes
+ */
+void NeoPixel::printInfo(Print * aSerial) {
+    aSerial->print(F("Pin="));
+    aSerial->print(getPin());
+    aSerial->print(F(" Offset="));
+    aSerial->print(PixelOffset);
+
+    aSerial->print(F(" PixelFlags=0x"));
+    aSerial->print(PixelFlags, HEX);
+    aSerial->print(F(" &under.NeoPixel=0x"));
+    aSerial->print((uintptr_t) UnderlyingNeoPixelObject, HEX);
+    aSerial->print(F(" &NeoPixel=0x"));
+    aSerial->println((uintptr_t) this, HEX);
 }
 
 /*
@@ -310,30 +388,34 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
 /*
  * adds color to existing one and clip to white (255)
  */
-color32_t NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
-    color32_t tOldColor = getPixelColor(aPixelIndex);
-    if (tOldColor != 0) {
-        uint8_t tRed = Red(tOldColor) + aRed;
-        if (tRed < aRed) {
-            // clip overflow
-            tRed = 255;
+void NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // support offsets
+        color32_t tOldColor = getPixelColor(aPixelIndex);
+        if (tOldColor == 0) {
+            setPixelColor(aPixelIndex, aRed, aGreen, aBlue);
+        } else {
+            uint8_t tRed = Red(tOldColor) + aRed;
+            if (tRed < aRed) {
+                // clip overflow
+                tRed = 255;
+            }
+            uint8_t tGreen = Green(tOldColor) + aGreen;
+            if (tGreen < aGreen) {
+                tGreen = 255;
+            }
+            uint8_t tBlue = Blue(tOldColor) + aBlue;
+            if (tBlue < aBlue) {
+                tBlue = 255;
+            }
+            setPixelColor(aPixelIndex, tRed, tGreen, tBlue);
         }
-        uint8_t tGreen = Green(tOldColor) + aGreen;
-        if (tGreen < aGreen) {
-            tGreen = 255;
-        }
-        uint8_t tBlue = Blue(tOldColor) + aBlue;
-        if (tBlue < aBlue) {
-            tBlue = 255;
-        }
-        return Color(tRed, tGreen, tBlue);
     }
-    return Color(aRed, aGreen, aBlue);
 }
 
 // Set all pixels to a color (synchronously)
 void NeoPixel::ColorSet(color32_t aColor) {
-    // This is faster but costs 82 bytes program space
+// This is faster but costs 82 bytes program space
 //    if (BytesPerPixel == 3) {
 //        setPixelColor(0, aColor);
 //        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
@@ -362,7 +444,7 @@ uint32_t NeoPixel::dimColor(color32_t aColor) {
 }
 
 // Input a value 0 to 255 to get a color value.
-// The colors are a transition r - g - b - back to r.
+// The colors are a transition red -> green -> blue -> back to red.
 color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
     aWheelPos = 255 - aWheelPos;
     if (aWheelPos < 85) {
@@ -373,6 +455,19 @@ color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
     } else {
         aWheelPos -= 170;
         return Color(aWheelPos * 3, 255 - (aWheelPos * 3), 0);
+    }
+}
+
+void NeoPixel::fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop) {
+    uint16_t tWheelIndexHighResolution = aWheelStartPos << 8; // upper byte is the integer part used for Wheel(), lower byte is the fractional part
+    uint16_t tWheelIndexHighResolutionDelta = 0x10000 / numLEDs;
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        if (aStartAtTop) {
+            setPixelColor(numLEDs - i, Wheel(tWheelIndexHighResolution >> 8));
+        } else {
+            setPixelColor(i, Wheel(tWheelIndexHighResolution >> 8));
+        }
+        tWheelIndexHighResolution += tWheelIndexHighResolutionDelta;
     }
 }
 
@@ -426,7 +521,7 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
         tGamma32Brightness = gamma32(aBrightness);
     }
 
-    // (tRedDimmed + 1) since (255 * 1) >> 8 gives 0 (and not 1)
+// (tRedDimmed + 1) since (255 * 1) >> 8 gives 0 (and not 1)
     tRedDimmed = ((tRedDimmed + 1) * tGamma32Brightness) >> 8;
     tGreenDimmed = ((tGreenDimmed + 1) * tGamma32Brightness) >> 8;
     tBlueDimmed = ((tBlueDimmed + 1) * tGamma32Brightness) >> 8;
