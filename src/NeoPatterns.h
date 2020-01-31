@@ -48,16 +48,18 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS 2.2.0
+#define VERSION_NEOPATTERNS "2.2.0"
+#define VERSION_NEOPATTERNS_NUMERICAL 220
 
 /*
  * Version 2.2.0 - 1/2020
- * - Use Print * instead of Stream *.
- * - Changed function addPixelColor().
- * - Added function NeoPixel::printInfo(aSerial).
+ * - Use type `Print *` instead of `Stream *`.
+ * - Changed function `addPixelColor()`.
+ * - Added function `NeoPixel::printInfo(aSerial)`.
  * - Added *D functions, which take the duration of the whole pattern as argument.
  * - Added OpenLedRace example.
  * - Added empty constructor and init() functions.
+ * - Added function `updateAllPartialPatterns()`.
  *
  * Version 2.1.0 - 12/2019
  * - Ported to ESP8266 and ESP32.

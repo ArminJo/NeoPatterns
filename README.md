@@ -76,12 +76,13 @@ NeoPatterns on breadboard
 
 # Revision History
 ### Version 2.2.0
-- Use Print * instead of Stream *.
+- Use type `Print *` instead of `Stream *`.
 - Changed function `addPixelColor()`.
 - Added function `NeoPixel::printInfo(aSerial)`.
-- Added *D functions, which take the duration of the whole pattern as argument.
+- Added `*D` functions, which take the duration of the whole pattern as argument.
 - Added OpenLedRace example.
-- Added empty constructor and init() functions.
+- Added empty constructor and `init()` functions.
+- Added function `updateAllPartialPatterns()`.
 
 ### Version 2.1.0
 - Ported to ESP8266 and ESP32.
