@@ -552,7 +552,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
             tGraphics8x8ArrayPtr = &font_PGM[(tNextChar - FONT_START) * FONT_HEIGHT];
             loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset + FONT_WIDTH,
                     GraphicsYOffset, (tNextNextChar == '\0'));
-            // check if next/next character can be displayed (needed for small font width)
+            // check if next/next character can be displayed (required for small font width)
             // do not check for next/next/next char != '\0' here!
             if ((GraphicsXOffset + (2 * FONT_WIDTH)) < Columns) {
                 if (tNextNextChar != '\0') {

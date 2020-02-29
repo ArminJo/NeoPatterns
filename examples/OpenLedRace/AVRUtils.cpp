@@ -191,7 +191,7 @@ void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
 #define WDTCSR  WDTCR
 #endif
     WDTCSR |= _BV(WDIE) | _BV(WDIF); // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
-    sei();
+    sei(); // enable interrupts
     sleep_cpu()
     ;
     wdt_disable(); // Because next interrupt will lead to a reset, since wdt_enable() sets WDE / Watchdog System Reset Enable

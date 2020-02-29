@@ -1357,7 +1357,7 @@ color32_t BrightenColor(NeoPatterns * aLedPtr) {
 
 #if defined(__AVR__)
 /*
- * Not needed for non AVR platforms, it is then just PatternNamesArray[aPatternNumber]
+ * Not required for non AVR platforms, it is then just PatternNamesArray[aPatternNumber]
  */
 void NeoPatterns::getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t aBuffersize) {
     const char* aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);

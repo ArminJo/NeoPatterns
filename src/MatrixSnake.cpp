@@ -97,7 +97,7 @@ void MatrixSnake::newApple() {
     setMatrixPixelColor(Apple.x, Apple.y, COLOR32_BLACK);
 
     position tNewApplePosition;
-// get new random position until the position is not on the snake tail and different from the actual apple position
+// get new random position until the position is not on the snake tail and different from the current apple position
     do {
         tNewApplePosition.x = random(Columns - 1);
         tNewApplePosition.y = random(Rows - 1);
@@ -257,7 +257,7 @@ uint8_t MatrixSnake::SnakeInputHandler() {
         }
     } else {
         /*
-         * 2 buttons turn direction input, debouncing needed to avoid multiple turns
+         * 2 buttons turn direction input, debouncing required to avoid multiple turns
          */
         uint32_t tMillisSinceLastButtonChanged = millis() - MillisOfLastButtonChange;
         if (tMillisSinceLastButtonChanged > MILLIS_FOR_BUTTON_DEBOUNCING) {
@@ -602,7 +602,6 @@ uint8_t computeReverseDirection(uint8_t aDirection) {
  * MAIN auto solver algorithm
  * Gives the next direction towards the apple.
  * returns DIRECTION_IMPOSSIBLE if no direction is valid.
- * aActualDirection is needed to fast exclude the invalid opposite direction.
  * SnakeAutoSolverMode determines the behavior of this algorithm
  */
 uint8_t MatrixSnake::findNextDir() {
@@ -625,7 +624,7 @@ uint8_t MatrixSnake::findNextDir() {
 
     /*
      * Avoid going to opposite direction, because this is invalid.
-     * Eg. if actual direction is UP, we must not change to DOWN.
+     * Eg. if current direction is UP, we must not change to DOWN.
      */
 // go shortest delta first
     if ((abs(tDeltaX) > abs(tDeltaY)) && tDeltaY != 0) {
@@ -673,7 +672,7 @@ uint8_t MatrixSnake::findNextDir() {
         bool invalidDirectionsArray[NUMBER_OF_DIRECTIONS];
         memset(invalidDirectionsArray, false, NUMBER_OF_DIRECTIONS);
         invalidDirectionsArray[tNewDirection] = true;
-        // mark opposite direction of actual moving direction also as invalid
+        // mark opposite direction of current moving direction also as invalid
         invalidDirectionsArray[(Direction + 2) % NUMBER_OF_DIRECTIONS] = true;
 #ifdef TRACE
         Serial.print(F("Detected invalid direction="));
@@ -717,7 +716,7 @@ uint8_t MatrixSnake::findNextDir() {
 }
 
 /*
- * Stores state, runs the game with the actual settings and restores state.
+ * Stores state, runs the game with the current settings and restores state.
  * Returns number of steps to get the apple or 0 if impossible.
  */
 uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {

@@ -26,24 +26,24 @@
 #define DEBUGLEVEL_H_
 
 // Propagate debug level
-#ifdef TRACE
+#ifdef TRACE 			// Information you need to understand details of a function or if you hunt a bug.
 #  ifndef DEBUG
-#define DEBUG
+#define DEBUG			// Information need to understand the operating of your program. E.g. function calls and values of control variables.
 #  endif
 #endif
 #ifdef DEBUG
 #  ifndef INFO
-#define INFO
+#define INFO 			// Information you want to see in regular operation to see what the program is doing. E.g. "START ../src/LightToTone.cpp Version 1.2 from Dec 31 2019" or "Now playing Muppets melody".
 #  endif
 #endif
 #ifdef INFO
 #  ifndef WARN
-#define WARN
+#define WARN			// Information that the program may encounter problems, like small Heap/Stack area.
 #  endif
 #endif
 #ifdef WARN
 #  ifndef ERROR
-#define ERROR
+#define ERROR			// Informations to explain why the program will not run. E.g. not enough Ram for all created objects.
 #  endif
 #endif
 
