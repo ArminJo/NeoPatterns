@@ -33,7 +33,7 @@
 #include <stdint.h>
 
 // deprecated
-typedef uint16_t Color_t;
+typedef uint16_t Color_t __attribute__ ((deprecated ("Renamed to color16_t")));;
 // new
 typedef uint16_t color16_t;
 
@@ -69,9 +69,11 @@ typedef uint16_t color16_t;
  */
 typedef uint32_t color32_t;
 
-// Eases constant color declarations but should not be used for non constant colors. Then better use Adafruit_NeoPixel::Color() it saves program space
+// Eases constant color declarations but should only be used for constant colors. Otherwise better use Adafruit_NeoPixel::Color() it saves program space
 #define COLOR32(r,g,b)   ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+#define COLOR_W32(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
 
+#define WHITE(color) ((color >> 24) & 0xFF)
 #define RED(color)   ((color >> 16) & 0xFF)
 #define GREEN(color) ((color >> 8) & 0xFF)
 #define BLUE(color)  (color 0xFF)

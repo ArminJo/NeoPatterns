@@ -16,10 +16,8 @@ jobs:
     runs-on: ubuntu-latest # I picked Ubuntu to use shell scripts.
 
     env:
-      # Space separated list without double quotes around the list. 
-      # If you need a library with a space in its name, like Adafruit NeoPixel or Adafruit INA219, you must use double quotes
-      # around the name and have at least 2 entries, where the first must be without double quotes! You may use Servo as dummy entry.
-      REQUIRED_LIBRARIES: Servo "Adafruit NeoPixel"
+      # Comma separated list without double quotes around the list. 
+      REQUIRED_LIBRARIES: Adafruit NeoPixel
 
     strategy:
       matrix:
@@ -35,6 +33,7 @@ jobs:
         #############################################################################################################
         arduino-boards-fqbn:
           - arduino:avr:uno
+          - arduino:avr:uno|All-DO_NOT_SUPPORT_RGBW
           - arduino:avr:leonardo
           - arduino:avr:mega
           - esp8266:esp8266:huzzah:eesz=4M3M,xtal=80
@@ -44,13 +43,18 @@ jobs:
         # Parameters can be: examples-exclude and examples-build-properties
         #############################################################################################################
         include:
+          - arduino-boards-fqbn: arduino:avr:uno|All-DO_NOT_SUPPORT_RGBW
+            examples-build-properties:
+              All:
+                -DDO_NOT_SUPPORT_RGBW
+                          
           - arduino-boards-fqbn: esp8266:esp8266:huzzah:eesz=4M3M,xtal=80
             platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-            examples-exclude: OpenLedRace TwoPatternsOnOneStrip # Space separated list of (unique substrings of) example names to exclude in build
+            examples-exclude: OpenLedRace,TwoPatternsOnOneStrip # Comma separated list of (unique substrings of) example names to exclude in build
 
           - arduino-boards-fqbn: esp32:esp32:featheresp32:FlashFreq=80
             platform-url: https://dl.espressif.com/dl/package_esp32_index.json
-            examples-exclude: OpenLedRace TwoPatternsOnOneStrip # TwoPatternsOnOneStrip because of missing EasyButton library
+            examples-exclude: OpenLedRace,TwoPatternsOnOneStrip # TwoPatternsOnOneStrip because of missing EasyButton library
 
       # Do not cancel all jobs / architectures if one job fails
       fail-fast: false

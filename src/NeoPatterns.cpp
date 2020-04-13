@@ -586,10 +586,15 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
          */
 // Calculate linear interpolation between Color1 and BackgroundColor
 // Optimize order of operations to minimize truncation error
-        uint8_t red = ((Red(Color1) * (PatternLength - Index)) + (Red(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t green = ((Green(Color1) * (PatternLength - Index)) + (Green(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t blue = ((Blue(Color1) * (PatternLength - Index)) + (Blue(LongValue1.Color2) * Index)) / PatternLength;
-        ColorSet(Color(red, green, blue));
+        uint8_t tRed = ((Red(Color1) * (PatternLength - Index)) + (Red(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tGreen = ((Green(Color1) * (PatternLength - Index)) + (Green(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tBlue = ((Blue(Color1) * (PatternLength - Index)) + (Blue(LongValue1.Color2) * Index)) / PatternLength;
+#ifdef SUPPORT_RGBW
+        uint8_t tWhite = ((White(Color1) * (PatternLength - Index)) + (White(LongValue1.Color2) * Index)) / PatternLength;
+        ColorSet(Color(tRed, tGreen, tBlue, tWhite));
+#else
+        ColorSet(Color(tRed, tGreen, tBlue));
+#endif
     }
     return false;
 }
@@ -1317,42 +1322,57 @@ bool NeoPatterns::ProcessSelectiveColorUpdate(bool aDoUpdate) {
 /***********************************************************
  * Sample processing functions for ProcessSelectiveColor()
  ***********************************************************/
-color32_t FadeColor(NeoPatterns * aLedPtr) {
-    aLedPtr->Index++;
-    uint16_t tIndex = aLedPtr->Index;
-    uint16_t tTotalSteps = aLedPtr->TotalStepCounter;
-    color32_t tColor1 = aLedPtr->Color1;
-    color32_t tColor2 = aLedPtr->LongValue1.Color2;
-    uint8_t red = ((Red(tColor1) * (tTotalSteps - tIndex)) + (Red(tColor2) * tIndex)) / tTotalSteps;
-    uint8_t green = ((Green(tColor1) * (tTotalSteps - tIndex)) + (Green(tColor2) * tIndex)) / tTotalSteps;
-    uint8_t blue = ((Blue(tColor1) * (tTotalSteps - tIndex)) + (Blue(tColor2) * tIndex)) / tTotalSteps;
-    return Adafruit_NeoPixel::Color(red, green, blue);
+color32_t FadeColor(NeoPatterns * aNeoPatternsPtr) {
+    aNeoPatternsPtr->Index++;
+    uint16_t tIndex = aNeoPatternsPtr->Index;
+    uint16_t tTotalSteps = aNeoPatternsPtr->TotalStepCounter;
+    color32_t tColor1 = aNeoPatternsPtr->Color1;
+    color32_t tColor2 = aNeoPatternsPtr->LongValue1.Color2;
+    uint8_t tRed = ((Red(tColor1) * (tTotalSteps - tIndex)) + (Red(tColor2) * tIndex)) / tTotalSteps;
+    uint8_t tGreen = ((Green(tColor1) * (tTotalSteps - tIndex)) + (Green(tColor2) * tIndex)) / tTotalSteps;
+    uint8_t tBlue = ((Blue(tColor1) * (tTotalSteps - tIndex)) + (Blue(tColor2) * tIndex)) / tTotalSteps;
+#ifdef SUPPORT_RGBW
+    uint8_t tWhite = ((White(tColor1) * (tTotalSteps - tIndex)) + (White(tColor2) * tIndex)) / tTotalSteps;
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
+#else
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
+#endif
 }
 
 /*
  * works on LongValue2.ColorTmp
  */
-color32_t DimColor(NeoPatterns * aLedPtr) {
-    color32_t tColor = aLedPtr->LongValue2.ColorTmp;
-    uint8_t red = Red(tColor) >> 1;
-    uint8_t green = Green(tColor) >> 1;
-    uint8_t blue = Blue(tColor) >> 1;
-// call to function saves 6 byte program space
-    return Adafruit_NeoPixel::Color(red, green, blue);
+color32_t DimColor(NeoPatterns * aNeoPatternsPtr) {
+    color32_t tColor = aNeoPatternsPtr->LongValue2.ColorTmp;
+    uint8_t tRed = Red(tColor) >> 1;
+    uint8_t tGreen = Green(tColor) >> 1;
+    uint8_t tBlue = Blue(tColor) >> 1;
+#ifdef SUPPORT_RGBW
+    uint8_t tWhite = White(tColor) >> 1;
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
+#else
+    // call to function saves 6 byte program space
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
+#endif
+
 //    return COLOR32(red, green, blue);
 }
 
 /*
  * works on LongValue2.ColorTmp
  */
-color32_t BrightenColor(NeoPatterns * aLedPtr) {
-    color32_t tColor = aLedPtr->LongValue2.ColorTmp;
-    uint8_t red = Red(tColor) << 1;
-    uint8_t green = Green(tColor) << 1;
-    uint8_t blue = Blue(tColor) << 1;
+color32_t BrightenColor(NeoPatterns * aNeoPatternsPtr) {
+    color32_t tColor = aNeoPatternsPtr->LongValue2.ColorTmp;
+    uint8_t tRed = Red(tColor) << 1;
+    uint8_t tGreen = Green(tColor) << 1;
+    uint8_t tBlue = Blue(tColor) << 1;
+#ifdef SUPPORT_RGBW
+    uint8_t tWhite = White(tColor) << 1;
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
+#else
 // call to function saves 22 byte program space
-    return Adafruit_NeoPixel::Color(red, green, blue);
-//    return COLOR32(red, green, blue);
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);//    return COLOR32(red, green, blue);
+#endif
 }
 
 #if defined(__AVR__)

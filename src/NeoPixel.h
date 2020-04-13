@@ -39,6 +39,16 @@
 #include "Adafruit_NeoPixel.h"
 #include "Colors.h"
 
+
+#if ! defined(DO_NOT_SUPPORT_RGBW)
+// Support rgbw colors for pattern. Requires additional program space.
+// Comment this out, if you do NOT need RGBW support and want to save program space.
+#define SUPPORT_RGBW
+#endif
+
+#ifdef SUPPORT_RGBW
+uint8_t White(color32_t color);
+#endif
 uint8_t Red(color32_t color);
 uint8_t Green(color32_t color);
 uint8_t Blue(color32_t color);
@@ -83,7 +93,9 @@ public:
     void clear(void);
     void clearPixel(uint16_t aPixelIndex);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+#ifdef SUPPORT_RGBW
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
+#endif
     void setPixelColor(uint16_t aPixelIndex, uint32_t aColor);
     void fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
@@ -99,7 +111,11 @@ public:
 
     void TestWS2812Resolution();
 
+#ifdef SUPPORT_RGBW
     uint8_t BytesPerPixel;  // can be 3 or 4
+#else
+#define BytesPerPixel 3
+#endif
     uint8_t PixelFlags;
     uint16_t PixelOffset; // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
     NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays

@@ -63,6 +63,15 @@ Examples:
 **All matrix pixel mappings except NEO_MATRIX_COLUMNS are supported**
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
 
+## Reducing library size
+If you do not have RGBW pixels, then you can save program space by commenting out the line `#define SUPPORT_RGBW` in *NeoPixel.h* or defining `DO_NOT_SUPPORT_RGBW` as global symbol. This saves e.g 400 bytes FLASH for the AllPatternsOnMultiDevices example.
+
+### Modifying library properties
+To access the Arduino library files from a sketch, you have to first use *Sketch/Show Sketch Folder (Ctrl+K)* in the Arduino IDE.<br/>
+Then navigate to the parallel `libraries` folder and select the library you want to access.<br/>
+The library files itself are located in the `src` sub-directory.<br/>
+If you did not yet store the example as your own sketch, then with *Ctrl+K* you are instantly in the right library folder.
+
 # SNAKE GAME
 ## SnakeGame Example
 The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
@@ -76,6 +85,7 @@ NeoPatterns on breadboard
 
 # Revision History
 ### Version 2.2.0
+- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes FLASH for the AllPatternsOnMultiDevices example.
 - Use type `Print *` instead of `Stream *`.
 - Changed function `addPixelColor()`.
 - Added function `NeoPixel::printInfo(aSerial)`.

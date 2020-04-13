@@ -30,7 +30,9 @@
 NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel() {
 
+#ifdef SUPPORT_RGBW
     BytesPerPixel = 0;
+#endif
     PixelOffset = 0;
     PixelFlags = 0;
     numBytes = 0;
@@ -39,7 +41,9 @@ NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initializ
 NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
 
+#ifdef SUPPORT_RGBW
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
+#endif
     PixelOffset = 0;  // 8 byte Flash
     UnderlyingNeoPixelObject = this;
     PixelFlags = 0;
@@ -61,7 +65,9 @@ bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel
     AdafruitNeoPixelIinit(aNumberOfPixels, aPin, aTypeOfPixel);
     Adafruit_NeoPixel::begin(); // sets pin to output
 
+#ifdef SUPPORT_RGBW
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
+#endif
     PixelOffset = 0;  // 8 byte Flash
     UnderlyingNeoPixelObject = this;
     PixelFlags = 0;
@@ -86,7 +92,9 @@ NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
         Adafruit_NeoPixel(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
+#ifdef SUPPORT_RGBW
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
+#endif
     PixelOffset = aPixelOffset;
     PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
@@ -97,7 +105,7 @@ NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
         // malloc has not worked for creating Adafruit_NeoPixel.
         // But since we do not need the malloced buffer, just set the numLEDs and numBytes to the right values.
         numLEDs = aNumberOfPixels;
-        numBytes = aUnderlyingNeoPixelObject->BytesPerPixel * aNumberOfPixels;
+        numBytes = BytesPerPixel * aNumberOfPixels;
     }
     /*
      * Replace buffer with existing one
@@ -111,7 +119,9 @@ void NeoPixel::init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset,
     Adafruit_NeoPixel::begin(); // sets pin to output
 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
+#ifdef SUPPORT_RGBW
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
+#endif
     PixelOffset = aPixelOffset;
     PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
@@ -122,7 +132,7 @@ void NeoPixel::init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset,
         // malloc has not worked for creating Adafruit_NeoPixel.
         // But since we do not need the malloced buffer, just set the numLEDs and numBytes to the right values.
         numLEDs = aNumberOfPixels;
-        numBytes = aUnderlyingNeoPixelObject->BytesPerPixel * aNumberOfPixels;
+        numBytes = BytesPerPixel * aNumberOfPixels;
     }
     /*
      * Replace buffer with existing one
@@ -300,9 +310,11 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
     *tPixelPtr++ = 0;
     *tPixelPtr++ = 0;
     *tPixelPtr++ = 0;
+#ifdef SUPPORT_RGBW
     if (BytesPerPixel == 4) {
         *tPixelPtr = 0;
     }
+#endif
 }
 
 /*
@@ -324,15 +336,18 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // support offsets
         uint8_t *p = &pixels[aPixelIndex * BytesPerPixel];
+#ifdef SUPPORT_RGBW
         if (BytesPerPixel == 4) {
             p[wOffset] = 0;        // But only R,G,B passed -- set W to 0
         }
+#endif
         p[rOffset] = aRed;          // R,G,B always stored
         p[gOffset] = aGreen;
         p[bOffset] = aBlue;
     }
 }
 
+#ifdef SUPPORT_RGBW
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
 #ifdef TRACE
 	Serial.print(F("Pixel="));
@@ -358,6 +373,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
         p[bOffset] = aBlue;
     }
 }
+#endif
 
 /*
  *
@@ -375,10 +391,12 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
         aPixelIndex += PixelOffset; // support offsets
         uint8_t *p, r = (uint8_t) (aColor >> 16), g = (uint8_t) (aColor >> 8), b = (uint8_t) aColor;
         p = &pixels[aPixelIndex * BytesPerPixel];
+#ifdef SUPPORT_RGBW
         if (BytesPerPixel == 4) {
             uint8_t w = (uint8_t) (aColor >> 24);
             p[wOffset] = w;
         }
+#endif
         p[rOffset] = r;
         p[gOffset] = g;
         p[bOffset] = b;
@@ -427,19 +445,24 @@ void NeoPixel::ColorSet(color32_t aColor) {
 }
 
 color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
-    uint8_t * tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * 3];
+    uint8_t * tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * BytesPerPixel];
     if (BytesPerPixel == 3) {
         return (uint32_t) tPixelPointer[rOffset] << 16 | (uint32_t) tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
-    } else {
+    }
+#ifdef SUPPORT_RGBW
         return (uint32_t) tPixelPointer[wOffset] << 24 | (uint32_t) tPixelPointer[rOffset] << 16 | tPixelPointer[gOffset] << 8
                 | tPixelPointer[bOffset];
-    }
+#endif
 }
 
 // Calculate 50% dimmed version of a color
 uint32_t NeoPixel::dimColor(color32_t aColor) {
 // Shift R, G and B components one bit to the right
+#ifdef SUPPORT_RGBW
+    uint32_t dimColor = Color(Red(aColor) >> 1, Green(aColor) >> 1, Blue(aColor) >> 1, White(aColor) >> 1);
+#else
     uint32_t dimColor = Color(Red(aColor) >> 1, Green(aColor) >> 1, Blue(aColor) >> 1);
+#endif
     return dimColor;
 }
 
@@ -502,7 +525,12 @@ color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor
     uint8_t tRed = pgm_read_byte(&GammaTable32[(Red(aLinearBrightnessColor) / 8)]);
     uint8_t tGreen = pgm_read_byte(&GammaTable32[(Green(aLinearBrightnessColor) / 8)]);
     uint8_t tBlue = pgm_read_byte(&GammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
+#ifdef SUPPORT_RGBW
+    uint8_t tWhite = pgm_read_byte(&GammaTable32[(White(aLinearBrightnessColor) / 8)]);
+    return Color(tRed, tGreen, tBlue, tWhite);
+#else
     return Color(tRed, tGreen, tBlue);
+#endif
 }
 
 /*
@@ -510,6 +538,9 @@ color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor
  * doSpecialZero -> tGamma32Brightness is only zero if aBrightness is zero and 1 for aBrightness 1 to 16
  */
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
+#ifdef SUPPORT_RGBW
+    uint8_t tWhiteDimmed = (uint8_t) (aLinearBrightnessColor >> 24);
+#endif
     uint8_t tRedDimmed = (uint8_t) (aLinearBrightnessColor >> 16);
     uint8_t tGreenDimmed = (uint8_t) (aLinearBrightnessColor >> 8);
     uint8_t tBlueDimmed = (uint8_t) aLinearBrightnessColor;
@@ -525,6 +556,9 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
     tRedDimmed = ((tRedDimmed + 1) * tGamma32Brightness) >> 8;
     tGreenDimmed = ((tGreenDimmed + 1) * tGamma32Brightness) >> 8;
     tBlueDimmed = ((tBlueDimmed + 1) * tGamma32Brightness) >> 8;
+#ifdef SUPPORT_RGBW
+    tWhiteDimmed = ((tWhiteDimmed + 1) * tGamma32Brightness) >> 8;
+#endif
 
 #ifdef TRACE
 	Serial.print(F("dimColorWithGamma32 aBrightness="));
@@ -534,10 +568,22 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
 	Serial.print(F(" 0x"));
 	Serial.print(aLinearBrightnessColor, HEX);
 	Serial.print(F("->0x"));
-	Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
+#ifdef SUPPORT_RGBW
+	Serial.println((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
+#else
+    Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
 #endif
-
+#endif
+#ifdef SUPPORT_RGBW
+    return ((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
+#else
     return ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
+#endif
+}
+
+// Returns the White component of a 32-bit color
+uint8_t White(color32_t color) {
+    return (color >> 24) & 0xFF;
 }
 
 // Returns the Red component of a 32-bit color

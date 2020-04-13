@@ -155,10 +155,17 @@ bool isAddressBelowHeap(void * aAddressToCheck) {
  ********************************************/
 volatile uint16_t sNumberOfSleeps = 0;
 
+#ifndef MILLIS_UTILS_H_
+// copied from MillisUtils.h
 /*
- * storage for millis value to enable millis() compensation for sleep.
+ * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
  */
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)  || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+#define timer0_millis millis_timer_millis // The ATTinyCore libraries use other variable name in wiring.c
+#endif
+
 extern volatile unsigned long timer0_millis;
+#endif // MILLIS_UTILS_H_
 
 void initSleep(uint8_t tSleepMode) {
     sleep_enable()

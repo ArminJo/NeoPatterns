@@ -52,7 +52,9 @@
 #define VERSION_NEOPATTERNS_NUMERICAL 220
 
 /*
- * Version 2.2.0 - 1/2020
+ * Version 2.2.0 - 4/2020
+ * - Added support for RGBW patterns. Requires additional 200 bytes for AllPatternsOnMultiDevices example.
+ *   Not defining SUPPORT_RGBW saves 400 bytes FLASH for AllPatternsOnMultiDevices example.
  * - Use type `Print *` instead of `Stream *`.
  * - Changed function `addPixelColor()`.
  * - Added function `NeoPixel::printInfo(aSerial)`.
@@ -286,9 +288,9 @@ public:
 };
 
 //  Sample processing functions for ProcessSelectiveColor()
-color32_t FadeColor(NeoPatterns* aLedPtr);
-color32_t DimColor(NeoPatterns* aLedPtr);
-color32_t BrightenColor(NeoPatterns* aLedPtr);
+color32_t FadeColor(NeoPatterns* aNeoPatternsPtr);
+color32_t DimColor(NeoPatterns* aNeoPatternsPtr);
+color32_t BrightenColor(NeoPatterns* aNeoPatternsPtr);
 
 // multiple pattern example
 void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
