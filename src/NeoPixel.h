@@ -36,14 +36,19 @@
 #ifndef SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
 #define SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
 
+// This does not work in Arduino IDE for "Generating function prototypes..."
+//#if ! __has_include("Adafruit_NeoPixel.h")
+//#error This NeoPixel library requires the "Adafruit NeoPixel" library. Please install it via the Arduino library manager.
+//#endif
+
 #include "Adafruit_NeoPixel.h"
 #include "Colors.h"
 
-
+//#define DO_NOT_SUPPORT_RGBW
 #if ! defined(DO_NOT_SUPPORT_RGBW)
 // Support rgbw colors for pattern. Requires additional program space.
 // Comment this out, if you do NOT need RGBW support and want to save program space.
-#define SUPPORT_RGBW
+#define SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
 #endif
 
 #ifdef SUPPORT_RGBW
@@ -62,7 +67,7 @@ public:
     NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true);
     void init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-                bool aEnableShowOfUnderlyingPixel = true);
+            bool aEnableShowOfUnderlyingPixel = true);
 
     void printInfo(Print * aSerial);
 
@@ -70,7 +75,7 @@ public:
     void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
 
     // To move the start index of a NeoPixel object
-    void setPixelOffsetForPartialNeoPixel( uint16_t aPixelOffset);
+    void setPixelOffsetForPartialNeoPixel(uint16_t aPixelOffset);
     /*
      * Extensions to Adafruit_NeoPixel functions
      */

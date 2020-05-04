@@ -63,6 +63,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      # Use the arduino-test-compile script, because it is faster
       - name: Compile all examples using the bash script arduino-test-compile.sh
         env:
           # Passing parameters to the script by setting the appropriate ENV_* variables.

@@ -64,7 +64,9 @@ Examples:
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
 
 ## Reducing library size
-If you do not have RGBW pixels, then you can save program space by commenting out the line `#define SUPPORT_RGBW` in *NeoPixel.h* or defining `DO_NOT_SUPPORT_RGBW` as global symbol. This saves e.g 400 bytes FLASH for the AllPatternsOnMultiDevices example.
+If you only have RGB pixels and do not require RGBW pixels support, then you can save program space by commenting out the line `#define DO_NOT_SUPPORT_RGBW` in *NeoPixel.h*. This saves e.g 400 bytes FLASH for the AllPatternsOnMultiDevices example.
+
+The `BOUNCING_BALL` pattern requires additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. If you do not require this pattern, you can save space by commenting out the line `#define DO_NOT_USE_MATH_PATTERNS` in *NeoPatterns.h*.
 
 ### Modifying library properties
 To access the Arduino library files from a sketch, you have to first use *Sketch/Show Sketch Folder (Ctrl+K)* in the Arduino IDE.<br/>

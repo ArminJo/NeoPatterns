@@ -37,7 +37,7 @@
 #define NEOPATTERNS_H
 
 #if !defined (DO_NOT_USE_MATH_PATTERNS)
-// Comment this out if you do NOT need the BOUNCING_BALL pattern
+// Comment this out if you do NOT need the BOUNCING_BALL pattern.
 // This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
 //#define DO_NOT_USE_MATH_PATTERNS
 #endif
@@ -131,13 +131,13 @@ public:
     NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
             bool aShowOnlyAtUpdate = false);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
-                bool aShowOnlyAtUpdate = false);
+            bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
     void init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-                bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
-                bool aShowOnlyAtUpdate = false);
+            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
+            bool aShowOnlyAtUpdate = false);
 
     void setCallback(void (*callback)(NeoPatterns*));
 
