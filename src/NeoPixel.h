@@ -41,7 +41,7 @@
 //#error This NeoPixel library requires the "Adafruit NeoPixel" library. Please install it via the Arduino library manager.
 //#endif
 
-#include "Adafruit_NeoPixel.h"
+#include "Adafruit_NeoPixel.h" // Click here to get the library: http://librarymanager/All#Adafruit_NeoPixel
 #include "Colors.h"
 
 //#define DO_NOT_SUPPORT_RGBW

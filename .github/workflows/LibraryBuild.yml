@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest # I picked Ubuntu to use shell scripts.
 
     env:
-      # Comma separated list without double quotes around the list. 
+      # Comma separated list without double quotes around the list.
       REQUIRED_LIBRARIES: Adafruit NeoPixel
 
     strategy:
@@ -40,14 +40,13 @@ jobs:
           - esp32:esp32:featheresp32:FlashFreq=80
 
         # Specify parameters for each board.
-        # Parameters can be: examples-exclude and examples-build-properties
         #############################################################################################################
         include:
           - arduino-boards-fqbn: arduino:avr:uno|All-DO_NOT_SUPPORT_RGBW
             examples-build-properties:
               All:
                 -DDO_NOT_SUPPORT_RGBW
-                          
+
           - arduino-boards-fqbn: esp8266:esp8266:huzzah:eesz=4M3M,xtal=80
             platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
             examples-exclude: OpenLedRace,TwoPatternsOnOneStrip # Comma separated list of (unique substrings of) example names to exclude in build
@@ -75,4 +74,4 @@ jobs:
         run: |
           wget --quiet https://raw.githubusercontent.com/ArminJo/arduino-test-compile/master/arduino-test-compile.sh
             chmod +x arduino-test-compile.sh
-            ./arduino-test-compile.sh          
+            ./arduino-test-compile.sh

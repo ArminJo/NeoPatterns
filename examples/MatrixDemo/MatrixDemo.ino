@@ -32,9 +32,9 @@
 
 #define PIN_NEOPIXEL_MATRIX   8
 
-#define NEOPIXEL_MATRIX_NUM_ROWS   		8
-#define NEOPIXEL_MATRIX_NUM_COLUMNS   	8
-#define NEOPIXEL_MATRIX_NUM_PIXELS   	(NEOPIXEL_MATRIX_NUM_COLUMNS * NEOPIXEL_MATRIX_NUM_ROWS)
+#define NEOPIXEL_MATRIX_NUM_ROWS        8
+#define NEOPIXEL_MATRIX_NUM_COLUMNS     8
+#define NEOPIXEL_MATRIX_NUM_PIXELS      (NEOPIXEL_MATRIX_NUM_COLUMNS * NEOPIXEL_MATRIX_NUM_ROWS)
 
 /*
  * Specify your matrix geometry as 4th parameter.
@@ -45,46 +45,46 @@ MatrixSnake NeoPixelMatrix = MatrixSnake(NEOPIXEL_MATRIX_NUM_COLUMNS, NEOPIXEL_M
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemoHandler);
 
 void setup() {
-	pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
 
-	Serial.begin(115200);
+    Serial.begin(115200);
 #if defined(__AVR_ATmega32U4__)
     while (!Serial); //delay for Leonardo, but this loops forever for Maple Serial
 #endif
 #if defined(SERIAL_USB)
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
-	// Just to know which program is running on my Arduino
-	Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+    // Just to know which program is running on my Arduino
+    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
 
-	// This initializes the NeoPixel library and checks if enough memory was available
-	if (!NeoPixelMatrix.begin(&Serial)) {
-		// Blink forever
-		while (true) {
-			digitalWrite(LED_BUILTIN, HIGH);
-			delay(500);
-			digitalWrite(LED_BUILTIN, LOW);
-			delay(500);
-		}
-	}
+    // This initializes the NeoPixel library and checks if enough memory was available
+    if (!NeoPixelMatrix.begin(&Serial)) {
+        // Blink forever
+        while (true) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
+    }
 
 #if defined(__AVR__)
-	extern void *__brkval;
-	Serial.print(F("Free Ram/Stack[bytes]="));
-	Serial.println(SP - (uint16_t) __brkval);
+    extern void *__brkval;
+    Serial.print(F("Free Ram/Stack[bytes]="));
+    Serial.println(SP - (uint16_t) __brkval);
 #endif
 
-	MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix);
+    MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix);
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
 void loop() {
-	if (NeoPixelMatrix.update()) {
-		if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
-			// change color of ticker after each update
-			NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
-			sWheelPosition += 256 / NEOPIXEL_MATRIX_NUM_PIXELS;
-		}
-	}
+    if (NeoPixelMatrix.update()) {
+        if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
+            // change color of ticker after each update
+            NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
+            sWheelPosition += 256 / NEOPIXEL_MATRIX_NUM_PIXELS;
+        }
+    }
 }

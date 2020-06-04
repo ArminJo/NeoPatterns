@@ -42,7 +42,8 @@
 #include "pitches.h"
 
 #define VERSION_PLAY_RTTTL "1.3.2"
-#define VERSION_PLAY_RTTTL_NUMERICAL 132
+#define VERSION_PLAY_RTTTL_MAJOR 1
+#define VERSION_PLAY_RTTTL_MINOR 3
 
 /*
  * Version 1.3.2 - 1/2020

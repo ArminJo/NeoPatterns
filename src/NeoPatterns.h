@@ -49,7 +49,8 @@
 #endif
 
 #define VERSION_NEOPATTERNS "2.2.0"
-#define VERSION_NEOPATTERNS_NUMERICAL 220
+#define VERSION_NEOPATTERNS_MAJOR 2
+#define VERSION_NEOPATTERNS_MINOR 2
 
 /*
  * Version 2.2.0 - 4/2020
@@ -237,7 +238,7 @@ public:
 #define FLAG_SCANNER_EXT_VANISH_COMPLETE    0x02
 #define FLAG_SCANNER_EXT_START_AT_BOTH_ENDS 0x04
 
-#define FLAG_DO_CLEAR                   	0x00
+#define FLAG_DO_CLEAR                       0x00
     // Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
 #define FLAG_DO_NOT_CLEAR                   0x10
     uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce

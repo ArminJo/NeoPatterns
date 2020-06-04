@@ -23,15 +23,14 @@
 #ifndef AVRUTILS_H_
 #define AVRUTILS_H_
 
-#include <stdint.h>
 #if defined(__AVR__)
+#include <stdint.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 
 void initSleep(uint8_t tSleepMode);
 void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis = false);
 extern volatile uint16_t sNumberOfSleeps;
-#endif
 
 #include <Print.h>
 
@@ -46,6 +45,7 @@ uint16_t getFreeRam(void);
 void printFreeRam(Print * aSerial);
 bool isAddressInRAM(void * aAddressToCheck);
 bool isAddressBelowHeap(void * aAddressToCheck);
+#endif //  defined(__AVR__)
 #endif // AVRUTILS_H_
 
 #pragma once

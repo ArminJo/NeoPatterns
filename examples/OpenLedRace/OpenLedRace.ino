@@ -61,6 +61,13 @@
  *
  */
 
+/*
+ * Ideas:
+ * Attach sensors instead of buttons
+ * improve winner pattern
+ *
+ *
+ */
 #include <Arduino.h>
 
 #include <NeoPatterns.h>
