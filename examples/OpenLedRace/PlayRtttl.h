@@ -41,16 +41,13 @@
 #endif
 #include "pitches.h"
 
-#define VERSION_PLAY_RTTTL "1.3.2"
+#define VERSION_PLAY_RTTTL "1.4.0"
 #define VERSION_PLAY_RTTTL_MAJOR 1
-#define VERSION_PLAY_RTTTL_MINOR 3
+#define VERSION_PLAY_RTTTL_MINOR 4
 
 /*
- * Version 1.3.2 - 1/2020
- * - supporting direct tone output at pin 11 for ATmega328. Can be used with interrupt blocking libraries for NeoPixel etc.
- *
- * Version 1.3.1 - 1/2020
- * - defining USE_NON_STANDARD_SERIAL_FOR_DEBUG needs serial class for debugging purposes to be set by setSerialForPlayRtttlDebug().
+ * Version 1.4.0 - 1/2020
+ * - Supporting direct tone output at pin 11 for ATmega328. Can be used with interrupt blocking libraries for NeoPixel etc.
  * - Use Print * instead of Stream *.
  * - Improved non-AVR compatibility.
  * - New Christmas songs example.
@@ -147,11 +144,6 @@ void playRandomRtttlSampleBlockingPGMAndPrintName(uint8_t aTonePin, Print * aSer
 bool updatePlayRtttl(void);
 
 void stopPlayRtttl(void);
-
-#ifdef USE_NON_STANDARD_SERIAL_FOR_DEBUG
-void setSerialForPlayRtttlDebug(Print * aPointerToSerial); // for DEBUG
-extern Print * sPointerToSerial;
-#endif
 
 struct playRtttlState {
     long MillisOfNextAction;

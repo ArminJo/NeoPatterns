@@ -45,14 +45,7 @@
 #  endif
 #endif
 #ifdef DEBUG
-#  if defined(USE_NON_STANDARD_SERIAL_FOR_DEBUG)
-Print * sPointerToSerial = NULL;  // needs 272 bytes Flash
-void setSerialForPlayRtttlDebug(Print * aPointerToSerial) {
-    sPointerToSerial = aPointerToSerial;
-}
-#  else
 Print * const sPointerToSerial = &Serial;  // needs 0 bytes Flash because it is constant
-#  endif
 #endif //DEBUG
 
 struct playRtttlState sPlayRtttlState;
@@ -94,11 +87,6 @@ void startPlayRtttl(uint8_t aTonePin, const char * aRTTTLArrayPtr, void (*aOnCom
      * Skip name and :
      */
 #ifdef DEBUG
-#  if defined(USE_NON_STANDARD_SERIAL_FOR_DEBUG)
-    if(sPointerToSerial == NULL){
-        return;
-    }
-#  endif
     sPointerToSerial->print(F("Title="));
 #endif
     while (*aRTTTLArrayPtr != ':') {
@@ -593,11 +581,6 @@ void startPlayRtttlPGM(uint8_t aTonePin, const char * aRTTTLArrayPtrPGM, void (*
      * Skip name and :
      */
 #ifdef DEBUG
-#  if defined(USE_NON_STANDARD_SERIAL_FOR_DEBUG)
-    if(sPointerToSerial == NULL){
-        return;
-    }
-#  endif
     sPointerToSerial->print(F("Title="));
 #endif
     char tPGMChar = pgm_read_byte(aRTTTLArrayPtrPGM);
