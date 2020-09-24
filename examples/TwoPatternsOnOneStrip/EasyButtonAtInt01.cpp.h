@@ -34,6 +34,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  */
 
+#if defined(__AVR__)
 #include <Arduino.h>
 #include "EasyButtonAtInt01.h"
 
@@ -63,15 +64,17 @@ EasyButton * EasyButton::sPointerToButton0ForISR;
 EasyButton * EasyButton::sPointerToButton1ForISR;
 #endif
 
+// @formatter:off // the eclipse formatter has problems with // comments in undefined code blocks
+
 /*
- * Constructor deterministic if only one button was enabled
- * If two buttons are enabled it is taken as the 1. button at INT0
+ * These constructors are deterministic if only one button is enabled
+ * If two buttons are enabled they can be taken for the 1. button at INT0
  */
 EasyButton::EasyButton() {
-#if defined(USE_BUTTON_1) && not defined(USE_BUTTON_0)
-    init(false); // 2. button
+#if defined(USE_BUTTON_0)
+    init(true);  // 1. button
 #else
-    init(true); // 1. button
+    init(false); // 2. button
 #endif
 }
 /*
@@ -79,16 +82,33 @@ EasyButton::EasyButton() {
  */
 EasyButton::EasyButton(void (*aButtonPressCallback)(bool aButtonToggleState)) {
     ButtonPressCallback = aButtonPressCallback;
-#if defined(USE_BUTTON_1) && not defined(USE_BUTTON_0)
-    init(false); // 2. button
+#if defined(USE_BUTTON_0)
+    init(true);  // 1. button
 #else
-    init(true); // 1. button
+    init(false); // 2. button
 #endif
 }
 
+#if ! defined(NO_BUTTON_RELEASE_CALLBACK)
+EasyButton::EasyButton(void (*aButtonPressCallback)(bool aButtonToggleState),
+        void (*aButtonReleaseCallback)(bool aButtonToggleState, uint16_t aButtonPressDurationMillis)) {
+    ButtonPressCallback = aButtonPressCallback;
+    ButtonReleaseCallback = aButtonReleaseCallback;
+#  if defined(USE_BUTTON_0)
+    init(true); // 1. button
+#  else
+    init(false); // 2. button
+#  endif
+}
+#endif // NO_BUTTON_RELEASE_CALLBACK
+
+/*
+ * These constructors use the first (bool) parameter to decide which button to take.
+ */
 #if defined(USE_BUTTON_0) && defined(USE_BUTTON_1)
 EasyButton::EasyButton(bool aIsButtonAtINT0)
 #else
+// Constructor with unused attribute to avoid warnings
 EasyButton::EasyButton(bool aIsButtonAtINT0 __attribute__((unused)))
 #endif
         {
@@ -104,6 +124,7 @@ EasyButton::EasyButton(bool aIsButtonAtINT0 __attribute__((unused)))
 #if defined(USE_BUTTON_0) && defined(USE_BUTTON_1)
 EasyButton::EasyButton(bool aIsButtonAtINT0, void (*aButtonPressCallback)(bool aButtonToggleState))
 #else
+// Constructor with unused attribute to avoid warnings
 EasyButton::EasyButton(bool aIsButtonAtINT0 __attribute__((unused)), void (*aButtonPressCallback)(bool aButtonToggleState))
 #endif
         {
@@ -122,6 +143,7 @@ EasyButton::EasyButton(bool aIsButtonAtINT0 __attribute__((unused)), void (*aBut
 EasyButton::EasyButton(bool aIsButtonAtINT0, void (*aButtonPressCallback)(bool aButtonToggleState),
         void (*aButtonReleaseCallback)(bool aButtonToggleState, uint16_t aButtonPressDurationMillis))
 #  else
+// Constructor with unused attribute to avoid warnings
 EasyButton::EasyButton(bool aIsButtonAtINT0 __attribute__((unused)), void (*aButtonPressCallback)(bool aButtonToggleState),
         void (*aButtonReleaseCallback)(bool aButtonToggleState, uint16_t aButtonPressDurationMillis))
 #  endif
@@ -252,15 +274,15 @@ void EasyButton::init(bool aIsButtonAtINT0) {
     /*
      * ATmega328 (Uno, Nano ) etc. Enable pin change interrupt for port PD0 to PD7 (Arduino pin 0 to 7)
      */
-    PCICR |= 1 << PCIE2;
-    PCMSK2 = digitalPinToBitMask(INT1_PIN);
+        PCICR |= 1 << PCIE2;
+        PCMSK2 = digitalPinToBitMask(INT1_PIN);
 #  else
 #    if defined(USE_ATTACH_INTERRUPT)
-            attachInterrupt(digitalPinToInterrupt(INT1_PIN), &handleINT1Interrupt, CHANGE);
+        attachInterrupt(digitalPinToInterrupt(INT1_PIN), &handleINT1Interrupt, CHANGE);
 #    else
-            EICRA |= (1 << ISC10);  // interrupt on any logical change
-            EIFR |= 1 << INTF1;     // clear interrupt bit
-            EIMSK |= 1 << INT1;     // enable interrupt on next change
+        EICRA |= (1 << ISC10);  // interrupt on any logical change
+        EIFR |= 1 << INTF1;     // clear interrupt bit
+        EIMSK |= 1 << INT1;     // enable interrupt on next change
 #    endif //USE_ATTACH_INTERRUPT
 #  endif // ! defined(ISC10)
     }
@@ -275,34 +297,36 @@ void EasyButton::init(bool aIsButtonAtINT0) {
 bool EasyButton::readButtonState() {
 #if defined(USE_BUTTON_0) && not defined(USE_BUTTON_1)
 #  if defined(BUTTON_IS_ACTIVE_HIGH)
-        return (INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
+    return (INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
 #  else
-        return !(INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
+    return !(INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
 #  endif
 
 #elif defined(USE_BUTTON_1) && not defined(USE_BUTTON_0)
 #  if defined(BUTTON_IS_ACTIVE_HIGH)
-        return (INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
+    return (INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
 #  else
-        return !(INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
+    return !(INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
 #  endif
 
 #elif defined(USE_BUTTON_0) && defined(USE_BUTTON_1)
 #  if defined(BUTTON_IS_ACTIVE_HIGH)
-        if (isButtonAtINT0) {
-            return (INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
-        } else {
-            return (INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
-        }
+    if (isButtonAtINT0) {
+        return (INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
+    } else {
+        return (INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
+    }
 #  else
-        if (isButtonAtINT0) {
-            return !(INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
-        } else {
-            return !(INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
-        }
+    if (isButtonAtINT0) {
+        return !(INT0_IN_PORT & _BV(INT0_BIT));  //  = digitalReadFast(2);
+    } else {
+        return !(INT1_IN_PORT & _BV(INT1_BIT));  //  = digitalReadFast(3);
+    }
 #  endif
 #endif
 }
+
+// @formatter:on // the eclipse formatter has problems with // comments in undefined code blocks
 
 /*
  * Returns stored state if in debouncing period otherwise current state of button
@@ -652,3 +676,5 @@ ISR(INT1_vect)
 }
 #  endif
 #endif // not defined(USE_ATTACH_INTERRUPT)
+
+#endif // defined(__AVR__)

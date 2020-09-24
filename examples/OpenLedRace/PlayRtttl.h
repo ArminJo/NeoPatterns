@@ -41,11 +41,14 @@
 #endif
 #include "pitches.h"
 
-#define VERSION_PLAY_RTTTL "1.4.0"
+#define VERSION_PLAY_RTTTL "1.4.1"
 #define VERSION_PLAY_RTTTL_MAJOR 1
 #define VERSION_PLAY_RTTTL_MINOR 4
 
 /*
+ * Version 1.4.1 - 9/2020
+ * - Removed blocking wait for ATmega32U4 Serial in examples.
+ *
  * Version 1.4.0 - 1/2020
  * - Supporting direct tone output at pin 11 for ATmega328. Can be used with interrupt blocking libraries for NeoPixel etc.
  * - Use Print * instead of Stream *.
@@ -75,9 +78,8 @@
  * - new setNumberOfLoops() and setDefaultStyle() functions.
  */
 
-//#define USE_NON_STANDARD_SERIAL_FOR_DEBUG // if activated you must -you are able to- set your own serial class for debugging purposes by setSerialForPlayRtttlDebug()
-
-#if ! defined(USE_NO_RTX_EXTENSIONS) // if defined it suppresses the next 2 defines / useful for ATtinies to shrink code
+#if ! defined(USE_NO_RTX_EXTENSIONS) // if defined it suppresses the next 2 defines / useful for ATtinies to shrink code up to 182 bytes
+// Even without `SUPPORT_RTX_EXTENSIONS` the default style is natural (Tone length = note length - 1/16)
 #define SUPPORT_RTX_EXTENSIONS  // needs additional 200 bytes FLASH - support loop and style
 #define SUPPORT_RTX_FORMAT      // needs additional 100 bytes FLASH - can read RTX formatted definitions
 #endif

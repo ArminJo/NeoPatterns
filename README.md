@@ -1,7 +1,7 @@
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
 Available as Arduino library "NeoPatterns"
 
-### [Version 2.2.0](https://github.com/ArminJo/NeoPatterns/releases)
+### [Version 2.2.1](https://github.com/ArminJo/NeoPatterns/releases)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
@@ -89,6 +89,9 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 2.2.1
+- Removed blocking wait for ATmega32U4 Serial in examples.
+
 ### Version 2.2.0
 - Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes FLASH for the AllPatternsOnMultiDevices example.
 - Use type `Print *` instead of `Stream *`.

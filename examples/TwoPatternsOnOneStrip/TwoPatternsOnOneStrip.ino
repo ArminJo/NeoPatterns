@@ -42,7 +42,7 @@
 
 #define VERSION_EXAMPLE "2.0"
 
-EasyButton Button0AtPin3(false);
+EasyButton Button0AtPin3;
 
 #define PIN_TIMING_DEBUG_BUTTON   6
 #define PIN_DELAY_POTI     A0
@@ -83,10 +83,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__)
-    while (!Serial); //delay for Leonardo, but this loops forever for Maple Serial
-#endif
-#if defined(SERIAL_USB)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
