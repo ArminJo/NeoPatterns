@@ -29,6 +29,8 @@
 #include <avr/wdt.h>
 
 void initSleep(uint8_t tSleepMode);
+void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescaler);
+uint16_t computeSleepMillis(uint8_t aWatchdogPrescaler);
 void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis = false);
 extern volatile uint16_t sNumberOfSleeps;
 
@@ -37,14 +39,14 @@ extern volatile uint16_t sNumberOfSleeps;
 #define HEAP_STACK_UNTOUCHED_VALUE 0x5A
 void initStackFreeMeasurement();
 uint16_t getStackFreeMinimumBytes();
-void printStackFreeMinimumBytes(Print * aSerial);
+void printStackFreeMinimumBytes(Print *aSerial);
 uint8_t * getHeapStart();
 uint16_t getFreeHeap(void);
-void printFreeHeap(Print * aSerial);
+void printFreeHeap(Print *aSerial);
 uint16_t getFreeRam(void);
-void printFreeRam(Print * aSerial);
-bool isAddressInRAM(void * aAddressToCheck);
-bool isAddressBelowHeap(void * aAddressToCheck);
+void printFreeRam(Print *aSerial);
+bool isAddressInRAM(void *aAddressToCheck);
+bool isAddressBelowHeap(void *aAddressToCheck);
 #endif //  defined(__AVR__)
 #endif // AVRUTILS_H_
 

@@ -87,7 +87,7 @@ bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel
  *   UnderlyingNeoPixelObject->show();
  * }
  */
-NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+NeoPixel::NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel) :
         Adafruit_NeoPixel(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
 
@@ -113,7 +113,7 @@ NeoPixel::NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     setPixelBuffer(aUnderlyingNeoPixelObject->getPixels());
 }
 
-void NeoPixel::init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel) {
     AdafruitNeoPixelIinit(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType());
     Adafruit_NeoPixel::begin(); // sets pin to output
@@ -148,7 +148,7 @@ void NeoPixel::begin() {
  * begin function, which prints error message if aSerial is not NULL
  * Returns false if no memory available
  */
-bool NeoPixel::begin(Print * aSerial) {
+bool NeoPixel::begin(Print *aSerial) {
     Adafruit_NeoPixel::begin();
     if (numLEDs == 0) {
         if (aSerial != NULL) {
@@ -163,7 +163,7 @@ bool NeoPixel::begin(Print * aSerial) {
 /*
  * For debugging purposes
  */
-void NeoPixel::printInfo(Print * aSerial) {
+void NeoPixel::printInfo(Print *aSerial) {
     aSerial->print(F("Pin="));
     aSerial->print(getPin());
     aSerial->print(F(" Offset="));
@@ -228,9 +228,9 @@ void NeoPixel::setPixelOffsetForPartialNeoPixel(uint16_t aPixelOffset) {
 /*
  *
  * Free old pixel buffer and set new value.
- * Needed if you want to have more than one patterns on the same strip.
+ * Required if you want to have more than one patterns on the same strip.
  */
-void NeoPixel::setPixelBuffer(uint8_t * aNewPixelBufferPointer) {
+void NeoPixel::setPixelBuffer(uint8_t *aNewPixelBufferPointer) {
     if (pixels) {
         free(pixels);
     }
@@ -241,11 +241,11 @@ uint16_t NeoPixel::getPixelBufferSize() {
     return numBytes;
 }
 
-void NeoPixel::storePixelBuffer(uint8_t * aPixelBufferPointerDestination) {
+void NeoPixel::storePixelBuffer(uint8_t *aPixelBufferPointerDestination) {
     memcpy(aPixelBufferPointerDestination, pixels, numBytes);
 }
 
-void NeoPixel::restorePixelBuffer(uint8_t * aPixelBufferPointerSource) {
+void NeoPixel::restorePixelBuffer(uint8_t *aPixelBufferPointerSource) {
     memcpy(pixels, aPixelBufferPointerSource, numBytes);
 }
 
@@ -277,7 +277,7 @@ void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBott
  * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
  * @param aDrawFromBottom - false: Bar is top down, i.e. it starts at the highest pixel index
  */
-void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t * aColorArrayPtr, bool aDrawFromBottom) {
+void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom) {
     for (uint16_t i = 0; i < numLEDs; i++) {
         bool tDrawPixel;
         if (aDrawFromBottom) {
@@ -306,7 +306,7 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // added line to support offsets
     }
-    uint8_t * tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
+    uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
     *tPixelPtr++ = 0;
     *tPixelPtr++ = 0;
     *tPixelPtr++ = 0;
@@ -445,7 +445,7 @@ void NeoPixel::ColorSet(color32_t aColor) {
 }
 
 color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
-    uint8_t * tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * BytesPerPixel];
+    uint8_t *tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * BytesPerPixel];
     if (BytesPerPixel == 3) {
         return (uint32_t) tPixelPointer[rOffset] << 16 | (uint32_t) tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
     }

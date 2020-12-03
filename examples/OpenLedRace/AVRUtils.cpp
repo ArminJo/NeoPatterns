@@ -34,12 +34,12 @@
  */
 void initStackFreeMeasurement() {
     extern unsigned int __heap_start;
-    extern void * __brkval;
+    extern void *__brkval;
     uint8_t tDummyVariableOnStack;
 
-    uint8_t * tHeapPtr = (uint8_t *) __brkval;
+    uint8_t *tHeapPtr = (uint8_t*) __brkval;
     if (tHeapPtr == 0) {
-        tHeapPtr = (uint8_t *) &__heap_start;
+        tHeapPtr = (uint8_t*) &__heap_start;
     }
 
 // Fill memory
@@ -53,12 +53,12 @@ void initStackFreeMeasurement() {
  */
 uint16_t getStackFreeMinimumBytes() {
     extern unsigned int __heap_start;
-    extern void * __brkval;
+    extern void *__brkval;
     uint8_t tDummyVariableOnStack;
 
-    uint8_t * tHeapPtr = (uint8_t *) __brkval;
+    uint8_t *tHeapPtr = (uint8_t*) __brkval;
     if (tHeapPtr == 0) {
-        tHeapPtr = (uint8_t *) &__heap_start;
+        tHeapPtr = (uint8_t*) &__heap_start;
     }
 
 // first search for first match, because malloc() and free() may be happened in between and overwrite low memory
@@ -75,7 +75,7 @@ uint16_t getStackFreeMinimumBytes() {
     return tStackFree;
 }
 
-void printStackFreeMinimumBytes(Print * aSerial) {
+void printStackFreeMinimumBytes(Print *aSerial) {
     aSerial->print(F("Minimum free Stack[bytes]="));
     aSerial->println(getStackFreeMinimumBytes());
 }
@@ -86,13 +86,13 @@ void printStackFreeMinimumBytes(Print * aSerial) {
  Serial.print(F("HeapStart=0x"));
  Serial.println((uintptr_t) getHeapStart(), HEX);
  */
-uint8_t * getHeapStart(void) {
+uint8_t *getHeapStart(void) {
     extern unsigned int __heap_start;
-    extern void * __brkval;
+    extern void *__brkval;
 
-    uint8_t * tHeapPtr = (uint8_t *) __brkval;
+    uint8_t *tHeapPtr = (uint8_t*) __brkval;
     if (tHeapPtr == 0) {
-        tHeapPtr = (uint8_t *) &__heap_start;
+        tHeapPtr = (uint8_t*) &__heap_start;
     }
     return tHeapPtr;
 }
@@ -105,7 +105,7 @@ uint16_t getFreeHeap(void) {
     return getFreeRam() - __malloc_margin; // (128)
 }
 
-void printFreeHeap(Print * aSerial) {
+void printFreeHeap(Print *aSerial) {
     aSerial->print(F("Free Heap[bytes]="));
     aSerial->println(getFreeHeap());
 }
@@ -127,18 +127,18 @@ uint16_t getFreeRam(void) {
     return (tFreeRamBytes);
 }
 
-void printFreeRam(Print * aSerial) {
+void printFreeRam(Print *aSerial) {
     aSerial->print(F("Free Ram/Stack[bytes]="));
     aSerial->println(getFreeRam());
 }
 
-bool isAddressInRAM(void * aAddressToCheck) {
-    return (aAddressToCheck <= (void *) RAMEND);
+bool isAddressInRAM(void *aAddressToCheck) {
+    return (aAddressToCheck <= (void*) RAMEND);
 }
 
-bool isAddressBelowHeap(void * aAddressToCheck) {
-    extern void * __brkval;
-    uint8_t * tHeapPtr = (uint8_t *) __brkval;
+bool isAddressBelowHeap(void *aAddressToCheck) {
+    extern void *__brkval;
+    uint8_t *tHeapPtr = (uint8_t*) __brkval;
     return (aAddressToCheck < tHeapPtr);
 }
 
@@ -167,10 +167,33 @@ volatile uint16_t sNumberOfSleeps = 0;
 extern volatile unsigned long timer0_millis;
 #endif // MILLIS_UTILS_H_
 
+// required only once
 void initSleep(uint8_t tSleepMode) {
+    sleep_enable();
+    set_sleep_mode(tSleepMode);
+}
+
+/*
+ * Watchdog wakes CPU periodically and all we have to do is call sleep_cpu();
+ * aWatchdogPrescaler (see wdt.h) can be one of
+ * WDTO_15MS, 30, 60, 120, 250, WDTO_500MS
+ * WDTO_1S to WDTO_8S
+ */
+void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescaler) {
     sleep_enable()
     ;
     set_sleep_mode(tSleepMode);
+    MCUSR = ~_BV(WDRF); // Clear WDRF in MCUSR
+
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) \
+    || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) \
+    || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
+#define WDTCSR  WDTCR
+#endif
+    // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
+    uint8_t tWDTCSR = _BV(WDIE) | _BV(WDIF) | (aWatchdogPrescaler & 0x08 ? _WD_PS3_MASK : 0x00) | (aWatchdogPrescaler & 0x07); // handles that the WDP3 bit is in bit 5 of the WDTCSR register,
+    WDTCSR = _BV(WDCE) | _BV(WDE); // clear lock bit for 4 cycles by writing 1 to WDCE AND WDE
+    WDTCSR = tWDTCSR; // set final Value
 }
 
 /*
@@ -189,7 +212,8 @@ uint16_t computeSleepMillis(uint8_t aWatchdogPrescaler) {
  * WDTO_1S to WDTO_8S
  */
 void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
-    MCUSR = ~_BV(WDRF); // Clear WDRF in MCUSR to enable a correct interpretation of MCUSR after reset
+    MCUSR = 0; // Clear MCUSR to enable a correct interpretation of MCUSR after reset
+    ADCSRA &= ~ADEN; // disable ADC just before sleep -> saves 200 uA
 
     // use wdt_enable() since it handles that the WDP3 bit is in bit 5 of the WDTCSR register
     wdt_enable(aWatchdogPrescaler);
@@ -197,45 +221,23 @@ void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis) {
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
 #define WDTCSR  WDTCR
 #endif
-    WDTCSR |= _BV(WDIE) | _BV(WDIF); // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
-    sei(); // enable interrupts
-    sleep_cpu()
-    ;
-    wdt_disable(); // Because next interrupt will lead to a reset, since wdt_enable() sets WDE / Watchdog System Reset Enable
-
+    WDTCSR |= _BV(WDIE) | _BV(WDIF); // Watchdog interrupt enable + reset interrupt flag -> requires ISR(WDT_vect)
+    sei();         // Enable interrupts
+    sleep_cpu();   // The watchdog interrupt will wake us up from sleep
+    wdt_disable(); // Because next interrupt will otherwise lead to a reset, since wdt_enable() sets WDE / Watchdog System Reset Enable
+    ADCSRA |= ADEN;
     /*
      * Since timer clock may be disabled adjust millis only if not slept in IDLE mode (SM2...0 bits are 000)
      */
 #if defined(SM2)
     if (aAdjustMillis && (SMCR & ((_BV(SM2) | _BV(SM1) | _BV(SM0)))) != 0) {
 #elif ! defined(SMCR)
-        if (aAdjustMillis && (MCUCR & ((_BV(SM1) | _BV(SM0)))) != 0) {
+    if (aAdjustMillis && (MCUCR & ((_BV(SM1) | _BV(SM0)))) != 0) {
 #else
     if (aAdjustMillis && (SMCR & ((_BV(SM1) | _BV(SM0)))) != 0) {
 #endif
         timer0_millis += computeSleepMillis(aWatchdogPrescaler);
     }
-}
-
-/*
- * Watchdog wakes CPU periodically and all we have to do is call sleep_cpu();
- * aWatchdogPrescaler (see wdt.h) can be one of
- * WDTO_15MS, 30, 60, 120, 250, WDTO_500MS
- * WDTO_1S to WDTO_8S
- */
-void initPeriodicSleepWithWatchdog(uint8_t tSleepMode, uint8_t aWatchdogPrescaler) {
-    sleep_enable()
-    ;
-    set_sleep_mode(tSleepMode);
-    MCUSR = ~_BV(WDRF); // Clear WDRF in MCUSR
-
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-#define WDTCSR  WDTCR
-#endif
-    // Watchdog interrupt enable + reset interrupt flag -> needs ISR(WDT_vect)
-    uint8_t tWDTCSR = _BV(WDIE) | _BV(WDIF) | (aWatchdogPrescaler & 0x08 ? _WD_PS3_MASK : 0x00) | (aWatchdogPrescaler & 0x07); // handles that the WDP3 bit is in bit 5 of the WDTCSR register,
-    WDTCSR = _BV(WDCE) | _BV(WDE); // clear lock bit for 4 cycles by writing 1 to WDCE AND WDE
-    WDTCSR = tWDTCSR; // set final Value
 }
 
 /*

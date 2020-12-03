@@ -53,11 +53,11 @@ public:
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
 
-    void loadPicturePGM(const uint8_t* aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+    void loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
             color32_t aForegroundColor, color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0,
             bool doPaddingRight = false, bool doPadding = false);
 
-    void loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
+    void loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
             color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
             bool doPadding = false, bool IsPGMData = false);
 
@@ -68,7 +68,7 @@ public:
     void drawAllColors2();
 
     void drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
-    void drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t * aColorArrayPtr, bool aDrawFromBottom = true);
+    void drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
 
     // Geometry of Matrix
     uint8_t Rows;       // Y Direction

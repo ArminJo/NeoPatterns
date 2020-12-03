@@ -57,7 +57,7 @@
 #define PIN_NEOPIXEL_MATRIX     8
 
 // onComplete callback functions
-void TestPatterns(NeoPatterns * aLedsPtr);
+void TestPatterns(NeoPatterns *aLedsPtr);
 #ifdef ALL_PATTERN_ON_ONE_STRIP
 #define PIN_NEOPIXEL_ALL        2
 NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
@@ -81,7 +81,10 @@ NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800,
  * See MatrixNeoPatterns.h for further explanation.
  */
 MatrixSnake NeoPixelMatrix = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemoHandler);
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800,
+        &MatrixAndSnakePatternsDemoHandler);
+
+void checkAndHandleVCCTooLow();
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -124,7 +127,6 @@ void setup() {
     ring16.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
     ring24.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
 
-
     delay(300); // to avoid partial patterns at power up
 
     ring12.ColorWipe(COLOR32_PURPLE, 50);
@@ -156,75 +158,9 @@ void setup() {
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
-#if defined(__AVR__)
-/*
- * Returns true if shutdown
- */
-bool checkVCC(uint16_t aVCC) {
-    static uint8_t sVoltageTooLowCounter;
-
-    if (aVCC < VCC_STOP_THRESHOLD_MILLIVOLT) {
-        /*
-         * Voltage too low, wait VCC_STOP_PERIOD_REPETITIONS (9) times and then shut down.
-         */
-        if (aVCC < VCC_STOP_MIN_MILLIVOLT) {
-            // emergency shutdown
-            sVoltageTooLowCounter = VCC_STOP_PERIOD_REPETITIONS;
-            Serial.println(F("Voltage < 3.2 volt detected"));
-        } else {
-            sVoltageTooLowCounter++;
-            Serial.println(F("Voltage < 3.4 volt detected"));
-        }
-        if (sVoltageTooLowCounter == VCC_STOP_PERIOD_REPETITIONS) {
-            Serial.println(F("Shut down"));
-            return true;
-        }
-    } else {
-        sVoltageTooLowCounter = 0;
-    }
-    return false;
-}
-#endif // defined(__AVR__)
-
 void loop() {
 #if defined(__AVR__)
-    /*
-     * Check VCC every 2 seconds
-     */
-    static long sLastMillisOfVoltageCheck;
-    static bool sVoltageTooLow = false; // one time flag
-
-    if (millis() - sLastMillisOfVoltageCheck >= VCC_CHECK_PERIOD_MILLIS) {
-        sLastMillisOfVoltageCheck = millis();
-        uint16_t tVCC = getVCCVoltageMillivoltSimple();
-        Serial.print(F("VCC="));
-        Serial.print(tVCC);
-        Serial.println(F("mV"));
-
-        if (!sVoltageTooLow) {
-            if (checkVCC(tVCC)) {
-                sVoltageTooLow = true;
-
-                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, NULL);
-                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, NULL);
-                ring12.clear();
-                ring12.show();
-                ring16.clear();
-                ring16.show();
-                ring24.clear();
-                ring24.show();
-                NeoPixelMatrix.clear();
-                NeoPixelMatrix.show();
-                return;
-            }
-        }
-    }
-    if (sVoltageTooLow) {
-        bar16.update();
-        bar24.update();
-        delay(FALLING_STAR_DURATION);
-        return;
-    }
+    checkAndHandleVCCTooLow();
 #endif // defined(__AVR__)
 
     bar16.update();
@@ -250,7 +186,7 @@ void loop() {
 /*
  * Handler for testing patterns
  */
-void TestPatterns(NeoPatterns * aLedsPtr) {
+void TestPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
     switch (sState) {
@@ -300,5 +236,70 @@ void TestPatterns(NeoPatterns * aLedsPtr) {
     Serial.println(sState);
 
     sState++;
+}
+
+#if defined(__AVR__)
+/*
+ * If voltage too low for VCC_STOP_PERIOD_REPETITIONS times clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
+ */
+void checkAndHandleVCCTooLow() {
+    /*
+     * Check VCC every 2 seconds
+     */
+    static long sLastMillisOfVoltageCheck;
+    static bool sVoltageTooLowDetectedOnce = false; // one time flag
+    static uint8_t sVoltageTooLowCounter;
+
+    if (millis() - sLastMillisOfVoltageCheck >= VCC_CHECK_PERIOD_MILLIS) {
+        sLastMillisOfVoltageCheck = millis();
+        uint16_t tVCC = getVCCVoltageMillivoltSimple();
+        Serial.print(F("VCC="));
+        Serial.print(tVCC);
+        Serial.println(F("mV"));
+
+        if (!sVoltageTooLowDetectedOnce) {
+
+            if (tVCC < VCC_STOP_THRESHOLD_MILLIVOLT) {
+                /*
+                 * Voltage too low, wait VCC_STOP_PERIOD_REPETITIONS (9) times and then shut down.
+                 */
+                if (tVCC < VCC_STOP_MIN_MILLIVOLT) {
+                    // emergency shutdown
+                    sVoltageTooLowCounter = VCC_STOP_PERIOD_REPETITIONS;
+                    Serial.println(F("Voltage < 3.2 volt detected -> emergency shutdown"));
+                } else {
+                    sVoltageTooLowCounter++;
+                    Serial.println(F("Voltage < 3.4 volt detected"));
+                }
+                if (sVoltageTooLowCounter == VCC_STOP_PERIOD_REPETITIONS) {
+                    Serial.println(F("Shut down"));
+                    sVoltageTooLowDetectedOnce = true;
+                }
+            } else {
+                sVoltageTooLowCounter = 0;
+            }
+
+            if (sVoltageTooLowDetectedOnce) {
+                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, NULL);
+                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, NULL);
+                ring12.clear();
+                ring12.show();
+                ring16.clear();
+                ring16.show();
+                ring24.clear();
+                ring24.show();
+                NeoPixelMatrix.clear();
+                NeoPixelMatrix.show();
+                return;
+            }
+        }
+    }
+    if (sVoltageTooLowDetectedOnce) {
+        bar16.update();
+        bar24.update();
+        delay(FALLING_STAR_DURATION);
+        return;
+    }
 
 }
+#endif // defined(__AVR__)

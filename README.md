@@ -66,16 +66,23 @@ Examples:
 **All matrix pixel mappings except NEO_MATRIX_COLUMNS are supported**
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
 
-## Reducing library size
-If you only have RGB pixels and do not require RGBW pixels support, then you can save program space by commenting out the line `#define DO_NOT_SUPPORT_RGBW` in *NeoPixel.h*. This saves e.g 400 bytes FLASH for the AllPatternsOnMultiDevices example.
+# Compile options / macros for this library
+To customize the library to different requirements, there are some compile options / makros available.<br/>
+Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for gobal compile (the latter is not possible with the Arduino IDE, so consider to use [Sloeber](https://eclipse.baeyens.it).
+| Macro | Default | File | Description |
+|-|-|-|-|
+| `DO_NOT_SUPPORT_RGBW` | enabled | NeoPixel.h | If you only have RGB pixels and do not require RGBW pixels support. Saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. |
 
-The `BOUNCING_BALL` pattern requires additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. If you do not require this pattern, you can save space by commenting out the line `#define DO_NOT_USE_MATH_PATTERNS` in *NeoPatterns.h*.
+### Modifying compile options with Arduino IDE
+First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
+If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
+Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
+In both cases the library files itself are located in the `src` directory.<br/>
 
-### Modifying library properties
-To access the Arduino library files from a sketch, you have to first use *Sketch/Show Sketch Folder (Ctrl+K)* in the Arduino IDE.<br/>
-Then navigate to the parallel `libraries` folder and select the library you want to access.<br/>
-The library files itself are located in the `src` sub-directory.<br/>
-If you did not yet store the example as your own sketch, then with *Ctrl+K* you are instantly in the right library folder.
+### Modifying compile options with Sloeber IDE
+If you are using Sloeber as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
+![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 # SNAKE GAME
 ## SnakeGame Example
@@ -104,7 +111,7 @@ NeoPatterns on breadboard
 
 ### Version 2.1.0
 - Ported to ESP8266 and ESP32.
-- Changed signature of `NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject)`. Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
+- Changed signature of `NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject)`. Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
 - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
 
 ### Version 2.0.0

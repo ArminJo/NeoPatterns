@@ -37,29 +37,7 @@
 #define VERSION_EASY_BUTTON "3.1.0"
 #define VERSION_EASY_BUTTON_MAJOR 3
 #define VERSION_EASY_BUTTON_MINOR 1
-
-/*
- *  Version 3.1.0 - 6/2020
- *  - 2 sets of constructors, one for only one button used and one for the second button if two buttons used.
- *  - Map pin numbers for Digispark pro boards, for use with with digispark library.
- *
- * Version 3.0.0 - 5/2020
- * - Added button release handler and adapted examples.
- * - Revoke change for "only one true result per press for checkForLongPressBlocking()". It is superseded by button release handler.
- * - Support buttons which are active high by defining BUTTON_IS_ACTIVE_HIGH.
- * - Improved detection of maximum bouncing period used in DebounceTest.
- *
- * Version 2.1.0 - 5/2020
- * - Avoid 1 ms delay for checkForLongPressBlocking() if button is not pressed.
- * - Only one true result per press for checkForLongPressBlocking().
- *
- * Version 2.0.0 - 1/2020
- * - Ported to ATtinyX5 and ATiny167.
- * - Support also PinChangeInterrupt for button 1 on Pin PA0 to PA7 for ATtiniy87/167.
- * - Long press detection support.
- * - Double press detection support.
- * - Renamed to EasyButtonAtInt01.cpp.h
- */
+// The change log is at the bottom of the file
 
 #if defined(__AVR__)
 #include <Arduino.h>
@@ -83,7 +61,7 @@
 //#define BUTTON_IS_ACTIVE_HIGH
 /*
  * Define USE_ATTACH_INTERRUPT to force use of the arduino function attachInterrupt().
- * Needed if you get the error " multiple definition of `__vector_1'" (or `__vector_2'), because another library uses the attachInterrupt() function.
+ * Required if you get the error " multiple definition of `__vector_1'" (or `__vector_2'), because another library uses the attachInterrupt() function.
  * For one button it needs additional 160 bytes FLASH, for 2 buttons it needs additional 88 bytes.
  */
 //#define USE_ATTACH_INTERRUPT
@@ -124,9 +102,9 @@
  * Activate LED_BUILTIN as long as button is pressed
  */
 //#define LED_FEEDBACK_TEST
-#if defined (LED_FEEDBACK_TEST)
+#if defined(LED_FEEDBACK_TEST)
 #  if ! defined(BUTTON_TEST_FEEDBACK_LED_PIN)
-#    if defined (LED_BUILTIN)
+#    if defined(LED_BUILTIN)
 #    define BUTTON_TEST_FEEDBACK_LED_PIN LED_BUILTIN  // if not specified, use built in led - pin 13 on Uno board
 #    else
 #    error "LED_FEEDBACK_TEST defined but no BUTTON_TEST_FEEDBACK_LED_PIN or LED_BUILTIN defined"
@@ -146,7 +124,7 @@
 
 //#define TRACE
 #ifdef TRACE
-#warning "If using TRACE, the timing of the interrupt service routine changes, e.g. you will see more spikes, than expected!"
+#warning If using TRACE, the timing of the interrupt service routine changes, e.g. you will see more spikes, than expected!
 #endif
 
 /*
@@ -171,7 +149,7 @@
 #    if ! defined(INT1_PIN)
 #define INT1_PIN 3
 #    elif (INT1_PIN != 2) && (INT1_PIN > 5)
-#error "INT1_PIN (for PCINT0 interrupt) can only be 0,1,3,4,5"
+#error INT1_PIN (for PCINT0 interrupt) can only be 0,1,3,4,5
 #    endif
 #define INT1_DDR_PORT (DDRB)
 #define INT1_IN_PORT  (PINB)
@@ -218,11 +196,11 @@
 #undef INT1_PIN
 #define INT1_PIN 6 // PA6
 #      else
-#error "INT1_PIN (for PCINT0 interrupt) can only be 5 to 12"
+#error INT1_PIN (for PCINT0 interrupt) can only be 5 to 12
 #      endif
 #    else // defined(ARDUINO_AVR_DIGISPARKPRO)
 #      if (INT1_PIN > 7)
-#error "INT1_PIN (for PCINT0 interrupt) can only be 0 to 7"
+#error INT1_PIN (for PCINT0 interrupt) can only be 0 to 7
 #      endif
 #    endif // defined(ARDUINO_AVR_DIGISPARKPRO)
 #define INT1_DDR_PORT (DDRA)
@@ -241,7 +219,7 @@
 #    if ! defined(INT1_PIN)
 #define INT1_PIN 3
 #    elif (INT1_PIN > 7)
-#error "INT1_PIN (for PCINT2 interrupt) can only be Arduino pins 0 to 7 (PD0 to PD7)"
+#error INT1_PIN (for PCINT2 interrupt) can only be Arduino pins 0 to 7 (PD0 to PD7)
 #    endif
 #define INT1_DDR_PORT (DDRD)
 #define INT1_IN_PORT  (PIND)
@@ -255,7 +233,7 @@
 
 #if defined(USE_BUTTON_1) && ((! defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)) \
     && ! defined(INTENTIONALLY_USE_PCI0_FOR_BUTTON1) && !(defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__))
-#warning "Using PCINT0 interrupt for button 1"
+#warning Using PCINT0 interrupt for button 1
 #endif
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
@@ -318,7 +296,7 @@ public:
     void handleINT01Interrupts(); // internal use only
 
     bool LastBounceWasChangeToInactive; // Internal state, reflects actual reading with spikes and bouncing. Negative logic: true / active means button pin is LOW
-    volatile bool ButtonStateIsActive;  // Negative logic: true / active means button pin is LOW. If last press duration < BUTTON_DEBOUNCING_MILLIS it holds wrong value (true instead of false) :-(
+    volatile bool ButtonStateIsActive; // Negative logic: true / active means button pin is LOW. If last press duration < BUTTON_DEBOUNCING_MILLIS it holds wrong value (true instead of false) :-(
     volatile bool ButtonToggleState;    // Toggle is on press, not on release - initial value is false
 
     /*
@@ -357,10 +335,10 @@ public:
 #endif
 
 #if defined(USE_BUTTON_0)
-    static EasyButton * sPointerToButton0ForISR;
+    static EasyButton *sPointerToButton0ForISR;
 #endif
 #if defined(USE_BUTTON_1)
-    static EasyButton * sPointerToButton1ForISR;
+    static EasyButton *sPointerToButton1ForISR;
 #endif
 };
 // end of class definition
@@ -380,6 +358,30 @@ void __attribute__ ((weak)) handleINT1Interrupt();
 #endif
 
 #endif // defined(__AVR__)
+
+/*
+ *  Version 3.1.0 - 6/2020
+ *  - 2 sets of constructors, one for only one button used and one for the second button if two buttons used.
+ *  - Map pin numbers for Digispark pro boards, for use with with digispark library.
+ *
+ * Version 3.0.0 - 5/2020
+ * - Added button release handler and adapted examples.
+ * - Revoke change for "only one true result per press for checkForLongPressBlocking()". It is superseded by button release handler.
+ * - Support buttons which are active high by defining BUTTON_IS_ACTIVE_HIGH.
+ * - Improved detection of maximum bouncing period used in DebounceTest.
+ *
+ * Version 2.1.0 - 5/2020
+ * - Avoid 1 ms delay for checkForLongPressBlocking() if button is not pressed.
+ * - Only one true result per press for checkForLongPressBlocking().
+ *
+ * Version 2.0.0 - 1/2020
+ * - Ported to ATtinyX5 and ATiny167.
+ * - Support also PinChangeInterrupt for button 1 on Pin PA0 to PA7 for ATtiniy87/167.
+ * - Long press detection support.
+ * - Double press detection support.
+ * - Renamed to EasyButtonAtInt01.cpp.h
+ */
+
 #endif /* EASY_BUTTON_AT_INT01_H_ */
 
 #pragma once

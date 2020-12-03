@@ -13,7 +13,7 @@
  *     bhagman@roguerobotics.com
  *
  *
- *  This file is part of PlayRttl https://github.com/ArminJo/PlayRttl.
+ *  This file is part of PlayRttl https://github.com/ArminJo/PlayRtttl.
  *
  *  PlayRttl is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,49 +34,17 @@
 #define SRC_PLAYRTTTL_H_
 
 #if defined(__SAM3X8E__)
-#error "Sorry no tone library for Arduino Due"
+#error Sorry no tone library for Arduino Due
 #endif
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #endif
 #include "pitches.h"
 
-#define VERSION_PLAY_RTTTL "1.4.1"
+#define VERSION_PLAY_RTTTL "1.4.2"
 #define VERSION_PLAY_RTTTL_MAJOR 1
 #define VERSION_PLAY_RTTTL_MINOR 4
-
-/*
- * Version 1.4.1 - 9/2020
- * - Removed blocking wait for ATmega32U4 Serial in examples.
- *
- * Version 1.4.0 - 1/2020
- * - Supporting direct tone output at pin 11 for ATmega328. Can be used with interrupt blocking libraries for NeoPixel etc.
- * - Use Print * instead of Stream *.
- * - Improved non-AVR compatibility.
- * - New Christmas songs example.
- *
- * Version 1.3.0 - 10/2019
- * - Support all octaves below 8.
- * - New styles '1' to '9' in addition to RTX styles 'C', 'N', 'S'.
- *
- * Version 1.2.2 - 6/2019
- * - Porting to non AVR architectures.
- *
- * Version 1.2.1 - 5/2019
- * - Natural is the new default style.
- * - New RTTTLMelodiesSmall sample array with less entries.
- * - Parameter now order independent.
- * - Modified oneMelody example.
- *
- * Version 1.2.0 - 5/2019
- * - No Serial.print statements in this library anymore, to avoid problems with different Serial implementations.
- * - Function playRandomRtttlBlocking() + startPlayRandomRtttlFromArrayPGM() do not print name now. If needed, use new functions playRandomRtttlSampleBlockingAndPrintName() + startPlayRandomRtttlFromArrayPGMAndPrintName().
- * - Printing functions have parameter (..., Print * aSerial) to print to any serial. Call it (..., &Serial) to use standard Serial;
- * - playRandomRtttlBlocking() renamed to playRandomRtttlSampleBlocking() and bug fixing.
- *
- * Version 1.1 - 5/2019
- * - new setNumberOfLoops() and setDefaultStyle() functions.
- */
+// The change log is at the bottom of the file
 
 #if ! defined(USE_NO_RTX_EXTENSIONS) // if defined it suppresses the next 2 defines / useful for ATtinies to shrink code up to 182 bytes
 // Even without `SUPPORT_RTX_EXTENSIONS` the default style is natural (Tone length = note length - 1/16)
@@ -114,33 +82,33 @@ void setDefaultStyle(uint8_t aDefaultStyleDivisorValue);
 uint8_t convertStyleCharacterToDivisorValue(char aStyleCharacter);
 #endif
 
-void getRtttlName(const char *aRTTTLArrayPtr, char * aBuffer, uint8_t aBuffersize);
-void printName(const char *aRTTTLArrayPtr, Print * aSerial);
+void getRtttlName(const char *aRTTTLArrayPtr, char *aBuffer, uint8_t aBuffersize);
+void printName(const char *aRTTTLArrayPtr, Print *aSerial);
 
 void startPlayRtttl(uint8_t aTonePin, const char *aRTTTLArrayPtr, void (*aOnComplete)()=NULL);
 void playRtttlBlocking(uint8_t aTonePin, const char *aRTTTLArrayPtr);
 
 void startPlayRandomRtttlFromArray(uint8_t aTonePin, const char* const aSongArray[], uint8_t aNumberOfEntriesInSongArray,
-        char* aBufferPointer = NULL, uint8_t aBufferSize = 0, void (*aOnComplete)()=NULL);
+        char *aBufferPointer = NULL, uint8_t aBufferSize = 0, void (*aOnComplete)()=NULL);
 void startPlayRandomRtttlFromArrayAndPrintName(uint8_t aTonePin, const char* const aSongArray[],
-        uint8_t aNumberOfEntriesInSongArray, Print * aSerial, void (*aOnComplete)()=NULL);
+        uint8_t aNumberOfEntriesInSongArray, Print *aSerial, void (*aOnComplete)()=NULL);
 
 void playRandomRtttlSampleBlocking(uint8_t aTonePin);
-void playRandomRtttlSampleBlockingAndPrintName(uint8_t aTonePin, Print * aSerial);
+void playRandomRtttlSampleBlockingAndPrintName(uint8_t aTonePin, Print *aSerial);
 
-void getRtttlNamePGM(const char *aRTTTLArrayPtrPGM, char * aBuffer, uint8_t aBuffersize);
-void printNamePGM(const char *aRTTTLArrayPtrPGM, Print * aSerial);
+void getRtttlNamePGM(const char *aRTTTLArrayPtrPGM, char *aBuffer, uint8_t aBuffersize);
+void printNamePGM(const char *aRTTTLArrayPtrPGM, Print *aSerial);
 
 void startPlayRtttlPGM(uint8_t aTonePin, const char *aRTTTLArrayPtrPGM, void (*aOnComplete)()=NULL);
 void playRtttlBlockingPGM(uint8_t aTonePin, const char *aRTTTLArrayPtrPGM);
 
 void startPlayRandomRtttlFromArrayPGM(uint8_t aTonePin, const char* const aSongArrayPGM[], uint8_t aNumberOfEntriesInSongArrayPGM,
-        char* aBufferPointer = NULL, uint8_t aBufferSize = 0, void (*aOnComplete)()=NULL);
+        char *aBufferPointer = NULL, uint8_t aBufferSize = 0, void (*aOnComplete)()=NULL);
 void startPlayRandomRtttlFromArrayPGMAndPrintName(uint8_t aTonePin, const char* const aSongArrayPGM[],
-        uint8_t aNumberOfEntriesInSongArrayPGM, Print * aSerial, void (*aOnComplete)()=NULL);
+        uint8_t aNumberOfEntriesInSongArrayPGM, Print *aSerial, void (*aOnComplete)()=NULL);
 
 void playRandomRtttlSampleBlockingPGM(uint8_t aTonePin);
-void playRandomRtttlSampleBlockingPGMAndPrintName(uint8_t aTonePin, Print * aSerial);
+void playRandomRtttlSampleBlockingPGMAndPrintName(uint8_t aTonePin, Print *aSerial);
 
 // To be called from loop. - Returns true if tone is playing, false if tone has ended or stopped
 bool updatePlayRtttl(void);
@@ -149,7 +117,7 @@ void stopPlayRtttl(void);
 
 struct playRtttlState {
     long MillisOfNextAction;
-    const char * NextTonePointer;
+    const char *NextTonePointer;
 
     struct {
         uint8_t IsRunning :1; // is false after boot
@@ -170,7 +138,7 @@ struct playRtttlState {
     // The divisor for the formula: Tone length = note length - note length * (1 / divisor)
     // If 0 then Tone length = note length;
     uint8_t StyleDivisorValue;
-    const char * LastTonePointer; // used for loops
+    const char *LastTonePointer; // used for loops
 
 #endif
 };
@@ -297,5 +265,41 @@ static const char AmazingGrace[] PROGMEM = "AmazingGrace:d=8,o=5,b=80:c,f,2f,a,g
 static const char * const RTTTLChristmasMelodies[] PROGMEM = { JingleBell, Rudolph, OhDennenboom, SilentNight, WeWishYou,
         WinterWonderland, LetItSnow, Frosty, LastChristmas, AllIWant, AmazingGrace };
 #define ARRAY_SIZE_CHRISTMAS_MELODIES (sizeof(RTTTLChristmasMelodies)/sizeof(const char *)) // 11
+
+/*
+ * Version 1.4.2 11/2020
+ * - New example ReactionTimeTestGame.
+ *
+ * Version 1.4.1 - 9/2020
+ * - Removed blocking wait for ATmega32U4 Serial in examples.
+ *
+ * Version 1.4.0 - 1/2020
+ * - Supporting direct tone output at pin 11 for ATmega328. Can be used with interrupt blocking libraries for NeoPixel etc.
+ * - Use Print * instead of Stream *.
+ * - Improved non-AVR compatibility.
+ * - New Christmas songs example.
+ *
+ * Version 1.3.0 - 10/2019
+ * - Support all octaves below 8.
+ * - New styles '1' to '9' in addition to RTX styles 'C', 'N', 'S'.
+ *
+ * Version 1.2.2 - 6/2019
+ * - Porting to non AVR architectures.
+ *
+ * Version 1.2.1 - 5/2019
+ * - Natural is the new default style.
+ * - New RTTTLMelodiesSmall sample array with less entries.
+ * - Parameter now order independent.
+ * - Modified oneMelody example.
+ *
+ * Version 1.2.0 - 5/2019
+ * - No Serial.print statements in this library anymore, to avoid problems with different Serial implementations.
+ * - Function playRandomRtttlBlocking() + startPlayRandomRtttlFromArrayPGM() do not print name now. If needed, use new functions playRandomRtttlSampleBlockingAndPrintName() + startPlayRandomRtttlFromArrayPGMAndPrintName().
+ * - Printing functions have parameter (..., Print *aSerial) to print to any serial. Call it (..., &Serial) to use standard Serial;
+ * - playRandomRtttlBlocking() renamed to playRandomRtttlSampleBlocking() and bug fixing.
+ *
+ * Version 1.1 - 5/2019
+ * - new setNumberOfLoops() and setDefaultStyle() functions.
+ */
 
 #endif /* SRC_PLAYRTTTL_H_ */

@@ -69,7 +69,7 @@ MatrixSnake NeoPixelMatrixSnake = MatrixSnake();
  * More functions can be found in MatrixSnake.h / .cpp
  *
  ********************************************/
-uint8_t getNextSnakeDirection(MatrixSnake * aSnake) {
+uint8_t getNextSnakeDirection(MatrixSnake *aSnake) {
 
     /*
      * Call internal solver

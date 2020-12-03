@@ -221,7 +221,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
  * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
  * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
  */
-void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t * aColorArrayPtr,
+void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr,
         bool aDrawFromBottom) {
 
     uint8_t j = Rows - 1;
@@ -259,16 +259,16 @@ void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength
  *          negative picture is shift down and truncated and top lines are padded with aBackgroundColor
  * aXOffset positive -> picture is shift right and left lines are padded -> rightmost part of graphic is not displayed
  *          negative -> picture is shift left and right lines are padded
- * doPaddingRight -> if  doPadding == false only do padding right from graphic. Needed for (last) character while moving left.
+ * doPaddingRight -> if  doPadding == false only do padding right from graphic. Required for (last) character while moving left.
  * doPadding true -> fill bottom, top and right lines with background color
  */
-void MatrixNeoPixel::loadPicturePGM(const uint8_t* aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+void MatrixNeoPixel::loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
         color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPaddingRight,
         bool doPadding) {
     loadPicture(aGraphicsArrayPtrPGM, aWidthOfGraphic, aHeightOfGraphic, aForegroundColor, aBackgroundColor, aXOffset, aYOffset,
             doPaddingRight, doPadding, true);
 }
-void MatrixNeoPixel::loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
         color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPaddingRight,
         bool doPadding, bool IsPGMData) {
 
@@ -282,7 +282,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t* aGraphicsArrayPtr, int8_t aWidth
 #endif
 
     int tYposition = 0;
-    const uint8_t* tGraphicsPointer = aGraphicsArrayPtr;
+    const uint8_t *tGraphicsPointer = aGraphicsArrayPtr;
 
     uint8_t tLinesFromGraphic = aHeightOfGraphic;
     aXOffset = constrain(aXOffset, -Rows, Rows);

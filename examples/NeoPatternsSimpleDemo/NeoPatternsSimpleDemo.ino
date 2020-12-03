@@ -33,7 +33,7 @@
 #define PIN_NEOPIXEL_BAR_16          3
 
 // onComplete callback functions
-void TwoPatterns(NeoPatterns * aLedsPtr);
+void TwoPatterns(NeoPatterns *aLedsPtr);
 
 // The NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &TwoPatterns);
@@ -89,7 +89,7 @@ void loop() {
 /*
  * Simple handler for switching between 2 patterns
  */
-void TwoPatterns(NeoPatterns * aLedsPtr) {
+void TwoPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
 #if defined(__AVR__)

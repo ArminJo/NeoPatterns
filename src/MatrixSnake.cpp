@@ -727,7 +727,7 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
      */
     uint16_t tStoredSnakeLength = SnakeLength;
     uint8_t tStoredDirection = Direction;
-    position * tStoredSnakePixelList = new position[Rows * Columns];
+    position *tStoredSnakePixelList = new position[Rows * Columns];
     memcpy(tStoredSnakePixelList, SnakePixelList, SnakeLength * sizeof(position));
 
     /*
@@ -772,7 +772,7 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
  * The weak standard implementation. Can be be overridden by the users own implementation.
  */
 uint8_t
-__attribute__((weak)) getNextSnakeDirection(MatrixSnake * aSnake) {
+__attribute__((weak)) getNextSnakeDirection(MatrixSnake *aSnake) {
     return aSnake->getNextSnakeDir();
 }
 
@@ -833,7 +833,7 @@ uint8_t MatrixSnake::getNextSnakeDir() {
  * aRepetitions - number of Snake games until original OnPatternCompleteHandler is called.
  * If OnPatternComplete is NULL, Snake game is played forever.
  */
-void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
+void initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
 
     aLedsPtr->MultipleExtension = AUTORUN_MODE_SHOW_END;
     aLedsPtr->Repetitions = aRepetitions;
@@ -848,7 +848,7 @@ void initSnakeAutorun(MatrixSnake * aLedsPtr, uint16_t aIntervalMillis, color32_
  *  - Move score to left
  *  - If specified, switch back to original OnComplete handler after delay of (Index * 2)
  */
-void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr) {
+void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     static unsigned long sOriginalInterval; // store for original interval, since move needs its separate interval
     MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
 
@@ -895,7 +895,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns * aLedsPtr) {
 const char sDefaultTickerText[] PROGMEM = "I love Neopixel";
 const char * sTickerTextPtr = sDefaultTickerText;
 
-void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper * aTextForTicker) {
+void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *aTextForTicker) {
     sTickerTextPtr = reinterpret_cast<const char*>(aTextForTicker);
 }
 
@@ -906,7 +906,7 @@ void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper * 
  * 2. Moves heart in from top / bottom, show 2 heart beats, and move heart out
  * 3. Show 2 snake runs / fire. Snake shows up on the odd loops, fire on the even ones
  */
-void MatrixAndSnakePatternsDemoHandler(NeoPatterns * aLedsPtr) {
+void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
     static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;

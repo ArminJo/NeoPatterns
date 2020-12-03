@@ -188,7 +188,7 @@ class Car {
      * Needs 23 bytes RAM per car
      */
 public:
-    NeoPatterns * TrackPtr;
+    NeoPatterns *TrackPtr;
 
     uint8_t NumberOfThisCar;
     uint8_t AcceleratorButtonPin;
@@ -209,7 +209,7 @@ public:
     }
 
     void init(NeoPatterns* aTrackPtr, uint8_t aNumberOfThisCar, uint8_t aButtonPin, color32_t aCarColor,
-            const char * aWinnerMelody) {
+            const char *aWinnerMelody) {
         TrackPtr = aTrackPtr;
         NumberOfThisCar = aNumberOfThisCar;
         AcceleratorButtonPin = aButtonPin;
@@ -463,8 +463,8 @@ class Ramp {
      */
 
 public:
-    NeoPatterns * TrackPtr;
-    NeoPatterns * RampPatterns;
+    NeoPatterns *TrackPtr;
+    NeoPatterns *RampPatterns;
     uint16_t StartPositionOnTrack;
     uint8_t RampLength;
     uint8_t RampHeight;
@@ -483,14 +483,14 @@ public:
          * NeoPatterns segments to control light effects on both ramps
          * Call malloc() and free() before, since the compiler calls the constructor even when the result of malloc() is NULL, which leads to overwrite low memory.
          */
-        void * tMallocTest = malloc(sizeof(NeoPatterns));
+        void *tMallocTest = malloc(sizeof(NeoPatterns));
         if (tMallocTest != NULL) {
             free(tMallocTest);
             RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, false);
             setGravity();
             show = true;
         } else {
-#if defined (__AVR__)
+#if defined(__AVR__)
             Serial.print(F("Not enough memory for RampPatterns. Free heap="));
             Serial.println(getFreeHeap());
             Serial.flush();
@@ -552,7 +552,7 @@ class Bridge {
     /*
      * Needs 23 bytes + 2 * sizeof(NeoPatterns) RAM per bridge
      */
-    NeoPatterns * TrackPtr;
+    NeoPatterns *TrackPtr;
     Ramp RampUp;
     Ramp RampDown;
     bool show;
@@ -598,15 +598,15 @@ class Loop {
      */
 
 public:
-    NeoPatterns * TrackPtr;
-    NeoPatterns * LoopPatterns;
+    NeoPatterns *TrackPtr;
+    NeoPatterns *LoopPatterns;
     uint16_t StartPositionOnTrack;
     uint8_t Length;
     bool show;
     uint8_t RainbowIndex;
     uint8_t RainbowIndexDividerCounter; // divides the call to RainbowIndex++
 
-    void init(NeoPatterns* aTrackPtr, uint16_t aStartPositionOnTrack, uint8_t aLength) {
+    void init(NeoPatterns *aTrackPtr, uint16_t aStartPositionOnTrack, uint8_t aLength) {
         TrackPtr = aTrackPtr;
         StartPositionOnTrack = aStartPositionOnTrack;
         Length = aLength;
@@ -614,14 +614,14 @@ public:
          * NeoPatterns segments to control light effects on both ramps
          * Call malloc() and free() before, since the compiler calls the constructor even when the result of malloc() is NULL, which leads to overwrite low memory.
          */
-        void * tMallocTest = malloc(sizeof(NeoPatterns)); // 67
+        void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67
         if (tMallocTest != NULL) {
             free(tMallocTest);
             LoopPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, Length, false);
             setGravity();
             show = true;
         } else {
-#if defined (__AVR__)
+#if defined(__AVR__)
             Serial.print(F("Not enough memory for new LoopPatterns. Free heap="));
             Serial.println(getFreeHeap());
             Serial.flush();
@@ -695,6 +695,19 @@ void setup() {
 #endif
 // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+
+    bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
+    if(tIsAnalogParameterInputMode) {
+        Serial.print(F("AnalogParameterInputMode is enabled. Pin "));
+    } else {
+        Serial.print(F("AnalogParameterInputMode is disabled. Pin "));
+    }
+    Serial.print(PIN_MANUAL_PARAMETER_MODE);
+    if(tIsAnalogParameterInputMode) {
+        Serial.println(F(" is connected to ground"));
+    } else {
+        Serial.println(F(" is disconnected from ground"));
+    }
 
 // This initializes the NeoPixel library and checks if enough memory was available
     if (!track.begin(&Serial)) {

@@ -42,7 +42,7 @@ MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(8, 8, PIN_NEOPIXEL_MATRIX,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 NEO_GRB + NEO_KHZ800, NULL);
 
-uint8_t * sPixelBuffer;
+uint8_t *sPixelBuffer;
 
 #define TEST_DELAY_MILLIS 2000
 

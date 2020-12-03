@@ -57,8 +57,8 @@ EasyButton Button0AtPin3;
 uint16_t sDelay; // goes from 1 to 10k in exponential scale
 
 // onComplete callback functions
-void PatternsBackground(NeoPatterns * aLedsPtr);
-void PatternsFastMoves(NeoPatterns * aLedsPtr);
+void PatternsBackground(NeoPatterns *aLedsPtr);
+void PatternsFastMoves(NeoPatterns *aLedsPtr);
 
 // construct the NeoPatterns instances
 NeoPatterns NeoPatternsBackground = NeoPatterns(144, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsBackground);
@@ -153,7 +153,7 @@ void loop() {
  * Handler for background pattern
  * since sState starts with (0++) scanner is the first pattern you see
  */
-void PatternsBackground(NeoPatterns * aLedsPtr) {
+void PatternsBackground(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
     static bool sNoDelay = false;
 
@@ -240,7 +240,7 @@ void PatternsBackground(NeoPatterns * aLedsPtr) {
  * Handler for fast and seldom patterns
  * since sState starts with (0++) scanner is the first pattern you see
  */
-void PatternsFastMoves(NeoPatterns * aLedsPtr) {
+void PatternsFastMoves(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
     /*

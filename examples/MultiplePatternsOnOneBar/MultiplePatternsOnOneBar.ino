@@ -35,7 +35,7 @@
 #define PIN_NEOPIXEL  2
 
 // onComplete callback functions
-void MultiPatterns(NeoPatterns * aLedsPtr);
+void MultiPatterns(NeoPatterns *aLedsPtr);
 
 // construct the NeoPatterns instances
 NeoPatterns NeoPixelBar24 = NeoPatterns(24, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
@@ -81,7 +81,7 @@ void loop() {
 /*
  * Handler for multi pattern
  */
-void MultiPatterns(NeoPatterns * aLedsPtr) {
+void MultiPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 1; // start with delay
 
     /*

@@ -109,4 +109,3 @@ typedef uint32_t color32_t;
 #endif /* COLORS_H_ */
 
 #pragma once
-

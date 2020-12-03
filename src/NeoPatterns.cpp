@@ -65,7 +65,7 @@ const char PatternBouncingBall[] PROGMEM ="Bouncing ball";
 const char * const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
         PatternScannerExtended, PatternStripes, PatternProcessSelectiveColor, PatternFire, PatternHeartbeat, PatternPattern1,
         PatternPattern2
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
         , PatternBouncingBall
 #endif
         };
@@ -77,7 +77,7 @@ const char * const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCy
 //            &NeoPatterns::HeartbeatUpdate, &NeoPatterns::Pattern1Update, &NeoPatterns::Pattern2Update};
 // call it with: bool tPatternEnded = (this->*sUpdateFunctionPointerArray[ActivePattern])(true);
 
-NeoPatterns * NeoPatterns::FirstNeoPatternsObject = NULL;
+NeoPatterns *NeoPatterns::FirstNeoPatternsObject = NULL;
 /**********************************************************************************
  * Code inspired by https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all
  * Changed and extended for added functionality
@@ -135,7 +135,7 @@ bool NeoPatterns::init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPi
  *   UnderlyingNeoPixelObject->show();
  * }
  */
-NeoPatterns::NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
+NeoPatterns::NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
         bool aEnableShowOfUnderlyingPixel, void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) :
         NeoPixel(aUnderlyingNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfUnderlyingPixel) {
 
@@ -148,10 +148,10 @@ NeoPatterns::NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOf
 
     /*
      * Insert "this" in the NextNeoPatternsObject list
-     * TODO manage list in destructor
+     * Do not forget to manage list in destructor (not yet implemented)
      */
     NextNeoPatternsObject = NULL;
-    NeoPatterns * NextObjectPointer = FirstNeoPatternsObject;
+    NeoPatterns *NextObjectPointer = FirstNeoPatternsObject;
     if (NextObjectPointer == NULL) {
         FirstNeoPatternsObject = this;
     } else {
@@ -162,7 +162,7 @@ NeoPatterns::NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOf
     }
 }
 
-void NeoPatterns::init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+void NeoPatterns::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel, void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) {
 
     NeoPixel::init(aUnderlyingNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfUnderlyingPixel);
@@ -175,10 +175,9 @@ void NeoPatterns::init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffs
 
     /*
      * Insert "this" in the NextNeoPatternsObject list
-     * TODO manage list in destructor
      */
     NextNeoPatternsObject = NULL;
-    NeoPatterns * NextObjectPointer = FirstNeoPatternsObject;
+    NeoPatterns *NextObjectPointer = FirstNeoPatternsObject;
     if (NextObjectPointer == NULL) {
         FirstNeoPatternsObject = this;
     } else {
@@ -219,7 +218,7 @@ bool NeoPatterns::updateAllPartialPatterns() {
      */
     bool tNeedShow = false;
     bool tAtLeastOnePatternIsActive = false;
-    NeoPatterns * NextObjectPointer = FirstNeoPatternsObject;
+    NeoPatterns *NextObjectPointer = FirstNeoPatternsObject;
     while (NextObjectPointer != NULL) {
 #ifdef TRACE
         Serial.print(F("&Pattern=0x"));
@@ -319,7 +318,7 @@ bool NeoPatterns::update() {
         case PATTERN_USER_PATTERN2:
             tPatternEnded = Pattern2Update();
             break;
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
         case PATTERN_BOUNCING_BALL:
             tPatternEnded = BouncingBallUpdate();
             break;
@@ -1012,7 +1011,7 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
     return false;
 }
 
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
 #include <math.h>
 
 /*
@@ -1124,7 +1123,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
 #endif
     return false;
 }
-#endif // !defined (DO_NOT_USE_MATH_PATTERNS)
+#endif // !defined(DO_NOT_USE_MATH_PATTERNS)
 
 /********************************************************
  * The original Fire code is from: Fire2012 by Mark Kriegsman, July 2012
@@ -1322,7 +1321,7 @@ bool NeoPatterns::ProcessSelectiveColorUpdate(bool aDoUpdate) {
 /***********************************************************
  * Sample processing functions for ProcessSelectiveColor()
  ***********************************************************/
-color32_t FadeColor(NeoPatterns * aNeoPatternsPtr) {
+color32_t FadeColor(NeoPatterns *aNeoPatternsPtr) {
     aNeoPatternsPtr->Index++;
     uint16_t tIndex = aNeoPatternsPtr->Index;
     uint16_t tTotalSteps = aNeoPatternsPtr->TotalStepCounter;
@@ -1342,7 +1341,7 @@ color32_t FadeColor(NeoPatterns * aNeoPatternsPtr) {
 /*
  * works on LongValue2.ColorTmp
  */
-color32_t DimColor(NeoPatterns * aNeoPatternsPtr) {
+color32_t DimColor(NeoPatterns *aNeoPatternsPtr) {
     color32_t tColor = aNeoPatternsPtr->LongValue2.ColorTmp;
     uint8_t tRed = Red(tColor) >> 1;
     uint8_t tGreen = Green(tColor) >> 1;
@@ -1361,7 +1360,7 @@ color32_t DimColor(NeoPatterns * aNeoPatternsPtr) {
 /*
  * works on LongValue2.ColorTmp
  */
-color32_t BrightenColor(NeoPatterns * aNeoPatternsPtr) {
+color32_t BrightenColor(NeoPatterns *aNeoPatternsPtr) {
     color32_t tColor = aNeoPatternsPtr->LongValue2.ColorTmp;
     uint8_t tRed = Red(tColor) << 1;
     uint8_t tGreen = Green(tColor) << 1;
@@ -1379,8 +1378,8 @@ color32_t BrightenColor(NeoPatterns * aNeoPatternsPtr) {
 /*
  * Not required for non AVR platforms, it is then just PatternNamesArray[aPatternNumber]
  */
-void NeoPatterns::getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t aBuffersize) {
-    const char* aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
+void NeoPatterns::getPatternName(uint8_t aPatternNumber, char *aBuffer, uint8_t aBuffersize) {
+    const char *aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
     char tPGMChar;
     do {
         tPGMChar = pgm_read_byte(aNameArrayPointerPGM++);
@@ -1396,9 +1395,9 @@ void NeoPatterns::getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t
  * Prints name of the pattern e.g. "Rainbow cycle"
  * call it e.g. printPatternName(&Serial);
  */
-void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print * aSerial) {
+void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 #if defined(__AVR__)
-    const char* aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
+    const char *aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
     aSerial->print((const __FlashStringHelper *) aNameArrayPointerPGM);
 #else
         aSerial->print(PatternNamesArray[aPatternNumber]);
@@ -1408,7 +1407,7 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print * aSerial) {
 /*
  * For debugging purposes
  */
-void NeoPatterns::printInfo(Print * aSerial, bool aFullInfo) {
+void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
     static uint16_t sLastSteps;
 
     /*
@@ -1465,13 +1464,13 @@ void NeoPatterns::printInfo(Print * aSerial, bool aFullInfo) {
  * Code for user pattern extensions
  ***********************************/
 
-bool __attribute__((weak)) UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate);
+bool __attribute__((weak)) UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate);
 
 /*
  * Set all pixel to aBackgroundColor and let a pixel of Color1 move through.
  * Starts with all pixel aColor1 and also ends with it.
  */
-void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
+void __attribute__((weak)) UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
     aNeoPatterns->Interval = aIntervalMillis;
     aNeoPatterns->Color1 = aPixelColor;
@@ -1496,7 +1495,7 @@ void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aP
 /*
  * Sample implementation
  */
-bool __attribute__((weak)) UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+bool __attribute__((weak)) UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
     if (aDoUpdate) {
         if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
             return true;
@@ -1523,7 +1522,7 @@ bool NeoPatterns::Pattern1Update(bool aDoUpdate) {
  * let a pixel of aColor move up and down
  * starts and ends with all pixel cleared
  */
-void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
+void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
         uint16_t aRepetitions, uint8_t aDirection) {
     /*
      * Sample implementation
@@ -1553,7 +1552,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aC
  * Sample implementation
  * The user may specify its own implementation
  */
-bool __attribute__((weak)) UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+bool __attribute__((weak)) UserPattern2Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
     if (aDoUpdate) {
         // clear old pixel
         aNeoPatterns->setPixelColor(aNeoPatterns->Index, COLOR32_BLACK);
@@ -1596,7 +1595,7 @@ bool NeoPatterns::Pattern2Update(bool aDoUpdate) {
  * If aNextOnCompleteHandler == NULL, run falling star forever with random delay
  *****************************************************************/
 // initialize for falling star (scanner with delay after pattern)
-void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
+void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
         void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection) {
 
     aLedsPtr->MultipleExtension = aDuration;
@@ -1619,7 +1618,7 @@ void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t 
  * if all falling stars are completed switch back to NextOnComplete
  * if NextOnPatternCompleteHandler == NULL, run falling star forever with random delay
  */
-void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr) {
+void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
     uint8_t tDuration = aLedsPtr->MultipleExtension;
     uint16_t tRepetitions = aLedsPtr->Repetitions;
     if (tRepetitions == 1) {
@@ -1672,11 +1671,11 @@ const char* DirectionToString(uint8_t aDirection) {
 /*
  * Sample handler for random pattern
  */
-void allPatternsRandomHandler(NeoPatterns * aLedsPtr) {
+void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
     uint8_t tState = random(13);
 
-    uint8_t tDuration = random(40, 81);
-    uint8_t tColor = random(255);
+    uint8_t tDuration = random(40, 80);
+    uint8_t tColor = random(256);
 
     switch (tState) {
     case 0:
@@ -1739,10 +1738,10 @@ void allPatternsRandomHandler(NeoPatterns * aLedsPtr) {
             FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR);
         }
         break;
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
     case 12:
-        // BouncingBall only for bars and then only 50 percent
-        if ((aLedsPtr->PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) == 0 && (tColor & 1)) {
+        // BouncingBall only for bars
+        if ((aLedsPtr->PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) == 0) {
             aLedsPtr->BouncingBall(NeoPatterns::Wheel(tColor), aLedsPtr->numPixels() - 1);
         } else {
             UserPattern1(aLedsPtr, NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), tDuration / 2);

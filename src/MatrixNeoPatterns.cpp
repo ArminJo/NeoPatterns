@@ -190,7 +190,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms
             int * convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
-            uint8_t * tFireMatrixOldPtr = &MatrixOld[mapXYToArray((x - 1), (y - 1), Rows + 2)];
+            uint8_t *tFireMatrixOldPtr = &MatrixOld[mapXYToArray((x - 1), (y - 1), Rows + 2)];
             for (uint8_t cy = 0; cy < CONVOLUTION_MATRIX_SIZE; cy++) {
                 for (uint8_t cx = 0; cx < CONVOLUTION_MATRIX_SIZE; cx++) {
                     tConvolutionSumTimes256 += *convolutionMatrixIntegerTimes256Ptr++ * *tFireMatrixOldPtr++;
@@ -225,7 +225,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
     }
 
 // toggle areas
-    uint8_t * tPtr = MatrixNew;
+    uint8_t *tPtr = MatrixNew;
     MatrixNew = MatrixOld;
     MatrixOld = tPtr;
     return false;
@@ -235,7 +235,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
  * direction FORWARD is from left to right
  * Currently only 8x8 Graphics are supported
  */
-void MatrixNeoPatterns::MovingPicturePGM(const uint8_t* aGraphics8x8ArrayPGM, color32_t aForegroundColor,
+void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, color32_t aForegroundColor,
         color32_t aBackgroundColor, int8_t aGraphicsXOffset, int8_t aGraphicsYOffset, uint16_t aSteps, uint16_t aIntervalMillis,
         uint8_t aDirection) {
     DataPtr = aGraphics8x8ArrayPGM;
@@ -457,22 +457,22 @@ bool MatrixNeoPatterns::MoveUpdate() {
 /*
  * only directions DIRECTION_LEFT and DIRECTION_UP are supported yet
  */
-void MatrixNeoPatterns::Ticker(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
+void MatrixNeoPatterns::Ticker(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
     TickerInit(aStringPtr, aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection);
 }
-void MatrixNeoPatterns::TickerPGM(const char* aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
+void MatrixNeoPatterns::TickerPGM(const char *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
     TickerInit(aStringPtrPGM, aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection, FLAG_TICKER_DATA_IN_FLASH);
 }
 
-void MatrixNeoPatterns::Ticker(__FlashStringHelper * aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
+void MatrixNeoPatterns::Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
     TickerInit(reinterpret_cast<const char*>(aStringPtrPGM), aForegroundColor, aBackgroundColor, aIntervalMillis, aDirection,
     FLAG_TICKER_DATA_IN_FLASH);
 }
 
-void MatrixNeoPatterns::TickerInit(const char* aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
+void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection, uint8_t aFlags) {
     ActivePattern = PATTERN_TICKER;
     PatternFlags = aFlags;
@@ -534,7 +534,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
     Serial.println(tNextChar);
 #endif
 
-    const uint8_t* tGraphics8x8ArrayPtr = &font_PGM[(tLeftChar - FONT_START) * FONT_HEIGHT];
+    const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tLeftChar - FONT_START) * FONT_HEIGHT];
     loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset,
             (tNextChar == '\0'));
     if (tNextChar != '\0') {
@@ -602,7 +602,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
 /*
  * Sample callback handler for MatrixNeoPatterns
  */
-void MatrixPatternsDemo(NeoPatterns * aLedsPtr) {
+void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
     MatrixNeoPatterns* tLedsPtr = (MatrixNeoPatterns*) aLedsPtr;
     static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;

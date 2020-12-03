@@ -64,15 +64,15 @@ public:
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
     void AdafruitNeoPixelIinit(uint16_t aNumberOfPixels, uint16_t aPin, neoPixelType aTypeOfPixel);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel);
-    NeoPixel(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+    NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true);
-    void init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+    void init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true);
 
-    void printInfo(Print * aSerial);
+    void printInfo(Print *aSerial);
 
     // To enable more than one pattern on the same strip
-    void setPixelBuffer(uint8_t * aNewPixelBufferPointer);
+    void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
 
     // To move the start index of a NeoPixel object
     void setPixelOffsetForPartialNeoPixel(uint16_t aPixelOffset);
@@ -82,7 +82,7 @@ public:
     void begin();
     void show();
     // Version with error message
-    bool begin(Print * aSerial);
+    bool begin(Print *aSerial);
 
     void ColorSet(color32_t aColor);
     color32_t getPixelColor(uint16_t aPixelIndex);
@@ -91,8 +91,8 @@ public:
     uint8_t getBytesPerPixel();
     neoPixelType getType();
     uint16_t getPixelBufferSize();
-    void storePixelBuffer(uint8_t * aPixelBufferPointerDestination);
-    void restorePixelBuffer(uint8_t * aPixelBufferPointerSource);
+    void storePixelBuffer(uint8_t *aPixelBufferPointerDestination);
+    void restorePixelBuffer(uint8_t *aPixelBufferPointerSource);
 
     // Functions to support PixelOffset
     void clear(void);
@@ -104,7 +104,7 @@ public:
     void setPixelColor(uint16_t aPixelIndex, uint32_t aColor);
     void fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
-    void drawBarFromColorArray(uint16_t aBarLength, color32_t * aColorArrayPtr, bool aDrawFromBottom = true);
+    void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
 
     void addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     // Static functions
@@ -123,14 +123,14 @@ public:
 #endif
     uint8_t PixelFlags;
     uint16_t PixelOffset; // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
-    NeoPixel * UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
+    NeoPixel *UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
 };
 
 #define PIXEL_FLAG_IS_PARTIAL_NEOPIXEL                       0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
 #define PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT   0x02 // use negative logic because evaluation is simpler then
 /*
  * Flag for NeoPattern. This disables the initial asynchronous show() for a new pattern, but enables show() if called by synchronous callback.
- * This behavior is needed to avoid disturbing other libraries, which cannot handle the time when interrupt is disabled for show() e.g. the Servo library.
+ * This behavior is required to avoid disturbing other libraries, which cannot handle the time when interrupt is disabled for show() e.g. the Servo library.
  * The asynchronous call is detected by checking if the current pattern is not PATTERN_NONE.
  */
 #define PIXEL_FLAG_SHOW_ONLY_AT_UPDATE                       0x04

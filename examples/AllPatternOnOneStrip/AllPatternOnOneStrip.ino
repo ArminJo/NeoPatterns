@@ -44,11 +44,11 @@
 #define PIN_NEOPIXEL_BAR_16          3
 
 // onComplete callback functions
-void allPatterns(NeoPatterns * aLedsPtr);
+void allPatterns(NeoPatterns *aLedsPtr);
 
 // construct the NeoPatterns instances
 #ifdef TEST_USER_PATTERNS
-void ownPatterns(NeoPatterns * aLedsPtr);
+void ownPatterns(NeoPatterns *aLedsPtr);
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &ownPatterns);
 #else
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatterns);
@@ -92,7 +92,7 @@ void loop() {
  * set all pixel to aColor1 and let a pixel of color2 move through
  * Starts with all pixel aColor1 and also ends with it.
  */
-void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
+void UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
         uint8_t aDirection) {
     /*
      * Sample implementation not supporting DIRECTION_DOWN
@@ -111,7 +111,7 @@ void UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t a
 /*
  * @return - true if pattern has ended, false if pattern has NOT ended
  */
-bool UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+bool UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
     /*
      * Sample implementation not supporting initial direction DIRECTION_DOWN
      */
@@ -136,7 +136,7 @@ bool UserPattern1Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
  * let a pixel of aColor move up and down
  * starts and ends with all pixel cleared
  */
-void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions,
+void UserPattern2(NeoPatterns *aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions,
         uint8_t aDirection) {
     /*
      * Sample implementation not supporting DIRECTION_DOWN
@@ -157,7 +157,7 @@ void UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aInterv
 /*
  * @return - true if pattern has ended, false if pattern has NOT ended
  */
-bool UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
+bool UserPattern2Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
     /*
      * Sample implementation
      */
@@ -196,7 +196,7 @@ bool UserPattern2Update(NeoPatterns * aNeoPatterns, bool aDoUpdate) {
 /*
  * Handler for testing your own patterns
  */
-void ownPatterns(NeoPatterns * aLedsPtr) {
+void ownPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
     uint8_t tDuration = random(20, 120);
@@ -225,7 +225,7 @@ void ownPatterns(NeoPatterns * aLedsPtr) {
 /*
  * Handler for all pattern
  */
-void allPatterns(NeoPatterns * aLedsPtr) {
+void allPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
     uint8_t tDuration = random(40, 81);

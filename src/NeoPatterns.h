@@ -36,7 +36,7 @@
 #ifndef NEOPATTERNS_H
 #define NEOPATTERNS_H
 
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
 // Comment this out if you do NOT need the BOUNCING_BALL pattern.
 // This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
 //#define DO_NOT_USE_MATH_PATTERNS
@@ -51,31 +51,7 @@
 #define VERSION_NEOPATTERNS "2.2.1"
 #define VERSION_NEOPATTERNS_MAJOR 2
 #define VERSION_NEOPATTERNS_MINOR 2
-
-/*
- * Version 2.2.0 - 4/2020
- * - Added support for RGBW patterns. Requires additional 200 bytes for AllPatternsOnMultiDevices example.
- *   Not defining SUPPORT_RGBW saves 400 bytes FLASH for AllPatternsOnMultiDevices example.
- * - Use type `Print *` instead of `Stream *`.
- * - Changed function `addPixelColor()`.
- * - Added function `NeoPixel::printInfo(aSerial)`.
- * - Added *D functions, which take the duration of the whole pattern as argument.
- * - Added OpenLedRace example.
- * - Added empty constructor and init() functions.
- * - Added function `updateAllPartialPatterns()`.
- *
- * Version 2.1.0 - 12/2019
- * - Ported to ESP8266 and ESP32.
- * - Changed signature of NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
- * - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
- *
- * Version 2.0.0 - 11/2019
- * - Function `drawBar()` in NeoPixel.cpp added.
- * - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
- * - Pattern `HEARTBEAT` and `BOUNCING_BALL` added.
- * - Added parameter aDirection to `Fire()`.
- * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
- */
+// The change log is at the bottom of the file
 
 extern const char * const PatternNamesArray[] PROGMEM;
 
@@ -95,7 +71,7 @@ extern const char * const PatternNamesArray[] PROGMEM;
 #define PATTERN_USER_PATTERN1      10
 #define PATTERN_USER_PATTERN2      11
 
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
 #define PATTERN_BOUNCING_BALL      12
 #endif
 
@@ -133,10 +109,10 @@ public:
             bool aShowOnlyAtUpdate = false);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
             bool aShowOnlyAtUpdate = false);
-    NeoPatterns(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+    NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
-    void init(NeoPixel * aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+    void init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
 
@@ -183,7 +159,7 @@ public:
 
     color32_t HeatColor(uint8_t aTemperature);
 
-#if !defined (DO_NOT_USE_MATH_PATTERNS)
+#if !defined(DO_NOT_USE_MATH_PATTERNS)
     void BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint16_t aIntervalMillis = 70, int8_t aPercentageOfLossAtBounce =
             10, uint8_t aDirection = DIRECTION_DOWN);
     bool BouncingBallUpdate(bool aDoUpdate = true);
@@ -212,12 +188,12 @@ public:
     void ProcessSelectiveColorForAllPixel();
 
 #if defined(__AVR__)
-    void getPatternName(uint8_t aPatternNumber, char * aBuffer, uint8_t aBuffersize);
+    void getPatternName(uint8_t aPatternNumber, char *aBuffer, uint8_t aBuffersize);
 #else
     // use PatternNamesArray[aPatternNumber] on other platforms
 #endif
-    void printPatternName(uint8_t aPatternNumber, Print * aSerial);
-    void printInfo(Print * aSerial, bool aFullInfo = true);
+    void printPatternName(uint8_t aPatternNumber, Print *aSerial);
+    void printInfo(Print *aSerial, bool aFullInfo = true);
 
     /*
      * Variables for almost each pattern
@@ -258,7 +234,7 @@ public:
     union {
         color32_t BackgroundColor;
         color32_t Color2; // second pattern color
-        uint8_t * heatOfPixelArrayPtr; // Allocated array for current heat values for Fire pattern
+        uint8_t *heatOfPixelArrayPtr; // Allocated array for current heat values for Fire pattern
         uint16_t StartIntervalMillis; // BouncingBall: interval for first step
         uint16_t NumberOfBouncings; // ScannerExtended: Number of bounces
     } LongValue1;
@@ -284,8 +260,8 @@ public:
     /*
      * List of all NeoPatterns
      */
-    NeoPatterns * NextNeoPatternsObject; // For underlying NeoPixels, the first partial NeoPixel, else the next partial NeoPixel for the same underlying NeoPixel
-    static NeoPatterns * FirstNeoPatternsObject;
+    NeoPatterns *NextNeoPatternsObject; // For underlying NeoPixels, the first partial NeoPixel, else the next partial NeoPixel for the same underlying NeoPixel
+    static NeoPatterns *FirstNeoPatternsObject;
 };
 
 //  Sample processing functions for ProcessSelectiveColor()
@@ -294,16 +270,42 @@ color32_t DimColor(NeoPatterns* aNeoPatternsPtr);
 color32_t BrightenColor(NeoPatterns* aNeoPatternsPtr);
 
 // multiple pattern example
-void initMultipleFallingStars(NeoPatterns * aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
+void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
         void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection = DIRECTION_DOWN);
-void multipleFallingStarsCompleteHandler(NeoPatterns * aLedsPtr);
+void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr);
 
-void allPatternsRandomHandler(NeoPatterns * aLedsPtr);
+void allPatternsRandomHandler(NeoPatterns *aLedsPtr);
 
-void __attribute__((weak)) UserPattern1(NeoPatterns * aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
+void __attribute__((weak)) UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
-void __attribute__((weak)) UserPattern2(NeoPatterns * aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
+void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
         uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
+
+/*
+ * Version 2.2.0 - 4/2020
+ * - Added support for RGBW patterns. Requires additional 200 bytes for AllPatternsOnMultiDevices example.
+ *   Not defining SUPPORT_RGBW saves 400 bytes FLASH for AllPatternsOnMultiDevices example.
+ * - Use type `Print *` instead of `Stream *`.
+ * - Changed function `addPixelColor()`.
+ * - Added function `NeoPixel::printInfo(aSerial)`.
+ * - Added *D functions, which take the duration of the whole pattern as argument.
+ * - Added OpenLedRace example.
+ * - Added empty constructor and init() functions.
+ * - Added function `updateAllPartialPatterns()`.
+ *
+ * Version 2.1.0 - 12/2019
+ * - Ported to ESP8266 and ESP32.
+ * - Changed signature of NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
+ * - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
+ *
+ * Version 2.0.0 - 11/2019
+ * - Function `drawBar()` in NeoPixel.cpp added.
+ * - Swapped parameter aNumberOfSteps and aIntervalMillis of `Stripes()`.
+ * - Pattern `HEARTBEAT` and `BOUNCING_BALL` added.
+ * - Added parameter aDirection to `Fire()`.
+ * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
+ */
+
 #endif // NEOPATTERNS_H
 
 #pragma once
