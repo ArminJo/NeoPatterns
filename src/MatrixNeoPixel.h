@@ -2,6 +2,7 @@
  * MatrixNeoPixel.h
  *
  * Implements basic functions for NeoPixel matrix. Tested with 8x8 matrix.
+ * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and DOWN.
  *
  *  Copyright (C) 2019  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
@@ -38,6 +39,39 @@
 
 #include "NeoPixel.h"
 
+/*
+ * If you have only default geometry (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE),
+ * i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag)
+ * then you can save program space by defining symbol `SUPPORT_ONLY_DEFAULT_GEOMETRY`.
+ * This saves 560 bytes FLASH and 3 bytes RAM.
+ */
+//#define SUPPORT_ONLY_DEFAULT_GEOMETRY
+//
+/*
+ * Defines from Adafruit_NeoMatrix.h
+ */
+// Matrix layout information is passed in the 'matrixType' parameter for
+// each constructor (the parameter immediately following is the LED type
+// from NeoPixel.h).
+// These define the layout for a single 'unified' matrix (e.g. one made
+// from NeoPixel strips, or a single NeoPixel shield), or for the pixels
+// within each matrix of a tiled display (e.g. multiple NeoPixel shields).
+#define NEO_MATRIX_TOP         0x00 // Pixel 0 is at top of matrix
+#define NEO_MATRIX_BOTTOM      0x01 // Pixel 0 is at bottom of matrix
+#define NEO_MATRIX_LEFT        0x00 // Pixel 0 is at left of matrix
+#define NEO_MATRIX_RIGHT       0x02 // Pixel 0 is at right of matrix
+#define NEO_MATRIX_CORNER      0x03 // Bitmask for pixel 0 matrix corner
+
+#define NEO_MATRIX_ROWS        0x00 // Matrix is row major (horizontal)
+#define NEO_MATRIX_COLUMNS     0x04 // Matrix is column major (vertical)
+#define NEO_MATRIX_AXIS        0x04 // Bitmask for row/column layout
+
+#define NEO_MATRIX_PROGRESSIVE 0x00 // Same pixel order across each line
+#define NEO_MATRIX_ZIGZAG      0x08 // Pixel order reverses between lines
+#define NEO_MATRIX_SEQUENCE    0x08 // Bitmask for pixel line order
+
+#define NEO_MATRIX_DEFAULT_GEOMETRY   (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)
+
 class MatrixNeoPixel: public virtual NeoPixel {
 public:
     MatrixNeoPixel();
@@ -45,9 +79,10 @@ public:
     MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
 
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     void setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t));
-
     uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);
+#endif
 
     color32_t getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor);
@@ -61,6 +96,10 @@ public:
             color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
             bool doPadding = false, bool IsPGMData = false);
 
+    void loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
+            color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
+            bool doPadding = false, bool IsPGMData = false);
+
     void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
     void drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
 
@@ -71,34 +110,13 @@ public:
     void drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
 
     // Geometry of Matrix
-    uint8_t Rows;       // Y Direction
-    uint8_t Columns;    // X Direction
+    uint8_t Rows;       // Y Direction / size
+    uint8_t Columns;    // X Direction / size
 
-    /*
-     * Defines from Adafruit_NeoMatrix.h
-     */
-    // Matrix layout information is passed in the 'matrixType' parameter for
-    // each constructor (the parameter immediately following is the LED type
-    // from NeoPixel.h).
-    // These define the layout for a single 'unified' matrix (e.g. one made
-    // from NeoPixel strips, or a single NeoPixel shield), or for the pixels
-    // within each matrix of a tiled display (e.g. multiple NeoPixel shields).
-#define NEO_MATRIX_TOP         0x00 // Pixel 0 is at top of matrix
-#define NEO_MATRIX_BOTTOM      0x01 // Pixel 0 is at bottom of matrix
-#define NEO_MATRIX_LEFT        0x00 // Pixel 0 is at left of matrix
-#define NEO_MATRIX_RIGHT       0x02 // Pixel 0 is at right of matrix
-#define NEO_MATRIX_CORNER      0x03 // Bitmask for pixel 0 matrix corner
-#define NEO_MATRIX_ROWS        0x00 // Matrix is row major (horizontal)
-#define NEO_MATRIX_COLUMNS     0x04 // Matrix is column major (vertical)
-#define NEO_MATRIX_AXIS        0x04 // Bitmask for row/column layout
-#define NEO_MATRIX_PROGRESSIVE 0x00 // Same pixel order across each line
-#define NEO_MATRIX_ZIGZAG      0x08 // Pixel order reverses between lines
-#define NEO_MATRIX_SEQUENCE    0x08 // Bitmask for pixel line order
-#define NEO_MATRIX_DEFAULT_GEOMETRY   (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     uint8_t Geometry;    // Flags for geometry
-
     uint16_t (*LayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t); // Pointer to function, which implements the mapping between X/Y and pixel number
-
+#endif
 };
 
 #define HEART_WIDTH 8

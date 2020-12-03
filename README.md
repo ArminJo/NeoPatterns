@@ -49,18 +49,20 @@ First you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libr
 Then install this "NeoPatterns" library with *Tools -> Manage Libraries... (Ctrl+Shift+I)*. Use "NeoPatterns" as filter string.
 
 ## Matrix pixel mappings
+**Origin (0,0) of x and y values is at the top left corner and the positive direction is right and DOWN.**
+
 Pixel mappings definitions and semantics are taken from https://github.com/adafruit/Adafruit_NeoMatrix/blob/master/Adafruit_NeoMatrix.h
 Here you find also mappings for tiled display with multiple matrices.
 
-Examples:
+Examples for LED index to position mappings:
 ```
      ProgressiveMapping                  ZigzagTypeMapping
    Regular        Mirrored           Regular        Mirrored
-   Bottom/Right   Bottom/Left                                                             
-   15 14 13 12    12 13 14 15        12 13 14 15    15 14 13 12    
-   11 10  9  8     8  9 10 11        11 10  9  8     8  9 10 11    
-    7  6  5  4     4  5  6  7         4  5  6  7     7  6  5  4    
-    3  2  1  0     0  1  2  3         3  2  1  0     0  1  2  3   
+   Bottom/Right   Bottom/Left
+   15 14 13 12    12 13 14 15        12 13 14 15    15 14 13 12
+   11 10  9  8     8  9 10 11        11 10  9  8     8  9 10 11
+    7  6  5  4     4  5  6  7         4  5  6  7     7  6  5  4
+    3  2  1  0     0  1  2  3         3  2  1  0     0  1  2  3
 ```
 
 **All matrix pixel mappings except NEO_MATRIX_COLUMNS are supported**
@@ -71,8 +73,10 @@ To customize the library to different requirements, there are some compile optio
 Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for gobal compile (the latter is not possible with the Arduino IDE, so consider to use [Sloeber](https://eclipse.baeyens.it).
 | Macro | Default | File | Description |
 |-|-|-|-|
-| `DO_NOT_SUPPORT_RGBW` | enabled | NeoPixel.h | If you only have RGB pixels and do not require RGBW pixels support. Saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
+| `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
 | `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. |
+| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes FLASH and 3 bytes RAM. |
+
 
 ### Modifying compile options with Arduino IDE
 First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
@@ -96,6 +100,12 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
+### Version 2.2.2
+- Fixed bugs if rows are not equal columns.
+- Fixed bug in MatrixNeoPatterns constructor.
+- Added `SUPPORT_ONLY_DEFAULT_GEOMETRY` compile option.
+- Added loadPicture() for 16 bit pictures.
+
 ### Version 2.2.1
 - Removed blocking wait for ATmega32U4 Serial in examples.
 

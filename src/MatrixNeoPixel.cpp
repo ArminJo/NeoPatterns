@@ -42,8 +42,10 @@ MatrixNeoPixel::MatrixNeoPixel() :
 void MatrixNeoPixel::init() {
     Rows = 0;
     Columns = 0;
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     Geometry = NEO_MATRIX_DEFAULT_GEOMETRY;
     LayoutMappingFunction = NULL;
+#endif
 }
 
 MatrixNeoPixel::MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel) : // @suppress("Class members should be properly initialized")
@@ -51,8 +53,10 @@ MatrixNeoPixel::MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, ui
 
     Rows = aRows;
     Columns = aColumns;
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     Geometry = aMatrixGeometry;
     LayoutMappingFunction = NULL;
+#endif
 }
 
 /*
@@ -63,14 +67,18 @@ bool MatrixNeoPixel::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t
 
     Rows = aRows;
     Columns = aColumns;
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     Geometry = aMatrixGeometry;
     LayoutMappingFunction = NULL;
+#endif
     return tRetval;
 }
 
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
 void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t)) {
     LayoutMappingFunction = aLayoutMappingFunction;
 }
+#endif
 
 void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
 #ifdef DEBUG
@@ -87,11 +95,15 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
     Serial.print('|');
     Serial.println(aBlue);
 #endif
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     if (LayoutMappingFunction == NULL) {
         setPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
     } else {
         setPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), aRed, aGreen, aBlue);
     }
+#else
+    setPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, aRed, aGreen, aBlue);
+#endif
 }
 
 /*
@@ -108,11 +120,15 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
     Serial.print(F(" color="));
     Serial.println(a32BitColor, HEX);
 #endif
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     if (LayoutMappingFunction == NULL) {
         setPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
     } else {
         setPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), a32BitColor);
     }
+#else
+    setPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, a32BitColor);
+#endif
 }
 
 /*
@@ -120,11 +136,15 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
  */
 uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
     uint32_t tColor;
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     if (LayoutMappingFunction == NULL) {
         tColor = getPixelColor(LayoutMapping(aColumnX, aRowY));
     } else {
         tColor = getPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows));
     }
+#else
+    tColor = getPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1);
+#endif
 #ifdef DEBUG
     Serial.print(F("set x="));
     Serial.print(aColumnX);
@@ -138,6 +158,7 @@ uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
     return tColor;
 }
 
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
 /*
  *   Example Pixel mappings supported (bottom up mappings not shown here)
  *
@@ -173,9 +194,9 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
         }
         if ((Geometry & NEO_MATRIX_SEQUENCE) == NEO_MATRIX_PROGRESSIVE) {
             if ((Geometry & NEO_MATRIX_RIGHT) == NEO_MATRIX_RIGHT) {
-                tRetvalue = (Columns * tRows - aColumnX) - 1; // From Right to Left -1 since we start at 0
+                tRetvalue = (Columns * tRows - aColumnX) - 1; // From right to left -1 since we start at 0
             } else {
-                tRetvalue = (Columns * (tRows - 1)) + aColumnX; // From Left to Right
+                tRetvalue = (Columns * (tRows - 1)) + aColumnX; // From left to right
             }
         } else {
             // ZIGZAG here
@@ -185,14 +206,15 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
                 tCompareValue = 1;
             }
             if ((tRows & 0x01) != tCompareValue) { // equivalent to ((tRows - 1) % 2 == tCompareValue)
-                tRetvalue = (Columns * tRows - aColumnX) - 1; // From Right to Left -1 since we start at 0
+                tRetvalue = (Columns * tRows - aColumnX) - 1; // From right to left -1 since we start at 0
             } else {
-                tRetvalue = (Columns * (tRows - 1)) + aColumnX;  // From Left to Right
+                tRetvalue = (Columns * (tRows - 1)) + aColumnX;  // From left to right
             }
         }
     }
     return tRetvalue;
 }
+#endif
 
 /*
  * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
@@ -221,8 +243,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
  * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
  * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
  */
-void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr,
-        bool aDrawFromBottom) {
+void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom) {
 
     uint8_t j = Rows - 1;
     for (uint8_t i = 0; i < Rows; i++) {
@@ -249,7 +270,7 @@ void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength
 }
 
 /*
- * For displaying a one color graphic.
+ * For displaying a one color graphic with maximum width of 8.
  *
  * Graphic is stored in a byte array where array[0] is the upper line and the lowest bit is the rightmost pixel.
  * Smaller graphics can be displayed by using aNumberOfVerticalLinesToProcess < 8 which ignores left / highest bits of 8bit line
@@ -285,8 +306,8 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
     const uint8_t *tGraphicsPointer = aGraphicsArrayPtr;
 
     uint8_t tLinesFromGraphic = aHeightOfGraphic;
-    aXOffset = constrain(aXOffset, -Rows, Rows);
-    aYOffset = constrain(aYOffset, -Columns, Columns);
+    aXOffset = constrain(aXOffset, -Columns, Columns);
+    aYOffset = constrain(aYOffset, -Rows, Rows);
 
     /*
      * YOffset handling
@@ -345,7 +366,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
         /*
          * Process one horizontal line
          */
-        for (int8_t x = 0; x < Rows; ++x) {
+        for (int8_t x = 0; x < Columns; ++x) {
             uint8_t tBitmask = tBitmaskExtended & 0xFF;
 #ifdef TRACE
             Serial.print(F(" tBitmask="));
@@ -366,6 +387,119 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
                 // padding
                 setMatrixPixelColor(x, tYposition, aBackgroundColor);
             } else if (doPaddingRight && tBitmask == 0x00 && x >= aXOffset) {
+                setMatrixPixelColor(x, tYposition, aBackgroundColor);
+            }
+            tBitmaskExtended = tBitmaskExtended >> 1;
+        }
+        tGraphicsPointer++;
+        tYposition++;
+    }
+}
+
+/*
+ * For displaying a one color graphic with maximum width of 16.
+ *
+ * Graphic is stored in a word array where array[0] is the upper line and the lowest bit is the rightmost pixel.
+ * Smaller graphics can be displayed by using aNumberOfVerticalLinesToProcess < 16 which ignores left / highest bits of 16bit line
+ */
+void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPaddingRight,
+        bool doPadding, bool IsPGMData) {
+
+#ifdef DEBUG
+    Serial.print(F("aGraphicsPtr="));
+    Serial.print((uintptr_t) aGraphicsArrayPtr, HEX);
+    Serial.print(F(" aXOffset="));
+    Serial.print(aXOffset);
+    Serial.print(F(" aYOffset="));
+    Serial.println(aYOffset);
+#endif
+
+    int tYposition = 0;
+    const uint16_t *tGraphicsPointer = aGraphicsArrayPtr;
+
+    uint8_t tLinesFromGraphic = aHeightOfGraphic;
+    aXOffset = constrain(aXOffset, -Columns, Columns);
+    aYOffset = constrain(aYOffset, -Rows, Rows);
+
+    /*
+     * YOffset handling
+     */
+    if (aYOffset > 0) {
+        // shift up
+        tLinesFromGraphic -= aYOffset;
+        tGraphicsPointer += aYOffset;
+        if (doPadding) {
+            // fill bottom lines with background color
+            for (uint8_t y = tLinesFromGraphic; y < Rows; ++y) {
+                for (uint8_t x = 0; x < Columns; ++x) {
+                    setMatrixPixelColor(x, y, aBackgroundColor);
+                }
+            }
+        }
+    } else if (aYOffset < 0) {
+        // shift down
+        if (doPadding) {
+            // fill top lines with background color
+            for (uint8_t y = 0; y < -aYOffset; ++y) {
+                for (uint8_t x = 0; x < Columns; ++x) {
+                    setMatrixPixelColor(x, y, aBackgroundColor);
+                }
+            }
+        }
+        tYposition += -aYOffset;
+    }
+
+    /*
+     * XOffset handling
+     * Use the lower 8 bit of a 16bit bitmask
+     */
+    uint32_t tBitmaskToStart = 0x8000 >> (16 - aWidthOfGraphic); // 16 are width of one word (of the word array of picture)
+    if (aXOffset > 0) {
+        tBitmaskToStart = tBitmaskToStart << aXOffset;
+    } else if (aXOffset < 0) {
+        tBitmaskToStart = tBitmaskToStart >> -aXOffset;
+    }
+
+    for (uint8_t i = 0; i < tLinesFromGraphic; ++i) {
+        uint16_t tLineBitPattern;
+        if (IsPGMData) {
+            tLineBitPattern = pgm_read_byte(tGraphicsPointer);
+        } else {
+            tLineBitPattern = *tGraphicsPointer;
+        }
+        uint32_t tBitmaskExtended = tBitmaskToStart; // shifting mask
+
+#ifdef TRACE
+        Serial.print(F("tGraphicsPointer="));
+        Serial.print((uintptr_t) tGraphicsPointer, HEX);
+        Serial.print(F(" tLineBitPattern="));
+        Serial.println(tLineBitPattern, HEX);
+#endif
+        /*
+         * Process one horizontal line
+         */
+        for (int8_t x = 0; x < Columns; ++x) {
+            uint16_t tBitmask = tBitmaskExtended & 0xFFFF;
+#ifdef TRACE
+            Serial.print(F(" tBitmask="));
+            Serial.print(tBitmask);
+            Serial.print(F(" x="));
+            Serial.print(x);
+            Serial.print(F(" y="));
+            Serial.println(tYposition);
+#endif
+            if (tBitmask != 0x0000 && x >= aXOffset) {
+                if (tBitmask & tLineBitPattern) {
+                    // bit in pattern is 1
+                    setMatrixPixelColor(x, tYposition, aForegroundColor);
+                } else {
+                    setMatrixPixelColor(x, tYposition, aBackgroundColor);
+                }
+            } else if (doPadding) {
+                // padding
+                setMatrixPixelColor(x, tYposition, aBackgroundColor);
+            } else if (doPaddingRight && tBitmask == 0x0000 && x >= aXOffset) {
                 setMatrixPixelColor(x, tYposition, aBackgroundColor);
             }
             tBitmaskExtended = tBitmaskExtended >> 1;
@@ -556,6 +690,7 @@ void MatrixNeoPixel::drawAllColors() {
                 // do not overwrite values at diagonal
                 if (x + y < (Columns - 1)) {
                     // set gamma corrected values at lower right
+                    // We must switch x and y here to fit the two patterns
                     setMatrixPixelColor((Rows - 1) - y, (Columns - 1) - x, redC, greenC, blueC);
                 }
             }
@@ -607,6 +742,7 @@ void MatrixNeoPixel::drawAllColors2() {
  */
 /*
  * Map row and column to pixel index for pixel arrays which pixels are organized in rows in Z type
+ * This is default geometry.
  *
  * Example of indexes of
  * an 8 x 8 Pixel array
@@ -627,6 +763,9 @@ uint16_t ProgressiveTypeBottomRightMapping(uint8_t aColumnX, uint8_t aRowY, uint
     return (aColumnsTotal * (aRowsTotal - aRowY) - aColumnX) - 1; // -1 since we start at 0
 }
 
+/*
+ * Non default mapping
+ */
 uint16_t ProgressiveTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aColumnsTotal, uint8_t aRowsTotal) {
     if (aRowY > aRowsTotal) {
         aRowY = aRowsTotal;

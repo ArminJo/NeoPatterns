@@ -74,7 +74,7 @@ public:
 
     void TickerPGM(const char *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
             uint8_t aDirection = DIRECTION_LEFT);
-    void Ticker(__FlashStringHelper* aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
+    void Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
     void Ticker(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
     void TickerInit(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT, uint8_t aFlags = 0);
 

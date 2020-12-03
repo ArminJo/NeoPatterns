@@ -48,7 +48,7 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "2.2.1"
+#define VERSION_NEOPATTERNS "2.2.2"
 #define VERSION_NEOPATTERNS_MAJOR 2
 #define VERSION_NEOPATTERNS_MINOR 2
 // The change log is at the bottom of the file
@@ -282,6 +282,15 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
         uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
 
 /*
+ * Version 2.2.2 - 12/2020
+ * - Fixed bugs if rows are not equal columns.
+ * - Fixed bug in MatrixNeoPatterns constructor.
+ * - Added `SUPPORT_ONLY_DEFAULT_GEOMETRY` compile option.
+ * - Added loadPicture() for 16 bit pictures.
+ *
+ * Version 2.2.1 - 9/2020
+ * - Removed blocking wait for ATmega32U4 Serial in examples.
+ *
  * Version 2.2.0 - 4/2020
  * - Added support for RGBW patterns. Requires additional 200 bytes for AllPatternsOnMultiDevices example.
  *   Not defining SUPPORT_RGBW saves 400 bytes FLASH for AllPatternsOnMultiDevices example.

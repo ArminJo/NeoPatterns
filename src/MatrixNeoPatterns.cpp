@@ -42,15 +42,15 @@
 #include "fonts.h"
 
 MatrixNeoPatterns::MatrixNeoPatterns() :  // @suppress("Class members should be properly initialized")
-        MatrixNeoPixel(), NeoPatterns() {
+        NeoPixel(), MatrixNeoPixel(), NeoPatterns() {
     OnPatternComplete = NULL;
 }
 
 // Constructor - calls base-class constructor to initialize strip
 MatrixNeoPatterns::MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
         void (*aPatternCompletionCallback)(NeoPatterns*)) :
-        MatrixNeoPixel(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel), NeoPatterns(aColumns * aRows, aPin, aTypeOfPixel,
-        NULL) {
+        NeoPixel((aColumns * aRows), aPin, aTypeOfPixel), MatrixNeoPixel(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel), NeoPatterns(
+                (aColumns * aRows), aPin, aTypeOfPixel, NULL) {
 
     OnPatternComplete = aPatternCompletionCallback;
 }
@@ -58,7 +58,7 @@ MatrixNeoPatterns::MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aP
 bool MatrixNeoPatterns::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
         void (*aPatternCompletionCallback)(NeoPatterns*)) {
     MatrixNeoPixel::init(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel);
-    bool tRetvalue = NeoPatterns::init(aColumns * aRows, aPin, aTypeOfPixel, NULL);
+    bool tRetvalue = NeoPatterns::init((aColumns * aRows), aPin, aTypeOfPixel, NULL);
 
     OnPatternComplete = aPatternCompletionCallback;
     return tRetvalue;
@@ -95,7 +95,7 @@ bool MatrixNeoPatterns::update() {
 }
 
 int convolutionMatrixIntegerTimes256[3][3];
-#define mapXYToArray(x, y, XRowLength) (((y) * (XRowLength)) + (x))
+#define mapXYToArray(x, y, XColumns) (((y) * (XColumns)) + (x))
 
 // The bottom line of fire which is set by random values every 4 updates
 uint8_t sInitialHeat[8];
@@ -125,8 +125,8 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     }
 
     // plus 1 pixel padding on each side
-    MatrixNew = (uint8_t *) calloc((Rows + 2) * (Columns + 2), 1);
-    MatrixOld = (uint8_t *) calloc((Rows + 2) * (Columns + 2), 1);
+    MatrixNew = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);
+    MatrixOld = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);
 
 #ifdef INFO
     Serial.print(F("Starting Fire with refresh interval="));
@@ -176,31 +176,31 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
     }
 
     // First refresh (invisible) bottom line on every update
-    for (int i = 1; i < Rows + 1; i++) {
-        MatrixOld[mapXYToArray(i, Columns + 1, Rows + 2)] = sInitialHeat[i - 1];
+    for (int i = 1; i < Columns + 1; i++) {
+        MatrixOld[mapXYToArray(i, Rows + 1, Columns + 2)] = sInitialHeat[i - 1];
     }
 
     /*
      * Process and Map center without padding from heat cells to LED colors.
      * Using pointer instead of indexing with x and y saves 1 ms!
      */
-    for (uint8_t y = 1; y < Columns + 1; y++) {
-        for (uint8_t x = 1; x < Rows + 1; x++) {
+    for (uint8_t y = 1; y < Rows + 1; y++) {
+        for (uint8_t x = 1; x < Columns + 1; x++) {
             // Convolution takes 11 milli seconds with float or 4 ms with integer
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms
-            int * convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
-            uint8_t *tFireMatrixOldPtr = &MatrixOld[mapXYToArray((x - 1), (y - 1), Rows + 2)];
+            int *convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
+            uint8_t *tFireMatrixOldPtr = &MatrixOld[mapXYToArray((x - 1), (y - 1), Columns + 2)];
             for (uint8_t cy = 0; cy < CONVOLUTION_MATRIX_SIZE; cy++) {
                 for (uint8_t cx = 0; cx < CONVOLUTION_MATRIX_SIZE; cx++) {
                     tConvolutionSumTimes256 += *convolutionMatrixIntegerTimes256Ptr++ * *tFireMatrixOldPtr++;
 //                    tConvolutionSumTimes256 += convolutionMatrixIntegerTimes256[cy][cx]
 //                            * FireGrid8x8Old[map10x10((x - 1) + cx, (y - 1) + cy)];
                 }
-                tFireMatrixOldPtr += (Rows + 2) - 3;
+                tFireMatrixOldPtr += (Columns + 2) - 3;
             }
 
-            uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Rows + 2)] + (tConvolutionSumTimes256 / 256);
+            uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Columns + 2)] + (tConvolutionSumTimes256 / 256);
 
             // - COOLING and clipping to zero
             if (tNewHeatValue > MATRIX_FIRE_COOLING) {
@@ -208,7 +208,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             } else {
                 tNewHeatValue = 0;
             }
-            MatrixNew[mapXYToArray(x, y, Rows + 2)] = tNewHeatValue;
+            MatrixNew[mapXYToArray(x, y, Columns + 2)] = tNewHeatValue;
 
             // Heat color mapping
             setMatrixPixelColor(x - 1, y - 1, HeatColor(tNewHeatValue));
@@ -218,7 +218,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             Serial.print(F(" y="));
             Serial.print(y);
             Serial.print(F(" map="));
-            Serial.println(mapXYToArray(x, y, Rows + 2));
+            Serial.println(mapXYToArray(x, y, Columns + 2));
 #endif
 
         }
@@ -241,8 +241,8 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     DataPtr = aGraphics8x8ArrayPGM;
     Color1 = aForegroundColor;
     LongValue1.Color2 = aBackgroundColor;
-    GraphicsXOffset = constrain(aGraphicsXOffset, -Rows, Rows);
-    GraphicsYOffset = constrain(aGraphicsYOffset, -Columns, Columns);
+    GraphicsXOffset = constrain(aGraphicsXOffset, -Columns, Columns);
+    GraphicsYOffset = constrain(aGraphicsYOffset, -Rows, Rows);
     Interval = aIntervalMillis;
     TotalStepCounter = aSteps + 1; // for the last pattern to show
     Direction = aDirection;
@@ -299,15 +299,17 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
  * assumes Z type mapping
  */
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     if (LayoutMappingFunction != NULL) {
-#ifdef WARN
+#  ifdef WARN
         Serial.print(F("moveArrayContent with only one parameter does actually not support other than Z type mappings."));
-#endif
-    } else {
-
+#  endif
+    } else
+#  endif
+    {
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
-#ifdef TRACE
+#  ifdef TRACE
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
         Serial.print(F(" NumPixels="));
@@ -316,7 +318,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
         Serial.print(BytesPerPixel);
         Serial.print(F(" BytesToSkipForOneRow="));
         Serial.println(tBytesToSkipForOneRow);
-#endif
+#  endif
 
         if (aDirection == DIRECTION_UP) {
             memmove(pixels + tBytesToSkipForOneRow, pixels, numBytes - tBytesToSkipForOneRow);
@@ -326,6 +328,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
             memset(pixels + (numBytes - tBytesToSkipForOneRow), 0, tBytesToSkipForOneRow);
         } else if (aDirection == DIRECTION_LEFT) {
             memmove(pixels + BytesPerPixel, pixels, numBytes - BytesPerPixel);
+            // clear right column in each row
             for (int i = 0; i < Rows; ++i) {
                 memset(pixels, 0, BytesPerPixel);
                 pixels += tBytesToSkipForOneRow;
@@ -333,6 +336,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
         } else if (aDirection == DIRECTION_RIGHT) {
             memmove(pixels, pixels + BytesPerPixel, numBytes - BytesPerPixel);
             pixels = pixels + tBytesToSkipForOneRow - BytesPerPixel;
+            // clear left column in each row
             for (int i = 0; i < Rows; ++i) {
                 memset(pixels, 0, BytesPerPixel);
                 pixels += tBytesToSkipForOneRow;
@@ -343,11 +347,14 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
 
 /*
  *  156/136(UP/DOWN) or 246 (LEFT/RIGHT)  usec for moving 8x8
- *  assumes LED Rows are in X direction
  */
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgroundColor) {
-    if (Geometry == (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)) {
-
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+    if (Geometry == NEO_MATRIX_DEFAULT_GEOMETRY) {
+#endif
+        /*
+         * Use fast memmove() function here
+         */
         uint16_t tNumBytes = numBytes;
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
@@ -362,8 +369,12 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         Serial.println(tBytesToSkipForOneRow);
 #endif
         if (aDirection == DIRECTION_UP) {
+            /*
+             * Copy all LED data one row up, which is at a higher index
+             */
             memmove(pixels + tBytesToSkipForOneRow, pixels, tNumBytes - tBytesToSkipForOneRow);
-            for (uint8_t i = 0; i < Rows; ++i) {
+            for (uint8_t i = 0; i < Columns; ++i) {
+                // set bottom line to background
                 setPixelColor(i, aBackgroundColor);
             }
         } else if (aDirection == DIRECTION_DOWN) {
@@ -382,41 +393,52 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
                 setPixelColor(i, aBackgroundColor);
             }
         }
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     } else {
+        /*
+         * Use slower setMatrixPixelColor() function in all other cases
+         */
         for (uint8_t y = 0; y < Rows; ++y) {
             for (uint8_t x = 0; x < Columns; ++x) {
                 if (aDirection == DIRECTION_UP) {
                     if (y != (Rows - 1)) {
+                        /*
+                         * Copy data from row+1 to row
+                         */
                         setMatrixPixelColor(x, y, getMatrixPixelColor(x, y + 1));
                     } else {
-                        //padding lower line
-                        setMatrixPixelColor(x, (Rows - 1), aBackgroundColor);
+                        // set bottom line (y == (Rows - 1)) to background
+                        setMatrixPixelColor(x, y, aBackgroundColor);
                     }
                 } else if (aDirection == DIRECTION_DOWN) {
                     if (y != (Rows - 1)) {
+                        /*
+                         * Copy data from row to row+1 and start at Rows-1 in order to avoid overwriting data
+                         */
                         setMatrixPixelColor(x, (Rows - 1) - y, getMatrixPixelColor(x, (Rows - 2) - y));
                     } else {
-                        //padding upper line
+                        // set top line to background
                         setMatrixPixelColor(x, 0, aBackgroundColor);
                     }
                 } else if (aDirection == DIRECTION_LEFT) {
                     if (x != (Columns - 1)) {
                         setMatrixPixelColor(x, y, getMatrixPixelColor(x + 1, y));
                     } else {
-                        //padding right
+                        // set right column to background
                         setMatrixPixelColor(x, y, aBackgroundColor);
                     }
                 } else if (aDirection == DIRECTION_RIGHT) {
                     if (x != (Columns - 1)) {
                         setMatrixPixelColor(((Columns - 1) - x), y, getMatrixPixelColor(((Columns - 1) - x) - 1, y));
                     } else {
-                        //padding left
+                        // set left column to background
                         setMatrixPixelColor(x, y, aBackgroundColor);
                     }
                 }
             }
         }
     }
+#endif
 }
 
 /*
@@ -496,12 +518,12 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     Serial.println(aDirection);
 #endif
 // try to position fonts at middle
-    GraphicsXOffset = (Rows - FONT_WIDTH) / 2; // positive
-    GraphicsYOffset = (FONT_HEIGHT - Columns) / 2; // negative since character must be shifted down
 // Set start position for first character to move in
     if (aDirection == DIRECTION_LEFT) {
         GraphicsXOffset = Columns;
+        GraphicsYOffset = (FONT_HEIGHT - Rows) / 2; // negative since character must be shifted down
     } else if (aDirection == DIRECTION_UP) {
+        GraphicsXOffset = (Columns - FONT_WIDTH) / 2; // positive
         GraphicsYOffset = -Rows;
     } else {
 #ifdef WARN
@@ -562,7 +584,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
                 }
             }
         }
-        if (Direction == DIRECTION_UP && (GraphicsYOffset - FONT_HEIGHT) > -Columns) {
+        if (Direction == DIRECTION_UP && (GraphicsYOffset - FONT_HEIGHT) > -Rows) {
             tGraphics8x8ArrayPtr = &font_PGM[(tNextChar - FONT_START) * FONT_HEIGHT];
             loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset,
                     GraphicsYOffset - FONT_HEIGHT, false);
@@ -603,7 +625,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
  * Sample callback handler for MatrixNeoPatterns
  */
 void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
-    MatrixNeoPatterns* tLedsPtr = (MatrixNeoPatterns*) aLedsPtr;
+    MatrixNeoPatterns *tLedsPtr = (MatrixNeoPatterns*) aLedsPtr;
     static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;
     static int8_t sTickerDirection = DIRECTION_LEFT;
@@ -714,7 +736,7 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
 }
 
 #define TEST_DELAY_MILLIS 2000
-void myMoveTest1(MatrixNeoPatterns* aLedsPtr) {
+void myMoveTest1(MatrixNeoPatterns *aLedsPtr) {
     aLedsPtr->moveArrayContent(DIRECTION_UP, COLOR32_RED_HALF);
     delay(TEST_DELAY_MILLIS);
     aLedsPtr->moveArrayContent(DIRECTION_DOWN, COLOR32_BLUE_HALF);
@@ -725,7 +747,7 @@ void myMoveTest1(MatrixNeoPatterns* aLedsPtr) {
     delay(TEST_DELAY_MILLIS);
 }
 
-void myMoveTest2(MatrixNeoPatterns* aLedsPtr) {
+void myMoveTest2(MatrixNeoPatterns *aLedsPtr) {
     aLedsPtr->moveArrayContent(DIRECTION_DOWN, COLOR32_BLUE_HALF);
     delay(TEST_DELAY_MILLIS);
     aLedsPtr->moveArrayContent(DIRECTION_UP, COLOR32_RED_HALF);
@@ -736,7 +758,7 @@ void myMoveTest2(MatrixNeoPatterns* aLedsPtr) {
     delay(TEST_DELAY_MILLIS);
 }
 
-void myLoadTest(MatrixNeoPatterns* aLedsPtr) {
+void myLoadTest(MatrixNeoPatterns *aLedsPtr) {
     aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 0, false, true);
     delay(TEST_DELAY_MILLIS);
     myMoveTest1(aLedsPtr);
