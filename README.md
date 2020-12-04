@@ -105,6 +105,7 @@ NeoPatterns on breadboard
 - Fixed bug in MatrixNeoPatterns constructor.
 - Added `SUPPORT_ONLY_DEFAULT_GEOMETRY` compile option.
 - Added loadPicture() for 16 bit pictures.
+- Ticker now supports multiple characters and `DIRECTION_NONE`.
 
 ### Version 2.2.1
 - Removed blocking wait for ATmega32U4 Serial in examples.

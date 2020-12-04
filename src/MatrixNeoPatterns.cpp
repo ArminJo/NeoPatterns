@@ -212,7 +212,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
 
             // Heat color mapping
             setMatrixPixelColor(x - 1, y - 1, HeatColor(tNewHeatValue));
-#ifdef DEBUG
+#ifdef TRACE
             Serial.print(F("x="));
             Serial.print(x);
             Serial.print(F(" y="));
@@ -456,10 +456,10 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
     ActivePattern = PATTERN_MOVE;
 #ifdef INFO
-        Serial.print(F("Starting Move with refresh interval="));
-        Serial.print(aIntervalMillis);
-        Serial.print(F("ms. Direction="));
-        Serial.println(aDirection);
+    Serial.print(F("Starting Move with refresh interval="));
+    Serial.print(aIntervalMillis);
+    Serial.print(F("ms. Direction="));
+    Serial.println(aDirection);
 #endif
 
 }
@@ -477,7 +477,7 @@ bool MatrixNeoPatterns::MoveUpdate() {
 }
 
 /*
- * only directions DIRECTION_LEFT and DIRECTION_UP are supported yet
+ * only directions DIRECTION_LEFT,DIRECTION_NONE and DIRECTION_UP are supported yet
  */
 void MatrixNeoPatterns::Ticker(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection) {
@@ -494,6 +494,9 @@ void MatrixNeoPatterns::Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aFo
     FLAG_TICKER_DATA_IN_FLASH);
 }
 
+/*
+ * Position the first character sensible
+ */
 void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection, uint8_t aFlags) {
     ActivePattern = PATTERN_TICKER;
@@ -510,21 +513,36 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Text=\""));
     if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
-        Serial.print(reinterpret_cast<const __FlashStringHelper *>(aStringPtr));
+        Serial.print(reinterpret_cast<const __FlashStringHelper*>(aStringPtr));
     } else {
         Serial.print(aStringPtr);
     }
     Serial.print(F("\" Direction="));
     Serial.println(aDirection);
 #endif
-// try to position fonts at middle
-// Set start position for first character to move in
+    /*
+     * Try to position fonts or string at middle
+     * Set start position for first character (to move in)
+     */
     if (aDirection == DIRECTION_LEFT) {
         GraphicsXOffset = Columns;
         GraphicsYOffset = (FONT_HEIGHT - Rows) / 2; // negative since character must be shifted down
     } else if (aDirection == DIRECTION_UP) {
         GraphicsXOffset = (Columns - FONT_WIDTH) / 2; // positive
         GraphicsYOffset = -Rows;
+    } else if (aDirection == DIRECTION_NONE) {
+        int tRemainingColumns;
+        if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
+            tRemainingColumns = Columns - (strlen_P(reinterpret_cast<const char*>(DataPtr)) * FONT_WIDTH);
+        } else {
+            tRemainingColumns = Columns - (strlen(reinterpret_cast<const char*>(DataPtr)) * FONT_WIDTH);
+        }
+        if (tRemainingColumns > 0) {
+            GraphicsXOffset = tRemainingColumns / 2;
+        } else {
+            GraphicsXOffset = 0; // Not enough space for complete string so start left
+        }
+        GraphicsYOffset = (FONT_HEIGHT - Rows) / 2; // negative since character must be shifted down
     } else {
 #ifdef WARN
         Serial.println(F("Direction="));
@@ -535,88 +553,130 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     }
 }
 
+/*
+ * Draw visible character(s) and handle shift out of first visible character, shift in of last visible character
+ */
 bool MatrixNeoPatterns::TickerUpdate() {
-    char tLeftChar;
+    char tCurrentChar;
     char tNextChar;
     lastUpdate = millis();
 
-// left character
+    const uint8_t *tDataPtr = DataPtr; // points to current character processed
+
+// get first 2 characters
     if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
-        tLeftChar = pgm_read_byte(DataPtr);
-        tNextChar = pgm_read_byte(DataPtr + 1);
+        tCurrentChar = pgm_read_byte(tDataPtr++);
+        tNextChar = pgm_read_byte(tDataPtr++);
     } else {
-        tLeftChar = *DataPtr;
-        tNextChar = *(DataPtr + 1);
+        tCurrentChar = *tDataPtr++;
+        tNextChar = *(tDataPtr++);
     }
+
+    // Required for testing of end of string
+    bool isLastChar = (tNextChar == '\0');
 
 #ifdef DEBUG
-    Serial.print(F("Char="));
-    Serial.print(tLeftChar);
-    Serial.print(F(" NextChar="));
-    Serial.println(tNextChar);
+    Serial.println();
 #endif
+    if (Direction == DIRECTION_LEFT || Direction == DIRECTION_NONE) {
+        int8_t tGraphicsXOffset = GraphicsXOffset; // X offset of current char to be processed
 
-    const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tLeftChar - FONT_START) * FONT_HEIGHT];
-    loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset,
-            (tNextChar == '\0'));
-    if (tNextChar != '\0') {
-        // check if next character is moving in
-        if (Direction == DIRECTION_LEFT && (GraphicsXOffset + FONT_WIDTH) < Columns) {
-            char tNextNextChar;
-            if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
-                tNextNextChar = pgm_read_byte(DataPtr + 2);
-            } else {
-                tNextNextChar = *(DataPtr + 2);
-            }
+        /*
+         * Check if current character is visible
+         */
+        while (tGraphicsXOffset < Columns && tCurrentChar != '\0') {
+#ifdef DEBUG
+            Serial.print(F("GraphicsXOffset="));
+            Serial.print(tGraphicsXOffset);
+            Serial.print(F(" CurrentChar="));
+            Serial.print(tCurrentChar);
+            Serial.print(F(" NextChar="));
+            Serial.println(tNextChar);
+#endif
             /*
-             * Display next character at right
+             * Print character (using information about next char)
              */
-            tGraphics8x8ArrayPtr = &font_PGM[(tNextChar - FONT_START) * FONT_HEIGHT];
-            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset + FONT_WIDTH,
-                    GraphicsYOffset, (tNextNextChar == '\0'));
-            // check if next/next character can be displayed (required for small font width)
-            // do not check for next/next/next char != '\0' here!
-            if ((GraphicsXOffset + (2 * FONT_WIDTH)) < Columns) {
-                if (tNextNextChar != '\0') {
-                    tGraphics8x8ArrayPtr = &font_PGM[(tNextNextChar - FONT_START) * FONT_HEIGHT];
-                    loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2,
-                            GraphicsXOffset + (2 * FONT_WIDTH), GraphicsYOffset, false);
-                }
-            }
-        }
-        if (Direction == DIRECTION_UP && (GraphicsYOffset - FONT_HEIGHT) > -Rows) {
-            tGraphics8x8ArrayPtr = &font_PGM[(tNextChar - FONT_START) * FONT_HEIGHT];
-            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset,
-                    GraphicsYOffset - FONT_HEIGHT, false);
-        }
-    }
-    /*
-     * character is moved out of matrix, so switch to next one
-     */
-    if (GraphicsXOffset == -FONT_WIDTH || GraphicsYOffset == FONT_HEIGHT) {
+            const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
+            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, tGraphicsXOffset,
+                    GraphicsYOffset, (tNextChar == '\0'));
 
-        if (tNextChar == '\0') {
-            if (OnPatternComplete != NULL) {
-                OnPatternComplete(this); // call the completion callback
+            tGraphicsXOffset += FONT_WIDTH; // update X offset for next character
+
+            /*
+             * Get next character
+             */
+            tCurrentChar = tNextChar;
+            if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
+                tNextChar = pgm_read_byte(tDataPtr++);
             } else {
-                ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
+                tNextChar = *(tDataPtr++);
             }
-            return true;
         }
-        // switch to next character
-        DataPtr++;
-        if (Direction == DIRECTION_LEFT) {
-            GraphicsXOffset = 0;
-        } else if (Direction == DIRECTION_UP) {
-            GraphicsYOffset = 0;
+    } else if (Direction == DIRECTION_UP) {
+        int8_t tGraphicsYOffset = GraphicsYOffset; // Y offset of current char to be processed
+
+        /*
+         * Check if current character is visible
+         */
+        while (tGraphicsYOffset > -Rows && tCurrentChar != '\0') {
+#ifdef DEBUG
+            Serial.print(F("GraphicsYOffset="));
+            Serial.print(tGraphicsYOffset);
+            Serial.print(F(" CurrentChar="));
+            Serial.print(tCurrentChar);
+            Serial.print(F(" NextChar="));
+            Serial.println(tNextChar);
+#endif
+            /*
+             * Print character (using information about next char)
+             */
+            const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
+            loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset,
+                    tGraphicsYOffset, false);
+
+            tGraphicsYOffset -= FONT_HEIGHT; // update Y offset for next character
+
+            /*
+             * Get next character
+             */
+            tCurrentChar = tNextChar;
+            if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
+                tNextChar = pgm_read_byte(tDataPtr++);
+            } else {
+                tNextChar = *(tDataPtr++);
+            }
         }
     }
+
+    if (Direction != DIRECTION_NONE) {
+        /*
+         * Check if first character is moved out of matrix, then switch to next one
+         */
+        if (GraphicsXOffset == -FONT_WIDTH || GraphicsYOffset == FONT_HEIGHT) {
+
+            if (isLastChar) {
+                if (OnPatternComplete != NULL) {
+                    OnPatternComplete(this); // call the completion callback
+                } else {
+                    ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
+                }
+                return true;
+            }
+            // switch to next character
+            DataPtr++;
+            if (Direction == DIRECTION_LEFT) {
+                GraphicsXOffset = 0;
+            } else if (Direction == DIRECTION_UP) {
+                GraphicsYOffset = 0;
+            }
+        }
 
 // shift offsets
-    if (Direction == DIRECTION_LEFT) {
-        GraphicsXOffset--;
-    } else if (Direction == DIRECTION_UP) {
-        GraphicsYOffset++;
+        if (Direction == DIRECTION_LEFT) {
+            GraphicsXOffset--;
+        } else if (Direction == DIRECTION_UP) {
+            GraphicsYOffset++;
+        }
     }
     return false;
 }

@@ -98,7 +98,7 @@ public:
     uint8_t *MatrixOld;
 
     // for movingPicture and Ticker patterns
-    const uint8_t *DataPtr;// can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
+    const uint8_t *DataPtr; // can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
     int8_t GraphicsYOffset;
     int8_t GraphicsXOffset;
 
