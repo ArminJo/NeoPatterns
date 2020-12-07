@@ -75,6 +75,9 @@ uint16_t getStackFreeMinimumBytes() {
     return tStackFree;
 }
 
+/*
+ * Do not forget to call initStackFreeMeasurement() before
+ */
 void printStackFreeMinimumBytes(Print *aSerial) {
     aSerial->print(F("Minimum free Stack[bytes]="));
     aSerial->println(getStackFreeMinimumBytes());

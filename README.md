@@ -1,7 +1,7 @@
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
 Available as Arduino library "NeoPatterns"
 
-### [Version 2.2.1](https://github.com/ArminJo/NeoPatterns/releases)
+### [Version 2.2.4](https://github.com/ArminJo/NeoPatterns/releases)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
@@ -100,7 +100,9 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
-### Version 2.2.2
+### Version 2.2.4
+
+### Version 2.2.2 + 2.2.3
 - Fixed bugs if rows are not equal columns.
 - Fixed bug in MatrixNeoPatterns constructor.
 - Added `SUPPORT_ONLY_DEFAULT_GEOMETRY` compile option.

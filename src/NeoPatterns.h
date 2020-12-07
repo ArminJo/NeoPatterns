@@ -48,7 +48,7 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "2.2.2"
+#define VERSION_NEOPATTERNS "2.2.3"
 #define VERSION_NEOPATTERNS_MAJOR 2
 #define VERSION_NEOPATTERNS_MINOR 2
 // The change log is at the bottom of the file
