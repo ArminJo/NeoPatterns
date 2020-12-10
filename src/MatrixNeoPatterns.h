@@ -99,8 +99,8 @@ public:
 
     // for movingPicture and Ticker patterns
     const uint8_t *DataPtr; // can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
-    int8_t GraphicsYOffset;
-    int8_t GraphicsXOffset;
+    int8_t GraphicsYOffset; // Offset of lower edge of graphic
+    int8_t GraphicsXOffset; // Offset of left edge of graphic
 
 };
 

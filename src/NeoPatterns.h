@@ -48,9 +48,9 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "2.2.3"
+#define VERSION_NEOPATTERNS "2.3.0"
 #define VERSION_NEOPATTERNS_MAJOR 2
-#define VERSION_NEOPATTERNS_MINOR 2
+#define VERSION_NEOPATTERNS_MINOR 3
 // The change log is at the bottom of the file
 
 extern const char * const PatternNamesArray[] PROGMEM;
@@ -282,7 +282,10 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
         uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
 
 /*
- * Version 2.2.2 - 12/2020
+ * Version 2.3.0 - 12/2020
+ * - Changed TickerUpdate() and loadPicture() and their callers to achieve that YOffset is consistent with Y direction and origin.
+ *
+ * Version 2.2.2 /2.2.3- 12/2020
  * - Fixed bugs if rows are not equal columns.
  * - Fixed bug in MatrixNeoPatterns constructor.
  * - Added `SUPPORT_ONLY_DEFAULT_GEOMETRY` compile option.

@@ -134,9 +134,9 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
 #endif
 #ifdef DEBUG
     Serial.print(F("MatrixNew=0x"));
-    Serial.println((uint16_t) MatrixNew, HEX);
+    Serial.println((uintptr_t) MatrixNew, HEX);
     Serial.print(F("MatrixOld=0x"));
-    Serial.println((uint16_t) MatrixOld, HEX);
+    Serial.println((uintptr_t) MatrixOld, HEX);
 #endif
 
     for (uint8_t cy = 0; cy < CONVOLUTION_MATRIX_SIZE; cy++) {
@@ -241,33 +241,35 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     DataPtr = aGraphics8x8ArrayPGM;
     Color1 = aForegroundColor;
     LongValue1.Color2 = aBackgroundColor;
-    GraphicsXOffset = constrain(aGraphicsXOffset, -Columns, Columns);
-    GraphicsYOffset = constrain(aGraphicsYOffset, -Rows, Rows);
+    GraphicsXOffset = constrain(aGraphicsXOffset, -MAX_SUPPORTED_GRAPHICS_WIDTH, Columns);
+    GraphicsYOffset = constrain(aGraphicsYOffset, -1, Rows + MAX_SUPPORTED_GRAPHICS_HEIGHT);
     Interval = aIntervalMillis;
     TotalStepCounter = aSteps + 1; // for the last pattern to show
     Direction = aDirection;
 
-    MovingPicturePGMUpdate();
-    showPatternInitially();
-    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
-    ActivePattern = PATTERN_MOVING_PICTURE;
 #ifdef INFO
     Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Direction="));
     Serial.println(aDirection);
 #endif
+
+    MovingPicturePGMUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_MOVING_PICTURE;
+
 }
 
 bool MatrixNeoPatterns::MovingPicturePGMUpdate() {
     if (decrementTotalStepCounter()) {
         return true;
     }
-    loadPicturePGM(DataPtr, 8, 8, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset, false, true);
+    loadPicturePGM(DataPtr, 8, 8, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset, true);
     if (Direction == DIRECTION_UP) {
-        GraphicsYOffset++;
-    } else if (Direction == DIRECTION_DOWN) {
         GraphicsYOffset--;
+    } else if (Direction == DIRECTION_DOWN) {
+        GraphicsYOffset++;
     } else if (Direction == DIRECTION_LEFT) {
         GraphicsXOffset++;
     } else if (Direction == DIRECTION_RIGHT) {
@@ -284,7 +286,7 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
     clear();
     for (int8_t i = tStringLength; i > 0; i--) {
         loadPicturePGM(&fontNumbers4x6[(tStringBuffer[i - 1] - '0') * NUMBERS_FONT_HEIGHT], NUMBERS_FONT_WIDTH,
-        NUMBERS_FONT_HEIGHT, aColor, COLOR32_BLACK, tXOffset);
+        NUMBERS_FONT_HEIGHT, aColor, COLOR32_BLACK, tXOffset, NUMBERS_FONT_HEIGHT);
         tXOffset -= NUMBERS_FONT_WIDTH;
         if (tXOffset < -3) {
             break;
@@ -451,10 +453,6 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     Interval = aIntervalMillis;
     TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
 
-    MoveUpdate();
-    showPatternInitially();
-    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
-    ActivePattern = PATTERN_MOVE;
 #ifdef INFO
     Serial.print(F("Starting Move with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -462,6 +460,10 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     Serial.println(aDirection);
 #endif
 
+    MoveUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_MOVE;
 }
 
 bool MatrixNeoPatterns::MoveUpdate() {
@@ -526,10 +528,10 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
      */
     if (aDirection == DIRECTION_LEFT) {
         GraphicsXOffset = Columns;
-        GraphicsYOffset = (FONT_HEIGHT - Rows) / 2; // negative since character must be shifted down
+        GraphicsYOffset = (Rows - 1) - ((Rows - FONT_HEIGHT) / 2);
     } else if (aDirection == DIRECTION_UP) {
         GraphicsXOffset = (Columns - FONT_WIDTH) / 2; // positive
-        GraphicsYOffset = -Rows;
+        GraphicsYOffset = Rows + FONT_HEIGHT;
     } else if (aDirection == DIRECTION_NONE) {
         int tRemainingColumns;
         if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
@@ -542,7 +544,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
         } else {
             GraphicsXOffset = 0; // Not enough space for complete string so start left
         }
-        GraphicsYOffset = (FONT_HEIGHT - Rows) / 2; // negative since character must be shifted down
+        GraphicsYOffset = (Rows - 1) - ((Rows - FONT_HEIGHT) / 2);
     } else {
 #ifdef WARN
         Serial.println(F("Direction="));
@@ -555,6 +557,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
 
 /*
  * Draw visible character(s) and handle shift out of first visible character, shift in of last visible character
+ * GraphicsXOffset is x offset for left side of first char to display. If DIRECTION_LEFT it goes from 0 to -(FONT_WIDTH-1) and back to 0 for next first char
  */
 bool MatrixNeoPatterns::TickerUpdate() {
     char tCurrentChar;
@@ -618,7 +621,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
         /*
          * Check if current character is visible
          */
-        while (tGraphicsYOffset > -Rows && tCurrentChar != '\0') {
+        while (tGraphicsYOffset < (Rows + FONT_HEIGHT - 1) && tCurrentChar != '\0') {
 #ifdef DEBUG
             Serial.print(F("GraphicsYOffset="));
             Serial.print(tGraphicsYOffset);
@@ -632,9 +635,9 @@ bool MatrixNeoPatterns::TickerUpdate() {
              */
             const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
             loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset,
-                    tGraphicsYOffset, false);
+                    tGraphicsYOffset, (tNextChar == '\0'));
 
-            tGraphicsYOffset -= FONT_HEIGHT; // update Y offset for next character
+            tGraphicsYOffset += FONT_HEIGHT; // update Y offset for next character
 
             /*
              * Get next character
@@ -652,9 +655,10 @@ bool MatrixNeoPatterns::TickerUpdate() {
         /*
          * Check if first character is moved out of matrix, then switch to next one
          */
-        if (GraphicsXOffset == -FONT_WIDTH || GraphicsYOffset == FONT_HEIGHT) {
+        if (GraphicsXOffset == -FONT_WIDTH || GraphicsYOffset < 0) {
 
             if (isLastChar) {
+                show(); // show last vanished character and its padding
                 if (OnPatternComplete != NULL) {
                     OnPatternComplete(this); // call the completion callback
                 } else {
@@ -667,15 +671,15 @@ bool MatrixNeoPatterns::TickerUpdate() {
             if (Direction == DIRECTION_LEFT) {
                 GraphicsXOffset = 0;
             } else if (Direction == DIRECTION_UP) {
-                GraphicsYOffset = 0;
+                GraphicsYOffset = FONT_HEIGHT - 1;
             }
         }
 
 // shift offsets
         if (Direction == DIRECTION_LEFT) {
-            GraphicsXOffset--;
+            GraphicsXOffset--;  // from 0 to -(FONT_WIDTH-1) and back to 0
         } else if (Direction == DIRECTION_UP) {
-            GraphicsYOffset++;
+            GraphicsYOffset--; // from (FONT_HEIGHT-1) to 0 and back to (FONT_HEIGHT-1)
         }
     }
     return false;
@@ -717,9 +721,9 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
         }
         break;
     case 1:
-        tYOffset = HEART_HEIGHT;
+        tYOffset = -1; // direction DOWN
         if (sHeartDirection == DIRECTION_UP) {
-            tYOffset = -HEART_HEIGHT;
+            tYOffset = tLedsPtr->Rows + HEART_HEIGHT;
         }
         // move in
         tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED_HALF, COLOR32_BLACK, tXOffset, tYOffset, tSteps, 100, sHeartDirection);
@@ -819,15 +823,15 @@ void myMoveTest2(MatrixNeoPatterns *aLedsPtr) {
 }
 
 void myLoadTest(MatrixNeoPatterns *aLedsPtr) {
-    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 0, false, true);
+    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 0, true);
     delay(TEST_DELAY_MILLIS);
     myMoveTest1(aLedsPtr);
-    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 2, 0, false, true);
+    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 2, 0, true);
     delay(TEST_DELAY_MILLIS);
     myMoveTest2(aLedsPtr);
-    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 2, false, true);
+    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 2, true);
     delay(TEST_DELAY_MILLIS);
-    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, -2, -2, false, true);
+    aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, -2, -2, true);
     delay(TEST_DELAY_MILLIS);
 }
 

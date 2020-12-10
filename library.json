@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/ArminJo/NeoPatterns"
   },
-  "version": "2.2.3",
+  "version": "2.3.0",
   "exclude": "pictures",
   "authors": {
     "name": "Armin Joachimsmeyer",

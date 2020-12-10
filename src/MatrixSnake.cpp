@@ -377,7 +377,7 @@ uint16_t MatrixSnake::getIndexOfPositionInSnake(position aPositionToCheck) {
 /*
  * returns true if new position is in area
  */
-bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position * aSnakeNewHeadPosition) {
+bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNewHeadPosition) {
     *aSnakeNewHeadPosition = SnakePixelList[0];
     switch (aDirection) {
     case DIRECTION_UP:
@@ -850,7 +850,7 @@ void initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t
  */
 void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     static unsigned long sOriginalInterval; // store for original interval, since move needs its separate interval
-    MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
+    MatrixSnake *tLedsPtr = (MatrixSnake*) aLedsPtr;
 
     uint8_t tStep = tLedsPtr->MultipleExtension;
 
@@ -893,7 +893,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
 }
 
 const char sDefaultTickerText[] PROGMEM = "I love Neopixel";
-const char * sTickerTextPtr = sDefaultTickerText;
+const char *sTickerTextPtr = sDefaultTickerText;
 
 void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *aTextForTicker) {
     sTickerTextPtr = reinterpret_cast<const char*>(aTextForTicker);
@@ -907,10 +907,12 @@ void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *a
  * 3. Show 2 snake runs / fire. Snake shows up on the odd loops, fire on the even ones
  */
 void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
-    MatrixSnake* tLedsPtr = (MatrixSnake*) aLedsPtr;
+    MatrixSnake *tLedsPtr = (MatrixSnake*) aLedsPtr;
     static int8_t sState = 0;
     static uint8_t sHeartDirection = DIRECTION_DOWN;
+//    static uint8_t sHeartDirection = DIRECTION_UP;
     static int8_t sTickerDirection = DIRECTION_LEFT;
+//    static int8_t sTickerDirection = DIRECTION_UP;
 
     /*
      * implement a delay between each case
@@ -936,12 +938,11 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         }
         break;
     case 1:
-        tYOffset = HEART_HEIGHT;
+        tYOffset = -1; // direction DOWN
         if (sHeartDirection == DIRECTION_UP) {
-            tYOffset = -HEART_HEIGHT;
+            tYOffset = tLedsPtr->Rows + HEART_HEIGHT;
         }
         // move in
-
         tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED_HALF, COLOR32_BLACK, tXOffset, tYOffset, tSteps, 100, sHeartDirection);
         break;
     case 2:

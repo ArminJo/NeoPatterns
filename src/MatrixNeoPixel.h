@@ -72,6 +72,12 @@
 
 #define NEO_MATRIX_DEFAULT_GEOMETRY   (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)
 
+/*
+ * For constrain function
+ */
+#define MAX_SUPPORTED_GRAPHICS_WIDTH    16 // see void loadPicture(const uint16_t *aGraphicsArrayPtr...
+#define MAX_SUPPORTED_GRAPHICS_HEIGHT   16 // a guess
+
 class MatrixNeoPixel: public virtual NeoPixel {
 public:
     MatrixNeoPixel();
@@ -89,15 +95,15 @@ public:
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
 
     void loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0,
-            bool doPaddingRight = false, bool doPadding = false);
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset,
+            bool doPadding = false);
 
     void loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
-            color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
-            bool doPadding = false, bool IsPGMData = false);
+            color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false, bool IsPGMData =
+                    false);
 
-    void loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
-            color32_t aBackgroundColor = COLOR32_BLACK, int8_t aXOffset = 0, int8_t aYOffset = 0, bool doPaddingRight = false,
+    void loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset,
             bool doPadding = false, bool IsPGMData = false);
 
     void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);

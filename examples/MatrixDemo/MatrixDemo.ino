@@ -42,7 +42,8 @@
  * See MatrixNeoPatterns.h for further explanation.
  */
 MatrixSnake NeoPixelMatrix = MatrixSnake(NEOPIXEL_MATRIX_NUM_COLUMNS, NEOPIXEL_MATRIX_NUM_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, &MatrixAndSnakePatternsDemoHandler);
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800,
+        &MatrixAndSnakePatternsDemoHandler);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
