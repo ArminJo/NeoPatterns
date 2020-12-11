@@ -31,7 +31,6 @@
 #define PIN_NEOPIXEL_MATRIX        8
 #define MATRIX_NUMBER_OF_COLUMNS   8
 #define MATRIX_NUMBER_OF_ROWS      8
-#define NEOPIXEL_MATRIX_NUM_PIXELS (MATRIX_NUMBER_OF_COLUMNS * MATRIX_NUMBER_OF_ROWS)
 
 /*
  * Specify your matrix geometry as 4th parameter.
@@ -79,8 +78,7 @@ void loop() {
         if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
             // change color of ticker after each update
             NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
-            sWheelPosition += 256 / NEOPIXEL_MATRIX_NUM_PIXELS
-            ;
+            sWheelPosition += 4;
         }
     }
 }

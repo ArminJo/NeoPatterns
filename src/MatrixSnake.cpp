@@ -979,9 +979,9 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         if (sTickerDirection == DIRECTION_LEFT) {
             // after 4 minutes show more fire :-)
             if (millis() < (4 * 60 * 1000L)) {
-                tLedsPtr->Fire(100, 50);
+                tLedsPtr->Fire(100, 30);
             } else {
-                tLedsPtr->Fire(100, 500);
+                tLedsPtr->Fire(500, 30);
             }
         } else {
             initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 2);

@@ -62,7 +62,7 @@ void setup() {
     NeoPixelMatrix.clear();
 
     Serial.println(F("Fire"));
-    NeoPixelMatrix.Fire(400, 30);
+    NeoPixelMatrix.Fire(42, 30);
 }
 
 void loop() {

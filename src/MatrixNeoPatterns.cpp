@@ -794,7 +794,7 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
         aLedsPtr->Delay(1500);
         break;
     case 8:
-        tLedsPtr->Fire(100, 50);
+        tLedsPtr->Fire(150, 30);
         break;
     case 9:
         aLedsPtr->clear(); // Clear matrix
