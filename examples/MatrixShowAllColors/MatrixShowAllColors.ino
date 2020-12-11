@@ -26,21 +26,20 @@
  *
  */
 
-#define VERSION_EXAMPLE "1.0"
-
 #include <Arduino.h>
 #include <MatrixNeoPatterns.h>
 
-#define PIN_NEOPIXEL_MATRIX   8
+#define PIN_NEOPIXEL_MATRIX      8
+#define MATRIX_NUMBER_OF_COLUMNS 8
+#define MATRIX_NUMBER_OF_ROWS    8
 
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(8, 8, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
-NEO_GRB + NEO_KHZ800, NULL);
+MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, NULL);
 
 uint8_t *sPixelBuffer;
 
@@ -52,7 +51,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
 //    bar24.begin();
     // This initializes the NeoPixel library and checks if enough memory was available
@@ -66,9 +65,8 @@ void setup() {
         }
     }
 
-    sPixelBuffer = (uint8_t *) malloc(NeoPixelMatrix.getPixelBufferSize());
+    sPixelBuffer = (uint8_t*) malloc(NeoPixelMatrix.getPixelBufferSize());
 }
-
 
 void loop() {
 

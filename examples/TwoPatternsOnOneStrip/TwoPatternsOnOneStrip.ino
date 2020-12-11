@@ -40,8 +40,6 @@
 #define USE_BUTTON_1
 #include "EasyButtonAtInt01.cpp.h"
 
-#define VERSION_EXAMPLE "2.0"
-
 EasyButton Button0AtPin3;
 
 #define PIN_TIMING_DEBUG_BUTTON   6
@@ -87,7 +85,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
     NeoPatternsBackground.begin(); // This initializes the NeoPixel library.
     // This initializes the NeoPixel library and checks if enough memory was available

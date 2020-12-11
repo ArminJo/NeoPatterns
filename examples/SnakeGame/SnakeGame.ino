@@ -28,15 +28,15 @@
  *
  */
 
-#define VERSION_EXAMPLE "1.0"
-
 #include <Arduino.h>
 #include <MatrixSnake.h>
 
 // Delay between two SNAKE moves / Speed of game
 #define GAME_REFRESH_INTERVAL   400
 
-#define PIN_NEOPIXEL_MATRIX_SNAKE  8
+#define PIN_NEOPIXEL_MATRIX_SNAKE 8
+#define MATRIX_NUMBER_OF_COLUMNS  8
+#define MATRIX_NUMBER_OF_ROWS     8
 
 #define RIGHT_BUTTON_PIN     2
 #define LEFT_BUTTON_PIN      3
@@ -53,7 +53,7 @@
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrixSnake = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX_SNAKE,
+MatrixSnake NeoPixelMatrixSnake = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX_SNAKE,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800);
 
 void setup() {
@@ -65,7 +65,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
     // This initializes the NeoPixel library and checks if enough memory was available
     if (!NeoPixelMatrixSnake.begin(&Serial)) {

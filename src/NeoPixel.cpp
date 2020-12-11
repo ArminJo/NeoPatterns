@@ -569,7 +569,7 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
     Serial.print(aLinearBrightnessColor, HEX);
     Serial.print(F("->0x"));
 #ifdef SUPPORT_RGBW
-    Serial.println((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
+    Serial.println(((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
 #else
     Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
 #endif

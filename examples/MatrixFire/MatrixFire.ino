@@ -1,11 +1,11 @@
 /*
- * MatrixDemo.cpp
+ * MatrixFire.cpp
  *
- *  Simply runs the MatrixAndSnakePatternsDemoHandler for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
+ *  For testing the MatrixNeoPatterns Fire pattern
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2019  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -26,21 +26,18 @@
  */
 
 #include <Arduino.h>
-#include <MatrixSnake.h>
+#include <MatrixNeoPatterns.h>
 
-#define PIN_NEOPIXEL_MATRIX        8
-#define MATRIX_NUMBER_OF_COLUMNS   8
-#define MATRIX_NUMBER_OF_ROWS      8
-#define NEOPIXEL_MATRIX_NUM_PIXELS (MATRIX_NUMBER_OF_COLUMNS * MATRIX_NUMBER_OF_ROWS)
-
+#define PIN_NEOPIXEL_MATRIX     8
+#define MATRIX_NUMBER_OF_COLUMNS 8
+#define MATRIX_NUMBER_OF_ROWS    8
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800,
-        &MatrixAndSnakePatternsDemoHandler);
+MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, NULL);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -62,25 +59,27 @@ void setup() {
             delay(500);
         }
     }
+    NeoPixelMatrix.clear();
 
-#if defined(__AVR__)
-    extern void *__brkval;
-    Serial.print(F("Free Ram/Stack[bytes]="));
-    Serial.println(SP - (uint16_t) __brkval);
-#endif
-
-    MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix);
+    Serial.println(F("Fire"));
+    NeoPixelMatrix.Fire(400, 30);
 }
 
-uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
-
 void loop() {
-    if (NeoPixelMatrix.update()) {
-        if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
-            // change color of ticker after each update
-            NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
-            sWheelPosition += 256 / NEOPIXEL_MATRIX_NUM_PIXELS
-            ;
-        }
-    }
+    NeoPixelMatrix.FireMatrixUpdate();
+    NeoPixelMatrix.show();
+    NeoPixelMatrix.TotalStepCounter = 42;
+    delay(30);
+    /*
+     * Can set cooling and sparking parameters by potentiometers
+     */
+    // set cooling. 10 to 25 are sensible with optimum around 19
+//    NeoPixelMatrix.PatternLength = map(analogRead(A0), 0, 1023, 5, 100);
+//    Serial.print(F("Cooling="));
+//    Serial.print(NeoPixelMatrix.PatternLength);
+
+//    NeoPixelMatrix.TotalStepCounter = map(analogRead(A1), 0, 1023, 30, 200);
+//    Serial.print(F(" Sparking="));
+//    Serial.println(NeoPixelMatrix.TotalStepCounter);
+
 }

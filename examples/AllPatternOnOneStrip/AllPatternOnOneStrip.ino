@@ -33,8 +33,6 @@
 
 #include <NeoPatterns.h>
 
-#define VERSION_EXAMPLE "2.0"
-
 #define INFO // if not defined, no Serial related code should be linked
 
 // Comment this out to test your own pattern implementation on line 74 ff.
@@ -63,7 +61,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 #endif
 
     bar16.begin(); // This initializes the NeoPixel library.

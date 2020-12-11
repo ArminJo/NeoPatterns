@@ -97,13 +97,44 @@ bool MatrixNeoPatterns::update() {
 int convolutionMatrixIntegerTimes256[3][3];
 #define mapXYToArray(x, y, XColumns) (((y) * (XColumns)) + (x))
 
-// The bottom line of fire which is set by random values every 4 updates
-uint8_t sInitialHeat[8];
+union LongUnion {
+    struct {
+        uint8_t LowByte;
+        uint8_t MidLowByte;
+        uint8_t MidHighByte;
+        uint8_t HighByte;
+    } UByte;
+    struct {
+        int8_t LowByte;
+        int8_t MidLowByte;
+        int8_t MidHighByte;
+        int8_t HighByte;
+    } Byte;
+    uint8_t UBytes[4];
+    int8_t Bytes[4];
+    uint16_t UWords[2];
+    int16_t Words[2];
+    uint32_t ULong;
+    int32_t Long;
+};
 
-void setInitHeat() {
-    for (int i = 0; i < 8;) {
-        uint8_t tVal = random(40, 255);
-        sInitialHeat[i++] = tVal;
+// The bottom line of fire which is set by random values every 4 updates
+void MatrixNeoPatterns::setInitHeat() {
+    LongUnion tRandomValue;
+    uint8_t tIndex = 0;
+    while (true) {
+        for (uint8_t i = 0; i < 4; ++i) {
+#if defined(ESP8266) || defined(ESP32)
+            tRandomValue.ULong = random(0xFFFFFFFFL);
+#else
+            tRandomValue.ULong = random();
+#endif
+            initalHeatLine[tIndex] = (tRandomValue.UBytes[i] % (255-40)) + 40;
+            tIndex++;
+            if (tIndex >= Columns) {
+                return;
+            }
+        }
     }
 }
 
@@ -123,10 +154,14 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     if (MatrixOld) {
         free(MatrixOld);
     }
+    if (initalHeatLine) {
+        free(initalHeatLine);
+    }
 
-    // plus 1 pixel padding on each side
+    // They have 1 pixel padding on each side for computation of convolution
     MatrixNew = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);
     MatrixOld = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);
+    initalHeatLine = (uint8_t*) calloc(Columns + 2, 1);
 
 #ifdef INFO
     Serial.print(F("Starting Fire with refresh interval="));
@@ -165,6 +200,8 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
         MatrixOld = NULL;
         free(MatrixNew);
         MatrixNew = NULL;
+        free(initalHeatLine);
+        initalHeatLine = NULL;
     }
     if (decrementTotalStepCounterAndSetNextIndex()) {
         return true;
@@ -177,7 +214,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
 
     // First refresh (invisible) bottom line on every update
     for (int i = 1; i < Columns + 1; i++) {
-        MatrixOld[mapXYToArray(i, Rows + 1, Columns + 2)] = sInitialHeat[i - 1];
+        MatrixOld[mapXYToArray(i, Rows + 1, Columns + 2)] = initalHeatLine[i - 1];
     }
 
     /*

@@ -29,8 +29,6 @@
 
 #include <NeoPatterns.h>
 
-#define VERSION_EXAMPLE "2.0"
-
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL  2
 
@@ -52,7 +50,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from  " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
     NeoPixelBar24.begin(); // This sets the output pin.
 

@@ -93,15 +93,21 @@ public:
 
     void showNumberOnMatrix(uint8_t aNumber, color32_t aColor);
 
-    // Two arrays for double buffering. Used for fire pattern
+    /*
+     * Two arrays for double buffering. Used for fire pattern
+     * They have 1 pixel padding on each side for computation of convolution
+     * Plus 1 extra bottom row for initial heat values
+     */
     uint8_t *MatrixNew;
     uint8_t *MatrixOld;
+    uint8_t *initalHeatLine;
 
     // for movingPicture and Ticker patterns
     const uint8_t *DataPtr; // can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
     int8_t GraphicsYOffset; // Offset of lower edge of graphic
     int8_t GraphicsXOffset; // Offset of left edge of graphic
 
+    void setInitHeat();
 };
 
 void MatrixPatternsDemo(NeoPatterns *aLedsPtr);

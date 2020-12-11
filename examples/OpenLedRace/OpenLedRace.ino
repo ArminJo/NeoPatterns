@@ -74,8 +74,6 @@
 #include "PlayRtttl.h"
 #include "AVRUtils.h"
 
-#define VERSION_EXAMPLE "1.0"
-
 //#define TRACE
 #define DEBUG
 //#define INFO
@@ -694,7 +692,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
 // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
     bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
     if(tIsAnalogParameterInputMode) {

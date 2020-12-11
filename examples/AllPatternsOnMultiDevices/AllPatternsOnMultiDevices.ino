@@ -25,10 +25,6 @@
  *
  */
 
-// Version 1.2
-// - Added low battery voltage shutdown
-#define VERSION_EXAMPLE "2.0"
-
 #include <Arduino.h>
 
 #include <MatrixSnake.h>
@@ -54,7 +50,9 @@
 #define PIN_NEOPIXEL_RING_24    5
 #define PIN_NEOPIXEL_RING_12    6
 
-#define PIN_NEOPIXEL_MATRIX     8
+#define PIN_NEOPIXEL_MATRIX      8
+#define MATRIX_NUMBER_OF_COLUMNS 8
+#define MATRIX_NUMBER_OF_ROWS    8
 
 // onComplete callback functions
 void TestPatterns(NeoPatterns *aLedsPtr);
@@ -80,7 +78,7 @@ NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800,
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrix = MatrixSnake(8, 8, PIN_NEOPIXEL_MATRIX,
+MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800,
         &MatrixAndSnakePatternsDemoHandler);
 
@@ -94,7 +92,7 @@ void setup() {
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ "\r\nVersion " VERSION_EXAMPLE " from " __DATE__));
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
     // This initializes the NeoPixel library and checks if enough memory was available
     // check the last object defined
