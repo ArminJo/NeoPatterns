@@ -283,9 +283,10 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 
 /*
  * Version 2.3.1 - 12/2020
- * - Removed restriction to 8 columns for `FireMatrix` pattern.
+ * - Added `SnowMatrix` pattern.
  *
  * Version 2.3.0 - 12/2020
+ * - Removed restriction to 8 columns for `FireMatrix` pattern.
  * - Changed TickerUpdate() and loadPicture() and their callers to achieve that YOffset is consistent with Y direction and origin.
  *
  * Version 2.2.2 /2.2.3- 12/2020

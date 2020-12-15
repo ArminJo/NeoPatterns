@@ -15,6 +15,8 @@ New Patterns are added, a snake game running on a matrix is included and you can
 | YouTube Video of NeoPatternsDemo | YouTube Video of MatrixDemo on a 10x10 matrix |
 | :-: | :-: |
 | [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
+| YouTube Video of NeoPatternsDemo on a long matrix | YouTube Video of Fire on on a long matrix |
+| [![Demonstration of NeoPatterns on a long matrix ](https://i.ytimg.com/vi/y_fmAEUqhFg/hqdefault.jpg)](https://www.youtube.com/watch?v=y_fmAEUqhFg) | [![Demonstration of Fire on a long matrix ](https://i.ytimg.com/vi/CgW5T-mRSvQ/hqdefault.jpg)](https://youtu.be/CgW5T-mRSvQ?t=43) |
 
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
@@ -99,13 +101,12 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
-### Version 2.3.2 - work in progress
-
-### Version 2.3.1
-- Removed restriction to 8 columns for `FireMatrix` pattern.
+### Version 2.3.1 - work in progress
+- Added `SnowMatrix` pattern.
 
 ### Version 2.3.0
 - Changed TickerUpdate() and loadPicture() and their callers to achieve that YOffset is consistent with Y direction and origin.
+- Removed restriction to 8 columns for `FireMatrix` pattern.
 
 ### Version 2.2.2 + 2.2.3 (2.2.2 was an incomplete version)
 - Fixed bugs if rows are not equal columns.

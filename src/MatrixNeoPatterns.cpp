@@ -129,7 +129,9 @@ void MatrixNeoPatterns::setInitHeat() {
 #else
             tRandomValue.ULong = random();
 #endif
-            initalHeatLine[tIndex] = (tRandomValue.UBytes[i] % (255-40)) + 40;
+            // Values from 40 to 255
+            initalHeatLine[tIndex] = (tRandomValue.UBytes[i] - 40) + 40; // 40 is somewhat over represented
+//            initalHeatLine[tIndex] = ((tRandomValue.UBytes[i] * (255 - 40)) >> 8) + 40; // the correct one - just in case
             tIndex++;
             if (tIndex >= Columns) {
                 return;
@@ -145,6 +147,7 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     Interval = aIntervalMillis;
     Direction = DIRECTION_UP;
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
+    PatternLength = MATRIX_FIRE_COOLING_PER_8_ROWS * 8 / Rows; // cooling affects the height of fire, the greater the value the smaller the fire
     Index = 3; // to call setInitHeat(); at startup
 
     // just to be sure
@@ -240,8 +243,8 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Columns + 2)] + (tConvolutionSumTimes256 / 256);
 
             // - COOLING and clipping to zero
-            if (tNewHeatValue > MATRIX_FIRE_COOLING) {
-                tNewHeatValue -= MATRIX_FIRE_COOLING;
+            if (tNewHeatValue > PatternLength) {
+                tNewHeatValue -= PatternLength;
             } else {
                 tNewHeatValue = 0;
             }

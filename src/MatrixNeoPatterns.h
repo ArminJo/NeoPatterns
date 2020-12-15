@@ -49,7 +49,7 @@ extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
 #define NUMBERS_FONT_WIDTH 4
 #define NUMBERS_FONT_HEIGHT 6
 
-#define MATRIX_FIRE_COOLING  20  // 10 to 25 are sensible with optimum around 19
+#define MATRIX_FIRE_COOLING_PER_8_ROWS  15  // for 8 rows 10 to 25 are sensible with optimum around 15
 /*
  * The sum SHOULD be 0!!!
  * The Matrix which describes the contribution of each surrounding pixel to the next heat value.

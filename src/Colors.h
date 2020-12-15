@@ -84,6 +84,10 @@ typedef uint32_t color32_t;
 #define COLOR32_WHITE_HALF     COLOR32(128,128,128) // to reduce power consumption
 #define COLOR32_WHITE_QUARTER  COLOR32(64,64,64)    // to reduce power consumption
 #define COLOR32_WHITE_EIGHTH   COLOR32(32,32,32)    // to reduce power consumption
+#define COLOR32_WHITE_16TH     COLOR32(16,16,16)
+#define COLOR32_WHITE_32TH     COLOR32(8,8,8)
+#define COLOR32_WHITE_64TH     COLOR32(4,4,4)
+#define COLOR32_WHITE_32TH     COLOR32(8,8,8)
 #define COLOR32_RED            COLOR32(255,0,0)
 #define COLOR32_RED_HALF       COLOR32(128,0,0)
 #define COLOR32_RED_QUARTER    COLOR32(64,0,0)
