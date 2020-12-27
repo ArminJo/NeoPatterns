@@ -1048,6 +1048,9 @@ void NeoPatterns::BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint
     ActivePattern = PATTERN_BOUNCING_BALL;
 }
 
+/*
+ * This implementation requires only the sqrt() function and no static float variables
+ */
 bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
     uint8_t tIndexToDraw = Index;
     if (aDoUpdate) {

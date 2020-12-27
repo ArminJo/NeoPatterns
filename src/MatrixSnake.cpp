@@ -912,7 +912,9 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     static uint8_t sHeartDirection = DIRECTION_DOWN;
 //    static uint8_t sHeartDirection = DIRECTION_UP;
     static int8_t sTickerDirection = DIRECTION_LEFT;
-//    static int8_t sTickerDirection = DIRECTION_UP;
+    //    static int8_t sTickerDirection = DIRECTION_UP;
+    static int8_t sSnakeFireSnowSelector = 0;
+//    static int8_t sSnakeFireSnowSelector = 2; // start with snow
 
     /*
      * implement a delay between each case
@@ -963,7 +965,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         break;
 
     case 6:
-        // move out
+        // move out - for move out, we can use Move instead of MovingPicturePGM
         tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100);
         // change direction for next time
         if (sHeartDirection == DIRECTION_DOWN) {
@@ -976,15 +978,26 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         aLedsPtr->Delay(1500);
         break;
     case 8:
-        if (sTickerDirection == DIRECTION_LEFT) {
+        if (sSnakeFireSnowSelector == 0) {
+            initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 1);
+        } else if (sSnakeFireSnowSelector == 1) {
             // after 4 minutes show more fire :-)
             if (millis() < (4 * 60 * 1000L)) {
-                tLedsPtr->Fire(100, 30);
+                tLedsPtr->Fire();
             } else {
-                tLedsPtr->Fire(500, 30);
+                tLedsPtr->Fire(800, 30);
             }
         } else {
-            initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 2);
+            // after 4 minutes show more snow :-)
+            if (millis() < (4 * 60 * 1000L)) {
+                tLedsPtr->Snow();
+            } else {
+                tLedsPtr->Snow(2000);
+            }
+        }
+        sSnakeFireSnowSelector++;
+        if (sSnakeFireSnowSelector >= 3) {
+            sSnakeFireSnowSelector = 0;
         }
         break;
     case 9:

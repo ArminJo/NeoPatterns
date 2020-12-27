@@ -49,7 +49,8 @@ void initStackFreeMeasurement() {
 }
 
 /*
- * Check for untouched patterns
+ * Returns the amount of stack not touched since the last call to initStackFreeMeasurement()
+ * by check for first touched pattern on the stack, starting the search at heap start.
  */
 uint16_t getStackFreeMinimumBytes() {
     extern unsigned int __heap_start;
@@ -76,7 +77,7 @@ uint16_t getStackFreeMinimumBytes() {
 }
 
 /*
- * Do not forget to call initStackFreeMeasurement() before
+ * Prints the amount of stack not touched (available) since the last call to initStackFreeMeasurement().
  */
 void printStackFreeMinimumBytes(Print *aSerial) {
     aSerial->print(F("Minimum free Stack[bytes]="));

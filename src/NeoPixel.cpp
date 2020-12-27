@@ -378,7 +378,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 /*
  *
  */
-void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
+void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 #ifdef TRACE
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
@@ -389,23 +389,51 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint32_t aColor) {
 #endif
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // support offsets
-        uint8_t *p, r = (uint8_t) (aColor >> 16), g = (uint8_t) (aColor >> 8), b = (uint8_t) aColor;
-        p = &pixels[aPixelIndex * BytesPerPixel];
+
+        uint8_t tRed = (uint8_t) (aColor >> 16);
+        uint8_t tGreen = (uint8_t) (aColor >> 8);
+        uint8_t tBlue = (uint8_t) aColor;
+        uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
 #ifdef SUPPORT_RGBW
         if (BytesPerPixel == 4) {
             uint8_t w = (uint8_t) (aColor >> 24);
-            p[wOffset] = w;
+            tPixelPtr[wOffset] = w;
         }
 #endif
-        p[rOffset] = r;
-        p[gOffset] = g;
-        p[bOffset] = b;
+        tPixelPtr[rOffset] = tRed;
+        tPixelPtr[gOffset] = tGreen;
+        tPixelPtr[bOffset] = tBlue;
     }
 }
 
 /*
  * adds color to existing one and clip to white (255)
  */
+void NeoPixel::addPixelColor(uint16_t aPixelIndex, color32_t aColor) {
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // support offsets
+        color32_t tOldColor = getPixelColor(aPixelIndex);
+        if (tOldColor == 0) {
+            setPixelColor(aPixelIndex, aColor);
+        } else {
+            uint8_t tRed = Red(tOldColor) + (uint8_t) (aColor >> 16);
+            if (tRed < (uint8_t) (aColor >> 16)) {
+                // clip overflow
+                tRed = 255;
+            }
+            uint8_t tGreen = Green(tOldColor) + (uint8_t) (aColor >> 8);
+            if (tGreen < (uint8_t) (aColor >> 8)) {
+                tGreen = 255;
+            }
+            uint8_t tBlue = Blue(tOldColor) + (uint8_t) aColor;
+            if (tBlue < (uint8_t) aColor) {
+                tBlue = 255;
+            }
+            setPixelColor(aPixelIndex, tRed, tGreen, tBlue);
+        }
+    }
+}
+
 void NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // support offsets
@@ -450,9 +478,18 @@ color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
         return (uint32_t) tPixelPointer[rOffset] << 16 | (uint32_t) tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
     }
 #ifdef SUPPORT_RGBW
-        return (uint32_t) tPixelPointer[wOffset] << 24 | (uint32_t) tPixelPointer[rOffset] << 16 | tPixelPointer[gOffset] << 8
-                | tPixelPointer[bOffset];
+    return (uint32_t) tPixelPointer[wOffset] << 24 | (uint32_t) tPixelPointer[rOffset] << 16 | tPixelPointer[gOffset] << 8
+            | tPixelPointer[bOffset];
 #endif
+}
+
+// Set 50% dimmed value of current color
+void NeoPixel::dimPixelColor(uint16_t aPixelIndex) {
+    uint8_t *tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * BytesPerPixel];
+    for (uint8_t i = 0; i < BytesPerPixel; ++i) {
+        *tPixelPointer = *tPixelPointer >> 1;
+        tPixelPointer++;
+    }
 }
 
 // Calculate 50% dimmed version of a color
@@ -534,7 +571,7 @@ color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor
 }
 
 /*
- * aBrightnessIndex 0 = black 255 = full
+ * aBrightness 0 = black 255 = full
  * doSpecialZero -> tGamma32Brightness is only zero if aBrightness is zero and 1 for aBrightness 1 to 16
  */
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {

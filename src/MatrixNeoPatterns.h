@@ -44,6 +44,10 @@
 #define PATTERN_TICKER              32
 #define PATTERN_MOVE                33
 #define PATTERN_MOVING_PICTURE      34
+#define PATTERN_SNOW                35
+
+//#define DO_NOT_USE_MATRIX_FIRE_PATTERN
+//#define DO_NOT_USE_SNOW_PATTERN
 
 extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
 #define NUMBERS_FONT_WIDTH 4
@@ -58,6 +62,16 @@ extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
 float const convolutionMatrix[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] =
         { { 0.02, 0.02, 0.02 } /*weights of values above*/, { 0.05, -1 /*own value*/, 0.05 }, { 0.05, 0.74, 0.05 }/*weights of values below*/};
 
+#define SNOW_BOTTOM_LINE_DIM_PRESCALER  20
+// Bit-fields save 2 bytes RAM per flake but costs 120 bytes FLASH
+struct SnowFlakeInfoStruct {
+    // fast flakes (period = 4) are in the foreground an therefore brighter;
+    uint8_t Period :4;
+    uint8_t Counter :4;
+    uint8_t Row :4; // starting with 0 / top
+    uint8_t Column :4; // starting with 0 / left
+};
+
 // extension of NeoPattern Class approximately 85 Byte / object
 class MatrixNeoPatterns: public MatrixNeoPixel, public NeoPatterns {
 public:
@@ -66,33 +80,48 @@ public:
     MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
-                void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
 
-    void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30);
+
 
     void TickerPGM(const char *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
             uint8_t aDirection = DIRECTION_LEFT);
-    void Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
-    void Ticker(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
-    void TickerInit(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT, uint8_t aFlags = 0);
+    void Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
+            uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_LEFT);
+    void Ticker(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
+            uint8_t aDirection = DIRECTION_LEFT);
+    void TickerInit(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
+            uint8_t aDirection = DIRECTION_LEFT, uint8_t aFlags = 0);
 
     void MovingPicturePGM(const uint8_t *aGraphics8x8Array, color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset,
-    int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+            int8_t aYOffset, uint16_t aSteps, uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     //
-    bool update();
-    void Move(uint8_t aDirection, uint16_t aNumberOfSteps = 1, uint16_t aIntervalMillis = 70, color32_t aBackgroundColor = COLOR32_BLACK);
+    void Move(uint8_t aDirection, uint16_t aNumberOfSteps = 1, uint16_t aIntervalMillis = 70, color32_t aBackgroundColor =
+    COLOR32_BLACK);
+    bool MoveUpdate();
     void moveArrayContent(uint8_t aDirection);
     void moveArrayContent(uint8_t aDirection, color32_t aBackgroundColor);
 
-    bool MoveUpdate();
-    bool FireMatrixUpdate();
+    bool update();
+
+#ifndef DO_NOT_USE_SNOW_PATTERN
+    void Snow(uint16_t aNumberOfSteps = 500, uint16_t aIntervalMillis = 20);
+    bool SnowUpdate();
+    void setRandomFlakeParameters(uint8_t aSnowFlakeIndex);
+    void drawSnowFlake(uint8_t aSnowFlakeIndex);
+    struct SnowFlakeInfoStruct *SnowFlakesArray;
+#endif
+
     bool MovingPicturePGMUpdate();
     bool TickerUpdate();
 
     void showNumberOnMatrix(uint8_t aNumber, color32_t aColor);
 
+#ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
+    void Fire(uint16_t aNumberOfSteps = 200, uint16_t aIntervalMillis = 30);
+    bool FireMatrixUpdate();
     /*
      * Two arrays for double buffering. Used for fire pattern
      * They have 1 pixel padding on each side for computation of convolution
@@ -101,6 +130,7 @@ public:
     uint8_t *MatrixNew;
     uint8_t *MatrixOld;
     uint8_t *initalHeatLine;
+#endif
 
     // for movingPicture and Ticker patterns
     const uint8_t *DataPtr; // can hold pointer to PGM or data space string or to PGM space 8x8 graphic array.
@@ -112,7 +142,7 @@ public:
 
 void MatrixPatternsDemo(NeoPatterns *aLedsPtr);
 
-void myLoadTest(MatrixNeoPatterns* aLedsPtr);
+void myLoadTest(MatrixNeoPatterns *aLedsPtr);
 
 #endif /* MATRIXNEOPATTERNS_H_ */
 

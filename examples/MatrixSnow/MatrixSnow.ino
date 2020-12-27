@@ -1,7 +1,7 @@
 /*
- * MatrixFire.cpp
+ * MatrixSnow.cpp
  *
- *  For testing the MatrixNeoPatterns Fire pattern
+ *  For testing the MatrixNeoPatterns Snow pattern
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -27,10 +27,12 @@
 
 #include <Arduino.h>
 #include <MatrixNeoPatterns.h>
+#include <NeoPixel.h>
 
-#define PIN_NEOPIXEL_MATRIX     8
-#define MATRIX_NUMBER_OF_COLUMNS 8
-#define MATRIX_NUMBER_OF_ROWS    8
+#define PIN_NEOPIXEL_MATRIX         8
+#define MATRIX_NUMBER_OF_COLUMNS    8
+#define MATRIX_NUMBER_OF_ROWS       8
+
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
@@ -59,28 +61,16 @@ void setup() {
             delay(500);
         }
     }
-    NeoPixelMatrix.clear();
+    NeoPixelMatrix.clear(); //clear all
 
-    Serial.println(F("Fire"));
-    NeoPixelMatrix.Fire();
+    Serial.println(F("Snow"));
+    NeoPixelMatrix.Snow();
 }
 
 void loop() {
-    NeoPixelMatrix.FireMatrixUpdate();
+
+    NeoPixelMatrix.SnowUpdate();
     NeoPixelMatrix.show();
     NeoPixelMatrix.TotalStepCounter = 42; // set to any value > 1
-    delay(30);
-    /*
-     * Can set cooling and sparking parameters by potentiometers
-     */
-    // set cooling. 10 to 25 are sensible with optimum around 14 to 20
-    NeoPixelMatrix.PatternLength = map(analogRead(A0), 0, 1023, 2, 40);
-    Serial.print(F("Cooling="));
-    Serial.println(NeoPixelMatrix.PatternLength);
-
-    // Not yet implemented
-//    NeoPixelMatrix.PatternFlags = map(analogRead(A1), 0, 1023, 30, 200);
-//    Serial.print(F(" Sparking="));
-//    Serial.println(NeoPixelMatrix.PatternFlags);
-
+    delay(20);
 }

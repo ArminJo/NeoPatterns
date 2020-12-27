@@ -70,9 +70,11 @@ bool MatrixNeoPatterns::update() {
         bool tPatternEnded = true;
 
         switch (ActivePattern) {
+#ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
         case PATTERN_FIRE:
             tPatternEnded = FireMatrixUpdate();
             break;
+#endif
         case PATTERN_TICKER:
             tPatternEnded = TickerUpdate();
             break;
@@ -82,6 +84,11 @@ bool MatrixNeoPatterns::update() {
         case PATTERN_MOVING_PICTURE:
             tPatternEnded = MovingPicturePGMUpdate();
             break;
+#ifndef DO_NOT_USE_SNOW_PATTERN
+        case PATTERN_SNOW:
+            tPatternEnded = SnowUpdate();
+            break;
+#endif
         default:
             NeoPatterns::update();
             break;
@@ -118,6 +125,7 @@ union LongUnion {
     int32_t Long;
 };
 
+#ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
 // The bottom line of fire which is set by random values every 4 updates
 void MatrixNeoPatterns::setInitHeat() {
     LongUnion tRandomValue;
@@ -139,6 +147,7 @@ void MatrixNeoPatterns::setInitHeat() {
         }
     }
 }
+
 
 /*
  * initialize for fire -> set all to zero
@@ -270,10 +279,197 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
     MatrixOld = tPtr;
     return false;
 }
+#endif // DO_NOT_USE_MATRIX_FIRE_PATTERN
+
+#ifndef DO_NOT_USE_SNOW_PATTERN
+// bright version
+//color32_t SnowFlakeBrightnessMap[4] = { COLOR32_WHITE, COLOR32_WHITE_QUARTER, COLOR32_WHITE_16TH, COLOR32_WHITE_64TH };
+// dimmed version
+const color32_t SnowFlakeBrightnessMap[4] = { COLOR32_WHITE_HALF, COLOR32_WHITE_EIGHTH, COLOR32_WHITE_32TH, COLOR32_WHITE_128TH };
+
+void MatrixNeoPatterns::setRandomFlakeParameters(uint8_t aSnowFlakeIndex) {
+    // random parameters for a snow flake
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+    // Hack to avoid using a union only for this purpose
+#if defined(ESP8266) || defined(ESP32)
+    *((uint16_t*) &SnowFlakesArray[aSnowFlakeIndex]) = random(0xFFFF);
+#else
+    *((uint16_t*) &SnowFlakesArray[aSnowFlakeIndex]) = random();
+#endif
+    SnowFlakesArray[aSnowFlakeIndex].Period |= 0x08; // values from 8 to F -> factor 2
+}
+
+void MatrixNeoPatterns::drawSnowFlake(uint8_t aSnowFlakeIndex) {
+    addMatrixPixelColor(SnowFlakesArray[aSnowFlakeIndex].Column, SnowFlakesArray[aSnowFlakeIndex].Row,
+            SnowFlakeBrightnessMap[(SnowFlakesArray[aSnowFlakeIndex].Period >> 1) & 0x03]);
+}
+
+void MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
+    Interval = aIntervalMillis;
+    TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
+    Direction = DIRECTION_UP; // for dim prescaler
+    if (SnowFlakesArray) {
+        free(SnowFlakesArray);
+    }
+    PatternLength = ((Rows * 2) / 5) * Columns;
+    SnowFlakesArray = (struct SnowFlakeInfoStruct*) malloc(PatternLength * sizeof(struct SnowFlakeInfoStruct));
+    for (int tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+        // random parameters for a snow flake
+        setRandomFlakeParameters(tSnowFlakeIndex);
+    }
+    SnowUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_SNOW;
+}
+
+bool MatrixNeoPatterns::SnowUpdate() {
+    if (TotalStepCounter == 1) {
+        /*
+         * End of snow pattern -> cleanup before calling callback
+         */
+        free(SnowFlakesArray);
+        SnowFlakesArray = NULL;
+    }
+    if (decrementTotalStepCounterAndSetNextIndex()) {
+        return true;
+    }
+
+    /*
+     *  clear all but the bottom row
+     */
+    memset(pixels + (BytesPerPixel * Columns), 0, numBytes - (BytesPerPixel * Columns));
+
+    /*
+     * 1. Dim bottom row. reasonable prescaler is between 10 and 30
+     */
+    if (Index >= SNOW_BOTTOM_LINE_DIM_PRESCALER) {
+        Index = 0;
+        for (uint8_t i = 0; i < Columns; i++) {
+            dimPixelColor(i);
+        }
+    }
+
+    /*
+     * 2. Do individual flake delay, move and draw all flakes
+     */
+    for (uint8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+        uint8_t tCount = SnowFlakesArray[tSnowFlakeIndex].Counter;
+        if (tCount == 0) {
+            // Move flake
+            tCount = SnowFlakesArray[tSnowFlakeIndex].Period;
+            SnowFlakesArray[tSnowFlakeIndex].Row++; // move
+        } else {
+            // delay
+            tCount--;
+        }
+        SnowFlakesArray[tSnowFlakeIndex].Counter = tCount;
+
+        // set pixel
+        drawSnowFlake(tSnowFlakeIndex);
+
+#ifdef TRACE
+        Serial.print(F("Index="));
+        Serial.print(tSnowFlakeIndex);
+        Serial.print(F(" Column="));
+        Serial.print(SnowFlakesArray[tSnowFlakeIndex].Column);
+        Serial.print(F(" Row="));
+        Serial.print(SnowFlakesArray[tSnowFlakeIndex].Row);
+        Serial.print(F(" Count="));
+        Serial.print(tCount);
+        Serial.print(F(" Period="));
+        Serial.print(SnowFlakesArray[tSnowFlakeIndex].Period);
+        Serial.print(F(" All=0x"));
+        Serial.print(SnowFlakesArray[tSnowFlakeIndex].All, HEX);
+        Serial.println();
+#endif
+    }
+    /*
+     * 3. Reinitialize all flakes, which were arrived at bottom row
+     */
+    for (uint8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+        if (SnowFlakesArray[tSnowFlakeIndex].Row >= Rows - 1) {
+            // Reinitialize
+            setRandomFlakeParameters(tSnowFlakeIndex);
+            // set row to 0
+            SnowFlakesArray[tSnowFlakeIndex].Row = 0;
+            uint8_t tTimeoutCounter = Columns;
+            uint8_t tFlakeColumn = SnowFlakesArray[tSnowFlakeIndex].Column;
+            /*
+             * Try to place the new flake in a column where the three upper rows are empty.
+             */
+            while (getMatrixPixelColor(tFlakeColumn, 0) != COLOR32_BLACK || getMatrixPixelColor(tFlakeColumn, 1) != COLOR32_BLACK
+                    || getMatrixPixelColor(tFlakeColumn, 2) != COLOR32_BLACK) {
+                tFlakeColumn++;
+                if (tFlakeColumn >= Columns) {
+                    tFlakeColumn = 0;
+                }
+                tTimeoutCounter--;
+                if (tTimeoutCounter == 0) {
+                    break;
+                }
+            }
+            SnowFlakesArray[tSnowFlakeIndex].Column = tFlakeColumn;
+
+            // set pixel
+            drawSnowFlake(tSnowFlakeIndex);
+
+#ifdef TRACE
+            Serial.print(F("Index="));
+            Serial.print(tSnowFlakeIndex);
+            Serial.print(F(" Column="));
+            Serial.print(SnowFlakesArray[tSnowFlakeIndex].Column);
+            Serial.print(F(" tTimeoutCounter="));
+            Serial.print(tTimeoutCounter);
+            Serial.println();
+#endif
+        }
+    }
+
+    return false;
+}
+#endif // DO_NOT_USE_SNOW_PATTERN
 
 /*
+ * Moving array content. Only moving out is performed e.g. for moving out the score-points of the snake game.
+ * aSteps == 1 is equivalent to just calling moveArrayContent(aDirection, aBackgroundColor),
+ */
+void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16_t aIntervalMillis, color32_t aBackgroundColor) {
+    LongValue1.Color2 = aBackgroundColor;
+    Direction = aDirection;
+    Interval = aIntervalMillis;
+    TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
+
+#ifdef INFO
+    Serial.print(F("Starting Move with refresh interval="));
+    Serial.print(aIntervalMillis);
+    Serial.print(F("ms. Direction="));
+    Serial.println(aDirection);
+#endif
+
+    MoveUpdate();
+    showPatternInitially();
+    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
+    ActivePattern = PATTERN_MOVE;
+}
+
+bool MatrixNeoPatterns::MoveUpdate() {
+#ifdef DEBUG
+    Serial.print(F("MoveUpdate TotalSteps="));
+    Serial.println(TotalStepCounter);
+#endif
+    if (decrementTotalStepCounter()) {
+        return true;
+    }
+    moveArrayContent(Direction, LongValue1.Color2);
+    return false;
+}
+
+/*
+ * Display a 8x8 graphic with moving offsets.
+ * Can be used for moving in and moving out in contrast to MOVE pattern, which is only capable of moving out.
  * direction FORWARD is from left to right
- * Currently only 8x8 Graphics are supported
+ * Currently only 8x8 graphics are supported
  */
 void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, color32_t aForegroundColor,
         color32_t aBackgroundColor, int8_t aGraphicsXOffset, int8_t aGraphicsYOffset, uint16_t aSteps, uint16_t aIntervalMillis,
@@ -344,7 +540,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
 #ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     if (LayoutMappingFunction != NULL) {
 #  ifdef WARN
-        Serial.print(F("moveArrayContent with only one parameter does actually not support other than Z type mappings."));
+        Serial.print(F("moveArrayContent with one parameter does not support other than Z type mappings."));
 #  endif
     } else
 #  endif
@@ -481,41 +677,6 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         }
     }
 #endif
-}
-
-/*
- * Moving for arrays with 0 at lower right and horizontal rows
- * aSteps == 1 is equivalent to just calling moveArrayContent()
- */
-void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16_t aIntervalMillis, color32_t aBackgroundColor) {
-    LongValue1.Color2 = aBackgroundColor;
-    Direction = aDirection;
-    Interval = aIntervalMillis;
-    TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
-
-#ifdef INFO
-    Serial.print(F("Starting Move with refresh interval="));
-    Serial.print(aIntervalMillis);
-    Serial.print(F("ms. Direction="));
-    Serial.println(aDirection);
-#endif
-
-    MoveUpdate();
-    showPatternInitially();
-    // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
-    ActivePattern = PATTERN_MOVE;
-}
-
-bool MatrixNeoPatterns::MoveUpdate() {
-#ifdef DEBUG
-    Serial.print(F("MoveUpdate TotalSteps="));
-    Serial.println(TotalStepCounter);
-#endif
-    if (decrementTotalStepCounter()) {
-        return true;
-    }
-    moveArrayContent(Direction, LongValue1.Color2);
-    return false;
 }
 
 /*

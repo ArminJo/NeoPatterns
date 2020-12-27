@@ -116,6 +116,41 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
     }
 }
 
+void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
+    if (aColumnX < Columns && aRowY < Rows) {
+#ifdef DEBUG
+        Serial.print(F("set x="));
+        Serial.print(aColumnX);
+        Serial.print(F(" y="));
+        Serial.print(aRowY);
+        Serial.print(F(" n="));
+        Serial.print(LayoutMapping(aColumnX, aRowY));
+        Serial.print(F(" Color="));
+        Serial.print(aRed);
+        Serial.print('|');
+        Serial.print(aGreen);
+        Serial.print('|');
+        Serial.println(aBlue);
+#endif
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+        if (LayoutMappingFunction == NULL) {
+            addPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
+        } else {
+            addPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), aRed, aGreen, aBlue);
+        }
+#else
+    addPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, aRed, aGreen, aBlue);
+#endif
+#ifdef DEBUG
+    } else {
+        Serial.print(F("skip x="));
+        Serial.print(aColumnX);
+        Serial.print(F(" y="));
+        Serial.println(aRowY);
+#endif
+    }
+}
+
 /*
  * If LayoutMappingFunction is not set, use ZTypeMapping.
  */
@@ -150,6 +185,36 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
     }
 }
 
+void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
+    if (aColumnX < Columns && aRowY < Rows) {
+#ifdef DEBUG
+        Serial.print(F("set x="));
+        Serial.print(aColumnX);
+        Serial.print(F(" y="));
+        Serial.print(aRowY);
+        Serial.print(F(" n="));
+        Serial.print(LayoutMapping(aColumnX, aRowY));
+        Serial.print(F(" color="));
+        Serial.println(a32BitColor, HEX);
+#endif
+#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+        if (LayoutMappingFunction == NULL) {
+            addPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
+        } else {
+            addPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), a32BitColor);
+        }
+#else
+        addPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, a32BitColor);
+#endif
+#ifdef DEBUG
+    } else {
+        Serial.print(F("skip x="));
+        Serial.print(aColumnX);
+        Serial.print(F(" y="));
+        Serial.println(aRowY);
+#endif
+    }
+}
 /*
  * If LayoutMappingFunction is not set, use ZTypeMapping.
  */

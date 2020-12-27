@@ -27,7 +27,7 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 ## Pattern from [FastLed](https://github.com/FastLED/FastLED)
 **FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
 ## Patterns only for nxn Matrix
-**MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNAKE**
+**MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNOW**, **SNAKE**
 ## Your own patterns
 **Put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in AllPatternOnOneStrip.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 41 to test them.**
 
@@ -72,7 +72,7 @@ In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use 
 
 # Compile options / macros for this library
 To customize the library to different requirements, there are some compile options / makros available.<br/>
-Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for gobal compile (the latter is not possible with the Arduino IDE, so consider to use [Sloeber](https://eclipse.baeyens.it).
+Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for global compile (the latter is not possible with the Arduino IDE, so consider using [Sloeber](https://eclipse.baeyens.it).
 | Macro | Default | File | Description |
 |-|-|-|-|
 | `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |

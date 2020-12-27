@@ -93,18 +93,18 @@ public:
     color32_t getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t aColor);
 
     void loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset,
-            bool doPadding = false);
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false);
 
     void loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
-            color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false, bool IsPGMData =
-                    false);
+            color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false, bool IsPGMData = false);
 
     void loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset,
-            bool doPadding = false, bool IsPGMData = false);
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false,
+            bool IsPGMData = false);
 
     void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
     void drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);

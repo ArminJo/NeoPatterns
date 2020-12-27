@@ -53,6 +53,7 @@
 #define VERSION_NEOPATTERNS_MINOR 3
 // The change log is at the bottom of the file
 
+
 extern const char * const PatternNamesArray[] PROGMEM;
 
 // Pattern types supported:
@@ -202,7 +203,7 @@ public:
     uint16_t Index;         // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
     color32_t Color1;       // Main pattern color
     int8_t Direction;       // Direction to run the pattern
-    uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel
+    uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel - Snow: number of flakes
 
     // For ScannerExtended()
     // PatternFlags 0 -> one pass scanner (rocket or falling star)

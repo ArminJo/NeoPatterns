@@ -86,8 +86,6 @@ public:
 
     void ColorSet(color32_t aColor);
     color32_t getPixelColor(uint16_t aPixelIndex);
-    uint32_t dimColor(color32_t aColor);
-    void resetBrightnessValue();
     uint8_t getBytesPerPixel();
     neoPixelType getType();
     uint16_t getPixelBufferSize();
@@ -101,13 +99,16 @@ public:
 #ifdef SUPPORT_RGBW
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
 #endif
-    void setPixelColor(uint16_t aPixelIndex, uint32_t aColor);
+    void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
     void fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
     void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
 
     void addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void addPixelColor(uint16_t aPixelIndex, color32_t aColor);
     // Static functions
+    static uint32_t dimColor(color32_t aColor);
+    void dimPixelColor(uint16_t aPixelIndex);
     static color32_t Wheel(uint8_t aWheelPos);
     static uint8_t gamma32(uint8_t aLinearBrightnessValue);
     static uint8_t gamma32WithSpecialZero(uint8_t aLinearBrightnessValue);
