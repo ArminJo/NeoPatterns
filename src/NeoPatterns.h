@@ -37,8 +37,8 @@
 #define NEOPATTERNS_H
 
 #if !defined(DO_NOT_USE_MATH_PATTERNS)
-// Comment this out if you do NOT need the BOUNCING_BALL pattern.
 // This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
+// Activate the next line if you do NOT need the BOUNCING_BALL pattern.
 //#define DO_NOT_USE_MATH_PATTERNS
 #endif
 

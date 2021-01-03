@@ -47,7 +47,7 @@
 //#define DO_NOT_SUPPORT_RGBW
 #if ! defined(DO_NOT_SUPPORT_RGBW)
 // Support rgbw colors for pattern. Requires additional program space.
-// Comment this out, if you do NOT need RGBW support and want to save program space.
+// Deactivate this, if you do NOT need RGBW support and want to save program space.
 #define SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
 #endif
 

@@ -32,10 +32,8 @@
 
 #include "PlayRtttl.h"
 
-// comment out next line to see the note played on Serial output
-//#define TRACE
-// comment out next line to see debug output
-//#define DEBUG
+//#define TRACE // Activate it to see the note played on Serial output
+//#define DEBUG // Activate it to see debug output
 
 // Propagate debug level
 #ifdef TRACE

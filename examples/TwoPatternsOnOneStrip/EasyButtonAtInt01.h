@@ -84,7 +84,7 @@
 #endif
 
 /*
- * Comment this out to save 2 bytes RAM and 64 bytes FLASH
+ * Activate this to save 2 bytes RAM and 64 bytes FLASH
  */
 //#define NO_BUTTON_RELEASE_CALLBACK
 //

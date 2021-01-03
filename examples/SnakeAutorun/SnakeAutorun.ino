@@ -71,7 +71,7 @@ uint8_t getNextSnakeDirection(MatrixSnake *aSnake) {
 
     /*
      * Call internal solver
-     * Comment this to enable your own code
+     * Comment / deactivate the next line to enable your own code
      */
     return aSnake->getNextSnakeDir();
 

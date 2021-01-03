@@ -31,6 +31,7 @@
 #include <Arduino.h>
 
 #include "MatrixNeoPatterns.h"
+#include "LongUnion.h"
 
 //#define TRACE
 //#define DEBUG
@@ -103,27 +104,6 @@ bool MatrixNeoPatterns::update() {
 
 int convolutionMatrixIntegerTimes256[3][3];
 #define mapXYToArray(x, y, XColumns) (((y) * (XColumns)) + (x))
-
-union LongUnion {
-    struct {
-        uint8_t LowByte;
-        uint8_t MidLowByte;
-        uint8_t MidHighByte;
-        uint8_t HighByte;
-    } UByte;
-    struct {
-        int8_t LowByte;
-        int8_t MidLowByte;
-        int8_t MidHighByte;
-        int8_t HighByte;
-    } Byte;
-    uint8_t UBytes[4];
-    int8_t Bytes[4];
-    uint16_t UWords[2];
-    int16_t Words[2];
-    uint32_t ULong;
-    int32_t Long;
-};
 
 #ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
 // The bottom line of fire which is set by random values every 4 updates

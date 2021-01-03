@@ -91,7 +91,7 @@ If you are using Sloeber as your IDE, you can easily define global symbols with 
 
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must comment out the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must activate the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
 The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example

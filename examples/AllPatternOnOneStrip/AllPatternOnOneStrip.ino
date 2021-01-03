@@ -35,8 +35,7 @@
 
 #define INFO // if not defined, no Serial related code should be linked
 
-// Comment this out to test your own pattern implementation on line 74 ff.
-//#define TEST_USER_PATTERNS
+//#define TEST_USER_PATTERNS // Activate this to test your own pattern implementation on line 74 ff.
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_BAR_16          3
