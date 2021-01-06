@@ -78,14 +78,14 @@ public:
     bool update();
 
     void SnakeUpdate();
-    uint8_t SnakeInputHandler();
+    void SnakeInputHandler();
     void SnakeEndHandler();
     void showScore();
 
     void newApple();
     void drawApple();
     void drawSnake();
-    void clearResetAndShowSnakeAndNewApple();
+    void resetAndClearAndShowSnakeAndNewApple();
     void rotateRight();
     void rotateLeft();
     //
@@ -126,7 +126,7 @@ public:
     uint8_t PinOfUpButton;
     uint8_t PinOfDownButton;
     uint8_t DirectionOfLastButtonPressed;  // for debouncing
-    uint32_t MillisOfLastButtonChange; // for debouncing
+    uint32_t MillisOfLastButtonChange; // for debouncing in 2 button mode
 
 private:
 };

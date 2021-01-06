@@ -4,7 +4,8 @@
  *  Simply runs the Snake game. It can be controlled by 2 or 4 buttons or by serial input (WASD).
  *  The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.
  *  After 7 seconds of inactivity it runs the Snake demo with a simple AI.
- *  If pin 10 is connected to ground, the game is in 2 button mode, i.e. one button for turn left and one for turn right.
+ *  The game starts in 2 button mode, i.e. one button for turn left and one for turn right.
+ *  If one of the up or down button is used, 4 button mode is entered automatically.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -40,13 +41,9 @@
 
 #define RIGHT_BUTTON_PIN     2
 #define LEFT_BUTTON_PIN      3
-/*
- * if connected, use up or down button first after reset to enable 4 button direct direction input
- */
+// If one of the up or down button is used, 4 button mode is entered automatically.
 #define UP_BUTTON_PIN        4
 #define DOWN_BUTTON_PIN      5
-
-#define TWO_BUTTON_MODE_SELECT_PIN 10 // if pulled low, then 2 button mode is activated
 
 /*
  * Specify your matrix geometry as 4th parameter.
@@ -58,7 +55,6 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(TWO_BUTTON_MODE_SELECT_PIN, INPUT_PULLUP);
 
     Serial.begin(115200);
 #if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)
@@ -78,21 +74,21 @@ void setup() {
             delay(500);
         }
     }
-    if (digitalRead(TWO_BUTTON_MODE_SELECT_PIN)) {
-        // 4 button mode
-        NeoPixelMatrixSnake.Snake(GAME_REFRESH_INTERVAL, COLOR32_BLUE, RIGHT_BUTTON_PIN, LEFT_BUTTON_PIN, UP_BUTTON_PIN,
-        DOWN_BUTTON_PIN);
-    } else {
-        // 2 button mode
-        NeoPixelMatrixSnake.Snake(GAME_REFRESH_INTERVAL, COLOR32_BLUE, RIGHT_BUTTON_PIN, LEFT_BUTTON_PIN, 0, 0);
-    }
-    pinMode(TWO_BUTTON_MODE_SELECT_PIN, INPUT);
+    // Prepare for 4 button mode. If up and down button are not connected
+    NeoPixelMatrixSnake.Snake(GAME_REFRESH_INTERVAL, COLOR32_BLUE, RIGHT_BUTTON_PIN, LEFT_BUTTON_PIN, UP_BUTTON_PIN,
+    DOWN_BUTTON_PIN);
+
 }
 
 void loop() {
-    static bool sButtonWasPressed = false;
-    // Direction is DIRECTION_NONE after each game.
-    if ((!sButtonWasPressed) && NeoPixelMatrixSnake.Direction == DIRECTION_NONE) {
+    static bool sButtonWasPressedOnce = false;
+
+    if (NeoPixelMatrixSnake.Direction != DIRECTION_NONE) {
+        // Direction is DIRECTION_NONE at start => direction != NONE indicates a pressed button
+        sButtonWasPressedOnce = true;
+    }
+
+    if (!sButtonWasPressedOnce) {
         /*
          * Just wait for TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS and then start snake autorun mode.
          */
@@ -101,8 +97,6 @@ void loop() {
             // switch to demo mode after switching delay if snake has not moved
             initSnakeAutorun(&NeoPixelMatrixSnake, GAME_REFRESH_INTERVAL / 2, COLOR32_BLUE);
         }
-    } else {
-        sButtonWasPressed = true;
     }
     NeoPixelMatrixSnake.update();
 }

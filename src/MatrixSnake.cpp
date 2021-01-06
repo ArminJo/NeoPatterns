@@ -71,9 +71,9 @@ bool MatrixSnake::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aM
  */
 bool MatrixSnake::update() {
 
-    if (ActivePattern == PATTERN_SNAKE) {
+    if (ActivePattern == PATTERN_SNAKE && !(PatternFlags & FLAG_SNAKE_AUTORUN)) {
         // do it on every call in order not to miss any button press
-        Direction = SnakeInputHandler();
+        SnakeInputHandler();
     }
 
     if ((millis() - lastUpdate) > Interval) {
@@ -115,25 +115,26 @@ void MatrixSnake::newApple() {
 }
 
 void MatrixSnake::rotateLeft() {
-    Direction = (Direction + 1) % 4;
+    Direction = (Direction + 1) % NUMBER_OF_DIRECTIONS;
 }
 
 void MatrixSnake::rotateRight() {
-    Direction -= 1;
+    Direction--;
     if (Direction < 0) {
         Direction = 3;
     }
 }
 
 // Resets the game area, init snake to start position and gets new apple
-void MatrixSnake::clearResetAndShowSnakeAndNewApple() {
+void MatrixSnake::resetAndClearAndShowSnakeAndNewApple() {
 #ifdef DEBUG
     Serial.println(F("Reset snake"));
 #endif
 
     SnakeLength = sizeof(SnakeInitialPixels) / sizeof(position);
-    Index = 0; // steps already gone
-    Direction = DIRECTION_NONE;
+    Index = 0; // start value
+    Direction = DIRECTION_NONE; // signal start condition
+
     PatternFlags &= ~FLAG_SNAKE_SHOW_LENGTH_SCORE;
 
 // Clear all pixels
@@ -188,7 +189,7 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     Serial.println(HighScore);
 #endif
 
-    clearResetAndShowSnakeAndNewApple();
+    resetAndClearAndShowSnakeAndNewApple();
 
     if (PinOfRightButton != 0) {
         pinMode(aPinOfRightButton, INPUT_PULLUP);
@@ -196,10 +197,8 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
         if (PinOfUpButton != 0) {
             pinMode(aPinOfUpButton, INPUT_PULLUP);
             pinMode(aPinOfDownButton, INPUT_PULLUP);
-            PatternFlags = FLAG_USE_4_BUTTONS;
-        } else {
-            PatternFlags = 0; // 2 button mode
         }
+        PatternFlags = 0; // always start with 2 button mode. 4 button mode is detected if up or down button are pressed
     } else {
         PatternFlags = FLAG_SNAKE_AUTORUN; // start in autorun mode
     }
@@ -223,43 +222,50 @@ void MatrixSnake::drawSnake() {
 }
 
 /*
- * Check button presses and return a (new) direction
+ * Called at every call of update() in order not to miss any button press
+ * Check button presses and updates direction
  */
-uint8_t MatrixSnake::SnakeInputHandler() {
-    uint8_t tNewDirection = Direction;
+void MatrixSnake::SnakeInputHandler() {
 
-    if (PinOfRightButton == 0) {
-        // Demo or AI autorun mode -> no buttons connected
-        return tNewDirection;
-    }
-
+#ifdef INFO
+    uint8_t tOldPatternFlags = PatternFlags;
+#endif
+#ifdef DEBUG
+    uint8_t tOldDirection = Direction;
+#endif
     if (PinOfUpButton != 0) {
         /*
          * First check up and down button direct input, no debouncing needed
          */
         if (digitalRead(PinOfUpButton) == LOW) {
-            tNewDirection = DIRECTION_UP;
+            Direction = DIRECTION_UP;
             PatternFlags = FLAG_USE_4_BUTTONS;
         } else if (digitalRead(PinOfDownButton) == LOW) {
-            tNewDirection = DIRECTION_DOWN;
+            Direction = DIRECTION_DOWN;
             PatternFlags = FLAG_USE_4_BUTTONS;
         }
     }
+
+#ifdef INFO
+    if (tOldPatternFlags != PatternFlags) {
+        Serial.println(F("4 Button mode detected"));
+    }
+#endif
 
     if (PatternFlags & FLAG_USE_4_BUTTONS) {
         /*
          * 4 buttons direct direction input
          */
         if (digitalRead(PinOfRightButton) == LOW) {
-            tNewDirection = DIRECTION_RIGHT;
+            Direction = DIRECTION_RIGHT;
         } else if (digitalRead(PinOfLeftButton) == LOW) {
-            tNewDirection = DIRECTION_LEFT;
+            Direction = DIRECTION_LEFT;
         }
     } else {
         /*
          * 2 buttons turn direction input, debouncing required to avoid multiple turns
          */
-        uint32_t tMillisSinceLastButtonChanged = millis() - MillisOfLastButtonChange;
+        uint16_t tMillisSinceLastButtonChanged = millis() - MillisOfLastButtonChange;
         if (tMillisSinceLastButtonChanged > MILLIS_FOR_BUTTON_DEBOUNCING) {
 
             if (DirectionOfLastButtonPressed == DIRECTION_NONE) {
@@ -267,11 +273,21 @@ uint8_t MatrixSnake::SnakeInputHandler() {
                  * Check if button pressed
                  */
                 if (digitalRead(PinOfRightButton) == LOW) {
-                    rotateRight();
+                    if (Index == 0) {
+                        //First button push in new game
+                        Direction = DIRECTION_RIGHT;
+                    } else {
+                        rotateRight();
+                    }
                     DirectionOfLastButtonPressed = DIRECTION_RIGHT;
                     MillisOfLastButtonChange = millis();
                 } else if (digitalRead(PinOfLeftButton) == LOW) {
-                    rotateLeft();
+                    if (Index == 0) {
+                        //First button push in new game
+                        Direction = DIRECTION_LEFT;
+                    } else {
+                        rotateLeft();
+                    }
                     DirectionOfLastButtonPressed = DIRECTION_LEFT;
                     MillisOfLastButtonChange = millis();
                 }
@@ -279,6 +295,9 @@ uint8_t MatrixSnake::SnakeInputHandler() {
                 /*
                  * Button released
                  */
+#ifdef TRACE
+                Serial.println(F("Button released"));
+#endif
                 DirectionOfLastButtonPressed = DIRECTION_NONE;
                 MillisOfLastButtonChange = millis();
             }
@@ -304,7 +323,12 @@ uint8_t MatrixSnake::SnakeInputHandler() {
 #endif
     }
 #endif
-    return tNewDirection;
+#ifdef DEBUG
+    if (tOldDirection != Direction) {
+        Serial.print(F("Button pressed. NewDirection="));
+        Serial.println(DirectionToString(Direction));
+    }
+#endif
 }
 
 /*
@@ -375,7 +399,7 @@ uint16_t MatrixSnake::getIndexOfPositionInSnake(position aPositionToCheck) {
 }
 
 /*
- * returns true if new position is in area
+ * returns true if direction is valid and new position is in area
  */
 bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNewHeadPosition) {
     *aSnakeNewHeadPosition = SnakePixelList[0];
@@ -392,7 +416,6 @@ bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNew
     case DIRECTION_LEFT:
         aSnakeNewHeadPosition->x = SnakePixelList[0].x - 1;
         break;
-    case DIRECTION_IMPOSSIBLE:
     default:
         return false;
         break;
@@ -453,7 +476,7 @@ void MatrixSnake::SnakeUpdate() {
             // show score until index gets 0, then reset snake
             Index--;
             if (Index == 0) {
-                clearResetAndShowSnakeAndNewApple();
+                resetAndClearAndShowSnakeAndNewApple();
             }
             return;
         }
@@ -461,8 +484,7 @@ void MatrixSnake::SnakeUpdate() {
 
     if (Direction != DIRECTION_NONE) {
         /*
-         * move the snake
-         * for autorun, check if direction is valid
+         * Try to move the snake. If direction is not valid, set it to DIRECTION_NONE.
          */
         position tSnakeNewHeadPosition;
         bool tHeadPositionIsInAreaAndDirectionIsValid = computeNewHeadPosition(Direction, &tSnakeNewHeadPosition);
@@ -498,29 +520,35 @@ void MatrixSnake::SnakeUpdate() {
                 Serial.println(SnakeLength);
             }
 #endif
-            if (OnPatternComplete == NULL) {
-                // set flags to show end and score and reset snake
-                SnakeEndHandler();
-            } else {
-                free(SnakePixelList);
-                SnakePixelList = NULL;
-                ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
-                OnPatternComplete(this); // call the completion callback
+            Direction = DIRECTION_NONE; // Current direction is not valid
+        } else {
+            /*
+             * move snake body -except head- back in array and set new head
+             */
+            if (moveSnakeAndCheckApple(tSnakeNewHeadPosition)) {
+                // eat the apple -> elongate snake
+                SnakeLength++;
+                newApple();
+                drawApple();
             }
-            return;
+            drawSnake();
+            Index++;
         }
+    }
 
-        /*
-         * move snake body -except head- back in array and set new head
-         */
-        if (moveSnakeAndCheckApple(tSnakeNewHeadPosition)) {
-            // eat the apple -> elongate snake
-            SnakeLength++;
-            newApple();
-            drawApple();
+    /*
+     * Not at start of game and current direction was not valid or no valid direction found for autorun
+     */
+    if (Index != 0 && Direction == DIRECTION_NONE) {
+        if (OnPatternComplete == NULL) {
+            // set flags to show end and score and reset snake
+            SnakeEndHandler();
+        } else {
+            free(SnakePixelList);
+            SnakePixelList = NULL;
+            ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
+            OnPatternComplete(this); // call the completion callback
         }
-        drawSnake();
-        Index++;
     }
 }
 
@@ -601,7 +629,7 @@ uint8_t computeReverseDirection(uint8_t aDirection) {
 /*
  * MAIN auto solver algorithm
  * Gives the next direction towards the apple.
- * returns DIRECTION_IMPOSSIBLE if no direction is valid.
+ * returns DIRECTION_NONE if no direction is valid.
  * SnakeAutoSolverMode determines the behavior of this algorithm
  */
 uint8_t MatrixSnake::findNextDir() {
@@ -702,7 +730,7 @@ uint8_t MatrixSnake::findNextDir() {
         }
 
         if (i == NUMBER_OF_DIRECTIONS) {
-            tNewDirection = DIRECTION_IMPOSSIBLE;
+            tNewDirection = DIRECTION_NONE;
 #ifdef TRACE
             Serial.println(F("Give up, no valid direction left"));
 #endif
@@ -736,7 +764,7 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     uint8_t tDirection = Direction;
     while (true) {
         tDirection = findNextDir();
-        if (tDirection == DIRECTION_IMPOSSIBLE) {
+        if (tDirection == DIRECTION_NONE) {
             tResult = 0;
             break;
         }
@@ -835,12 +863,16 @@ uint8_t MatrixSnake::getNextSnakeDir() {
  */
 void initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
 
+#ifdef INFO
+    Serial.print(F("Autorun: "));
+#endif
     aLedsPtr->MultipleExtension = AUTORUN_MODE_SHOW_END;
     aLedsPtr->Repetitions = aRepetitions;
     aLedsPtr->NextOnPatternCompleteHandler = aLedsPtr->OnPatternComplete;
     aLedsPtr->OnPatternComplete = &SnakeAutorunCompleteHandler;
     aLedsPtr->Snake(aIntervalMillis, aColor);
     aLedsPtr->Direction = DIRECTION_LEFT;
+
 }
 
 /*

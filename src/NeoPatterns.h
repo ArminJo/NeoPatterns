@@ -87,8 +87,7 @@ extern const char * const PatternNamesArray[] PROGMEM;
 #define PARAMETER_IS_DURATION  0x80 // if highest bit is set for direction parameter, the intervalMillis parameter is interpreted as durationMillis.
 #define OppositeDirection(aDirection) (((aDirection) + 2) & DIRECTION_MASK)
 #define NUMBER_OF_DIRECTIONS 4
-#define DIRECTION_IMPOSSIBLE NUMBER_OF_DIRECTIONS   // No direction possible (for AI)
-#define DIRECTION_NONE 5                            // No button pressed until now
+#define DIRECTION_NONE NUMBER_OF_DIRECTIONS   // No button pressed until now, no direction possible (for AI)
 const char DirectionUp[] = "up";
 const char DirectionLeft[] = "left";
 const char DirectionDown[] = "down";
