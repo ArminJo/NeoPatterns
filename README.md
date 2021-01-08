@@ -102,7 +102,10 @@ NeoPatterns on breadboard
 
 # Revision History
 ### Version 2.3.1 - work in progress
+- Changed type of TotalStepCounter from uint16_t to int16_t.
 - Added `SnowMatrix` pattern.
+- Improved debugging.
+- Fixed random() bug for ESP32.
 
 ### Version 2.3.0
 - Changed TickerUpdate() and loadPicture() and their callers to achieve that YOffset is consistent with Y direction and origin.
