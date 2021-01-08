@@ -31,15 +31,14 @@
 
 #include <Arduino.h>
 
-#include "MatrixSnake.h"
-
 // Output information on Serial must be defined before #include "MatrixSnake.h"
 //#define TRACE
 //#define DEBUG
 //#define INFO
 //#define WARN
 //#define ERROR
-#include "DebugLevel.h"
+
+#include "MatrixSnake.h"
 
 #include <stdlib.h>         // for utoa() etc.
 

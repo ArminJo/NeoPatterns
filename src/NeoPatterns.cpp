@@ -39,14 +39,12 @@
  */
 #include <Arduino.h>
 
-#include "NeoPatterns.h"
-
 //#define TRACE
 //#define DEBUG
 //#define INFO
 //#define WARN
 //#define ERROR
-#include "DebugLevel.h"
+#include "NeoPatterns.h"
 
 const char PatternNone[] PROGMEM ="None";
 const char PatternRainbowCycle[] PROGMEM ="Rainbow cycle";
@@ -62,12 +60,23 @@ const char PatternPattern1[] PROGMEM ="User pattern 1";
 const char PatternPattern2[] PROGMEM ="User pattern 2";
 const char PatternBouncingBall[] PROGMEM ="Bouncing ball";
 
-const char * const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
+/*
+ * Include known matrix patterns
+ */
+const char MatrixPatternTicker[] PROGMEM ="Ticker";
+const char MatrixPatternMove[] PROGMEM ="Move";
+const char MatrixPatternMovingPicture[] PROGMEM ="Moving picture";
+const char MatrixPatternSnow[] PROGMEM ="Snow";
+const char MatrixExtraPatternSnake[] PROGMEM ="Snake";
+const char PatternUnknown[] PROGMEM ="Unknown";
+
+const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
         PatternScannerExtended, PatternStripes, PatternProcessSelectiveColor, PatternFire, PatternHeartbeat, PatternPattern1,
-        PatternPattern2
+        PatternPattern2,
 #if !defined(DO_NOT_USE_MATH_PATTERNS)
-        , PatternBouncingBall
+         PatternBouncingBall,
 #endif
+         MatrixPatternTicker, MatrixPatternMove, MatrixPatternMovingPicture, MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown
         };
 
 // array of update function pointer, not used since it needs 150 bytes more :-(
@@ -221,6 +230,7 @@ bool NeoPatterns::updateAllPartialPatterns() {
     NeoPatterns *NextObjectPointer = FirstNeoPatternsObject;
     while (NextObjectPointer != NULL) {
 #ifdef TRACE
+        printPin();
         Serial.print(F("&Pattern=0x"));
         Serial.print((uintptr_t) NextObjectPointer, HEX);
         Serial.print(F(" &nextPattern=0x"));
@@ -263,12 +273,14 @@ void NeoPatterns::showPatternInitially() {
         show();
         lastUpdate = millis();
 #ifdef TRACE
+        printPin();
         Serial.print(F("Init lastUpdate to "));
         Serial.println(lastUpdate);
 #endif
     }
 #ifdef INFO
     else {
+        printPin();
         Serial.println(F("Called asynchronously -> do not show"));
     }
 #endif
@@ -398,11 +410,35 @@ bool NeoPatterns::updateOrRedraw() {
  */
 bool NeoPatterns::decrementTotalStepCounter() {
     TotalStepCounter--;
+    if (TotalStepCounter < 0) {
+        // Safety net. The pattern has ended, but the callback has not set a new pattern
+        TotalStepCounter = 0;
+        ActivePattern = PATTERN_NONE;
+#ifdef INFO
+        printPin();
+        Serial.println(F("Reset pattern to NONE"));
+#endif
+        return true;
+    }
     if (TotalStepCounter == 0) {
         // disable brightness before eventual calling generation of next pattern
         brightness = 0;
         if (OnPatternComplete != NULL) {
+            /*
+             * Do not set activePattern to PATTERN_NONE, to enable the callback to see the finished one.
+             */
+#ifdef INFO
+            printPin();
+            printPattern();
+            Serial.println(F(": Call completion callback"));
+#endif
             OnPatternComplete(this); // call the completion callback
+#ifdef INFO
+            printPin();
+            Serial.print(F("New "));
+            printPattern();
+            Serial.println();
+#endif
         } else {
             ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         }
@@ -413,7 +449,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
      */
     lastUpdate = millis();
 #ifdef TRACE
-    Serial.print(F("lastUpdate="));
+    Serial.print(F(" lastUpdate="));
     Serial.println(lastUpdate);
 #endif
     return false;
@@ -428,6 +464,15 @@ void NeoPatterns::setNextIndex() {
     } else {
         Index--;
     }
+#ifdef DEBUG
+    printPin();
+    printPattern();
+    Serial.print(F("TotalSteps="));
+    Serial.print(TotalStepCounter);
+    Serial.print(F(" Index="));
+    Serial.println((int16_t) Index);
+
+#endif
 }
 
 /*
@@ -655,6 +700,7 @@ bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
             }
         }
 #ifdef TRACE
+        printPin();
         Serial.print(F("Index="));
         Serial.println(Index);
 #endif
@@ -843,7 +889,8 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
             }
         }
 
-#ifdef DEBUG
+#ifdef TRACE
+        printPin();
         Serial.print(F("ScannerExtendedUpdate: Index="));
         Serial.print(Index);
         Serial.print(F(" Loop="));
@@ -864,7 +911,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
     }
 
     if (aDoUpdate) {
-#ifdef DEBUG
+#ifdef TRACE
         Serial.println(F("clear tail"));
 #endif
         /*
@@ -946,6 +993,7 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
         }
     }
 #ifdef DEBUG
+    printPin();
     Serial.print(F("Index="));
     Serial.print(Index);
     Serial.print(F(" Length1="));
@@ -1114,6 +1162,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
      */
     setPixelColor(tIndexToDraw, Color1);
 #ifdef TRACE
+    printPin();
     Serial.print(F("Ball: Index="));
     Serial.print(Index);
     Serial.print(F(" tIndexToDraw="));
@@ -1152,7 +1201,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
     clear();
 
-    LongValue1.heatOfPixelArrayPtr = (uint8_t *) calloc(numLEDs, 1);
+    LongValue1.heatOfPixelArrayPtr = (uint8_t*) calloc(numLEDs, 1);
 
     FireUpdate(false);
     showPatternInitially();
@@ -1167,7 +1216,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
 bool NeoPatterns::FireUpdate(bool aDoUpdate) {
 
     // map heap space to heat array
-    uint8_t * heat = LongValue1.heatOfPixelArrayPtr;
+    uint8_t *heat = LongValue1.heatOfPixelArrayPtr;
 
     if (aDoUpdate) {
         if (TotalStepCounter == 1) {
@@ -1401,17 +1450,25 @@ void NeoPatterns::getPatternName(uint8_t aPatternNumber, char *aBuffer, uint8_t 
 void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 #if defined(__AVR__)
     const char *aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
-    aSerial->print((const __FlashStringHelper *) aNameArrayPointerPGM);
+    aSerial->print((const __FlashStringHelper*) aNameArrayPointerPGM);
 #else
-        aSerial->print(PatternNamesArray[aPatternNumber]);
+    aSerial->print(PatternNamesArray[aPatternNumber]);
 #endif
 }
 
 /*
  * For debugging purposes
  */
+#ifdef INFO
+void NeoPatterns::printPattern() {
+    Serial.print(F("Pattern="));
+    printPatternName(ActivePattern, &Serial);
+    Serial.print(' ');
+}
+#endif
+
 void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
-    static uint16_t sLastSteps;
+    static int16_t sLastSteps;
 
     /*
      * only print if TotalSteps changed
@@ -1420,7 +1477,7 @@ void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
         sLastSteps = TotalStepCounter;
 
         aSerial->print(F("Pin="));
-        aSerial->print(getPin());
+        aSerial->print(pin);
         aSerial->print(F(" Offset="));
         aSerial->print(PixelOffset);
 

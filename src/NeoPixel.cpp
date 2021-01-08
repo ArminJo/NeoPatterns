@@ -23,9 +23,8 @@
  *
  */
 
-#include "NeoPixel.h"
-
 //#define TRACE
+#include "NeoPixel.h"
 
 NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel() {
@@ -163,6 +162,20 @@ bool NeoPixel::begin(Print *aSerial) {
 /*
  * For debugging purposes
  */
+/*
+ * For debugging purposes
+ */
+#ifdef INFO
+void NeoPixel::printPin() {
+    Serial.print(pin);
+    if (PixelOffset != 0) {
+        Serial.print('|');
+        Serial.print(PixelOffset);
+    }
+    Serial.print(' ');
+}
+#endif
+
 void NeoPixel::printInfo(Print *aSerial) {
     aSerial->print(F("Pin="));
     aSerial->print(getPin());
@@ -184,12 +197,14 @@ void NeoPixel::show() {
     if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
         if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
 #ifdef TRACE
+            printPin();
             Serial.println("Underlying->show");
 #endif
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
 #ifdef TRACE
+        printPin();
         Serial.println("show");
 #endif
         Adafruit_NeoPixel::show();
@@ -322,6 +337,7 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
 #ifdef TRACE
+    printPin();
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
     Serial.print(F(" Offset="));
@@ -350,6 +366,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 #ifdef SUPPORT_RGBW
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
 #ifdef TRACE
+    printPin();
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
     Serial.print(F(" Offset="));
@@ -380,6 +397,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 #ifdef TRACE
+    printPin();
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
     Serial.print(F(" Offset="));
@@ -598,6 +616,7 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
 #endif
 
 #ifdef TRACE
+    printPin();
     Serial.print(F("dimColorWithGamma32 aBrightness="));
     Serial.print(aBrightness);
     Serial.print(F(" Gamma="));

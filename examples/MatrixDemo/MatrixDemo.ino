@@ -28,7 +28,11 @@
 #include <Arduino.h>
 #include <MatrixSnake.h>
 
+#if defined(ESP32)
+#define PIN_NEOPIXEL_MATRIX        2
+#else
 #define PIN_NEOPIXEL_MATRIX        8
+#endif
 #define MATRIX_NUMBER_OF_COLUMNS   8
 #define MATRIX_NUMBER_OF_ROWS      8
 

@@ -74,6 +74,9 @@ extern const char * const PatternNamesArray[] PROGMEM;
 
 #if !defined(DO_NOT_USE_MATH_PATTERNS)
 #define PATTERN_BOUNCING_BALL      12
+#define LAST_NEO_PATTERN           PATTERN_BOUNCING_BALL
+#else
+#define LAST_NEO_PATTERN           PATTERN_USER_PATTERN2
 #endif
 
 /*
@@ -194,15 +197,18 @@ public:
 #endif
     void printPatternName(uint8_t aPatternNumber, Print *aSerial);
     void printInfo(Print *aSerial, bool aFullInfo = true);
+#ifdef INFO
+    void printPattern();
+#endif
 
     /*
      * Variables for almost each pattern
      */
-    uint16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
+    int16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
     uint16_t Index;         // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
     color32_t Color1;       // Main pattern color
     int8_t Direction;       // Direction to run the pattern
-    uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel - Snow: number of flakes
+    uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel - Fire: Cooling - Snow: Number of flakes
 
     // For ScannerExtended()
     // PatternFlags 0 -> one pass scanner (rocket or falling star)
@@ -222,7 +228,7 @@ public:
     /*
      * Internal control variables
      */
-    uint8_t ActivePattern;  // Number of pattern which is running
+    uint8_t ActivePattern;  // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
     uint16_t Interval;   // Milliseconds between updates
     unsigned long lastUpdate; // Milliseconds of last update of pattern
 

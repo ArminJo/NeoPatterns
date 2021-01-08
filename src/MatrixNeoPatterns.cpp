@@ -30,14 +30,13 @@
 
 #include <Arduino.h>
 
-#include "MatrixNeoPatterns.h"
-#include "LongUnion.h"
-
 //#define TRACE
 //#define DEBUG
 //#define INFO
 //#define WARN
-#include "DebugLevel.h"
+
+#include "MatrixNeoPatterns.h"
+#include "LongUnion.h"
 
 // used for Ticker - modify line 12 of fonts.h to change font sizes
 #include "fonts.h"
@@ -102,7 +101,7 @@ bool MatrixNeoPatterns::update() {
     return false;
 }
 
-int convolutionMatrixIntegerTimes256[3][3];
+int16_t convolutionMatrixIntegerTimes256[3][3];
 #define mapXYToArray(x, y, XColumns) (((y) * (XColumns)) + (x))
 
 #ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
@@ -112,8 +111,16 @@ void MatrixNeoPatterns::setInitHeat() {
     uint8_t tIndex = 0;
     while (true) {
         for (uint8_t i = 0; i < 4; ++i) {
-#if defined(ESP8266) || defined(ESP32)
-            tRandomValue.ULong = random(0xFFFFFFFFL);
+            /*
+             * With one random call we get a uint32 -> 4 8 bit random values
+             */
+#if defined(ESP32)
+//            tRandomValue.ULong = random(0xFFFFFFFFL); // this gives only constant 0xFFFFFFFF so use esp_random()
+            tRandomValue.ULong = esp_random();
+//            Serial.print(F("Random=0x"));
+//            Serial.println(tRandomValue.ULong, HEX);
+#elif defined(ESP8266)
+            tRandomValue.ULong = rand();
 #else
             tRandomValue.ULong = random();
 #endif
@@ -122,12 +129,19 @@ void MatrixNeoPatterns::setInitHeat() {
 //            initalHeatLine[tIndex] = ((tRandomValue.UBytes[i] * (255 - 40)) >> 8) + 40; // the correct one - just in case
             tIndex++;
             if (tIndex >= Columns) {
+#ifdef TRACE
+                Serial.print(F("initalHeatLine="));
+                for (uint8_t i = 0; i < Columns; ++i) {
+                    Serial.print(initalHeatLine[i]);
+                    Serial.print(' ');
+                }
+                Serial.println();
+#endif
                 return;
             }
         }
     }
 }
-
 
 /*
  * initialize for fire -> set all to zero
@@ -136,7 +150,7 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     Interval = aIntervalMillis;
     Direction = DIRECTION_UP;
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
-    PatternLength = MATRIX_FIRE_COOLING_PER_8_ROWS * 8 / Rows; // cooling affects the height of fire, the greater the value the smaller the fire
+    PatternLength = (MATRIX_FIRE_COOLING_PER_8_ROWS * 8) / Rows; // cooling affects the height of fire, the greater the value the smaller the fire
     Index = 3; // to call setInitHeat(); at startup
 
     // just to be sure
@@ -156,6 +170,7 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     initalHeatLine = (uint8_t*) calloc(Columns + 2, 1);
 
 #ifdef INFO
+    printPin();
     Serial.print(F("Starting Fire with refresh interval="));
     Serial.println(aIntervalMillis);
 #endif
@@ -205,7 +220,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
     }
 
     // First refresh (invisible) bottom line on every update
-    for (int i = 1; i < Columns + 1; i++) {
+    for (uint8_t i = 1; i < Columns + 1; i++) {
         MatrixOld[mapXYToArray(i, Rows + 1, Columns + 2)] = initalHeatLine[i - 1];
     }
 
@@ -218,7 +233,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             // Convolution takes 11 milli seconds with float or 4 ms with integer
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms
-            int *convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
+            int16_t *convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
             uint8_t *tFireMatrixOldPtr = &MatrixOld[mapXYToArray((x - 1), (y - 1), Columns + 2)];
             for (uint8_t cy = 0; cy < CONVOLUTION_MATRIX_SIZE; cy++) {
                 for (uint8_t cx = 0; cx < CONVOLUTION_MATRIX_SIZE; cx++) {
@@ -231,7 +246,10 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
 
             uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Columns + 2)] + (tConvolutionSumTimes256 / 256);
 
-            // - COOLING and clipping to zero
+            /*
+             * PatternLength contains the cooling
+             * COOLING and clipping to zero
+             */
             if (tNewHeatValue > PatternLength) {
                 tNewHeatValue -= PatternLength;
             } else {
@@ -242,6 +260,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             // Heat color mapping
             setMatrixPixelColor(x - 1, y - 1, HeatColor(tNewHeatValue));
 #ifdef TRACE
+            printPin();
             Serial.print(F("x="));
             Serial.print(x);
             Serial.print(F(" y="));
@@ -297,6 +316,13 @@ void MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
         // random parameters for a snow flake
         setRandomFlakeParameters(tSnowFlakeIndex);
     }
+
+#ifdef INFO
+    printPin();
+    Serial.print(F("Starting Snow with refresh interval="));
+    Serial.println(aIntervalMillis);
+#endif
+
     SnowUpdate();
     showPatternInitially();
     // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
@@ -349,6 +375,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
         drawSnowFlake(tSnowFlakeIndex);
 
 #ifdef TRACE
+        printPin();
         Serial.print(F("Index="));
         Serial.print(tSnowFlakeIndex);
         Serial.print(F(" Column="));
@@ -421,6 +448,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
 
 #ifdef INFO
+    printPin();
     Serial.print(F("Starting Move with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Direction="));
@@ -435,6 +463,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
 
 bool MatrixNeoPatterns::MoveUpdate() {
 #ifdef DEBUG
+    printPin();
     Serial.print(F("MoveUpdate TotalSteps="));
     Serial.println(TotalStepCounter);
 #endif
@@ -464,6 +493,7 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     Direction = aDirection;
 
 #ifdef INFO
+    printPin();
     Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Direction="));
@@ -528,6 +558,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
 #  ifdef TRACE
+        printPin();
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
         Serial.print(F(" NumPixels="));
@@ -577,6 +608,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
 #ifdef TRACE
+        printPin();
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
         Serial.print(F(" NumPixels="));
@@ -692,6 +724,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     Direction = aDirection;
 
 #ifdef INFO
+    printPin();
     Serial.print(F("Starting Ticker with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Text=\""));
@@ -755,12 +788,16 @@ bool MatrixNeoPatterns::TickerUpdate() {
         tCurrentChar = *tDataPtr++;
         tNextChar = *(tDataPtr++);
     }
+#if defined(DEBUG)
+    char tFirstCurrentChar = tCurrentChar;
+    char tFirstNextChar = tNextChar;
+#endif
 
     // Required for testing of end of string
     bool isLastChar = (tNextChar == '\0');
 
-#ifdef DEBUG
-    Serial.println();
+#ifdef TRACE
+    printPin();
 #endif
     if (Direction == DIRECTION_LEFT || Direction == DIRECTION_NONE) {
         int8_t tGraphicsXOffset = GraphicsXOffset; // X offset of current char to be processed
@@ -769,7 +806,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
          * Check if current character is visible
          */
         while (tGraphicsXOffset < Columns && tCurrentChar != '\0') {
-#ifdef DEBUG
+#ifdef TRACE
             Serial.print(F("GraphicsXOffset="));
             Serial.print(tGraphicsXOffset);
             Serial.print(F(" CurrentChar="));
@@ -803,7 +840,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
          * Check if current character is visible
          */
         while (tGraphicsYOffset < (Rows + FONT_HEIGHT - 1) && tCurrentChar != '\0') {
-#ifdef DEBUG
+#ifdef TRACE
             Serial.print(F("GraphicsYOffset="));
             Serial.print(tGraphicsYOffset);
             Serial.print(F(" CurrentChar="));
@@ -848,6 +885,13 @@ bool MatrixNeoPatterns::TickerUpdate() {
                 return true;
             }
             // switch to next character
+#if defined(DEBUG) && !defined(TRACE)
+            printPin();
+            Serial.print(F("Char "));
+            Serial.print(tFirstCurrentChar);
+            Serial.print(F(" -> "));
+            Serial.println(tFirstNextChar);
+#endif
             DataPtr++;
             if (Direction == DIRECTION_LEFT) {
                 GraphicsXOffset = 0;
@@ -876,7 +920,8 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
 #ifdef INFO
-    Serial.print(F("State="));
+    Serial.print(aLedsPtr->getPin());
+    Serial.print(F(" State="));
     Serial.println(sState);
 #endif
     /*

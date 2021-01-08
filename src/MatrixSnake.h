@@ -38,7 +38,7 @@
 
 //#define USE_SERIAL_CONTROL // Accepts snake direction commands over the serial line
 
-#define PATTERN_SNAKE 64
+#define PATTERN_SNAKE   (LAST_MATRIX_NEO_PATTERN + 1)
 
 #define APPLE_COLOR COLOR32_RED
 

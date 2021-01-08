@@ -41,10 +41,12 @@
 
 #define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH
 
-#define PATTERN_TICKER              32
-#define PATTERN_MOVE                33
-#define PATTERN_MOVING_PICTURE      34
-#define PATTERN_SNOW                35
+
+#define PATTERN_TICKER              (LAST_NEO_PATTERN + 1)
+#define PATTERN_MOVE                (LAST_NEO_PATTERN + 2)
+#define PATTERN_MOVING_PICTURE      (LAST_NEO_PATTERN + 3)
+#define PATTERN_SNOW                (LAST_NEO_PATTERN + 4)
+#define LAST_MATRIX_NEO_PATTERN     PATTERN_SNOW
 
 //#define DO_NOT_USE_MATRIX_FIRE_PATTERN
 //#define DO_NOT_USE_SNOW_PATTERN

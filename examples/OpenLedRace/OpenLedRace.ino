@@ -70,14 +70,13 @@
  */
 #include <Arduino.h>
 
-#include <NeoPatterns.h>
-#include "PlayRtttl.h"
-#include "AVRUtils.h"
-
 //#define TRACE
 #define DEBUG
 //#define INFO
-#include "DebugLevel.h"
+
+#include <NeoPatterns.h>
+#include "PlayRtttl.h"
+#include "AVRUtils.h"
 
 #define TIMING_TEST
 
@@ -199,14 +198,14 @@ public:
     bool CarIsActive;
 
     bool lastButtonState;
-    const char * WinnerMelody;
+    const char *WinnerMelody;
 
     Car() {  // @suppress("Class members should be properly initialized")
         TrackPtr = NULL;
         CarIsActive = false;
     }
 
-    void init(NeoPatterns* aTrackPtr, uint8_t aNumberOfThisCar, uint8_t aButtonPin, color32_t aCarColor,
+    void init(NeoPatterns *aTrackPtr, uint8_t aNumberOfThisCar, uint8_t aButtonPin, color32_t aCarColor,
             const char *aWinnerMelody) {
         TrackPtr = aTrackPtr;
         NumberOfThisCar = aNumberOfThisCar;
@@ -469,7 +468,7 @@ public:
     bool isRampDown;
     bool show;
 
-    void init(NeoPatterns* aTrackPtr, uint16_t aRampUpStartPositionOnTrack, uint8_t aRampHeight, uint8_t aRampLength,
+    void init(NeoPatterns *aTrackPtr, uint16_t aRampUpStartPositionOnTrack, uint8_t aRampHeight, uint8_t aRampLength,
             bool aIsRampDown) {
         TrackPtr = aTrackPtr;
         StartPositionOnTrack = aRampUpStartPositionOnTrack;
@@ -560,7 +559,7 @@ public:
      * aRampTopPlatformLength - if 0 then we have 2 pixel with gravity = 1/2 gravity
      *
      */
-    void init(NeoPatterns* aTrackPtr, uint16_t aBridgeStartPositionOnTrack, uint8_t aBridgeHeight, uint8_t aRampLength,
+    void init(NeoPatterns *aTrackPtr, uint16_t aBridgeStartPositionOnTrack, uint8_t aBridgeHeight, uint8_t aRampLength,
             uint8_t aRampPlatformLength) {
         RampUp.init(aTrackPtr, aBridgeStartPositionOnTrack, aBridgeHeight, aRampLength, false);
         RampDown.init(aTrackPtr, aBridgeStartPositionOnTrack + aRampLength + aRampPlatformLength, aBridgeHeight, aRampLength, true);
@@ -695,13 +694,13 @@ void setup() {
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
     bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
-    if(tIsAnalogParameterInputMode) {
+    if (tIsAnalogParameterInputMode) {
         Serial.print(F("AnalogParameterInputMode is enabled. Pin "));
     } else {
         Serial.print(F("AnalogParameterInputMode is disabled. Pin "));
     }
     Serial.print(PIN_MANUAL_PARAMETER_MODE);
-    if(tIsAnalogParameterInputMode) {
+    if (tIsAnalogParameterInputMode) {
         Serial.println(F(" is connected to ground"));
     } else {
         Serial.println(F(" is disconnected from ground"));

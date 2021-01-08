@@ -36,6 +36,9 @@
 #ifndef SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
 #define SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
 
+// To support various debug levels set in different sources
+#include "DebugLevel.h"
+
 // This does not work in Arduino IDE for "Generating function prototypes..."
 //#if ! __has_include("Adafruit_NeoPixel.h")
 //#error This NeoPixel library requires the "Adafruit NeoPixel" library. Please install it via the Arduino library manager.
@@ -70,7 +73,9 @@ public:
             bool aEnableShowOfUnderlyingPixel = true);
 
     void printInfo(Print *aSerial);
-
+#ifdef INFO
+    void printPin();
+#endif
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
 

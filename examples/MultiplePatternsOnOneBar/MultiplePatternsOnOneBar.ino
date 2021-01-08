@@ -29,6 +29,8 @@
 
 #include <NeoPatterns.h>
 
+//#define DEBUG
+
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL  2
 
@@ -85,8 +87,19 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
     /*
      * Wait for the last pattern to end
      */
-    if (LowerNeoPixelBar.ActivePattern == PATTERN_NONE && MiddleNeoPixelBar.ActivePattern == PATTERN_NONE
-            && UpperNeoPixelBar.ActivePattern == PATTERN_NONE) {
+    if (LowerNeoPixelBar.TotalStepCounter != 0 || MiddleNeoPixelBar.TotalStepCounter != 0
+            || UpperNeoPixelBar.TotalStepCounter != 0) {
+        aLedsPtr->ActivePattern = PATTERN_NONE;
+#ifdef DEBUG
+        Serial.print(F("Lower counter="));
+        Serial.print(LowerNeoPixelBar.TotalStepCounter);
+        Serial.print(F(" Middle counter="));
+        Serial.print(MiddleNeoPixelBar.TotalStepCounter);
+        Serial.print(F(" Upper counter="));
+        Serial.print(UpperNeoPixelBar.TotalStepCounter);
+        Serial.println(F(" One pattern is still active"));
+#endif
+    } else {
 
         uint16_t tInterval = random(40, 200);
 
@@ -94,8 +107,11 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
             /*
              * Insert a random delay if sState is odd
              */
-            aLedsPtr->Delay(random(200, 1000)); // to separate each pattern
+            uint16_t tDelay = random(200, 1000);
+            aLedsPtr->Delay(tDelay); // to separate each pattern
             sState++;
+            Serial.print(F("Insert delay of "));
+            Serial.println(tDelay);
             return;
         }
 
@@ -138,17 +154,17 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
             break;
         }
 
-        Serial.print("Pin=");
+        Serial.print(F("Pin="));
         Serial.print(aLedsPtr->getPin());
-        Serial.print(" Length=");
+        Serial.print(F(" Length="));
         Serial.print(aLedsPtr->numPixels());
-        Serial.print(" ActivePattern=");
+        Serial.print(F(" ActivePattern="));
         aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
-        Serial.print("|");
+        Serial.print('|');
         Serial.print(aLedsPtr->ActivePattern);
-        Serial.print(" Interval=");
+        Serial.print(F(" Interval="));
         Serial.print(tInterval);
-        Serial.print(" StateFast=");
+        Serial.print(F(" State="));
         Serial.println(tState);
 
         sState++;
