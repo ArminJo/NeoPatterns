@@ -39,8 +39,7 @@
 #include "MatrixNeoPixel.h"
 #include "NeoPatterns.h"
 
-#define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH
-
+#define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH. Only evaluated for AVR platform.
 
 #define PATTERN_TICKER              (LAST_NEO_PATTERN + 1)
 #define PATTERN_MOVE                (LAST_NEO_PATTERN + 2)
@@ -67,11 +66,18 @@ float const convolutionMatrix[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] 
 #define SNOW_BOTTOM_LINE_DIM_PRESCALER  20
 // Bit-fields save 2 bytes RAM per flake but costs 120 bytes FLASH
 struct SnowFlakeInfoStruct {
+#ifdef SNOW_SUPPORT_MORE_THAN_16_ROWS_AND_COLUMNS
+    uint8_t Period;
+    uint8_t Counter;
+    uint8_t Row; // starting with 0 / top
+    uint8_t Column; // starting with 0 / left
+#else
     // fast flakes (period = 4) are in the foreground an therefore brighter;
     uint8_t Period :4;
     uint8_t Counter :4;
     uint8_t Row :4; // starting with 0 / top
     uint8_t Column :4; // starting with 0 / left
+#endif
 };
 
 // extension of NeoPattern Class approximately 85 Byte / object

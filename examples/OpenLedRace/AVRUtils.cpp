@@ -24,7 +24,7 @@
  *
  */
 
-#if defined(__AVR__)
+#if defined(__AVR__) && !(defined(__AVR_ATtiny1616__)  || defined(__AVR_ATtiny3216__) || defined(__AVR_ATtiny3217__))
 #include "AVRUtils.h"
 #include <avr/interrupt.h>
 #include <stdlib.h> // for __malloc_margin

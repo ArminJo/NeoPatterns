@@ -94,13 +94,11 @@ uint8_t checkAndWaitForReferenceAndChannelToSwitch(uint8_t aChannelNumber, uint8
      */
     uint8_t tNewReference = (aReference << SHIFT_VALUE_FOR_REFERENCE);
     ADMUX = aChannelNumber | tNewReference;
-    if ((tOldADMUX & MASK_FOR_ADC_REFERENCE) != tNewReference) {
-        if (aReference == INTERNAL) {
-            /*
-             * Switch reference from DEFAULT to INTERNAL
-             */
-            delayMicroseconds(8000); // experimental value is >= 7600 us for Nano board and 6200 for UNO board
-        }
+    if ((tOldADMUX & MASK_FOR_ADC_REFERENCE) != tNewReference && aReference == INTERNAL) {
+        /*
+         * Switch reference from DEFAULT to INTERNAL
+         */
+        delayMicroseconds(8000); // experimental value is >= 7600 us for Nano board and 6200 for UNO board
     } else if ((tOldADMUX & 0x0F) != aChannelNumber) {
         if (aChannelNumber == ADC_1_1_VOLT_CHANNEL_MUX) {
             /*
@@ -298,6 +296,7 @@ uint16_t readUntil4ConsecutiveValuesAreEqual(uint8_t aChannelNumber, uint8_t aDe
 /*
  * !!! Function without handling of switched reference and channel.!!!
  * Use it ONLY if you only call getVCCVoltageSimple() or getVCCVoltageMillivoltSimple() in your program.
+ * !!! Resolution is only 20 millivolt !!!
  */
 float getVCCVoltageSimple(void) {
     // use AVCC with (optional) external capacitor at AREF pin as reference
@@ -308,6 +307,7 @@ float getVCCVoltageSimple(void) {
 /*
  * !!! Function without handling of switched reference and channel.!!!
  * Use it ONLY if you only call getVCCVoltageSimple() or getVCCVoltageMillivoltSimple() in your program.
+ * !!! Resolution is only 20 millivolt !!!
  */
 uint16_t getVCCVoltageMillivoltSimple(void) {
     // use AVCC with external capacitor at AREF pin as reference
@@ -336,6 +336,7 @@ float getVCCVoltage(void) {
 /*
  * Read value of 1.1 volt internal channel using VCC as reference.
  * Handles reference and channel switching by introducing the appropriate delays.
+ * !!! Resolution is only 20 millivolt !!!
  */
 uint16_t getVCCVoltageMillivolt(void) {
     uint8_t tOldADMUX = checkAndWaitForReferenceAndChannelToSwitch(ADC_1_1_VOLT_CHANNEL_MUX, DEFAULT);

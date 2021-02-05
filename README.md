@@ -1,7 +1,7 @@
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
 Available as Arduino library "NeoPatterns"
 
-### [Version 2.3.1](https://github.com/ArminJo/NeoPatterns/releases) - work in progress
+### [Version 2.3.2](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
@@ -38,7 +38,6 @@ the included NeoPixel library is an extensions of the Adafruit NeoPixel library 
 - drawBarFromColorArray() - uses a color array for the different colors of the bar pixel.
 - dimColor() - by 50%.
 - gamma5() - returns gamma brightness value from a linear input.
-- gamma5WithSpecialZero()
 - gamma5FromColor() - returns the gamma corrected color.
 - Wheel() - returns colors from a color wheel starting ar red.
 as well as functions for getting color parts
@@ -77,7 +76,7 @@ Modify it by commenting them out or in, or change the values if applicable. Or d
 |-|-|-|-|
 | `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
 | `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. |
-| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes FLASH and 3 bytes RAM. |
+| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes (and more) FLASH and 3 bytes RAM. |
 
 ### Modifying compile options with Arduino IDE
 First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
@@ -101,11 +100,14 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
-### Version 2.3.1 - work in progress
+### Version 2.3.2 - work in progress
+
+### Version 2.3.1
 - Changed type of TotalStepCounter from uint16_t to int16_t.
 - Added `SnowMatrix` pattern.
 - Improved debugging.
 - Fixed random() bug for ESP32.
+- Improved Fire cooling.
 
 ### Version 2.3.0
 - Changed TickerUpdate() and loadPicture() and their callers to achieve that YOffset is consistent with Y direction and origin.

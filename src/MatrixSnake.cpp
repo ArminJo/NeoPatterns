@@ -923,8 +923,21 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     tLedsPtr->MultipleExtension = tStep;
 }
 
-const char sDefaultTickerText[] PROGMEM = "I love Neopixel";
-const char *sTickerTextPtr = sDefaultTickerText;
+const char DefaultTickerText[] PROGMEM = "I love Neopixel";
+const char ILoveNeopatternsString[] PROGMEM = "I love Neopatterns";
+const char MatrixDemoString[] PROGMEM = "Matrix Demo";
+const char WelcomeString[] PROGMEM = "Welcome";
+const char *const TickerStrings[] PROGMEM = { DefaultTickerText, ILoveNeopatternsString, MatrixDemoString, WelcomeString };
+const char *sTickerTextPtr;
+
+void setMatrixAndSnakePatternsDemoHandlerRandomTickerText() {
+    uint8_t tRandomIndex = random(0, sizeof(TickerStrings) / sizeof(char*));
+#if defined(__AVR__) // Let the function work for non AVR platforms
+    sTickerTextPtr = (char*) pgm_read_word(&TickerStrings[tRandomIndex]);
+#else
+    sTickerTextPtr = TickerStrings[tRandomIndex];
+#endif
+}
 
 void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *aTextForTicker) {
     sTickerTextPtr = reinterpret_cast<const char*>(aTextForTicker);
@@ -964,7 +977,8 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     switch (tState) {
     case 0:
 //        myLoadTest(tLedsPtr);
-        tLedsPtr->TickerPGM(sTickerTextPtr, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection);
+        setMatrixAndSnakePatternsDemoHandlerRandomTickerText();
+        tLedsPtr->TickerInit(sTickerTextPtr, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection, FLAG_TICKER_DATA_IN_FLASH);
         sTickerDirection--;
         if (sTickerDirection < 0) {
             sTickerDirection = DIRECTION_LEFT;

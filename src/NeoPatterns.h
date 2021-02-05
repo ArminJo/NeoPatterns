@@ -288,11 +288,12 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
         uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
 
 /*
- * Version 2.3.1 - 01/2021
+ * Version 2.3.1 - 02/2021
  * - Changed type of TotalStepCounter from uint16_t to int16_t.
  * - Added `SnowMatrix` pattern.
  * - Improved debugging.
  * - Fixed random() bug for ESP32.
+ * - Improved Fire cooling.
  *
  * Version 2.3.0 - 12/2020
  * - Removed restriction to 8 columns for `FireMatrix` pattern.
