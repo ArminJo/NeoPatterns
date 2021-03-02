@@ -55,11 +55,16 @@
 #endif
 
 #ifdef SUPPORT_RGBW
-uint8_t White(color32_t color);
+uint8_t getWhitePart(color32_t color);
+uint8_t White(color32_t color) __attribute__ ((deprecated ("Renamed to getWhitePart()"))); // deprecated
 #endif
-uint8_t Red(color32_t color);
-uint8_t Green(color32_t color);
-uint8_t Blue(color32_t color);
+uint8_t getRedPart(color32_t color);
+uint8_t getGreenPart(color32_t color);
+uint8_t getBluePart(color32_t color);
+
+uint8_t Red(color32_t color) __attribute__ ((deprecated ("Renamed to getRedPart()"))); // deprecated
+uint8_t Green(color32_t color) __attribute__ ((deprecated ("Renamed to getGreenPart()"))); // deprecated
+uint8_t Blue(color32_t color) __attribute__ ((deprecated ("Renamed to getBluePart()"))); // deprecated
 
 class NeoPixel: public Adafruit_NeoPixel {
 public:

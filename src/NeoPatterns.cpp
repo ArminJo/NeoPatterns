@@ -630,11 +630,11 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
          */
 // Calculate linear interpolation between Color1 and BackgroundColor
 // Optimize order of operations to minimize truncation error
-        uint8_t tRed = ((Red(Color1) * (PatternLength - Index)) + (Red(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t tGreen = ((Green(Color1) * (PatternLength - Index)) + (Green(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t tBlue = ((Blue(Color1) * (PatternLength - Index)) + (Blue(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tRed = ((getRedPart(Color1) * (PatternLength - Index)) + (getRedPart(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tGreen = ((getGreenPart(Color1) * (PatternLength - Index)) + (getGreenPart(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tBlue = ((getBluePart(Color1) * (PatternLength - Index)) + (getBluePart(LongValue1.Color2) * Index)) / PatternLength;
 #ifdef SUPPORT_RGBW
-        uint8_t tWhite = ((White(Color1) * (PatternLength - Index)) + (White(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tWhite = ((getWhitePart(Color1) * (PatternLength - Index)) + (getWhitePart(LongValue1.Color2) * Index)) / PatternLength;
         ColorSet(Color(tRed, tGreen, tBlue, tWhite));
 #else
         ColorSet(Color(tRed, tGreen, tBlue));
@@ -1379,11 +1379,11 @@ color32_t FadeColor(NeoPatterns *aNeoPatternsPtr) {
     uint16_t tTotalSteps = aNeoPatternsPtr->TotalStepCounter;
     color32_t tColor1 = aNeoPatternsPtr->Color1;
     color32_t tColor2 = aNeoPatternsPtr->LongValue1.Color2;
-    uint8_t tRed = ((Red(tColor1) * (tTotalSteps - tIndex)) + (Red(tColor2) * tIndex)) / tTotalSteps;
-    uint8_t tGreen = ((Green(tColor1) * (tTotalSteps - tIndex)) + (Green(tColor2) * tIndex)) / tTotalSteps;
-    uint8_t tBlue = ((Blue(tColor1) * (tTotalSteps - tIndex)) + (Blue(tColor2) * tIndex)) / tTotalSteps;
+    uint8_t tRed = ((getRedPart(tColor1) * (tTotalSteps - tIndex)) + (getRedPart(tColor2) * tIndex)) / tTotalSteps;
+    uint8_t tGreen = ((getGreenPart(tColor1) * (tTotalSteps - tIndex)) + (getGreenPart(tColor2) * tIndex)) / tTotalSteps;
+    uint8_t tBlue = ((getBluePart(tColor1) * (tTotalSteps - tIndex)) + (getBluePart(tColor2) * tIndex)) / tTotalSteps;
 #ifdef SUPPORT_RGBW
-    uint8_t tWhite = ((White(tColor1) * (tTotalSteps - tIndex)) + (White(tColor2) * tIndex)) / tTotalSteps;
+    uint8_t tWhite = ((getWhitePart(tColor1) * (tTotalSteps - tIndex)) + (getWhitePart(tColor2) * tIndex)) / tTotalSteps;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
@@ -1395,11 +1395,11 @@ color32_t FadeColor(NeoPatterns *aNeoPatternsPtr) {
  */
 color32_t DimColor(NeoPatterns *aNeoPatternsPtr) {
     color32_t tColor = aNeoPatternsPtr->LongValue2.ColorTmp;
-    uint8_t tRed = Red(tColor) >> 1;
-    uint8_t tGreen = Green(tColor) >> 1;
-    uint8_t tBlue = Blue(tColor) >> 1;
+    uint8_t tRed = getRedPart(tColor) >> 1;
+    uint8_t tGreen = getGreenPart(tColor) >> 1;
+    uint8_t tBlue = getBluePart(tColor) >> 1;
 #ifdef SUPPORT_RGBW
-    uint8_t tWhite = White(tColor) >> 1;
+    uint8_t tWhite = getWhitePart(tColor) >> 1;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
     // call to function saves 6 byte program space
@@ -1414,11 +1414,11 @@ color32_t DimColor(NeoPatterns *aNeoPatternsPtr) {
  */
 color32_t BrightenColor(NeoPatterns *aNeoPatternsPtr) {
     color32_t tColor = aNeoPatternsPtr->LongValue2.ColorTmp;
-    uint8_t tRed = Red(tColor) << 1;
-    uint8_t tGreen = Green(tColor) << 1;
-    uint8_t tBlue = Blue(tColor) << 1;
+    uint8_t tRed = getRedPart(tColor) << 1;
+    uint8_t tGreen = getGreenPart(tColor) << 1;
+    uint8_t tBlue = getBluePart(tColor) << 1;
 #ifdef SUPPORT_RGBW
-    uint8_t tWhite = White(tColor) << 1;
+    uint8_t tWhite = getWhitePart(tColor) << 1;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
 // call to function saves 22 byte program space

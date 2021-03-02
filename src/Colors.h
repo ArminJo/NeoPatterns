@@ -7,7 +7,7 @@
  *  It also implements basic GUI elements as buttons and sliders.
  *  GUI callback, touch and sensor events are sent back to Arduino.
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2021  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of BlueDisplay https://github.com/ArminJo/android-blue-display.
@@ -32,15 +32,35 @@
 
 #include <stdint.h>
 
-// deprecated
-typedef uint16_t Color_t __attribute__ ((deprecated ("Renamed to color16_t")));;
-// new
-typedef uint16_t color16_t;
-
 /*
  * Basic 16 Bit Colors
+ * RGB to 16 bit 565 schema - 5 red | 6 green | 5 blue
  */
-// RGB to 16 bit 565 schema - 5 red | 6 green | 5 blue
+typedef uint16_t color16_t;
+
+// If used as background color for char or text, the background will not filled
+#define COLOR16_NO_BACKGROUND   ((color16_t)0XFFFE)
+#define COLOR16_BLUEMASK 0x1F
+#define COLOR16_GET_RED(rgb)    ((rgb & 0xF800) >> 8)
+#define COLOR16_GET_GREEN(rgb)  ((rgb & 0x07E0) >> 3)
+#define COLOR16_GET_BLUE(rgb)   ((rgb & 0x001F) << 3)
+#define COLOR16(r,g,b) ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
+
+#define COLOR16_WHITE     ((color16_t)0xFFFF)
+// 01 because 0 is used as flag (e.g. in touch button for default color)
+#define COLOR16_BLACK     ((color16_t)0X0001)
+#define COLOR16_RED       ((color16_t)0xF800)
+#define COLOR16_GREEN     ((color16_t)0X07E0)
+#define COLOR16_BLUE      ((color16_t)0x001F)
+#define COLOR16_DARK_BLUE ((color16_t)0x0014)
+#define COLOR16_YELLOW    ((color16_t)0XFFE0)
+#define COLOR16_ORANGE    ((color16_t)0XFE00)
+#define COLOR16_PURPLE    ((color16_t)0xF81F)
+#define COLOR16_CYAN      ((color16_t)0x07FF)
+
+
+// deprecated
+typedef uint16_t Color_t __attribute__ ((deprecated ("Renamed to color16_t")));
 #define COLOR_WHITE     ((color16_t)0xFFFF)
 // 01 because 0 is used as flag (e.g. in touch button for default color)
 #define COLOR_BLACK     ((color16_t)0X0001)
@@ -52,31 +72,27 @@ typedef uint16_t color16_t;
 #define COLOR_ORANGE    ((color16_t)0XFE00)
 #define COLOR_PURPLE   ((color16_t)0xF81F)
 #define COLOR_CYAN      ((color16_t)0x07FF)
-
-// If used as background color for char or text, the background will not filled
 #define COLOR_NO_BACKGROUND   ((color16_t)0XFFFE)
-
 #define BLUEMASK 0x1F
-#define GET_RED(rgb) ((rgb & 0xF800) >> 8)
-#define GET_GREEN(rgb) ((rgb & 0x07E0) >> 3)
-#define GET_BLUE(rgb) ((rgb & 0x001F) << 3)
-#define RGB(r,g,b)   ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
-#define COLOR16(r,g,b)   ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
-
+#define GET_RED(rgb)    ((rgb & 0xF800) >> 8)
+#define GET_GREEN(rgb)  ((rgb & 0x07E0) >> 3)
+#define GET_BLUE(rgb)   ((rgb & 0x001F) << 3)
+#define RGB(r,g,b)      ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
+#define COLOR16(r,g,b)  ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
+// end deprecated
 
 /*
  * 32 Bit Color values
  */
 typedef uint32_t color32_t;
 
-// Eases constant color declarations but should only be used for constant colors. Otherwise better use Adafruit_NeoPixel::Color() it saves program space
-#define COLOR32(r,g,b)   ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
-#define COLOR_W32(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
-
-#define WHITE(color) ((color >> 24) & 0xFF)
-#define RED(color)   ((color >> 16) & 0xFF)
-#define GREEN(color) ((color >> 8) & 0xFF)
-#define BLUE(color)  (color 0xFF)
+#define COLOR32_GET_WHITE(color) ((color >> 24) & 0xFF)
+#define COLOR32_GET_RED(color)   ((color >> 16) & 0xFF)
+#define COLOR32_GET_GREEN(color) ((color >> 8) & 0xFF)
+#define COLOR32_GET_BLUE(color)  (color 0xFF)
+// Eases constant color declarations but should only be used for constant colors. Otherwise better use Adafruit_NeoPixel::Color() to save program space
+#define COLOR32(r,g,b)  ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+#define COLOR32_W(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
 
 #define COLOR32_BLACK          COLOR32(0,0,0)
 
@@ -110,6 +126,14 @@ typedef uint32_t color32_t;
 #define COLOR32_CYAN_HALF      COLOR32(0,128,128)
 #define COLOR32_CYAN_QUARTER   COLOR32(0,64,64)
 
+// deprecated
+#define COLOR32(r,g,b)   ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+#define COLOR_W32(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+#define WHITE(color) ((color >> 24) & 0xFF)
+#define RED(color)   ((color >> 16) & 0xFF)
+#define GREEN(color) ((color >> 8) & 0xFF)
+#define BLUE(color)  (color 0xFF)
+// end deprecated
 #endif /* COLORS_H_ */
 
 #pragma once

@@ -434,16 +434,16 @@ void NeoPixel::addPixelColor(uint16_t aPixelIndex, color32_t aColor) {
         if (tOldColor == 0) {
             setPixelColor(aPixelIndex, aColor);
         } else {
-            uint8_t tRed = Red(tOldColor) + (uint8_t) (aColor >> 16);
+            uint8_t tRed = getRedPart(tOldColor) + (uint8_t) (aColor >> 16);
             if (tRed < (uint8_t) (aColor >> 16)) {
                 // clip overflow
                 tRed = 255;
             }
-            uint8_t tGreen = Green(tOldColor) + (uint8_t) (aColor >> 8);
+            uint8_t tGreen = getGreenPart(tOldColor) + (uint8_t) (aColor >> 8);
             if (tGreen < (uint8_t) (aColor >> 8)) {
                 tGreen = 255;
             }
-            uint8_t tBlue = Blue(tOldColor) + (uint8_t) aColor;
+            uint8_t tBlue = getBluePart(tOldColor) + (uint8_t) aColor;
             if (tBlue < (uint8_t) aColor) {
                 tBlue = 255;
             }
@@ -459,16 +459,16 @@ void NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
         if (tOldColor == 0) {
             setPixelColor(aPixelIndex, aRed, aGreen, aBlue);
         } else {
-            uint8_t tRed = Red(tOldColor) + aRed;
+            uint8_t tRed = getRedPart(tOldColor) + aRed;
             if (tRed < aRed) {
                 // clip overflow
                 tRed = 255;
             }
-            uint8_t tGreen = Green(tOldColor) + aGreen;
+            uint8_t tGreen = getGreenPart(tOldColor) + aGreen;
             if (tGreen < aGreen) {
                 tGreen = 255;
             }
-            uint8_t tBlue = Blue(tOldColor) + aBlue;
+            uint8_t tBlue = getBluePart(tOldColor) + aBlue;
             if (tBlue < aBlue) {
                 tBlue = 255;
             }
@@ -514,9 +514,9 @@ void NeoPixel::dimPixelColor(uint16_t aPixelIndex) {
 uint32_t NeoPixel::dimColor(color32_t aColor) {
 // Shift R, G and B components one bit to the right
 #ifdef SUPPORT_RGBW
-    uint32_t dimColor = Color(Red(aColor) >> 1, Green(aColor) >> 1, Blue(aColor) >> 1, White(aColor) >> 1);
+    uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1, getWhitePart(aColor) >> 1);
 #else
-    uint32_t dimColor = Color(Red(aColor) >> 1, Green(aColor) >> 1, Blue(aColor) >> 1);
+    uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1);
 #endif
     return dimColor;
 }
@@ -577,11 +577,11 @@ uint8_t NeoPixel::gamma32WithSpecialZero(uint8_t aLinearBrightnessValue) {
  * Using gamma table with 32 entries
  */
 color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor) {
-    uint8_t tRed = pgm_read_byte(&GammaTable32[(Red(aLinearBrightnessColor) / 8)]);
-    uint8_t tGreen = pgm_read_byte(&GammaTable32[(Green(aLinearBrightnessColor) / 8)]);
-    uint8_t tBlue = pgm_read_byte(&GammaTable32[(Blue(aLinearBrightnessColor) / 8)]);
+    uint8_t tRed = pgm_read_byte(&GammaTable32[(getRedPart(aLinearBrightnessColor) / 8)]);
+    uint8_t tGreen = pgm_read_byte(&GammaTable32[(getGreenPart(aLinearBrightnessColor) / 8)]);
+    uint8_t tBlue = pgm_read_byte(&GammaTable32[(getBluePart(aLinearBrightnessColor) / 8)]);
 #ifdef SUPPORT_RGBW
-    uint8_t tWhite = pgm_read_byte(&GammaTable32[(White(aLinearBrightnessColor) / 8)]);
+    uint8_t tWhite = pgm_read_byte(&GammaTable32[(getWhitePart(aLinearBrightnessColor) / 8)]);
     return Color(tRed, tGreen, tBlue, tWhite);
 #else
     return Color(tRed, tGreen, tBlue);
@@ -637,25 +637,47 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
 #endif
 }
 
-// Returns the White component of a 32-bit color
+// Returns the White part of a 32-bit color
+uint8_t getWhitePart(color32_t color) {
+    return (color >> 24) & 0xFF;
+}
+
+// Returns the getRed part of a 32-bit color
+uint8_t getRedPart(color32_t color) {
+    return (color >> 16) & 0xFF;
+}
+
+// Returns the getGreen part of a 32-bit color
+uint8_t getGreenPart(color32_t color) {
+    return (color >> 8) & 0xFF;
+}
+
+// Returns the Blue part of a 32-bit color
+uint8_t getBluePart(color32_t color) {
+    return color & 0xFF;
+}
+
+// deprecated
+// Returns the White part of a 32-bit color
 uint8_t White(color32_t color) {
     return (color >> 24) & 0xFF;
 }
 
-// Returns the Red component of a 32-bit color
+// Returns the getRed part of a 32-bit color
 uint8_t Red(color32_t color) {
     return (color >> 16) & 0xFF;
 }
 
-// Returns the Green component of a 32-bit color
+// Returns the getGreen part of a 32-bit color
 uint8_t Green(color32_t color) {
     return (color >> 8) & 0xFF;
 }
 
-// Returns the Blue component of a 32-bit color
+// Returns the Blue part of a 32-bit color
 uint8_t Blue(color32_t color) {
     return color & 0xFF;
 }
+// end deprecated
 
 /*
  * Test WS2812 resolution
