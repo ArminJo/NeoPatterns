@@ -46,7 +46,7 @@ as well as functions for getting color parts
 - Blue()
 
 # Installation
-First you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
+First, you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
 Then install this "NeoPatterns" library with *Tools -> Manage Libraries... (Ctrl+Shift+I)*. Use "NeoPatterns" as filter string.
 
 ## Matrix pixel mappings
@@ -74,12 +74,12 @@ To customize the library to different requirements, there are some compile optio
 Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for global compile (the latter is not possible with the Arduino IDE, so consider using [Sloeber](https://eclipse.baeyens.it).
 | Macro | Default | File | Description |
 |-|-|-|-|
-| `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
+| `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by deactivating the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
 | `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. |
 | `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes (and more) FLASH and 3 bytes RAM. |
 
 ### Modifying compile options with Arduino IDE
-First use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
+First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
 If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
 Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
 In both cases the library files itself are located in the `src` directory.<br/>
@@ -87,6 +87,12 @@ In both cases the library files itself are located in the `src` directory.<br/>
 ### Modifying compile options with Sloeber IDE
 If you are using Sloeber as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
+
+WOKWI online simulation of the AllPatternOnOneStrip example.<br/>
+[![WOKWI online simulation of the AllPatternOnOneStrip example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneStrip.png)](https://wokwi.com/arduino/projects/299556508969992714).
+
+WOKWI online simulation of the MatrixDemo example.<br/>
+[![WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)](https://wokwi.com/arduino/projects/299560666027524617).
 
 # SNAKE GAME
 ## SnakeGame Example
@@ -124,7 +130,7 @@ NeoPatterns on breadboard
 - Removed blocking wait for ATmega32U4 Serial in examples.
 
 ### Version 2.2.0
-- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Commenting out `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes FLASH for the AllPatternsOnMultiDevices example.
+- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Deactivate the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes FLASH for the AllPatternsOnMultiDevices example.
 - Use type `Print *` instead of `Stream *`.
 - Changed function `addPixelColor()`.
 - Added function `NeoPixel::printInfo(aSerial)`.

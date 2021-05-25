@@ -58,7 +58,6 @@ typedef uint16_t color16_t;
 #define COLOR16_PURPLE    ((color16_t)0xF81F)
 #define COLOR16_CYAN      ((color16_t)0x07FF)
 
-
 // deprecated
 typedef uint16_t Color_t __attribute__ ((deprecated ("Renamed to color16_t")));
 #define COLOR_WHITE     ((color16_t)0xFFFF)
