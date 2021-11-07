@@ -27,7 +27,7 @@ jobs:
         # Examples: arduino:avr:uno, arduino:avr:leonardo, arduino:avr:nano, arduino:avr:mega
         # arduino:sam:arduino_due_x, arduino:samd:arduino_zero_native"
         # ATTinyCore:avr:attinyx5:chip=85,clock=1internal, digistump:avr:digispark-tiny, digistump:avr:digispark-pro
-        # STM32:stm32:GenF1:pnum=BLUEPILL_F103C8
+        # STMicroelectronics:stm32:GenF1:pnum=BLUEPILL_F103C8
         # esp8266:esp8266:huzzah:eesz=4M3M,xtal=80, esp32:esp32:featheresp32:FlashFreq=80
         # You may add a suffix behind the fqbn with "|" to specify one board for e.g. different compile options like arduino:avr:uno|trace
         #############################################################################################################
@@ -52,7 +52,7 @@ jobs:
             sketches-exclude: OpenLedRace,TwoPatternsOnOneStrip # Comma separated list of example names to exclude in build
 
           - arduino-boards-fqbn: esp32:esp32:featheresp32:FlashFreq=80
-            platform-url: https://dl.espressif.com/dl/package_esp32_index.json
+            platform-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
             sketches-exclude: OpenLedRace,TwoPatternsOnOneStrip # TwoPatternsOnOneStrip because of missing EasyButton library
 
       # Do not cancel all jobs / architectures if one job fails

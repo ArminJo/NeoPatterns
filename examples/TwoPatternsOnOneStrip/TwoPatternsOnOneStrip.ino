@@ -38,7 +38,7 @@
 #include <NeoPatterns.h>
 
 #define USE_BUTTON_1
-#include "EasyButtonAtInt01.cpp.h"
+#include "EasyButtonAtInt01.hpp"
 
 EasyButton Button0AtPin3;
 

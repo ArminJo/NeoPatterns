@@ -30,7 +30,7 @@
 #include <stdlib.h> // for __malloc_margin
 
 /*
- * initialize RAM between actual stack and actual heap start (__brkval) with pattern 0x5A
+ * initialize RAM between current stack and actual heap start (__brkval) with pattern 0x5A
  */
 void initStackFreeMeasurement() {
     extern unsigned int __heap_start;
@@ -62,7 +62,7 @@ uint16_t getStackFreeMinimumBytes() {
         tHeapPtr = (uint8_t*) &__heap_start;
     }
 
-// first search for first match, because malloc() and free() may be happened in between and overwrite low memory
+// first search for first match after current begin of heap, because malloc() and free() may be happened in between and overwrite low memory
     while (*tHeapPtr != HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr < &tDummyVariableOnStack) {
         tHeapPtr++;
     }
@@ -76,6 +76,33 @@ uint16_t getStackFreeMinimumBytes() {
     return tStackFree;
 }
 
+uint16_t getStackUsedMaximumBytes(uint16_t *aStackStillFreeBytes) {
+    extern unsigned int __heap_start;
+    extern void *__brkval;
+    uint8_t tDummyVariableOnStack;
+
+    uint8_t *tHeapPtr = (uint8_t*) __brkval;
+    if (tHeapPtr == 0) {
+        tHeapPtr = (uint8_t*) &__heap_start;
+    }
+
+// first search for first match after current begin of heap, because malloc() and free() may be happened in between and overwrite low memory
+    while (*tHeapPtr != HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr < &tDummyVariableOnStack) {
+        tHeapPtr++;
+    }
+// then count untouched patterns
+    uint16_t tStackFree = 0;
+    while (*tHeapPtr == HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr < &tDummyVariableOnStack) {
+        tHeapPtr++;
+        tStackFree++;
+    }
+// word -> bytes
+    *aStackStillFreeBytes = tStackFree;
+
+    return (RAMEND - (uint16_t)tHeapPtr) + 1;
+}
+
+
 /*
  * Prints the amount of stack not touched (available) since the last call to initStackFreeMeasurement().
  */
@@ -84,13 +111,21 @@ void printStackFreeMinimumBytes(Print *aSerial) {
     aSerial->println(getStackFreeMinimumBytes());
 }
 
+void printStackUsedAndFreeBytes(Print *aSerial) {
+    uint16_t tStackStillFreeBytes;
+    aSerial->print(F("Stack used="));
+    aSerial->print(getStackUsedMaximumBytes(&tStackStillFreeBytes));
+    aSerial->print(F(", free="));
+    aSerial->println(tStackStillFreeBytes);
+}
+
 /*
  * Returns actual start of free heap
  * Usage for print:
  Serial.print(F("HeapStart=0x"));
  Serial.println((uintptr_t) getHeapStart(), HEX);
  */
-uint8_t *getHeapStart(void) {
+uint8_t* getHeapStart(void) {
     extern unsigned int __heap_start;
     extern void *__brkval;
 

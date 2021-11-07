@@ -39,6 +39,9 @@
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #endif
+#if defined(ESP32)
+#define TONE_LEDC_CHANNEL   0 // channel used for ledcWriteTone()
+#endif
 #include "pitches.h"
 
 #define VERSION_PLAY_RTTTL "1.4.2"
@@ -98,8 +101,10 @@ void playRandomRtttlSampleBlockingAndPrintName(uint8_t aTonePin, Print *aSerial)
 
 void getRtttlNamePGM(const char *aRTTTLArrayPtrPGM, char *aBuffer, uint8_t aBuffersize);
 void printNamePGM(const char *aRTTTLArrayPtrPGM, Print *aSerial);
+void printNamePGMPGM(const char* const*aRTTTLPGMArrayPtrPGM, Print *aSerial);
 
 void startPlayRtttlPGM(uint8_t aTonePin, const char *aRTTTLArrayPtrPGM, void (*aOnComplete)()=NULL);
+void startPlayRtttlPGMPGM(uint8_t aTonePin, const char* const*aRTTTLPGMArrayPtrPGM, void (*aOnComplete)()=NULL);
 void playRtttlBlockingPGM(uint8_t aTonePin, const char *aRTTTLArrayPtrPGM);
 
 void startPlayRandomRtttlFromArrayPGM(uint8_t aTonePin, const char* const aSongArrayPGM[], uint8_t aNumberOfEntriesInSongArrayPGM,
@@ -221,12 +226,17 @@ static const char Toccata[] PROGMEM
 ="Toccata:d=4,o=5,b=160:16a4,16g4,1a4,16g4,16f4,16d4,16e4,2c#4,16p,d.4,2p,16a4,16g4,1a4,8e.4,8f.4,8c#.4,2d4";
 static const char Short[] PROGMEM = "Short:d=4,o=3,b=240,s=4:c4,8g,8g,a,g.,b,c4";
 
+static const char IHaveADream[] PROGMEM =
+        "IHaveADr:b=125,o=6,d=8:32p,4f#5,4d#.,c#,2e.,4f#5,4b.5,a#5,2b.5,4f#5,4d#.,c#,2e.,4f#5,4b.5,a#5,2b.5,d#,e,f#.,16g#,4f#,2c#.,c#,d#,e.,16f#,2d#.,d#,e,f#.,16g#,4f#,2c#.,c#,d#,e.,16f#,1d#";
+static const char MammaMia[] PROGMEM =
+        "MammaMia:d=16,o=5,b=60:f6,d#6,f6,4d#6,d#6,d#6,f6,g6,f6,8d#.6,p,8f6,4d#6,8g#6,g#6,g#6,g#6,8g6,8d#.6,p,4a#6,a#6,a#6,8a#6,8f6,8g6,4g#6,8g6,8g6,g6,8g6,8d6,8d#6,4f6,8f6,4d#6,8g#6,g#6,g#6,g#6,g6,d#6,f6,8d#6";
+
 /*
  * Array of songs. Useful for random melody
  */
 //#pragma GCC diagnostic ignored "-Wunused-variable"
-static const char * const RTTTLMelodies[] PROGMEM = { StarWars, MahnaMahna, LeisureSuit, MissionImp, Flinstones, YMCA, Simpsons,
-        Indiana, TakeOnMe, Entertainer, Muppets, Looney, _20thCenFox, Bond, GoodBad, PinkPanther, A_Team, Jeopardy, Gadget, Smurfs,
+static const char *const RTTTLMelodies[] PROGMEM = { StarWars, MahnaMahna, LeisureSuit, MissionImp, Flinstones, YMCA, MammaMia,
+        Indiana, TakeOnMe, Entertainer, Muppets, IHaveADream, _20thCenFox, Bond, GoodBad, PinkPanther, A_Team, Jeopardy, Gadget, Smurfs,
         Toccata };
 #define ARRAY_SIZE_MELODIES (sizeof(RTTTLMelodies)/sizeof(const char *)) // 21
 

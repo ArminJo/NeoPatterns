@@ -1,5 +1,5 @@
 /*
- * EasyButtonAtInt01.cpp.h
+ * EasyButtonAtInt01.hpp
  *
  * This file can be directly configured and included in one source.
  * Include EasyButtonAtInt01.h file if you need the declarations in a second source file.
@@ -12,7 +12,7 @@
  *
  *  Usage:
  *  #define USE_BUTTON_0
- *  #include "EasyButtonAtInt01.cpp.h"
+ *  #include "EasyButtonAtInt01.hpp"
  *  EasyButton Button0AtPin2(true);
  *
  *  Copyright (C) 2018  Armin Joachimsmeyer
@@ -40,9 +40,9 @@
 
 /*
  * Usage:
- * #define USE_BUTTON_0  // Enable code for button at INT0 (pin2 on 328P, PB6 on ATtiny167, PB2 on ATtinyX5)
- * #define USE_BUTTON_1  // Enable code for button at INT1 (pin3 on 328P, PA3 on ATtiny167, PCINT0 / PCx for ATtinyX5)
- * #include "EasyButtonAtInt01.cpp.h"
+ * #define USE_BUTTON_0  // Enables code for button at INT0 (pin2 on 328P, PB6 on ATtiny167, PB2 on ATtinyX5)
+ * #define USE_BUTTON_1  // Enables code for button at INT1 (pin3 on 328P, PA3 on ATtiny167, PCINT0 / PCx for ATtinyX5)
+ * #include "EasyButtonAtInt01.hpp"
  * EasyButton Button0AtPin2(true);  // true  -> Button is connected to INT0
  * EasyButton Button0AtPin3(false, &Button3CallbackHandler); // false -> button is not connected to INT0 => connected to INT1
  * ...
@@ -53,7 +53,7 @@
 
 // For external measurement of code timing
 //#define MEASURE_EASY_BUTTON_INTERRUPT_TIMING
-#if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING) || defined(LED_FEEDBACK_TEST)
+#if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING) || defined(BUTTON_LED_FEEDBACK)
 #include "digitalWriteFast.h"
 #endif
 
@@ -89,7 +89,7 @@ EasyButton::EasyButton(void (*aButtonPressCallback)(bool aButtonToggleState)) {
 #endif
 }
 
-#if ! defined(NO_BUTTON_RELEASE_CALLBACK)
+#if !defined(NO_BUTTON_RELEASE_CALLBACK)
 EasyButton::EasyButton(void (*aButtonPressCallback)(bool aButtonToggleState),
         void (*aButtonReleaseCallback)(bool aButtonToggleState, uint16_t aButtonPressDurationMillis)) {
     ButtonPressCallback = aButtonPressCallback;
@@ -138,7 +138,7 @@ EasyButton::EasyButton(bool aIsButtonAtINT0 __attribute__((unused)), void (*aBut
 #endif
 }
 
-#if ! defined(NO_BUTTON_RELEASE_CALLBACK)
+#if !defined(NO_BUTTON_RELEASE_CALLBACK)
 #  if defined(USE_BUTTON_0) && defined(USE_BUTTON_1)
 EasyButton::EasyButton(bool aIsButtonAtINT0, void (*aButtonPressCallback)(bool aButtonToggleState),
         void (*aButtonReleaseCallback)(bool aButtonToggleState, uint16_t aButtonPressDurationMillis))
@@ -169,8 +169,8 @@ void EasyButton::init(bool aIsButtonAtINT0) {
     pinModeFast(INTERRUPT_TIMING_OUTPUT_PIN, OUTPUT);
 #endif
 
-#if defined(LED_FEEDBACK_TEST)
-    pinModeFast(BUTTON_TEST_FEEDBACK_LED_PIN, OUTPUT);
+#if defined(BUTTON_LED_FEEDBACK)
+    pinModeFast(BUTTON_LED_FEEDBACK_PIN, OUTPUT);
 #endif
 
 #if defined(USE_BUTTON_0) && not defined(USE_BUTTON_1)
@@ -178,7 +178,7 @@ void EasyButton::init(bool aIsButtonAtINT0) {
      * Only button 0 requested
      */
     INT0_DDR_PORT &= ~(_BV(INT0_BIT)); // pinModeFast(2, INPUT_PULLUP);
-#  if ! defined(BUTTON_IS_ACTIVE_HIGH)
+#  if !defined(BUTTON_IS_ACTIVE_HIGH)
     INT0_OUT_PORT |= _BV(INT0_BIT); // enable pullup
 #  endif
     sPointerToButton0ForISR = this;
@@ -195,12 +195,12 @@ void EasyButton::init(bool aIsButtonAtINT0) {
      * Only button 1 requested
      */
     INT1_DDR_PORT &= ~(_BV(INT1_BIT));
-#  if ! defined(BUTTON_IS_ACTIVE_HIGH)
+#  if !defined(BUTTON_IS_ACTIVE_HIGH)
     INT1_OUT_PORT |= _BV(INT1_BIT); // enable pullup
 #  endif
     sPointerToButton1ForISR = this;
 
-#  if (! defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
+#  if (!defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
 #    if defined(PCICR)
     PCICR |= 1 << PCIE0; // Enable pin change interrupt for port PA0 to PA7
     PCMSK0 = digitalPinToBitMask(INT1_PIN);
@@ -223,7 +223,7 @@ void EasyButton::init(bool aIsButtonAtINT0) {
     EIFR |= 1 << INTF1;     // clear interrupt bit
     EIMSK |= 1 << INT1;     // enable interrupt on next change
 #    endif //USE_ATTACH_INTERRUPT
-#  endif // ! defined(ISC10)
+#  endif // !defined(ISC10)
 
 #elif defined(USE_BUTTON_0) && defined(USE_BUTTON_1)
     /*
@@ -234,7 +234,7 @@ void EasyButton::init(bool aIsButtonAtINT0) {
          * Button 0
          */
         INT0_DDR_PORT &= ~(_BV(INT0_BIT)); // pinModeFast(2, INPUT);
-#  if ! defined(BUTTON_IS_ACTIVE_HIGH)
+#  if !defined(BUTTON_IS_ACTIVE_HIGH)
         INT0_OUT_PORT |= _BV(INT0_BIT); // enable pullup
 #  endif
         sPointerToButton0ForISR = this;
@@ -251,12 +251,12 @@ void EasyButton::init(bool aIsButtonAtINT0) {
          * Allow PinChangeInterrupt
          */
         INT1_DDR_PORT &= ~(_BV(INT1_BIT));  // pinModeFast(INT1_BIT, INPUT_PULLUP);
-#  if ! defined(BUTTON_IS_ACTIVE_HIGH)
+#  if !defined(BUTTON_IS_ACTIVE_HIGH)
         INT1_OUT_PORT |= _BV(INT1_BIT); // enable pullup
 #  endif
         sPointerToButton1ForISR = this;
 
-#  if (! defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
+#  if (!defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
 #    if defined(PCICR)
         /*
          * ATtiny167 + 87. Enable pin change interrupt for port PA0 to PA7
@@ -290,7 +290,7 @@ void EasyButton::init(bool aIsButtonAtINT0) {
         EIFR |= 1 << INTF1;     // clear interrupt bit
         EIMSK |= 1 << INT1;     // enable interrupt on next change
 #    endif //USE_ATTACH_INTERRUPT
-#  endif // ! defined(ISC10)
+#  endif // !defined(ISC10)
     }
 #endif
     ButtonStateIsActive = false; // negative logic for ButtonStateIsActive! true means button pin is LOW
@@ -436,6 +436,8 @@ bool EasyButton::checkForLongPressBlocking(uint16_t aLongPressThresholdMillis) {
  * Double press detection by computing difference between current (active) timestamp ButtonLastChangeMillis
  * and last release timestamp ButtonReleaseMillis.
  * !!!Works only reliable if called early in ButtonPress callback function!!!
+ * Be aware, that the first press after booting may be detected as double press!
+ * This is because ButtonReleaseMillis is initialized with 0 milliseconds, which is interpreted as the first press happened at the beginning of boot.
  * @return true if double press detected.
  */
 bool EasyButton::checkForDoublePress(uint16_t aDoublePressDelayMillis) {
@@ -482,7 +484,7 @@ void EasyButton::handleINT01Interrupts() {
         tCurrentButtonStateIsActive = INT1_IN_PORT & _BV(INT1_BIT);  //  = digitalReadFast(3);
     }
 #endif
-#if ! defined(BUTTON_IS_ACTIVE_HIGH)
+#if !defined(BUTTON_IS_ACTIVE_HIGH)
     tCurrentButtonStateIsActive = !tCurrentButtonStateIsActive; // negative logic for tCurrentButtonStateIsActive! true means button pin is LOW
 #endif
 
@@ -563,8 +565,8 @@ void EasyButton::handleINT01Interrupts() {
                 /*
                  * Button pressed
                  */
-#ifdef LED_FEEDBACK_TEST
-                digitalWriteFast(BUTTON_TEST_FEEDBACK_LED_PIN, HIGH);
+#ifdef BUTTON_LED_FEEDBACK
+                digitalWriteFast(BUTTON_LED_FEEDBACK_PIN, HIGH);
 #endif
                 ButtonToggleState = !ButtonToggleState;
                 if (ButtonPressCallback != NULL) {
@@ -597,7 +599,7 @@ void EasyButton::handleINT01Interrupts() {
                  */
                 ButtonPressDurationMillis = tDeltaMillis;
                 ButtonReleaseMillis = tMillis;
-#if ! defined(NO_BUTTON_RELEASE_CALLBACK)
+#if !defined(NO_BUTTON_RELEASE_CALLBACK)
                 if (ButtonReleaseCallback != NULL) {
                     /*
                      * Call callback function.
@@ -620,8 +622,8 @@ void EasyButton::handleINT01Interrupts() {
                     }
                 }
 #endif
-#ifdef LED_FEEDBACK_TEST
-                digitalWriteFast(BUTTON_TEST_FEEDBACK_LED_PIN, LOW);
+#ifdef BUTTON_LED_FEEDBACK
+                digitalWriteFast(BUTTON_LED_FEEDBACK_PIN, LOW);
 #endif
             }
         }
@@ -662,7 +664,7 @@ ISR(INT0_vect) {
 #  endif
 
 #  if defined(USE_BUTTON_1)
-#    if (! defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
+#    if (!defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
 // on ATtinyX5 we do not have a INT1_vect but we can use the PCINT0_vect
 ISR(PCINT0_vect)
 #    elif INT1_PIN == 4 || INT1_PIN == 5 || INT1_PIN == 6 || INT1_PIN == 7

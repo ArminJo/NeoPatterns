@@ -125,8 +125,8 @@ void MatrixNeoPatterns::setInitHeat() {
             tRandomValue.ULong = random();
 #endif
             // Values from 40 to 255
-            initalHeatLine[tIndex] = (tRandomValue.UBytes[i] - 40) + 40; // 40 is somewhat over represented
-//            initalHeatLine[tIndex] = ((tRandomValue.UBytes[i] * (255 - 40)) >> 8) + 40; // the correct one - just in case
+//            initalHeatLine[tIndex] = (tRandomValue.UBytes[i] % (255-40)) + 40; // random(40,255)
+            initalHeatLine[tIndex] = (tRandomValue.UBytes[i] * (255 - 40) >> 8) + 40; // random(40,255) saves 4 bytes and is faster
             tIndex++;
             if (tIndex >= Columns) {
 #ifdef TRACE
