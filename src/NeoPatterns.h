@@ -293,7 +293,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  * Version 2.3.2 - 11/2021
  * - Changed parameter for endless repeats in initMultipleFallingStars().
  * - Improved usage of random().
- * - Added function setBrightnessValueForNextDraw() and isActive().
+ * - Added function fillRegion(), isActive() and setAdafruitBrightnessValue().
  *
  * Version 2.3.1 - 02/2021
  * - Changed type of TotalStepCounter from uint16_t to int16_t.

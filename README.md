@@ -109,9 +109,9 @@ NeoPatterns on breadboard
 ### Version 2.3.3 - work in progress
 
 ### Version 2.3.2
-- Changed parameter for endless repeats in initMultipleFallingStars().
+- Changed parameter for endless repeats in `NeoPatterns::initMultipleFallingStars()`.
 - Improved usage of random().
-- Added function setBrightnessValueForNextDraw() and isActive().
+- Added function `NeoPixel::fillRegion()`, `NeoPatterns::isActive()` and `NeoPixel::setAdafruitBrightnessValue()`.
  
 ### Version 2.3.1
 - Changed type of TotalStepCounter from uint16_t to int16_t.

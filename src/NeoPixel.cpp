@@ -167,7 +167,7 @@ bool NeoPixel::begin(Print *aSerial) {
 /*
  * For debugging purposes
  */
-#ifdef INFO
+#ifdef INFO // To avoid, that the library by default requires the Serial object
 void NeoPixel::printPin() {
     Serial.print(pin);
     if (PixelOffset != 0) {
@@ -200,14 +200,14 @@ void NeoPixel::show() {
         if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
 #ifdef TRACE
             printPin();
-            Serial.println("Underlying->show");
+            Serial.println(F("Underlying->show"));
 #endif
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
 #ifdef TRACE
         printPin();
-        Serial.println("show");
+        Serial.println(F("show"));
 #endif
         Adafruit_NeoPixel::show();
     }
@@ -271,10 +271,11 @@ void NeoPixel::clear(void) {
 }
 
 /*
+ * Draws bar with length pixel and clears the other ones
  * @param aDrawFromBottom - false: Bar is top down, i.e. it starts at the highest pixel index
  */
 void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom) {
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         bool tDrawPixel;
         if (aDrawFromBottom) {
             tDrawPixel = (i < aBarLength);
@@ -290,12 +291,20 @@ void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBott
     }
 }
 
+void NeoPixel::fillRegion(color32_t aColor, uint16_t aRegionFirst, uint16_t aRegionLength) {
+    if (aRegionFirst + aRegionLength <= numLEDs) {
+        for (uint_fast16_t i = aRegionFirst; i < aRegionFirst + aRegionLength; i++) {
+            setPixelColor(i, aColor);
+        }
+    }
+}
+
 /*
  * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
  * @param aDrawFromBottom - false: Bar is top down, i.e. it starts at the highest pixel index
  */
 void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom) {
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         bool tDrawPixel;
         if (aDrawFromBottom) {
             tDrawPixel = (i < aBarLength);
@@ -334,7 +343,10 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
 #endif
 }
 
-void NeoPixel::setBrightnessValueForNextDraw(uint8_t aBrightness) {
+/*
+ * !!! Affects only the unused Adafruit drawing functions
+ */
+void NeoPixel::setAdafruitBrightnessValue(uint8_t aBrightness) {
     brightness = aBrightness + 1; // Overflow is intended see setBrightness()
 }
 
@@ -414,13 +426,13 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // support offsets
 
-        uint8_t tRed = (uint8_t)(aColor >> 16);
-        uint8_t tGreen = (uint8_t)(aColor >> 8);
+        uint8_t tRed = (uint8_t) (aColor >> 16);
+        uint8_t tGreen = (uint8_t) (aColor >> 8);
         uint8_t tBlue = (uint8_t) aColor;
         uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
 #ifdef SUPPORT_RGBW
         if (BytesPerPixel == 4) {
-            uint8_t w = (uint8_t)(aColor >> 24);
+            uint8_t w = (uint8_t) (aColor >> 24);
             tPixelPtr[wOffset] = w;
         }
 #endif
@@ -440,13 +452,13 @@ void NeoPixel::addPixelColor(uint16_t aPixelIndex, color32_t aColor) {
         if (tOldColor == 0) {
             setPixelColor(aPixelIndex, aColor);
         } else {
-            uint8_t tRed = getRedPart(tOldColor) + (uint8_t)(aColor >> 16);
-            if (tRed < (uint8_t)(aColor >> 16)) {
+            uint8_t tRed = getRedPart(tOldColor) + (uint8_t) (aColor >> 16);
+            if (tRed < (uint8_t) (aColor >> 16)) {
                 // clip overflow
                 tRed = 255;
             }
-            uint8_t tGreen = getGreenPart(tOldColor) + (uint8_t)(aColor >> 8);
-            if (tGreen < (uint8_t)(aColor >> 8)) {
+            uint8_t tGreen = getGreenPart(tOldColor) + (uint8_t) (aColor >> 8);
+            if (tGreen < (uint8_t) (aColor >> 8)) {
                 tGreen = 255;
             }
             uint8_t tBlue = getBluePart(tOldColor) + (uint8_t) aColor;
@@ -490,7 +502,7 @@ void NeoPixel::ColorSet(color32_t aColor) {
 //        setPixelColor(0, aColor);
 //        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
 //    } else {
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         setPixelColor(i, aColor);
     }
 //    }
@@ -510,7 +522,7 @@ color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
 // Set 50% dimmed value of current color
 void NeoPixel::dimPixelColor(uint16_t aPixelIndex) {
     uint8_t *tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * BytesPerPixel];
-    for (uint8_t i = 0; i < BytesPerPixel; ++i) {
+    for (uint_fast8_t i = 0; i < BytesPerPixel; ++i) {
         *tPixelPointer = *tPixelPointer >> 1;
         tPixelPointer++;
     }
@@ -546,7 +558,7 @@ color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
 void NeoPixel::fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop) {
     uint16_t tWheelIndexHighResolution = aWheelStartPos << 8; // upper byte is the integer part used for Wheel(), lower byte is the fractional part
     uint16_t tWheelIndexHighResolutionDelta = 0x10000 / numLEDs;
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         if (aStartAtTop) {
             setPixelColor(numLEDs - i, Wheel(tWheelIndexHighResolution >> 8));
         } else {
@@ -557,8 +569,8 @@ void NeoPixel::fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop) {
 }
 
 // from https://www.mikrocontroller.net/articles/LED-Fading
-const uint8_t GammaTable32[32] PROGMEM = {0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
-    91, 108, 128, 152, 181, 215, 255};
+const uint8_t GammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
+        91, 108, 128, 152, 181, 215, 255 };
 
 /*
  * Use mapping table with 32 entries (using 5 MSbits)
@@ -600,10 +612,10 @@ color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor
  */
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
 #ifdef SUPPORT_RGBW
-    uint8_t tWhiteDimmed = (uint8_t)(aLinearBrightnessColor >> 24);
+    uint8_t tWhiteDimmed = (uint8_t) (aLinearBrightnessColor >> 24);
 #endif
-    uint8_t tRedDimmed = (uint8_t)(aLinearBrightnessColor >> 16);
-    uint8_t tGreenDimmed = (uint8_t)(aLinearBrightnessColor >> 8);
+    uint8_t tRedDimmed = (uint8_t) (aLinearBrightnessColor >> 16);
+    uint8_t tGreenDimmed = (uint8_t) (aLinearBrightnessColor >> 8);
     uint8_t tBlueDimmed = (uint8_t) aLinearBrightnessColor;
 
     uint8_t tGamma32Brightness;
@@ -622,7 +634,6 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
 #endif
 
 #ifdef TRACE
-    printPin();
     Serial.print(F("dimColorWithGamma32 aBrightness="));
     Serial.print(aBrightness);
     Serial.print(F(" Gamma="));

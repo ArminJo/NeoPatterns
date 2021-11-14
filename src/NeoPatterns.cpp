@@ -595,7 +595,7 @@ bool NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
     /*
      * Refresh pattern
      */
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         if ((Direction == DIRECTION_UP && i <= Index) || (Direction == DIRECTION_DOWN && i >= Index)) {
             setPixelColor(i, Color1);
         } else if (!(PatternFlags & FLAG_DO_NOT_CLEAR)) {
@@ -1055,7 +1055,7 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
      * Refresh pattern
      */
     uint8_t tRunningIndex = Index;
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         if (tRunningIndex < PatternLength) {
             // first color
             setPixelColor(i, Color1);
@@ -1246,7 +1246,7 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
          * Next index
          */
 // Step 1.  Cool down every cell a little
-        for (uint16_t i = 0; i < numLEDs; i++) {
+        for (uint_fast16_t i = 0; i < numLEDs; i++) {
             uint8_t tChill = random(((COOLING * 20) / numLEDs) + 2);
             if (tChill >= heat[i]) {
                 heat[i] = 0;
@@ -1256,7 +1256,7 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
         }
 
 // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-        for (uint16_t k = numLEDs - 1; k >= 2; k--) {
+        for (uint_fast16_t k = numLEDs - 1; k >= 2; k--) {
             heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
         }
         LongUnion tRandom; // usage of Long union saves 20 bytes and is way faster
@@ -1279,7 +1279,7 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
      * Refresh pattern
      */
 // Step 4.  Map from heat cells to LED colors
-    for (uint16_t j = 0; j < numLEDs; j++) {
+    for (uint_fast16_t j = 0; j < numLEDs; j++) {
         if (Direction == DIRECTION_UP) {
             setPixelColor(j, HeatColor(heat[j]));
         } else {
@@ -1365,7 +1365,7 @@ void NeoPatterns::ProcessSelectiveColor(color32_t aColorForSelection, color32_t 
 void NeoPatterns::ProcessSelectiveColorForAllPixel() {
 
     color32_t tNewColor = Value3.SingleLEDProcessingFunction(this);
-    for (uint16_t i = 0; i < numLEDs; i++) {
+    for (uint_fast16_t i = 0; i < numLEDs; i++) {
         color32_t tOldColor = getPixelColor(i);
         if (tOldColor == LongValue2.ColorTmp) {
             setPixelColor(i, tNewColor);
@@ -1581,7 +1581,7 @@ bool __attribute__((weak)) UserPattern1Update(NeoPatterns *aNeoPatterns, bool aD
     /*
      * Refresh pattern
      */
-    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
+    for (uint_fast16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
         if (i == aNeoPatterns->Index) {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
         } else {

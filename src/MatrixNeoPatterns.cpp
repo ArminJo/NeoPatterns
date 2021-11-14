@@ -131,7 +131,7 @@ void MatrixNeoPatterns::setInitHeat() {
             if (tIndex >= Columns) {
 #ifdef TRACE
                 Serial.print(F("initalHeatLine="));
-                for (uint8_t i = 0; i < Columns; ++i) {
+                for (uint_fast8_t i = 0; i < Columns; ++i) {
                     Serial.print(initalHeatLine[i]);
                     Serial.print(' ');
                 }
@@ -220,7 +220,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
     }
 
     // First refresh (invisible) bottom line on every update
-    for (uint8_t i = 1; i < Columns + 1; i++) {
+    for (uint_fast8_t i = 1; i < Columns + 1; i++) {
         MatrixOld[mapXYToArray(i, Rows + 1, Columns + 2)] = initalHeatLine[i - 1];
     }
 
@@ -228,8 +228,8 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
      * Process and Map center without padding from heat cells to LED colors.
      * Using pointer instead of indexing with x and y saves 1 ms!
      */
-    for (uint8_t y = 1; y < Rows + 1; y++) {
-        for (uint8_t x = 1; x < Columns + 1; x++) {
+    for (uint_fast8_t y = 1; y < Rows + 1; y++) {
+        for (uint_fast8_t x = 1; x < Columns + 1; x++) {
             // Convolution takes 11 milli seconds with float or 4 ms with integer
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms
@@ -359,8 +359,8 @@ bool MatrixNeoPatterns::SnowUpdate() {
      */
 #ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
     // TODO 2 for loops instead of memset
-    for (uint8_t x = 0; x < Columns; x++) {
-        for (uint8_t y = 0; y < Rows - 1; y++) {
+    for (uint_fast8_t x = 0; x < Columns; x++) {
+        for (uint_fast8_t y = 0; y < Rows - 1; y++) {
             setMatrixPixelColor(x, y, COLOR32_BLACK);
         }
     }
@@ -373,7 +373,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
      */
     if (Index >= SNOW_BOTTOM_LINE_DIM_PRESCALER) {
         Index = 0;
-        for (uint8_t i = 0; i < Columns; i++) {
+        for (uint_fast8_t i = 0; i < Columns; i++) {
 #ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
             if (LayoutMappingFunction == NULL) {
                 dimPixelColor(LayoutMapping(i, Rows - 1));
@@ -389,7 +389,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
     /*
      * 2. Do individual flake delay, move and draw all flakes
      */
-    for (uint8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+    for (uint_fast8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
         uint8_t tCount = SnowFlakesArray[tSnowFlakeIndex].Counter;
         if (tCount == 0) {
             // Move flake
@@ -416,15 +416,13 @@ bool MatrixNeoPatterns::SnowUpdate() {
         Serial.print(tCount);
         Serial.print(F(" Period="));
         Serial.print(SnowFlakesArray[tSnowFlakeIndex].Period);
-        Serial.print(F(" All=0x"));
-        Serial.print(SnowFlakesArray[tSnowFlakeIndex].All, HEX);
         Serial.println();
 #endif
     }
     /*
      * 3. Reinitialize all flakes, which were arrived at bottom row
      */
-    for (uint8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+    for (uint_fast8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
         if (SnowFlakesArray[tSnowFlakeIndex].Row >= Rows - 1) {
             // Reinitialize
             setRandomFlakeParameters(tSnowFlakeIndex);
@@ -653,23 +651,23 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
              * Copy all LED data one row up, which is at a higher index
              */
             memmove(pixels + tBytesToSkipForOneRow, pixels, tNumBytes - tBytesToSkipForOneRow);
-            for (uint8_t i = 0; i < Columns; ++i) {
+            for (uint_fast8_t i = 0; i < Columns; ++i) {
                 // set bottom line to background
                 setPixelColor(i, aBackgroundColor);
             }
         } else if (aDirection == DIRECTION_DOWN) {
             memmove(pixels, pixels + tBytesToSkipForOneRow, tNumBytes - tBytesToSkipForOneRow);
-            for (uint16_t i = numLEDs - Columns; i < numLEDs; ++i) {
+            for (uint_fast16_t i = numLEDs - Columns; i < numLEDs; ++i) {
                 setPixelColor(i, aBackgroundColor);
             }
         } else if (aDirection == DIRECTION_LEFT) {
             memmove(pixels + BytesPerPixel, pixels, tNumBytes - BytesPerPixel);
-            for (uint16_t i = 0; i < numLEDs; i += Columns) {
+            for (uint_fast16_t i = 0; i < numLEDs; i += Columns) {
                 setPixelColor(i, aBackgroundColor);
             }
         } else if (aDirection == DIRECTION_RIGHT) {
             memmove(pixels, pixels + BytesPerPixel, tNumBytes - BytesPerPixel);
-            for (uint16_t i = Columns - 1; i <= numLEDs; i += Columns) {
+            for (uint_fast16_t i = Columns - 1; i <= numLEDs; i += Columns) {
                 setPixelColor(i, aBackgroundColor);
             }
         }
@@ -678,8 +676,8 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         /*
          * Use slower setMatrixPixelColor() function in all other cases
          */
-        for (uint8_t y = 0; y < Rows; ++y) {
-            for (uint8_t x = 0; x < Columns; ++x) {
+        for (uint_fast8_t y = 0; y < Rows; ++y) {
+            for (uint_fast8_t x = 0; x < Columns; ++x) {
                 if (aDirection == DIRECTION_UP) {
                     if (y != (Rows - 1)) {
                         /*
@@ -829,7 +827,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
     tNextChar = *(tDataPtr++);
 #endif
 
-#if defined(DEBUG)
+#if defined(DEBUG) && !defined(TRACE)
     char tFirstCurrentChar = tCurrentChar;
     char tFirstNextChar = tNextChar;
 #endif

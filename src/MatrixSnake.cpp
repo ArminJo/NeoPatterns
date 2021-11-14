@@ -209,7 +209,7 @@ void MatrixSnake::drawApple() {
 
 void MatrixSnake::drawSnake() {
 
-    for (uint16_t i = 0; i < SnakeLength; i++) {
+    for (uint_fast16_t i = 0; i < SnakeLength; i++) {
         position tPosition = SnakePixelList[i];
         // linear color interpolation over the body of the snake between tail and head
         uint8_t tBrightness = ((SnakeLength - i) * 255) / SnakeLength;
@@ -361,7 +361,7 @@ bool MatrixSnake::isPositionInArea(position aPositionToCheck) {
  * returns 0 if position is NOT in snake tail
  */
 uint16_t MatrixSnake::getIndexOfPositionInSnakeTail(position aPositionToCheck) {
-    for (uint16_t i = 1; i < (SnakeLength - 1); ++i) {
+    for (uint_fast16_t i = 1; i < (SnakeLength - 1); ++i) {
         if (aPositionToCheck.x == SnakePixelList[i].x && aPositionToCheck.y == SnakePixelList[i].y) {
             return i;
         }
@@ -375,7 +375,7 @@ uint16_t MatrixSnake::getIndexOfPositionInSnakeTail(position aPositionToCheck) {
  * returns !!! SnakeLength !!! if position is NOT in snake
  */
 uint16_t MatrixSnake::getIndexOfPositionInSnake(uint8_t aPositionToCheckX, uint8_t aPositionToCheckY) {
-    for (uint16_t i = 0; i < SnakeLength; ++i) {
+    for (uint_fast16_t i = 0; i < SnakeLength; ++i) {
         if (aPositionToCheckX == SnakePixelList[i].x && aPositionToCheckY == SnakePixelList[i].y) {
             return i;
         }
@@ -389,7 +389,7 @@ uint16_t MatrixSnake::getIndexOfPositionInSnake(uint8_t aPositionToCheckX, uint8
  * returns !!! SnakeLength !!! if position is NOT in snake
  */
 uint16_t MatrixSnake::getIndexOfPositionInSnake(position aPositionToCheck) {
-    for (uint16_t i = 0; i < SnakeLength; ++i) {
+    for (uint_fast16_t i = 0; i < SnakeLength; ++i) {
         if (aPositionToCheck.x == SnakePixelList[i].x && aPositionToCheck.y == SnakePixelList[i].y) {
             return i;
         }

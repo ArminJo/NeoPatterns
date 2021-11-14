@@ -313,7 +313,7 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
  */
 void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom) {
 
-    for (uint8_t i = 0; i < Rows; i++) {
+    for (uint_fast8_t i = 0; i < Rows; i++) {
         bool tDrawPixel;
         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
         if (aDrawFromBottom) {
@@ -327,7 +327,6 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
             // Clear pixel
             setMatrixPixelColor(aColumnX, i, COLOR32_BLACK);
         }
-
     }
 }
 
@@ -338,7 +337,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
 void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom) {
 
     uint8_t j = Rows - 1;
-    for (uint8_t i = 0; i < Rows; i++) {
+    for (uint_fast8_t i = 0; i < Rows; i++) {
         bool tDrawPixel;
 
         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
@@ -591,7 +590,7 @@ void MatrixNeoPixel::drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aFo
         Serial.print(F("drawQuarterPatternOdd aPatternValue=0x"));
         Serial.println(aPatternValue, HEX);
 #endif
-    for (uint8_t tPixelY = 0; tPixelY < 4; ++tPixelY) {
+    for (uint_fast8_t tPixelY = 0; tPixelY < 4; ++tPixelY) {
         /*
          * Write one line and the above mirrored line
          * The middle line is written twice.
@@ -634,7 +633,7 @@ void MatrixNeoPixel::drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aFo
         tBitMask <<= 4;
     }
 //clear bottom line
-    for (uint8_t tPixelX = 0; tPixelX < 7; ++tPixelX) {
+    for (uint_fast8_t tPixelX = 0; tPixelX < 7; ++tPixelX) {
         setMatrixPixelColor(tPixelX, 7, aBackgroundColor);
     }
     show();
@@ -661,7 +660,7 @@ void MatrixNeoPixel::drawQuarterPatternEven(uint16_t aPatternValue, color32_t aF
         Serial.print(F("drawQuarterPatternEven aPatternValue=0x"));
         Serial.println(aPatternValue, HEX);
 #endif
-    for (uint8_t tPixelY = 0; tPixelY < 4; ++tPixelY) {
+    for (uint_fast8_t tPixelY = 0; tPixelY < 4; ++tPixelY) {
         /*
          * Write one line and the above mirrored line
          */
@@ -712,8 +711,8 @@ void MatrixNeoPixel::drawQuarterPatternEven(uint16_t aPatternValue, color32_t aF
  * The lower right half are the same colors but each color is gamma corrected
  */
 void MatrixNeoPixel::drawAllColors() {
-    for (uint8_t y = 0; y < Rows; y++) {
-        for (uint8_t x = 0; x < Columns; x++) {
+    for (uint_fast8_t y = 0; y < Rows; y++) {
+        for (uint_fast8_t x = 0; x < Columns; x++) {
             // check for upper half
             if (x + y < Columns) {
                 // linear rising values from 0 to 255
@@ -771,8 +770,8 @@ void MatrixNeoPixel::drawAllColors() {
  */
 void MatrixNeoPixel::drawAllColors2() {
 
-    for (uint8_t y = 0; y < Rows; ++y) {
-        for (uint8_t x = 0; x < Columns; ++x) {
+    for (uint_fast8_t y = 0; y < Rows; ++y) {
+        for (uint_fast8_t x = 0; x < Columns; ++x) {
 
             uint8_t yAscending = (255 * y) / (Rows - 1);
             uint8_t yDescending = 255 - yAscending;
