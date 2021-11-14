@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
-#define SRC_LIB_NEOPATTERNS_NEOPIXEL_H_
+#ifndef NEOPATTERNS_NEOPIXEL_H
+#define NEOPATTERNS_NEOPIXEL_H
 
 // To support various debug levels set in different sources
 #include "DebugLevel.h"
@@ -110,6 +110,7 @@ public:
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
 #endif
     void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
+    void setBrightnessValueForNextDraw(uint8_t aBrightness);
     void fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
     void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
@@ -150,6 +151,6 @@ public:
 
 extern const uint8_t GammaTable32[32] PROGMEM;
 
-#endif /* SRC_LIB_NEOPATTERNS_NEOPIXEL_H_ */
+#endif /* NEOPATTERNS_NEOPIXEL_H */
 
 #pragma once

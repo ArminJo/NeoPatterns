@@ -70,7 +70,7 @@ public:
     MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
-                void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);
@@ -95,7 +95,7 @@ public:
     uint16_t getIndexOfPositionInSnakeTail(position aPositionToCheck);
     uint16_t checkDirection(uint8_t aDirectionToCheck);
     //
-    bool computeNewHeadPosition(uint8_t aActualDirection, position * aSnakeNewHeadPosition);
+    bool computeNewHeadPosition(uint8_t aActualDirection, position *aSnakeNewHeadPosition);
     bool moveSnakeAndCheckApple(position tSnakeNewHeadPosition);
 
     /*
@@ -107,7 +107,7 @@ public:
 
     // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
     // SnakePixelList[0] is head of snake
-    position * SnakePixelList;
+    position *SnakePixelList;
     uint16_t SnakeLength;
 
 #define AUTOSOLVER_CLOCKWISE_FLAG 0x01 // if set choose directions from 3 to 0

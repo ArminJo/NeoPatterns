@@ -53,7 +53,6 @@
 #define VERSION_NEOPATTERNS_MINOR 3
 // The change log is at the bottom of the file
 
-
 extern const char * const PatternNamesArray[] PROGMEM;
 
 // Pattern types supported:
@@ -121,6 +120,7 @@ public:
 
     void setCallback(void (*callback)(NeoPatterns*));
 
+    bool isActive();
     bool checkForUpdate();
     bool updateOrRedraw();
     bool update();
@@ -208,7 +208,7 @@ public:
     uint16_t Index;         // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
     color32_t Color1;       // Main pattern color
     int8_t Direction;       // Direction to run the pattern
-    uint8_t PatternLength;  // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel - Fire: Cooling - Snow: Number of flakes
+    uint8_t PatternLength; // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel - Fire: Cooling - Snow: Number of flakes
 
     // For ScannerExtended()
     // PatternFlags 0 -> one pass scanner (rocket or falling star)
@@ -228,7 +228,7 @@ public:
     /*
      * Internal control variables
      */
-    uint8_t ActivePattern;  // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
+    uint8_t ActivePattern; // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
     uint16_t Interval;   // Milliseconds between updates
     unsigned long lastUpdate; // Milliseconds of last update of pattern
 
@@ -270,14 +270,16 @@ public:
     static NeoPatterns *FirstNeoPatternsObject;
 };
 
+#define ENDLESS_HANDLER_POINTER ((void (*)(NeoPatterns*)) 1) // currently for initMultipleFallingStars()
+
 //  Sample processing functions for ProcessSelectiveColor()
-color32_t FadeColor(NeoPatterns* aNeoPatternsPtr);
-color32_t DimColor(NeoPatterns* aNeoPatternsPtr);
-color32_t BrightenColor(NeoPatterns* aNeoPatternsPtr);
+color32_t FadeColor(NeoPatterns *aNeoPatternsPtr);
+color32_t DimColor(NeoPatterns *aNeoPatternsPtr);
+color32_t BrightenColor(NeoPatterns *aNeoPatternsPtr);
 
 // multiple pattern example
-void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
-        void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection = DIRECTION_DOWN);
+void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aHalfDelayBetweenStarsMillis,
+        uint8_t aRepetitions, void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection = DIRECTION_DOWN);
 void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr);
 
 void allPatternsRandomHandler(NeoPatterns *aLedsPtr);
@@ -288,6 +290,11 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
         uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
 
 /*
+ * Version 2.3.2 - 11/2021
+ * - Changed parameter for endless repeats in initMultipleFallingStars().
+ * - Improved usage of random().
+ * - Added function setBrightnessValueForNextDraw() and isActive().
+ *
  * Version 2.3.1 - 02/2021
  * - Changed type of TotalStepCounter from uint16_t to int16_t.
  * - Added `SnowMatrix` pattern.

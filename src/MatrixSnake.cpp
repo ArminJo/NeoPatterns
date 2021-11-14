@@ -927,7 +927,7 @@ const char DefaultTickerText[] PROGMEM = "I love Neopixel";
 const char ILoveNeopatternsString[] PROGMEM = "I love Neopatterns";
 const char MatrixDemoString[] PROGMEM = "Matrix Demo";
 const char WelcomeString[] PROGMEM = "Welcome";
-const char *const TickerStrings[] PROGMEM = { DefaultTickerText, ILoveNeopatternsString, MatrixDemoString, WelcomeString };
+const char *const TickerStrings[] PROGMEM = {DefaultTickerText, ILoveNeopatternsString, MatrixDemoString, WelcomeString};
 const char *sTickerTextPtr;
 
 void setMatrixAndSnakePatternsDemoHandlerRandomTickerText() {

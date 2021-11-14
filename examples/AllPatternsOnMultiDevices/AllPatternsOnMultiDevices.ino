@@ -278,8 +278,8 @@ void checkAndHandleVCCTooLow() {
             }
 
             if (sVoltageTooLowDetectedOnce) {
-                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, NULL);
-                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, NULL);
+                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, ENDLESS_HANDLER_POINTER);
+                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, ENDLESS_HANDLER_POINTER);
                 ring12.clear();
                 ring12.show();
                 ring16.clear();

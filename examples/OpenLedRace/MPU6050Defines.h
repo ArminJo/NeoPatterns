@@ -29,8 +29,8 @@ THE SOFTWARE.
 ===============================================
 */
 
-#ifndef _MPU6050_H_
-#define _MPU6050_H_
+#ifndef MPU6050_DEFINES_H
+#define MPU6050_DEFINES_H
 
 //#define MPU6050_INCLUDE_DMP_MOTIONAPPS41
 
@@ -208,6 +208,10 @@ THE SOFTWARE.
 #define MPU6050_EXT_SYNC_ACCEL_XOUT_L   0x5
 #define MPU6050_EXT_SYNC_ACCEL_YOUT_L   0x6
 #define MPU6050_EXT_SYNC_ACCEL_ZOUT_L   0x7
+/*
+ * This and all the next enums are copied from Adafruit_MPU6050.cpp
+ * https://github.com/adafruit/Adafruit_MPU6050
+ */
 /**
  * @brief FSYNC output values
  *
@@ -502,4 +506,5 @@ typedef enum {
 #define MPU6050_DMP_MEMORY_BANK_SIZE    256
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
-#endif /* _MPU6050_H_ */
+#endif // MPU6050_DEFINES_H
+#pragma once

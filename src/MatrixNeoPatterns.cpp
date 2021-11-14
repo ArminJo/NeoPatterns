@@ -915,7 +915,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
 #else
             tNextChar = *(tDataPtr++);
 #endif
-            }
+        }
     }
 
     if (Direction != DIRECTION_NONE) {

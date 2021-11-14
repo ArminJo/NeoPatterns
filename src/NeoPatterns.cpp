@@ -37,14 +37,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
+#ifndef NEOPATTERNS_HPP
+#define NEOPATTERNS_HPP
+
 #include <Arduino.h>
 
-//#define TRACE
-//#define DEBUG
-//#define INFO
-//#define WARN
-//#define ERROR
 #include "NeoPatterns.h"
+
+#include "LongUnion.h" // for faster random()
 
 const char PatternNone[] PROGMEM ="None";
 const char PatternRainbowCycle[] PROGMEM ="Rainbow cycle";
@@ -70,14 +70,14 @@ const char MatrixPatternSnow[] PROGMEM ="Snow";
 const char MatrixExtraPatternSnake[] PROGMEM ="Snake";
 const char PatternUnknown[] PROGMEM ="Unknown";
 
-const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
-        PatternScannerExtended, PatternStripes, PatternProcessSelectiveColor, PatternFire, PatternHeartbeat, PatternPattern1,
-        PatternPattern2,
+const char *const PatternNamesArray[] PROGMEM = {PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
+    PatternScannerExtended, PatternStripes, PatternProcessSelectiveColor, PatternFire, PatternHeartbeat, PatternPattern1,
+    PatternPattern2,
 #if !defined(DO_NOT_USE_MATH_PATTERNS)
-         PatternBouncingBall,
+    PatternBouncingBall,
 #endif
-         MatrixPatternTicker, MatrixPatternMove, MatrixPatternMovingPicture, MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown
-        };
+    MatrixPatternTicker, MatrixPatternMove, MatrixPatternMovingPicture, MatrixPatternSnow, MatrixExtraPatternSnake,
+    PatternUnknown};
 
 // array of update function pointer, not used since it needs 150 bytes more :-(
 //bool (NeoPatterns::*sUpdateFunctionPointerArray[])(
@@ -207,6 +207,10 @@ bool NeoPatterns::checkForUpdate() {
     return false;
 }
 
+bool NeoPatterns::isActive() {
+    return (ActivePattern != PATTERN_NONE);
+}
+
 void NeoPatterns::updateAndWaitForPatternToStop() {
     void (*tOnPatternCompleteBackup)(NeoPatterns*) = OnPatternComplete;
     OnPatternComplete = NULL;
@@ -278,7 +282,7 @@ void NeoPatterns::showPatternInitially() {
         Serial.println(lastUpdate);
 #endif
     }
-#ifdef INFO
+#ifdef DEBUG
     else {
         printPin();
         Serial.println(F("Called asynchronously -> do not show"));
@@ -427,19 +431,25 @@ bool NeoPatterns::decrementTotalStepCounter() {
             /*
              * Do not set activePattern to PATTERN_NONE, to enable the callback to see the finished one.
              */
-#ifdef INFO
+#ifdef DEBUG
             printPin();
             printPattern();
-            Serial.println(F(": Call completion callback"));
+            Serial.print(F(": Call completion callback 0x"));
+            Serial.println((__SIZE_TYPE__)(OnPatternComplete) << 1, HEX);
 #endif
             OnPatternComplete(this); // call the completion callback
-#ifdef INFO
+#ifdef DEBUG
             printPin();
             Serial.print(F("New "));
             printPattern();
             Serial.println();
 #endif
         } else {
+#ifdef DEBUG
+            printPin();
+            printPattern();
+            Serial.println(F(": No completion callback, ActivePattern = PATTERN_NONE"));
+#endif
             ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
         }
         return true;
@@ -631,10 +641,13 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
 // Calculate linear interpolation between Color1 and BackgroundColor
 // Optimize order of operations to minimize truncation error
         uint8_t tRed = ((getRedPart(Color1) * (PatternLength - Index)) + (getRedPart(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t tGreen = ((getGreenPart(Color1) * (PatternLength - Index)) + (getGreenPart(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t tBlue = ((getBluePart(Color1) * (PatternLength - Index)) + (getBluePart(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tGreen = ((getGreenPart(Color1) * (PatternLength - Index)) + (getGreenPart(LongValue1.Color2) * Index))
+                / PatternLength;
+        uint8_t tBlue = ((getBluePart(Color1) * (PatternLength - Index)) + (getBluePart(LongValue1.Color2) * Index))
+                / PatternLength;
 #ifdef SUPPORT_RGBW
-        uint8_t tWhite = ((getWhitePart(Color1) * (PatternLength - Index)) + (getWhitePart(LongValue1.Color2) * Index)) / PatternLength;
+        uint8_t tWhite = ((getWhitePart(Color1) * (PatternLength - Index)) + (getWhitePart(LongValue1.Color2) * Index))
+                / PatternLength;
         ColorSet(Color(tRed, tGreen, tBlue, tWhite));
 #else
         ColorSet(Color(tRed, tGreen, tBlue));
@@ -1246,11 +1259,15 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
         for (uint16_t k = numLEDs - 1; k >= 2; k--) {
             heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
         }
+        LongUnion tRandom; // usage of Long union saves 20 bytes and is way faster
+        tRandom.Long = random();
 
 // Step 3.  Randomly ignite one new 'spark' of heat near the bottom
-        if (random(255) < SPARKING) {
-            int y = random(numLEDs / 4);
-            uint8_t tNewHeat = random(160, 255);
+        if (tRandom.UBytes[0] < SPARKING) {
+            unsigned int y = tRandom.UWords[1] % (numLEDs / 4);
+            uint8_t tNewHeat = ((tRandom.UBytes[1] * (255 - 160)) >> 8) + 160; // random(160, 255); fastest version
+//            uint8_t tNewHeat = (tRandom.UBytes[1] % ((uint8_t)(255-160))) + 160; // random(160, 255); uint8_t is required here :-(
+//            uint8_t tNewHeat = (tRandom.UBytes[1] % 95) + 160; // random(160, 255);
             if (heat[y] + tNewHeat < heat[y]) {
                 heat[y] = 0xFF;
             } else {
@@ -1277,7 +1294,7 @@ uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
 // Scale 'heat' down from 0-255 to 0-191,
 // which can then be easily divided into three
 // equal 'thirds' of 64 units each.
-    uint8_t t192 = (aTemperature == 0) ? 0 : ((aTemperature * (uint16_t) (192)) >> 8) + 1;
+    uint8_t t192 = (aTemperature == 0) ? 0 : ((aTemperature * (uint16_t)(192)) >> 8) + 1;
 
 // calculate a value that ramps up from
 // zero to 255 in each 'third' of the scale.
@@ -1652,13 +1669,14 @@ bool NeoPatterns::Pattern2Update(bool aDoUpdate) {
  * COMBINED PATTERN EXAMPLE
  * overwrites the OnComplete Handler pointer and sets it
  * to aNextOnComplete after completion of combined patterns
- * If aNextOnCompleteHandler == NULL, run falling star forever with random delay
+ * @param aScannerIntervalMillis The delay between two stars is 2 * ScannerIntervalMillis
+ * if ENDLESS_HANDLER_POINTER is used then run falling star forever with random delay between 10 and 1000 times the aScannerIntervalMillis
  *****************************************************************/
 // initialize for falling star (scanner with delay after pattern)
-void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aDuration, uint8_t aRepetitions,
-        void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection) {
+void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aScannerIntervalMillis,
+        uint8_t aRepetitions, void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection) {
 
-    aLedsPtr->MultipleExtension = aDuration;
+    aLedsPtr->MultipleExtension = aScannerIntervalMillis;
     if (aRepetitions < (0xFF / 2)) {
         aLedsPtr->Repetitions = (aRepetitions * 2) - 1; // get an odd number
     } else {
@@ -1666,30 +1684,39 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
     }
     aLedsPtr->OnPatternComplete = &multipleFallingStarsCompleteHandler;
     aLedsPtr->NextOnPatternCompleteHandler = aNextOnCompleteHandler;
-
     /*
      * Start with one scanner
      */
-    aLedsPtr->ScannerExtended(aColor, aLength, aDuration, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, aDirection);
+    aLedsPtr->ScannerExtended(aColor, aLength, aScannerIntervalMillis, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, aDirection);
+#ifdef DEBUG
+    aLedsPtr->printPin();
+    aLedsPtr->printPattern();
+    Serial.print(F("Repetitions="));
+    Serial.println(aRepetitions);
+#endif
 }
 
 /*
  * start delay pattern and then a new falling star
  * if all falling stars are completed switch back to NextOnComplete
- * if NextOnPatternCompleteHandler == NULL, run falling star forever with random delay
+ * if ENDLESS_HANDLER_POINTER is used then run falling star forever with random delay between 10 and 1000 times the aScannerIntervalMillis
  */
 void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
-    uint8_t tDuration = aLedsPtr->MultipleExtension;
+    uint8_t tScannerIntervalMillis = aLedsPtr->MultipleExtension;
     uint16_t tRepetitions = aLedsPtr->Repetitions;
+#ifdef TRACE
+    Serial.print(F("Repetitions="));
+    Serial.println(tRepetitions);
+#endif
     if (tRepetitions == 1) {
 // perform delay and then switch back to NextOnComplete
-        if (aLedsPtr->NextOnPatternCompleteHandler != NULL) {
-            aLedsPtr->OnPatternComplete = aLedsPtr->NextOnPatternCompleteHandler;
-            aLedsPtr->Delay(tDuration * 2);
-        } else {
+        if (aLedsPtr->NextOnPatternCompleteHandler == ENDLESS_HANDLER_POINTER) {
             // do it forever but with random delay
             aLedsPtr->Repetitions = 2; // set to even;
-            aLedsPtr->Delay(random(tDuration * 10, tDuration * 1000));
+            aLedsPtr->Delay(random(tScannerIntervalMillis * 10, tScannerIntervalMillis * 1000));
+        } else {
+            aLedsPtr->OnPatternComplete = aLedsPtr->NextOnPatternCompleteHandler;
+            aLedsPtr->Delay(tScannerIntervalMillis * 2); // after delay NextOnPatternCompleteHandler is called
         }
     } else {
         /*
@@ -1697,11 +1724,11 @@ void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
          */
         tRepetitions = tRepetitions & 0x01; // = tRepetitions % 2;
         if (tRepetitions == 1) {
-            // for odd Repetitions 3,5,7, etc. -> do delay
-            aLedsPtr->Delay(tDuration * 2);
+            // for odd Repetitions 3,5,7, etc. -> do small delay
+            aLedsPtr->Delay(tScannerIntervalMillis * 2);
         } else {
             // for even Repetitions 2,4,6, etc. -> do scanner
-            aLedsPtr->ScannerExtended(aLedsPtr->Color1, aLedsPtr->PatternLength, tDuration, 0,
+            aLedsPtr->ScannerExtended(aLedsPtr->Color1, aLedsPtr->PatternLength, tScannerIntervalMillis, 0,
             FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, aLedsPtr->Direction);
         }
         aLedsPtr->Repetitions--;
@@ -1732,12 +1759,15 @@ const char* DirectionToString(uint8_t aDirection) {
  * Sample handler for random pattern
  */
 void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
-    uint8_t tState = random(13);
+    LongUnion tRandom; // usage of Long union saves 4 bytes and is way faster
+    tRandom.Long = random();
 
-    uint8_t tDuration = random(40, 80);
-    uint8_t tColor = random(256);
+//    uint8_t tState = random(13);
+    uint8_t tDuration = ((tRandom.UBytes[1] * (80 - 40)) >> 8) + 40; // = random(40, 80); fastest version
+//    uint8_t tDuration = (tRandom.UBytes[2] % 40) + 40;  // = random(40, 80);
+    uint8_t tColor = tRandom.UBytes[1];                 // = random(256)
 
-    switch (tState) {
+    switch ((tRandom.UBytes[0] * 13) >> 8) { // = random(13)
     case 0:
         // Cylon 3 times bouncing
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 3,
@@ -1824,7 +1854,9 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 #endif
     Serial.print(aLedsPtr->ActivePattern);
     Serial.print(F(" State="));
-    Serial.println(tState);
+    Serial.println((tRandom.UBytes[0] * 13) >> 8);
 #endif
 }
 
+#endif // #ifndef NEOPATTERNS_HPP
+//#pragma once

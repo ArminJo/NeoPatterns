@@ -17,7 +17,7 @@ jobs:
 
     env:
       # Comma separated list without double quotes around the list.
-      REQUIRED_LIBRARIES: Adafruit NeoPixel
+      REQUIRED_LIBRARIES: Adafruit NeoPixel,PlayRtttl
 
     strategy:
       matrix:

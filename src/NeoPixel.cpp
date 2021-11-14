@@ -23,6 +23,8 @@
  *
  */
 
+#ifndef NEOPATTERNS_NEOPIXEL_HPP
+#define NEOPATTERNS_NEOPIXEL_HPP
 //#define TRACE
 #include "NeoPixel.h"
 
@@ -332,6 +334,10 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
 #endif
 }
 
+void NeoPixel::setBrightnessValueForNextDraw(uint8_t aBrightness) {
+    brightness = aBrightness + 1; // Overflow is intended see setBrightness()
+}
+
 /*
  * Checks for valid pixel index / skips invalid ones
  */
@@ -408,13 +414,13 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
     if (aPixelIndex < numLEDs) {
         aPixelIndex += PixelOffset; // support offsets
 
-        uint8_t tRed = (uint8_t) (aColor >> 16);
-        uint8_t tGreen = (uint8_t) (aColor >> 8);
+        uint8_t tRed = (uint8_t)(aColor >> 16);
+        uint8_t tGreen = (uint8_t)(aColor >> 8);
         uint8_t tBlue = (uint8_t) aColor;
         uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
 #ifdef SUPPORT_RGBW
         if (BytesPerPixel == 4) {
-            uint8_t w = (uint8_t) (aColor >> 24);
+            uint8_t w = (uint8_t)(aColor >> 24);
             tPixelPtr[wOffset] = w;
         }
 #endif
@@ -434,13 +440,13 @@ void NeoPixel::addPixelColor(uint16_t aPixelIndex, color32_t aColor) {
         if (tOldColor == 0) {
             setPixelColor(aPixelIndex, aColor);
         } else {
-            uint8_t tRed = getRedPart(tOldColor) + (uint8_t) (aColor >> 16);
-            if (tRed < (uint8_t) (aColor >> 16)) {
+            uint8_t tRed = getRedPart(tOldColor) + (uint8_t)(aColor >> 16);
+            if (tRed < (uint8_t)(aColor >> 16)) {
                 // clip overflow
                 tRed = 255;
             }
-            uint8_t tGreen = getGreenPart(tOldColor) + (uint8_t) (aColor >> 8);
-            if (tGreen < (uint8_t) (aColor >> 8)) {
+            uint8_t tGreen = getGreenPart(tOldColor) + (uint8_t)(aColor >> 8);
+            if (tGreen < (uint8_t)(aColor >> 8)) {
                 tGreen = 255;
             }
             uint8_t tBlue = getBluePart(tOldColor) + (uint8_t) aColor;
@@ -514,7 +520,8 @@ void NeoPixel::dimPixelColor(uint16_t aPixelIndex) {
 uint32_t NeoPixel::dimColor(color32_t aColor) {
 // Shift R, G and B components one bit to the right
 #ifdef SUPPORT_RGBW
-    uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1, getWhitePart(aColor) >> 1);
+    uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1,
+            getWhitePart(aColor) >> 1);
 #else
     uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1);
 #endif
@@ -550,11 +557,11 @@ void NeoPixel::fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop) {
 }
 
 // from https://www.mikrocontroller.net/articles/LED-Fading
-const uint8_t GammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
-        91, 108, 128, 152, 181, 215, 255 };
+const uint8_t GammaTable32[32] PROGMEM = {0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
+    91, 108, 128, 152, 181, 215, 255};
 
 /*
- * use mapping table with 32 entries (using 5 MSbits)
+ * Use mapping table with 32 entries (using 5 MSbits)
  * @param aLinearBrightnessValue - from 0 to 255
  */
 uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
@@ -562,8 +569,7 @@ uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
 }
 
 /*
- * Returns only 0 if value is 0.
- * Returns 1 for input 1 to 7.
+ * Returns only 0 if value is 0. Returns 1 for input 1 to 7 (and for 8 to 15).
  * used for snake tail, not to blank out the last elements of a tail with more than 32 elements
  */
 uint8_t NeoPixel::gamma32WithSpecialZero(uint8_t aLinearBrightnessValue) {
@@ -589,15 +595,15 @@ color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor
 }
 
 /*
- * aBrightness 0 = black 255 = full
- * doSpecialZero -> tGamma32Brightness is only zero if aBrightness is zero and 1 for aBrightness 1 to 16
+ * aBrightness 0 = black, 8 = 1, 16 to 32 = 2, 40 = 3, ... 255 = full
+ * doSpecialZero -> tGamma32Brightness returns only 0 if aBrightness value is 0. Returns 1 for aBrightness 1 to 7 (and for 8 to 15).
  */
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
 #ifdef SUPPORT_RGBW
-    uint8_t tWhiteDimmed = (uint8_t) (aLinearBrightnessColor >> 24);
+    uint8_t tWhiteDimmed = (uint8_t)(aLinearBrightnessColor >> 24);
 #endif
-    uint8_t tRedDimmed = (uint8_t) (aLinearBrightnessColor >> 16);
-    uint8_t tGreenDimmed = (uint8_t) (aLinearBrightnessColor >> 8);
+    uint8_t tRedDimmed = (uint8_t)(aLinearBrightnessColor >> 16);
+    uint8_t tGreenDimmed = (uint8_t)(aLinearBrightnessColor >> 8);
     uint8_t tBlueDimmed = (uint8_t) aLinearBrightnessColor;
 
     uint8_t tGamma32Brightness;
@@ -730,3 +736,5 @@ void NeoPixel::TestWS2812Resolution() {
     setPixelColor(tPosition++, 0, 0, 255);
     show();
 }
+#endif // #ifndef NEOPATTERNS_NEOPIXEL_HPP
+//#pragma once

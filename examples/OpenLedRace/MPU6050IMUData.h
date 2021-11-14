@@ -1,5 +1,5 @@
 /*
- * CarIMUData.h
+ * MPU6050IMUData.h
  *
  *  Functions for getting IMU data from MPU6050 for car control.
  *
@@ -23,54 +23,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  */
 
-#ifndef CAR_IMU_DATA_H_
-#define CAR_IMU_DATA_H_
+#ifndef MPU6050_IMU_DATA_H
+#define MPU6050_IMU_DATA_H
 
 #include <stdint.h>
 #include "MPU6050Defines.h"
 #include "LongUnion.h"
 
-//#define DO_NOT_USE_GYRO
-//#define USE_ACCEL_FLOATING_OFFSET
-
-//#define USE_SOFT_WIRE     // saves 1700 bytes FLASH + 150 bytes RAM compared with Wire
-#define USE_SOFT_I2C_MASTER // saves additional 410 bytes FLASH and 50 bytes RAM compared with USE_SOFT_WIRE
-#if defined(USE_SOFT_I2C_MASTER) || defined(USE_SOFT_WIRE)
-#define SCL_PIN 5
-#define SCL_PORT PORTC
-#define SDA_PIN 4
-#define SDA_PORT PORTC
-#define I2C_HARDWARE 1 // use I2C Hardware
-#define I2C_PULLUP 1
-//#define I2C_TIMEOUT 5000 // costs 350 bytes
-#define I2C_FASTMODE 1
-#  if defined(USE_SOFT_WIRE)
-#include "SoftWire.h"
-SoftWire Wire = SoftWire();
-#undef USE_SOFT_I2C_MASTER
-#  else
-#include "SoftI2CMaster.h"
-#  endif
-#else
-#include "Wire.h"
-#endif
-
-#define ACCEL_RAW_TO_G_FOR_2G_RANGE (4.0/65536.0)
-#define ACCEL_RAW_VALUE_OF_ONE_G_FOR_2G_RANGE (65536 / 4)
-#define GYRO_RAW_TO_DEGREE_PER_SECOND_FOR_250DPS_RANGE (500.0/65536.0) // 0.00762939 or 1/131.072
-
-#if !defined(NUMBER_OF_OFFSET_CALIBRATION_SAMPLES)
-#define NUMBER_OF_OFFSET_CALIBRATION_SAMPLES 512
-#endif
 
 #define NUMBER_OF_ACCEL_VALUES      3
 #define NUMBER_OF_GYRO_VALUES       3
 
-#if !defined(DO_NOT_USE_GYRO)
-#define FIFO_CHUNK_SIZE             ((NUMBER_OF_ACCEL_VALUES + NUMBER_OF_GYRO_VALUES) * 2) // size of one complete fifo dataset
-#else
-#define FIFO_CHUNK_SIZE             ((NUMBER_OF_ACCEL_VALUES) * 2) // size of one complete fifo dataset
-#endif
 
 #if defined(USE_ONLY_ACCEL_FLOATING_OFFSET)
 #define USE_ACCEL_FLOATING_OFFSET
@@ -87,8 +50,9 @@ public:
     int16_t Accelerator[NUMBER_OF_ACCEL_VALUES]; // Values compensated with initial offset, +/-2 | 4 g for 16 bit full range
 #if defined(USE_ACCEL_FLOATING_OFFSET)
     // The low pass value is in the HighWord, the LowWord holds the fraction
-    LongUnion AcceleratorLP8[NUMBER_OF_ACCEL_VALUES]; // stores the low pass values (-> floating offsets) for the !offset compensated! 3 axes
+    LongUnion AcceleratorLowpassSubOneHertz[NUMBER_OF_ACCEL_VALUES]; // stores the low pass (0.6 Hz) values (-> floating offsets) for the 3 axes
 #endif
+    uint8_t LowPassShiftValue; // used to determine the AcceleratorLowpassSubOneHertz filter value
 
 #if !defined(DO_NOT_USE_GYRO)
     int16_t GyroscopeOffset[NUMBER_OF_GYRO_VALUES];
@@ -107,7 +71,7 @@ public:
      * Initialization
      */
     void setI2CAddress(uint8_t aI2CAddress);
-    void initMPU6050();
+    void initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassIndex);
     void calculateAllOffsets();
     void printLP8Offsets(Print *aSerial);
     void printAllOffsets(Print *aSerial);
@@ -117,7 +81,7 @@ public:
      */
     void initMPU6050FifoForAccelAndGyro();
     void resetMPU6050Fifo();
-    uint8_t readFromMPU6050Fifo();
+    uint8_t readMPU6050Fifo();
     void readMPU6050Raw();
 
     /*
@@ -137,7 +101,7 @@ public:
 
 bool initWire();
 
-#endif /* CAR_IMU_DATA_H_ */
+#endif // MPU6050_IMU_DATA_H
 
 #pragma once
 

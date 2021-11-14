@@ -92,8 +92,6 @@ public:
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
 
-
-
     void TickerPGM(const char *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
             uint8_t aDirection = DIRECTION_LEFT);
     void Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor,
