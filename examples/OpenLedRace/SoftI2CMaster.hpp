@@ -308,12 +308,23 @@ void i2c_wait_scl_high(void)
 bool i2c_init(void)
 #if I2C_HARDWARE
 {
-#if I2C_PULLUP
+#if __has_include("digitalWriteFast.h")
+#include "digitalWriteFast.h"
+#  if I2C_PULLUP
+  digitalWriteFast(SDA, 1);
+  digitalWriteFast(SCL, 1);
+#  else
+  digitalWriteFast(SDA, 0);
+  digitalWriteFast(SCL, 0);
+#  endif
+#else
+#  if I2C_PULLUP
   digitalWrite(SDA, 1);
   digitalWrite(SCL, 1);
-#else
+#  else
   digitalWrite(SDA, 0);
   digitalWrite(SCL, 0);
+#  endif
 #endif
 #if ((I2C_CPUFREQ/SCL_CLOCK)-16)/2 < 250
   TWSR = 0;                         /* no prescaler */
@@ -370,7 +381,7 @@ bool  i2c_start(uint8_t addr)
   // wait until transmission completed
   while(!(TWCR & (1<<TWINT))) {
 #if I2C_TIMEOUT
-    if (millis() - start > I2C_TIMEOUT) return false;
+    if (millis() - start > I2C_TIMEOUT) return 1;
 #endif
   }
 

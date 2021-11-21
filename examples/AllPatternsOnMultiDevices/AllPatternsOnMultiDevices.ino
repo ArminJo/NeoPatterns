@@ -33,7 +33,7 @@
 #include <avr/power.h>
 #include <avr/pgmspace.h>
 
-//#define ALL_PATTERN_ON_ONE_STRIP
+//#define ALL_PATTERN_ON_ONE_STRIP // shows all patterns on one consecutive device / multiple chained devices
 
 #define VCC_STOP_THRESHOLD_MILLIVOLT 3400   // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
 #define VCC_STOP_MIN_MILLIVOLT 3200         // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.

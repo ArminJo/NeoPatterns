@@ -118,7 +118,7 @@ bool UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
         }
     }
 
-    for (uint16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
+    for (unsigned int i = 0; i < aNeoPatterns->numPixels(); i++) {
         if (i == aNeoPatterns->Index) {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
         } else {

@@ -71,7 +71,7 @@ public:
      * Initialization
      */
     void setI2CAddress(uint8_t aI2CAddress);
-    void initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassIndex);
+    bool initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassIndex);
     void calculateAllOffsets();
     void printLP8Offsets(Print *aSerial);
     void printAllOffsets(Print *aSerial);

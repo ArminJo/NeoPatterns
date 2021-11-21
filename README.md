@@ -1,7 +1,7 @@
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
 Available as Arduino library "NeoPatterns"
 
-### [Version 2.3.3](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
+### [Version 2.3.2](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
@@ -106,8 +106,6 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
-### Version 2.3.3 - work in progress
-
 ### Version 2.3.2
 - Changed parameter for endless repeats in `NeoPatterns::initMultipleFallingStars()`.
 - Improved usage of random().

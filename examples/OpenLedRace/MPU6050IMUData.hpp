@@ -100,18 +100,23 @@ bool initWire() {
  * @param aSampleRateDivider 1 to 256. Divider of the 1 kHz clock used for FiFo
  * @param aLowPassIndex one of: MPU6050_BAND_260_HZ (LP disabled) MPU6050_BAND_184_HZ (184 Hz), 94, 44, 21, 10 to MPU6050_BAND_5_HZ
  */
-void MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassType) {
+bool MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassType) {
 
 #if !defined(USE_ONLY_ACCEL_FLOATING_OFFSET)
-    for (uint8_t i = 0; i < NUMBER_OF_ACCEL_VALUES; i++) {
+    for (uint_fast8_t i = 0; i < NUMBER_OF_ACCEL_VALUES; i++) {
         Speeds[i].ULong = 0;
     }
 #endif
 #if !defined(DO_NOT_USE_GYRO)
-    for (uint8_t i = 0; i < NUMBER_OF_GYRO_VALUES; i++) {
+    for (uint_fast8_t i = 0; i < NUMBER_OF_GYRO_VALUES; i++) {
         Rotations[i].ULong = 0;
     }
 #endif
+    if (!i2c_start(I2CAddress << 1)) {
+        i2c_stop();
+        return false;
+    }
+    i2c_stop();
     MPU6050WriteByte(MPU6050_RA_PWR_MGMT_1, MPU6050_CLOCK_PLL_ZGYRO); // use recommended gyro reference: PLL with Z axis gyroscope reference
     MPU6050WriteByte(MPU6050_RA_SMPLRT_DIV, aSampleRateDivider - 1); // parameter 0 => divider 1, 19 -> divider 20
     MPU6050WriteByte(MPU6050_RA_CONFIG, aLowPassType); // ext input disabled, DLPF enabled
@@ -135,6 +140,7 @@ void MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t
     MPU6050WriteByte(MPU6050_RA_GYRO_CONFIG,
     MPU6050_GYRO_FS_250 << (MPU6050_GCONFIG_FS_SEL_BIT - MPU6050_GCONFIG_FS_SEL_LENGTH + 1)); // range +/- 250 deg/s - default
 #endif
+    return true;
 }
 
 void MPU6050IMUData::resetMPU6050Fifo() {
@@ -248,7 +254,7 @@ uint8_t MPU6050IMUData::readMPU6050Fifo() {
             }
 #endif
 
-        } // for (uint8_t tChunckCount = 0
+        } // for (uint_fast8_t tChunckCount = 0
 #if !defined(USE_ARDUINO_WIRE)
         i2c_stop();
 #endif
