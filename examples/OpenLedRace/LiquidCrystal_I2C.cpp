@@ -14,7 +14,6 @@ inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 #include <SoftI2CMaster.h>
 #else
 #define printIIC(args)  Wire.write(args)
-#include <Wire.h>
 #endif
 
 // When the display powers up, it is configured as follows:

@@ -51,10 +51,7 @@
 #define FIFO_CHUNK_SIZE             ((NUMBER_OF_ACCEL_VALUES) * 2) // size of one complete fifo dataset
 #endif
 
-//#define USE_ARDUINO_WIRE // costs additional 2110 bytes FLASH and 200 bytes RAM compared with SoftI2cMaster
-#if defined(USE_ARDUINO_WIRE)
-#include "Wire.h"
-#else
+
 //#define SCL_PIN 5
 //#define SCL_PORT PORTC
 //#define SDA_PIN 4
@@ -63,6 +60,14 @@
 #define I2C_PULLUP 1
 //#define I2C_TIMEOUT 5000 // costs 350 bytes
 #define I2C_FASTMODE 1
+
+//#define USE_ARDUINO_WIRE // costs additional 2110 bytes FLASH and 200 bytes RAM compared with SoftI2cMaster
+#if defined(USE_SOFT_WIRE)
+#include "SoftWire.hpp"
+#elif defined(USE_ARDUINO_WIRE)
+#include "Wire.h"
+#else
+
 #include "SoftI2CMaster.hpp"
 #endif
 
@@ -91,6 +96,7 @@ bool initWire() {
     Wire.begin();
     Wire.setClock(400000);
     Wire.setTimeout(5000);
+    return true;
 #else
     return i2c_init(); // Initialize everything and check for bus lockup
 #endif
@@ -112,11 +118,13 @@ bool MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t
         Rotations[i].ULong = 0;
     }
 #endif
+#if !defined(USE_ARDUINO_WIRE)
     if (!i2c_start(I2CAddress << 1)) {
         i2c_stop();
         return false;
     }
     i2c_stop();
+#endif
     MPU6050WriteByte(MPU6050_RA_PWR_MGMT_1, MPU6050_CLOCK_PLL_ZGYRO); // use recommended gyro reference: PLL with Z axis gyroscope reference
     MPU6050WriteByte(MPU6050_RA_SMPLRT_DIV, aSampleRateDivider - 1); // parameter 0 => divider 1, 19 -> divider 20
     MPU6050WriteByte(MPU6050_RA_CONFIG, aLowPassType); // ext input disabled, DLPF enabled

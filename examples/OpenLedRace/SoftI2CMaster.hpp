@@ -381,7 +381,7 @@ bool  i2c_start(uint8_t addr)
   // wait until transmission completed
   while(!(TWCR & (1<<TWINT))) {
 #if I2C_TIMEOUT
-    if (millis() - start > I2C_TIMEOUT) return 1;
+    if (millis() - start > I2C_TIMEOUT) return false;
 #endif
   }
 
@@ -542,21 +542,19 @@ bool  i2c_start_wait(uint8_t addr)
     twst = TW_STATUS & 0xF8;
     if ( (twst == TW_MT_SLA_NACK )||(twst ==TW_MR_DATA_NACK) )
       {
-    /* device busy, send stop condition to terminate write operation */
-    TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+      /* device busy, send stop condition to terminate write operation */
+      TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
 
-    // wait until stop condition is executed and bus released
-    while(TWCR & (1<<TWSTO)) {
+      // wait until stop condition is executed and bus released
+      while(TWCR & (1<<TWSTO)) {
 #if I2C_TIMEOUT
       if (millis() - start > I2C_TIMEOUT) return false;
 #endif
-    }
+      }
 
-    if (maxwait)
-      if (--maxwait == 0)
-        return false;
+      if (maxwait && --maxwait == 0) return false;
 
-    continue;
+      continue;
       }
     //if( twst != TW_MT_SLA_ACK) return 1;
     return true;

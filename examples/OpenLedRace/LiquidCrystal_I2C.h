@@ -5,7 +5,11 @@
 #include <inttypes.h>
 #include "Print.h"
 #if !defined(USE_SOFT_I2C_MASTER)
+#  if defined(USE_SOFT_WIRE)
+#include "SoftWire.h"
+#  else
 #include <Wire.h>
+#  endif
 #endif
 
 // commands

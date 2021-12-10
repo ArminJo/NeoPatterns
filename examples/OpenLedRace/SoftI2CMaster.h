@@ -1,6 +1,6 @@
 /* Arduino SoftI2C library.
  *
- * Version 2.1.6
+ * Version 2.1.7
  *
  * Copyright (C) 2013-2021, Bernhard Nebel and Peter Fleury
  *
@@ -44,7 +44,7 @@
  * the standard SDA/SCL pins (and, of course, the chip needs to support
  * this).
  *
- * You can also define the following constants (see also below):
+ * You can also define the following constants (see also SoftI2CMaster.hpp):
  ' - I2C_PULLUP = 1 meaning that internal pullups should be used
  * - I2C_CPUFREQ, when changing CPU clock frequency dynamically
  * - I2C_FASTMODE = 1 meaning that the I2C bus allows speeds up to 400 kHz
@@ -60,6 +60,8 @@
  */
 
 /* Changelog:
+ * Version 2.1.8
+ * - ArminJo: changed SoftI2CMaster.h to SoftI2CMaster.hpp and added new SoftI2CMaster.h
  * Version 2.1.7
  * - ArminJo: replaced all calls and jmps by rcalls and rjmps for CPUs not having call and jmp
  * Version 2.1.6

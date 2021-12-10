@@ -78,14 +78,15 @@ Modify it by commenting them out or in, or change the values if applicable. Or d
 | `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. |
 | `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes (and more) FLASH and 3 bytes RAM. |
 
-### Modifying compile options with Arduino IDE
+### Changing include (*.h) files with Arduino IDE
 First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
-If you did not yet stored the example as your own sketch, then you are instantly in the right library folder.<br/>
+If you have not yet saved the example as your own sketch, then you are instantly in the right library folder.<br/>
 Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
-In both cases the library files itself are located in the `src` directory.<br/>
+In both cases the library source and include files are located in the libraries `src` directory.<br/>
+The modification must be renewed for each new library version!
 
 ### Modifying compile options with Sloeber IDE
-If you are using Sloeber as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
+If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
 
 WOKWI online simulation of the AllPatternOnOneStrip example.<br/>

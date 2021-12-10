@@ -100,7 +100,7 @@
 #define I2C_PULLUP 1
 //#define I2C_TIMEOUT 5000 // costs 350 bytes
 #define I2C_FASTMODE 1
-#include "SoftI2CMaster.hpp" // is included in MPU6050IMUData.hpp
+#include "SoftI2CMaster.hpp" // is also included in MPU6050IMUData.hpp
 #endif // #if defined(USE_ACCELERATOR_INPUT)
 #include "LongUnion.h"
 
@@ -1413,11 +1413,13 @@ void checkForLCDConnected() {
         Serial.println(F("Try to connect to I2C LCD"));
         Serial.flush();
     }
+#if defined(USE_SOFT_I2C_MASTER)
     if (!i2c_start(LCD_I2C_ADDRESS << 1)) {
         Serial.print(F("No I2C LCD connected at address " STR(LCD_I2C_ADDRESS) ". Disable \"#define USE_SERIAL_LCD\""));
         playShutdownMelody();
     }
     i2c_stop();
+#endif
 }
 
 const char LCDCustomPatterns[][8] PROGMEM = { { 0x01, 0x07, 0x0F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F }, // char 1: bottom right triangle
@@ -1432,7 +1434,7 @@ const char LCDCustomPatterns[][8] PROGMEM = { { 0x01, 0x07, 0x0F, 0x1F, 0x1F, 0x
 
 // !!! Must be without comment and closed by @formatter:on
 // @formatter:off
-const char bigNumbers4[][30] PROGMEM = {                         // 4-line numbers
+const uint8_t bigNumbers4[][30] PROGMEM = {                         // 4-line numbers
 //         0               1               2               3               4              5               6                7               8               9
     {0x01,0x06,0x03, 0x08,0xFF,0xFE, 0x08,0x06,0x03, 0x08,0x06,0x03, 0xFF,0xFE,0xFF, 0xFF,0x06,0x06, 0x01,0x06,0x03, 0x06,0x06,0xFF, 0x01,0x06,0x03, 0x01,0x06,0x03},
     {0xFF,0xFE,0xFF, 0xFE,0xFF,0xFE, 0x02,0x02,0xFF, 0xFE,0x02,0xFF, 0xFF,0x02,0xFF, 0xFF,0x02,0x02, 0xFF,0x02,0x02, 0xFE,0x01,0x07, 0xFF,0x02,0xFF, 0xFF,0x02,0xFF},
