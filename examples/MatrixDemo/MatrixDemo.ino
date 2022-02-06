@@ -26,7 +26,9 @@
  */
 
 #include <Arduino.h>
-#include <MatrixSnake.h>
+
+#define ENABLE_PATTERNS_FOR_MATRIX_AND_SNAKE_DEMO_HANDLER
+#include <MatrixSnake.hpp>
 
 #if defined(ESP32)
 #define PIN_NEOPIXEL_MATRIX        2
@@ -49,7 +51,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
@@ -79,7 +81,7 @@ uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colo
 
 void loop() {
     if (NeoPixelMatrix.update()) {
-        if (NeoPixelMatrix.ActivePattern == PATTERN_TICKER) {
+        if (NeoPixelMatrix.ActivePattern == MATRIX_PATTERN_TICKER) {
             // change color of ticker after each update
             NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
             sWheelPosition += 4;

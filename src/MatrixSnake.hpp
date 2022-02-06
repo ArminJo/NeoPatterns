@@ -1,5 +1,5 @@
 /*
- * MatrixSnake.cpp
+ * MatrixSnake.hpp
  *
  * Implements a snake game on NeoPixel matrix.
  * High-Score is reset if both RightButton and Left Button are pressed at start of game by calling Snake().
@@ -9,7 +9,7 @@
  *  SUMMARY
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -29,6 +29,9 @@
  *
  */
 
+#ifndef MATRIX_SNAKE_HPP
+#define MATRIX_SNAKE_HPP
+
 #include <Arduino.h>
 
 // Output information on Serial must be defined before #include "MatrixSnake.h"
@@ -39,6 +42,9 @@
 //#define ERROR
 
 #include "MatrixSnake.h"
+
+// include sources
+#include "MatrixNeoPatterns.hpp"
 
 #include <stdlib.h>         // for utoa() etc.
 
@@ -70,18 +76,16 @@ bool MatrixSnake::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aM
  */
 bool MatrixSnake::update() {
 
-    if (ActivePattern == PATTERN_SNAKE && !(PatternFlags & FLAG_SNAKE_AUTORUN)) {
+    if (ActivePattern == SPECIAL_PATTERN_SNAKE && !(PatternFlags & FLAG_SNAKE_AUTORUN)) {
         // do it on every call in order not to miss any button press
         SnakeInputHandler();
     }
 
     if ((millis() - lastUpdate) > Interval) {
         // time to update
-        if (ActivePattern == PATTERN_SNAKE) {
+        if (ActivePattern == SPECIAL_PATTERN_SNAKE) {
             SnakeUpdate();
             show();
-            // remember last time of update
-            lastUpdate = millis();
         } else {
             MatrixNeoPatterns::update();
         }
@@ -148,10 +152,12 @@ void MatrixSnake::resetAndClearAndShowSnakeAndNewApple() {
 /*
  * IF PinOfUpButton is 0, then snake runs in 2 button mode.
  * if aPinOfRightButton is 0, then snake starts in autorun mode.
+ * @return false if new position[Rows * Columns] failed
+
  */
-void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton, uint8_t aPinOfLeftButton,
+bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton, uint8_t aPinOfLeftButton,
         uint8_t aPinOfUpButton, uint8_t aPinOfDownButton) {
-    ActivePattern = PATTERN_SNAKE;
+    ActivePattern = SPECIAL_PATTERN_SNAKE;
     Interval = aIntervalMillis;
     Color1 = aColor;
     PinOfRightButton = aPinOfRightButton;
@@ -164,6 +170,9 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
         free(SnakePixelList);
     }
     SnakePixelList = new position[Rows * Columns];
+    if (SnakePixelList == NULL) {
+        return false;
+    }
 
 #if defined(__AVR__)
     /*
@@ -201,6 +210,15 @@ void MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     } else {
         PatternFlags = FLAG_SNAKE_AUTORUN; // start in autorun mode
     }
+    return true;
+}
+
+void MatrixSnake::SnakeStop() {
+    if (SnakePixelList != NULL) {
+        free(SnakePixelList);
+    }
+    SnakePixelList = NULL;
+    ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
 }
 
 void MatrixSnake::drawApple() {
@@ -213,7 +231,7 @@ void MatrixSnake::drawSnake() {
         position tPosition = SnakePixelList[i];
         // linear color interpolation over the body of the snake between tail and head
         uint8_t tBrightness = ((SnakeLength - i) * 255) / SnakeLength;
-        color32_t tDimmedColor = dimColorWithGamma32(Color1, tBrightness, true);
+        color32_t tDimmedColor = dimColorWithGamma5(Color1, tBrightness, true);
         setMatrixPixelColor(tPosition.x, tPosition.y, tDimmedColor);
     }
 // set snake head color
@@ -397,10 +415,23 @@ uint16_t MatrixSnake::getIndexOfPositionInSnake(position aPositionToCheck) {
     return SnakeLength;
 }
 
+#ifdef DEBUG
+void MatrixSnake::printSnakePosition(position aSnakePosition) {
+    Serial.print(F("X="));
+    Serial.print(aSnakePosition.x);
+    Serial.print(F(" Y="));
+    Serial.println(aSnakePosition.y);
+}
+#endif
+
 /*
  * returns true if direction is valid and new position is in area
+ * does not change current head position, only writes new head position in variable pointed to by aSnakeNewHeadPosition
  */
 bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNewHeadPosition) {
+#ifdef TRACE
+    printSnakePosition(SnakePixelList[0]);
+#endif
     *aSnakeNewHeadPosition = SnakePixelList[0];
     switch (aDirection) {
     case DIRECTION_UP:
@@ -419,6 +450,9 @@ bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNew
         return false;
         break;
     }
+#ifdef TRACE
+    printSnakePosition(*aSnakeNewHeadPosition);
+#endif
 // check if position is in area
     if (aSnakeNewHeadPosition->x >= Columns || aSnakeNewHeadPosition->y >= Rows) {
         return false;
@@ -454,6 +488,8 @@ bool MatrixSnake::moveSnakeAndCheckApple(position tSnakeNewHeadPosition) {
  * The button input is acquired before by the global update routine.
  */
 void MatrixSnake::SnakeUpdate() {
+
+    lastUpdate = millis(); // remember last time of update
 
     if (PatternFlags & FLAG_SNAKE_AUTORUN) {
         // this calls the AI to simulate button presses which leads to a direction
@@ -635,7 +671,11 @@ uint8_t MatrixSnake::findNextDir() {
 
 #ifdef DEBUG
     Serial.print(F("Direction="));
+#ifdef TRACE
+    Serial.print(DirectionToString(Direction)); // we get an extension of this line below
+#  else
     Serial.println(DirectionToString(Direction));
+#  endif
 #endif
 
     uint8_t tNewDirection = DIRECTION_NONE;
@@ -643,18 +683,22 @@ uint8_t MatrixSnake::findNextDir() {
     int8_t tDeltaY = Apple.y - SnakePixelList[0].y;
 
 #ifdef TRACE
-    Serial.print(F("DeltaX="));
+    Serial.print(F(" DeltaX="));
     Serial.print(tDeltaX);
     Serial.print(F(" DeltaY="));
     Serial.println(tDeltaY);
 #endif
 
     /*
+     * Go shortest delta first
      * Avoid going to opposite direction, because this is invalid.
      * Eg. if current direction is UP, we must not change to DOWN.
      */
-// go shortest delta first
     if ((abs(tDeltaX) > abs(tDeltaY)) && tDeltaY != 0) {
+        /*
+         * Here y is shortest delta and not 0
+         * Now check for opposite direction
+         */
         if (tDeltaY > 0 && Direction != DIRECTION_UP) {
             tNewDirection = DIRECTION_DOWN;
         } else if (tDeltaY < 0 && Direction != DIRECTION_DOWN) {
@@ -676,6 +720,7 @@ uint8_t MatrixSnake::findNextDir() {
     if (tNewDirection == DIRECTION_NONE) {
         /*
          * Here x delta is 0 or x is shortest delta but x move not valid
+         * Check if we can reduce delta y direction
          */
         if (tDeltaY > 0 && Direction != DIRECTION_UP) {
             tNewDirection = DIRECTION_DOWN;
@@ -694,7 +739,7 @@ uint8_t MatrixSnake::findNextDir() {
     uint16_t tIndexOfNewHeadPositionInSnake = checkDirection(tNewDirection);
     if (tIndexOfNewHeadPositionInSnake > 0) {
         /*
-         * New direction leads to collision with snake itself, so must try other directions
+         * New direction leads to collision with snake itself, or is outside area, so must try other directions
          */
         bool invalidDirectionsArray[NUMBER_OF_DIRECTIONS];
         memset(invalidDirectionsArray, false, NUMBER_OF_DIRECTIONS);
@@ -703,7 +748,7 @@ uint8_t MatrixSnake::findNextDir() {
         invalidDirectionsArray[(Direction + 2) % NUMBER_OF_DIRECTIONS] = true;
 #ifdef TRACE
         Serial.print(F("Detected invalid direction="));
-        Serial.println(tNewDirection);
+        Serial.println(DirectionToString(tNewDirection));
 #endif
 
         /*
@@ -724,7 +769,7 @@ uint8_t MatrixSnake::findNextDir() {
             }
 #ifdef TRACE
             Serial.print(F("Detected invalid direction="));
-            Serial.println(tNewDirection);
+            Serial.println(DirectionToString(tNewDirection));
 #endif
         }
 
@@ -748,13 +793,24 @@ uint8_t MatrixSnake::findNextDir() {
  */
 uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
 
+#ifdef DEBUG
+    Serial.print(F("runAndCheckIfAppleCanBeReached SnakeAutoSolverMode=0x"));
+    Serial.println(SnakeAutoSolverMode, HEX);
+#endif
+
     uint8_t tResult = 0;
     /*
      * store original snake values
      */
     uint16_t tStoredSnakeLength = SnakeLength;
     uint8_t tStoredDirection = Direction;
-    position *tStoredSnakePixelList = new position[Rows * Columns];
+    position *tStoredSnakePixelList = new position[SnakeLength];
+    if (tStoredSnakePixelList == NULL) {
+#ifdef DEBUG
+        Serial.println(F("No memory for StoredSnakePixelList"));
+#endif
+        return 0;
+    }
     memcpy(tStoredSnakePixelList, SnakePixelList, SnakeLength * sizeof(position));
 
     /*
@@ -790,7 +846,8 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     Serial.print(F("Check with settings=0x"));
     Serial.print(SnakeAutoSolverMode, HEX);
     Serial.print(F(" gives "));
-    Serial.println(tResult);
+    Serial.print(tResult);
+    Serial.println(F(" steps to apple"));
 #endif
     return tResult;
 }
@@ -812,7 +869,7 @@ __attribute__((weak)) getNextSnakeDirection(MatrixSnake *aSnake) {
 uint8_t MatrixSnake::getNextSnakeDir() {
 
 #ifdef DEBUG
-    Serial.print(F("Direction="));
+    Serial.print(F("Solver start. Direction="));
     Serial.print(DirectionToString(Direction));
     Serial.print(F(" head=("));
     Serial.print(SnakePixelList[0].x);
@@ -850,6 +907,7 @@ uint8_t MatrixSnake::getNextSnakeDir() {
  * Uses built in or user supplied auto solver
  * SnakeAutorun is implemented as a COMBINED PATTERN
  ****************************************************/
+#if defined(ENABLE_MATRIX_PATTERN_MOVE) // is required by SnakeAutorun and can be enabled by ENABLE_MATRIX_PATTERNS_FOR_SNAKE_AUTORUN
 #define AUTORUN_MODE_SHOW_END 0
 #define AUTORUN_MODE_SHOW_SCORE 1
 #define AUTORUN_MODE_MOVE_SCORE 2
@@ -860,7 +918,7 @@ uint8_t MatrixSnake::getNextSnakeDir() {
  * aRepetitions - number of Snake games until original OnPatternCompleteHandler is called.
  * If OnPatternComplete is NULL, Snake game is played forever.
  */
-void initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
+bool initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
 
 #ifdef INFO
     Serial.print(F("Autorun: "));
@@ -869,9 +927,9 @@ void initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t
     aLedsPtr->Repetitions = aRepetitions;
     aLedsPtr->NextOnPatternCompleteHandler = aLedsPtr->OnPatternComplete;
     aLedsPtr->OnPatternComplete = &SnakeAutorunCompleteHandler;
-    aLedsPtr->Snake(aIntervalMillis, aColor);
+    bool aRetValue = aLedsPtr->Snake(aIntervalMillis, aColor);
     aLedsPtr->Direction = DIRECTION_LEFT;
-
+    return aRetValue;
 }
 
 /*
@@ -922,12 +980,13 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     tStep++;
     tLedsPtr->MultipleExtension = tStep;
 }
+#endif // defined(ENABLE_MATRIX_PATTERN_MOVE)
 
 const char DefaultTickerText[] PROGMEM = "I love Neopixel";
 const char ILoveNeopatternsString[] PROGMEM = "I love Neopatterns";
 const char MatrixDemoString[] PROGMEM = "Matrix Demo";
 const char WelcomeString[] PROGMEM = "Welcome";
-const char *const TickerStrings[] PROGMEM = {DefaultTickerText, ILoveNeopatternsString, MatrixDemoString, WelcomeString};
+const char *const TickerStrings[] PROGMEM = { DefaultTickerText, ILoveNeopatternsString, MatrixDemoString, WelcomeString };
 const char *sTickerTextPtr;
 
 void setMatrixAndSnakePatternsDemoHandlerRandomTickerText() {
@@ -950,6 +1009,8 @@ void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *a
  * 2. Moves heart in from top / bottom, show 2 heart beats, and move heart out
  * 3. Show 2 snake runs / fire. Snake shows up on the odd loops, fire on the even ones
  */
+#if defined(ENABLE_MATRIX_PATTERN_TICKER) && defined(ENABLE_MATRIX_PATTERN_MOVING_PICTURE)  && defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
+        && defined(ENABLE_MATRIX_PATTERN_MOVE) && defined(ENABLE_MATRIX_PATTERN_FIRE) && defined(ENABLE_MATRIX_PATTERN_SNOW)
 void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     MatrixSnake *tLedsPtr = (MatrixSnake*) aLedsPtr;
     static int8_t sState = 0;
@@ -1088,6 +1149,8 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     Serial.print(F(" Length="));
     Serial.print(aLedsPtr->numPixels());
     Serial.print(F(" ActivePattern="));
+    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    Serial.print('|');
     Serial.print(aLedsPtr->ActivePattern);
     Serial.print(F(" State="));
     Serial.println(tState);
@@ -1095,4 +1158,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
 
     sState++;
 }
+#endif
 
+#endif // #ifndef MATRIX_SNAKE_HPP
+#pragma once

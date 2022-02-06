@@ -1,16 +1,16 @@
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
-Available as Arduino library "NeoPatterns"
+This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).
+New Patterns are added, a snake game running on a matrix is included and you can run multiple patterns simultaneously on the same strip.
 
-### [Version 2.3.2](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
+### [Version 2.4.0](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/NeoPatterns/latest)](https://github.com/ArminJo/NeoPatterns/commits/master)
 [![Build Status](https://github.com/ArminJo/NeoPatterns/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/NeoPatterns/actions)
-[![Hit Counter](https://hitcounter.pythonanywhere.com/count/tag.svg?url=https%3A%2F%2Fgithub.com%2FArminJo%2FNeoPatterns)](https://github.com/brentvollebregt/hit-counter)
+![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_NeoPatterns)
 
-This is an extended version version of the NeoPattern example by Adafruit https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all.
-New Patterns are added, a snake game running on a matrix is included and you can run multiple patterns simultaneously on the same strip.
+Available as Arduino library "NeoPatterns"
 
 | YouTube Video of NeoPatternsDemo | YouTube Video of MatrixDemo on a 10x10 matrix |
 | :-: | :-: |
@@ -20,16 +20,36 @@ New Patterns are added, a snake game running on a matrix is included and you can
 
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
-**RAINBOW_CYCLE**, **COLOR_WIPE**, **FADE**
+- RAINBOW_CYCLE
+- COLOR_WIPE
+- FADE
+
 ## New patterns
-**SCANNER**. **STRIPES**, **HEARTBEAT**, **DELAY**, **PROCESS_SELECTIVE**, **FADE_SELECTIVE**, **BOUNCING_BALL**<br/>
+- DELAY
+- SCANNER_EXTENDED
+- STRIPES
+- PROCESS_SELECTIVE
+- HEARTBEAT
+- BOUNCING_BALL
+
 The original **SCANNER** pattern is extended and includes the **CYLON** as well as the **ROCKET** or **FALLING_STAR** pattern. The more versatile **STRIPES** pattern replaces the old **THEATER_CHASE** one.
-## Pattern from [FastLed](https://github.com/FastLED/FastLED)
-**FIRE** adapted from https://github.com/FastLED/FastLED/tree/master/examples/Fire2012
-## Patterns only for nxn Matrix
-**MOVING_PICTURE**, **MOVE**, **TICKER**, **FIRE**, **SNOW**, **SNAKE**
+
+## Pattern from FastLed
+- FIRE adapted from [FastLed](https://github.com/FastLED/FastLED/tree/master/examples/Fire2012)
+
+## Patterns only for n x n Matrix
+- MOVING_PICTURE*
+- MOVE
+- TICKER
+- FIRE
+- SNOW
+- SNAKE
+
 ## Your own patterns
-**Put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in AllPatternOnOneStrip.cpp to realize your own patterns. Enable TEST_USER_PATTERNS on line 41 to test them.**
+- USER_PATTERN1
+- USER_PATTERN2
+
+**Put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in a file UserPattern.cpp to realize your own patterns.**
 
 # NeoPixel library
 the included NeoPixel library is an extensions of the Adafruit NeoPixel library and supports multiple virtual NeoPixel (and NeoPattern) objects on one physical strip. It also contains a lot of useful functions like:
@@ -69,13 +89,29 @@ Examples for LED index to position mappings:
 **All matrix pixel mappings except NEO_MATRIX_COLUMNS are supported**
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
 
+# Using the new *.hpp files / how to avoid `multiple definitions` linker errors
+In order to support [compile options](#compile-options--macros-for-this-library) more easily, the line `#include <NeoPatterns.h>`
+ or `MatrixNeoPatterns.hpp` or `MatrixSnake.hpp` must be changed to `#include <NeoPatterns.hpp>`,
+ but only in your **main program (aka *.ino file with setup() and loop())**, like it is done in the examples.<br/>
+In **all other files** you must use `#include <NeoPatterns.h>` etc., otherwise you will get tons of **"multiple definition"** errors.
+Take care that all macros you define in your main program before `#include <NeoPatterns.hpp>` etc. ,
+e.g. `DO_NOT_USE_MATH_PATTERNS` should also be specified before the *NeoPatterns.h* include,
+otherwise the include may not work as expected!
+
 # Compile options / macros for this library
-To customize the library to different requirements, there are some compile options / makros available.<br/>
-Modify it by commenting them out or in, or change the values if applicable. Or define the macro with the -D compiler option for global compile (the latter is not possible with the Arduino IDE, so consider using [Sloeber](https://eclipse.baeyens.it).
-| Macro | Default | File | Description |
-|-|-|-|-|
-| `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by deactivating the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes FLASH for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise. |
+To customize the library to different requirements, there are some compile options / macros available.<br/>
+These macros must be defined in your program before the line `#include <NeoPatterns.hpp>` or `#include MatrixNeoPatterns.hpp` or `#include MatrixSnake.hpp` to take effect.
+Modify them by enabling / disabling them, or change the values if applicable.
+
+| Macro | Default | Description |
+|-|-|-|
+| `ENABLE_PATTERN_<Pattern name>` | all | Selection of individual pattern(s) to be enabled for your program. You can specify multiple pattern. See [NeoPatterns.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/NeoPatterns.h#L58-L77) |
+| `ENABLE_MATRIX_PATTERN_<Pattern name>` | all | Selection of individual matrix pattern(s) to be enabled for your program. You can specify multiple pattern. See [MatrixNeoPatterns.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/MatrixNeoPatterns.h#L41-L51) |
+| `ENABLE_SPECIAL_PATTERN_<Pattern name>` | all | Selection of individual special pattern(s) (currently only snake pattern) to be enabled for your program. You can specify multiple pattern. See  [MatrixSnake.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/MatrixSnake.h#L41-L48) |
+| `ENABLE_NO_NEO_PATTERN_BY_DEFAULT` | disabled | Disables the default selection of all non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> is specified. Enables the exclusively use compilation of matrix NeoPattern. |
+| `ENABLE_NO_MATRIX_AND_NEO_PATTERN_BY_DEFAULT` | disabled | Disables default selection of all matrix and non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> or ENABLE_MATRIX_PATTERN_<Pattern name> is specified. Enables the exclusively use compilation of special Pattern snake. |
+| `SUPPORT_RGBW` | enabled | NeoPixel.h | Can be disabled by deactivating the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW`. Disable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 400 bytes program space for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise. |
 | `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes (and more) FLASH and 3 bytes RAM. |
 
 ### Changing include (*.h) files with Arduino IDE
@@ -85,9 +121,12 @@ Otherwise you have to navigate to the parallel `libraries` folder and select the
 In both cases the library source and include files are located in the libraries `src` directory.<br/>
 The modification must be renewed for each new library version!
 
-### Modifying compile options with Sloeber IDE
+### Modifying compile options / macros with PlatformIO
+If you are using PlatformIO, you can define the macros in the *[platformio.ini](https://docs.platformio.org/en/latest/projectconf/section_env_build.html)* file with `build_flags = -D MACRO_NAME` or `build_flags = -D MACRO_NAME=macroValue`.
+
+### Modifying compile options / macros with Sloeber IDE
 If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
-![Sloeber settings](https://github.com/ArminJo/ServoEasing/blob/master/pictures/SloeberDefineSymbols.png)
+![Sloeber settings](https://github.com/Arduino-IRremote/Arduino-IRremote/blob/master/pictures/SloeberDefineSymbols.png)
 
 WOKWI online simulation of the AllPatternOnOneStrip example.<br/>
 [![WOKWI online simulation of the AllPatternOnOneStrip example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneStrip.png)](https://wokwi.com/arduino/projects/299556508969992714).
@@ -97,7 +136,7 @@ WOKWI online simulation of the MatrixDemo example.<br/>
 
 # SNAKE GAME
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must activate the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE:-(.<br/>
+The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must activate the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE :disappointed:.<br/>
 The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
 After 7 seconds of inactivity the Snake demo with a simple AI is started.
 ## SnakeAutorun Example
@@ -107,7 +146,10 @@ NeoPatterns on breadboard
 ![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
 
 # Revision History
-### Version 2.3.2
+### Version 2.4.0
+- Added macros `ENABLE_PATTERN_<pattern_name>` to enable reducing size, if some patterns are not used.
+- Renamed `NeoPatterns.cpp` to `NeoPatterns.hpp` to enable easy configuration by main program.
+- Fixed brightness bug in `decrementTotalStepCounter()`.
 - Changed parameter for endless repeats in `NeoPatterns::initMultipleFallingStars()`.
 - Improved usage of random().
 - Added function `NeoPixel::fillRegion()`, `NeoPatterns::isActive()` and `NeoPixel::setAdafruitBrightnessValue()`.
@@ -134,7 +176,7 @@ NeoPatterns on breadboard
 - Removed blocking wait for ATmega32U4 Serial in examples.
 
 ### Version 2.2.0
-- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Deactivate the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes FLASH for the AllPatternsOnMultiDevices example.
+- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Deactivate the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes program space for the AllPatternsOnMultiDevices example.
 - Use type `Print *` instead of `Stream *`.
 - Changed function `addPixelColor()`.
 - Added function `NeoPixel::printInfo(aSerial)`.

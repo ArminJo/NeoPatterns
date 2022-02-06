@@ -6,7 +6,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2019  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -27,7 +27,8 @@
  */
 
 #include <Arduino.h>
-#include <MatrixNeoPatterns.h>
+
+#include <MatrixNeoPatterns.hpp>
 
 #define PIN_NEOPIXEL_MATRIX      8
 #define MATRIX_NUMBER_OF_COLUMNS 8
@@ -48,7 +49,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino

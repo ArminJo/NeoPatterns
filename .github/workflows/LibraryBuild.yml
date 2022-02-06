@@ -44,13 +44,14 @@ jobs:
         include:
           - arduino-boards-fqbn: arduino:avr:uno|All-DO_NOT_SUPPORT_RGBW
             build-properties:
-              AllPatternsOnMultiDevices:
-                -DALL_PATTERN_ON_ONE_STRIP -DDO_NOT_SUPPORT_RGBW
-              All:
-                -DDO_NOT_SUPPORT_RGBW
+              AllPatternsOnMultiDevices: -DALL_PATTERN_ON_ONE_STRIP -DDO_NOT_SUPPORT_RGBW
+              OpenLedRace: -DUSE_SOFT_I2C_MASTER -DDO_NOT_SUPPORT_RGBW
+              All: -DDO_NOT_SUPPORT_RGBW
 
           - arduino-boards-fqbn: arduino:avr:leonardo
-            sketches-exclude: OpenLedRace # too big
+            build-properties:
+              AllPatternOnOneBar: -DTEST_USER_PATTERNS
+            sketches-exclude: AllPatternsOnMultiDevices,OpenLedRace # too big
 
           - arduino-boards-fqbn: esp8266:esp8266:huzzah:eesz=4M3M,xtal=80
             platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json

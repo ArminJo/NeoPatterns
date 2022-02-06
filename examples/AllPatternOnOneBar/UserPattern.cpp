@@ -1,15 +1,12 @@
 /*
- *  AllPatternOnOneStrip.cpp
+ *  UserPattern.cpp
  *
- *  Shows all patterns included in the NeoPixel library for NeoPixel strips.
- *
- *  Add your pattern code to the functions Pattern[1,2]() and Pattern[1,2]Update() in Neopatterns.cpp (line 588ff.)
- *  to realize and see your own patterns.
- *  Enable TEST_OWN_PATTERNS on line 38 to test your patterns.
+ *  Contains the user provided definitions of the functions UserPattern1() and UserPattern1().
+ *  For convenience it also contains a test handler userPatternsHandler().
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -35,49 +32,8 @@
 
 #define INFO // if not defined, no Serial related code should be linked
 
-//#define TEST_USER_PATTERNS // Activate this to test your own pattern implementation on line 74 ff.
-
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_BAR_16          3
-
-// onComplete callback functions
-void allPatterns(NeoPatterns *aLedsPtr);
-
-// construct the NeoPatterns instances
-#ifdef TEST_USER_PATTERNS
-void ownPatterns(NeoPatterns *aLedsPtr);
-NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &ownPatterns);
-#else
-NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatterns);
-#endif
-
-void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
-
-#ifdef INFO
-    Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
-    delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
-#endif
-    // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
-#endif
-
-    bar16.begin(); // This initializes the NeoPixel library.
-    bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, REVERSE); // light Blue
-
-#ifdef INFO
-    Serial.println("started");
-#endif
-    delay(500);
-}
-
-void loop() {
-    bar16.update();
-    delay(10);
-}
-
-#ifdef TEST_USER_PATTERNS
 
 /************************************************************************************************************
  * Put your own pattern code here
@@ -191,9 +147,9 @@ bool UserPattern2Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
 }
 
 /*
- * Handler for testing your own patterns
+ * Handler for testing your user patterns
  */
-void ownPatterns(NeoPatterns *aLedsPtr) {
+void userPatternsHandler(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
     uint8_t tDuration = random(20, 120);
@@ -214,95 +170,6 @@ void ownPatterns(NeoPatterns *aLedsPtr) {
         Serial.println("ERROR");
         break;
     }
-
-    sState++;
-}
-#endif // TEST_USER_PATTERNS
-
-/*
- * Handler for all pattern
- */
-void allPatterns(NeoPatterns *aLedsPtr) {
-    static int8_t sState = 0;
-
-    uint8_t tDuration = random(40, 81);
-    uint8_t tColor = random(255);
-
-#ifdef INFO
-    Serial.print("Pin=");
-    Serial.print(aLedsPtr->getPin());
-    Serial.print(" Length=");
-    Serial.print(aLedsPtr->numPixels());
-    Serial.print(" State=");
-    Serial.print(sState);
-#endif
-
-    switch (sState) {
-    case 0:
-        // Cylon
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 2, FLAG_SCANNER_EXT_CYLON);
-        break;
-    case 1:
-        // Heartbeat
-        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 2);
-        break;
-    case 2:
-        // rocket and falling star - 2 times bouncing
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
-        FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, (tDuration & DIRECTION_DOWN));
-        break;
-    case 3:
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 5, NeoPatterns::Wheel(tColor + 0x80), 3, 2 * aLedsPtr->numPixels(),
-                tDuration * 2, (tDuration & DIRECTION_DOWN));
-        break;
-    case 4:
-        aLedsPtr->RainbowCycle(tDuration / 4, (tDuration & DIRECTION_DOWN));
-        break;
-    case 5:
-        // old TheaterChase
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, 2 * aLedsPtr->numPixels(),
-                tDuration * 2, (tDuration & DIRECTION_DOWN));
-        break;
-    case 6:
-        aLedsPtr->Fade(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), 64, tDuration);
-        break;
-    case 7:
-        aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration);
-        break;
-    case 8:
-        // clear existing color wipe
-        aLedsPtr->ColorWipe(COLOR32_BLACK, tDuration, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
-        break;
-    case 9:
-        // Multiple falling star
-        initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration / 2, 3, &allPatterns);
-        break;
-    case 10:
-        if ((aLedsPtr->PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) == 0) {
-            //Fire
-            aLedsPtr->Fire(tDuration * 2, tDuration / 2);
-        } else {
-            // start at both end
-            aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 0,
-            FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE);
-        }
-
-        sState = -1; // Start from beginning
-        break;
-    default:
-#ifdef INFO
-        Serial.println("ERROR");
-#endif
-        break;
-    }
-
-#ifdef INFO
-    Serial.print(" ActivePattern=");
-    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
-    Serial.print("|");
-    Serial.print(aLedsPtr->ActivePattern);
-    Serial.println();
-#endif
 
     sState++;
 }

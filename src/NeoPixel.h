@@ -47,9 +47,9 @@
 #include "Adafruit_NeoPixel.h" // Click here to get the library: http://librarymanager/All#Adafruit_NeoPixel
 #include "Colors.h"
 
-//#define DO_NOT_SUPPORT_RGBW
+//#define DO_NOT_SUPPORT_RGBW // saves up to 400 bytes additional program space for the AllPatternsOnMultiDevices() example.
 #if ! defined(DO_NOT_SUPPORT_RGBW)
-// Support rgbw colors for pattern. Requires additional program space.
+// Support rgbw colors for pattern.
 // Deactivate this, if you do NOT need RGBW support and want to save program space.
 #define SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
 #endif
@@ -78,9 +78,9 @@ public:
             bool aEnableShowOfUnderlyingPixel = true);
 
     void printInfo(Print *aSerial);
-#ifdef INFO
-    void printPin();
-#endif
+    void printContent(Print *aSerial);
+    void printPin(Print *aSerial);
+
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
 
@@ -122,10 +122,12 @@ public:
     static uint32_t dimColor(color32_t aColor);
     void dimPixelColor(uint16_t aPixelIndex);
     static color32_t Wheel(uint8_t aWheelPos);
+    static uint8_t gamma5(uint8_t aLinearBrightnessValue);
     static uint8_t gamma32(uint8_t aLinearBrightnessValue);
-    static uint8_t gamma32WithSpecialZero(uint8_t aLinearBrightnessValue);
-    static color32_t convertLinearToGamma32Color(color32_t aLinearBrightnessColor);
-    static color32_t dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero = false);
+    static uint8_t gamma5WithSpecialZero(uint8_t aLinearBrightnessValue);
+    static color32_t convertLinearToGamma5Color(color32_t aLinearBrightnessColor);
+    static color32_t dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero = false);
+    static color32_t dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero = false) __attribute__ ((deprecated ("Renamed to dimColorWithGamma5().")));
 
     void TestWS2812Resolution();
 

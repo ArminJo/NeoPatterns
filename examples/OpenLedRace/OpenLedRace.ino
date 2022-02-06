@@ -65,13 +65,20 @@
 #include <Arduino.h>
 
 #include "PlayRtttl.h"
-#include "AVRUtils.h" // for initStackFreeMeasurement()
-#include "NeoPatterns.h"
+
+#define ENABLE_PATTERN_SCANNER_EXTENDED
+#define ENABLE_PATTERN_COLOR_WIPE
+#define ENABLE_PATTERN_STRIPES
+#include "NeoPatterns.hpp"
 
 //#define TRACE
 //#define DEBUG
 #define INFO
 #include "DebugLevel.h" // to propagate debug level
+
+#if defined(INFO) && defined(__AVR__)
+#include "AVRUtils.h" // for initStackFreeMeasurement() and printFreeHeap()
+#endif
 
 // for hunting errors
 //#include "AvrTracing.hpp"
@@ -251,7 +258,7 @@ void resetTrack(bool aDoAnimation);
 void resetAndShowTrackWithoutCars();
 bool isCarInRegion(unsigned int aRegionFirst, unsigned int aRegionLength);
 void playShutdownMelody();
-void playShutdownMelodyAndBlinkForever();
+void playMelodyAndShutdown();
 
 extern volatile unsigned long timer0_millis; // Used for ATmega328P to adjust for missed millis interrupts
 
@@ -336,7 +343,7 @@ public:
             myLCD.print(F("No IMU for car "));
             myLCD.print(aNumberOfThisCar);
 #endif
-            playShutdownMelodyAndBlinkForever();
+            playMelodyAndShutdown();
         }
         AcceleratorInput.calculateAllOffsets();
 #  if defined(INFO)
@@ -998,7 +1005,7 @@ void setup() {
 #endif
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     sOnlyPlotterOutput = digitalRead(PIN_SERIAL_MONITOR_OUTPUT);
@@ -1052,7 +1059,7 @@ void setup() {
 
 // This initializes the NeoPixel library and checks if enough memory was available
     if (!track.begin(&Serial)) {
-        playShutdownMelodyAndBlinkForever();
+        playMelodyAndShutdown();
     }
 
     /*
@@ -1118,7 +1125,7 @@ void setup() {
 
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
-        printStackUsedAndFreeBytes(&Serial);
+        printStackUnusedAndUsedBytes(&Serial);
         printFreeHeap(&Serial);
     }
 #endif
@@ -1164,7 +1171,7 @@ void loop() {
 
 #if defined(INFO) && defined(__AVR__)
             if (!sOnlyPlotterOutput) {
-                printStackUsedAndFreeBytes(&Serial);
+                printStackUnusedAndUsedBytesIfChanged(&Serial);
             }
 #endif
         }
@@ -1225,8 +1232,7 @@ void loop() {
             sMode = MODE_WAIT;
 #if defined(INFO) && defined(__AVR__)
             if (!sOnlyPlotterOutput) {
-                Serial.print(F("Min stack free[bytes]="));
-                Serial.println(getStackFreeMinimumBytes());
+                printStackUnusedAndUsedBytesIfChanged(&Serial);
             }
 #endif
             break;
@@ -1307,7 +1313,7 @@ void playShutdownMelody() {
 
 }
 
-void playShutdownMelodyAndBlinkForever() {
+void playMelodyAndShutdown() {
     playShutdownMelody();
     while (true) {
         digitalWrite(LED_BUILTIN, HIGH);
@@ -1416,7 +1422,7 @@ void checkForLCDConnected() {
 #if defined(USE_SOFT_I2C_MASTER)
     if (!i2c_start(LCD_I2C_ADDRESS << 1)) {
         Serial.print(F("No I2C LCD connected at address " STR(LCD_I2C_ADDRESS) ". Disable \"#define USE_SERIAL_LCD\""));
-        playShutdownMelody();
+        playMelodyAndShutdown();
     }
     i2c_stop();
 #endif

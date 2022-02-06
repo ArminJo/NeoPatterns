@@ -26,6 +26,7 @@
 #ifndef NEOPATTERNS_NEOPIXEL_HPP
 #define NEOPATTERNS_NEOPIXEL_HPP
 //#define TRACE
+//#define INFO
 #include "NeoPixel.h"
 
 NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initialized")
@@ -167,16 +168,14 @@ bool NeoPixel::begin(Print *aSerial) {
 /*
  * For debugging purposes
  */
-#ifdef INFO // To avoid, that the library by default requires the Serial object
-void NeoPixel::printPin() {
-    Serial.print(pin);
+void NeoPixel::printPin(Print *aSerial) {
+    aSerial->print(pin);
     if (PixelOffset != 0) {
-        Serial.print('|');
-        Serial.print(PixelOffset);
+        aSerial->print('|');
+        aSerial->print(PixelOffset);
     }
-    Serial.print(' ');
+    aSerial->print(' ');
 }
-#endif
 
 void NeoPixel::printInfo(Print *aSerial) {
     aSerial->print(F("Pin="));
@@ -192,6 +191,16 @@ void NeoPixel::printInfo(Print *aSerial) {
     aSerial->println((uintptr_t) this, HEX);
 }
 
+void NeoPixel::printContent(Print *aSerial) {
+    aSerial->print(getPin());
+    aSerial->print(F(" Colors="));
+    for (uint16_t i = 0; i < numLEDs; i++) {
+        aSerial->print(F(" 0x"));
+        aSerial->print(getPixelColor(i), HEX);
+    }
+    aSerial->println();
+}
+
 /*
  * Handles the DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT flag
  */
@@ -199,14 +208,14 @@ void NeoPixel::show() {
     if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
         if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
 #ifdef TRACE
-            printPin();
+            printPin(&Serial);
             Serial.println(F("Underlying->show"));
 #endif
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
 #ifdef TRACE
-        printPin();
+        printPin(&Serial);
         Serial.println(F("show"));
 #endif
         Adafruit_NeoPixel::show();
@@ -326,7 +335,7 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
 }
 
 /*
- * Needs 50 bytes FLASH, but is faster
+ * Needs 50 bytes program space, but is faster
  */
 void NeoPixel::clearPixel(uint16_t aPixelIndex) {
     if (aPixelIndex < numLEDs) {
@@ -345,9 +354,10 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
 
 /*
  * !!! Affects only the unused Adafruit drawing functions
+ *  @param   aBrightness  Brightness setting, 0=minimum (off), 255=brightest.
  */
 void NeoPixel::setAdafruitBrightnessValue(uint8_t aBrightness) {
-    brightness = aBrightness + 1; // Overflow is intended see setBrightness()
+    brightness = aBrightness + 1; // Overflow is intended, see setBrightness()
 }
 
 /*
@@ -355,7 +365,7 @@ void NeoPixel::setAdafruitBrightnessValue(uint8_t aBrightness) {
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
 #ifdef TRACE
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
     Serial.print(F(" Offset="));
@@ -384,7 +394,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 #ifdef SUPPORT_RGBW
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
 #ifdef TRACE
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
     Serial.print(F(" Offset="));
@@ -411,11 +421,11 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 #endif
 
 /*
- *
+ * Fast version without brightness
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 #ifdef TRACE
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
     Serial.print(F(" Offset="));
@@ -568,23 +578,29 @@ void NeoPixel::fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop) {
     }
 }
 
-// from https://www.mikrocontroller.net/articles/LED-Fading
-const uint8_t GammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
-        91, 108, 128, 152, 181, 215, 255 };
+// from https://www.mikrocontroller.net/articles/LED-Fading pwmtable_8D
+//const uint8_t GammaTable32[32] PROGMEM = { 0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76,
+//        91, 108, 128, 152, 181, 215, 255 };
 
+// Excel: y= round(31*power(1.121725454;x);0) values are chosen, that we have y for 1 as 0.7
+const uint8_t GammaTable32[32] PROGMEM = { 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 29, 36, 43, 55, 64, 78,
+        95, 116, 141, 172, 209, 255 };
 /*
- * Use mapping table with 32 entries (using 5 MSbits)
+ * Use mapping table with 32 entries (using 5 MostSignificantBits)
  * @param aLinearBrightnessValue - from 0 to 255
  */
-uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
+uint8_t NeoPixel::gamma5(uint8_t aLinearBrightnessValue) {
     return pgm_read_byte(&GammaTable32[(aLinearBrightnessValue / 8)]);
+}
+uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
+    return gamma5(aLinearBrightnessValue);
 }
 
 /*
- * Returns only 0 if value is 0. Returns 1 for input 1 to 7 (and for 8 to 15).
+ * Returns only 0 if value is 0. Returns 1 for input 1 to 7 (and for 8 to 39).
  * used for snake tail, not to blank out the last elements of a tail with more than 32 elements
  */
-uint8_t NeoPixel::gamma32WithSpecialZero(uint8_t aLinearBrightnessValue) {
+uint8_t NeoPixel::gamma5WithSpecialZero(uint8_t aLinearBrightnessValue) {
     if (aLinearBrightnessValue <= 7 && aLinearBrightnessValue >= 1) {
         return 1;
     }
@@ -594,7 +610,7 @@ uint8_t NeoPixel::gamma32WithSpecialZero(uint8_t aLinearBrightnessValue) {
 /*
  * Using gamma table with 32 entries
  */
-color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor) {
+color32_t NeoPixel::convertLinearToGamma5Color(color32_t aLinearBrightnessColor) {
     uint8_t tRed = pgm_read_byte(&GammaTable32[(getRedPart(aLinearBrightnessColor) / 8)]);
     uint8_t tGreen = pgm_read_byte(&GammaTable32[(getGreenPart(aLinearBrightnessColor) / 8)]);
     uint8_t tBlue = pgm_read_byte(&GammaTable32[(getBluePart(aLinearBrightnessColor) / 8)]);
@@ -611,6 +627,10 @@ color32_t NeoPixel::convertLinearToGamma32Color(color32_t aLinearBrightnessColor
  * doSpecialZero -> tGamma32Brightness returns only 0 if aBrightness value is 0. Returns 1 for aBrightness 1 to 7 (and for 8 to 15).
  */
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
+    return dimColorWithGamma5(aLinearBrightnessColor, aBrightness, doSpecialZero);
+}
+
+color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
 #ifdef SUPPORT_RGBW
     uint8_t tWhiteDimmed = (uint8_t) (aLinearBrightnessColor >> 24);
 #endif
@@ -618,26 +638,26 @@ color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_
     uint8_t tGreenDimmed = (uint8_t) (aLinearBrightnessColor >> 8);
     uint8_t tBlueDimmed = (uint8_t) aLinearBrightnessColor;
 
-    uint8_t tGamma32Brightness;
+    uint8_t tGamma5Brightness;
     if (doSpecialZero) {
-        tGamma32Brightness = gamma32WithSpecialZero(aBrightness);
+        tGamma5Brightness = gamma5WithSpecialZero(aBrightness);
     } else {
-        tGamma32Brightness = gamma32(aBrightness);
+        tGamma5Brightness = gamma5(aBrightness);
     }
 
 // (tRedDimmed + 1) since (255 * 1) >> 8 gives 0 (and not 1)
-    tRedDimmed = ((tRedDimmed + 1) * tGamma32Brightness) >> 8;
-    tGreenDimmed = ((tGreenDimmed + 1) * tGamma32Brightness) >> 8;
-    tBlueDimmed = ((tBlueDimmed + 1) * tGamma32Brightness) >> 8;
+    tRedDimmed = ((tRedDimmed + 1) * tGamma5Brightness) >> 8;
+    tGreenDimmed = ((tGreenDimmed + 1) * tGamma5Brightness) >> 8;
+    tBlueDimmed = ((tBlueDimmed + 1) * tGamma5Brightness) >> 8;
 #ifdef SUPPORT_RGBW
-    tWhiteDimmed = ((tWhiteDimmed + 1) * tGamma32Brightness) >> 8;
+    tWhiteDimmed = ((tWhiteDimmed + 1) * tGamma5Brightness) >> 8;
 #endif
 
 #ifdef TRACE
-    Serial.print(F("dimColorWithGamma32 aBrightness="));
+    Serial.print(F("dimColorWithGamma5 aBrightness="));
     Serial.print(aBrightness);
     Serial.print(F(" Gamma="));
-    Serial.print(tGamma32Brightness);
+    Serial.print(tGamma5Brightness);
     Serial.print(F(" 0x"));
     Serial.print(aLinearBrightnessColor, HEX);
     Serial.print(F("->0x"));

@@ -35,7 +35,11 @@
 
 #include <Arduino.h>
 
-#include <NeoPatterns.h>
+#define ENABLE_PATTERN_STRIPES
+#define ENABLE_PATTERN_COLOR_WIPE
+#define ENABLE_PATTERN_SCANNER_EXTENDED
+#define ENABLE_PATTERN_RAINBOW_CYCLE
+#include <NeoPatterns.hpp>
 
 #define USE_BUTTON_1
 #include "EasyButtonAtInt01.hpp"
@@ -46,6 +50,10 @@ EasyButton Button0AtPin3;
 #define PIN_DELAY_POTI     A0
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_STRIP  5
+
+//#define NEOPIXEL_STRIP_LENGTH  144
+//#define NEOPIXEL_STRIP_LENGTH  256
+#define NEOPIXEL_STRIP_LENGTH  300
 
 #define INTERVAL_BACKGROUND_MIN 10
 #define INTERVAL_FAST_MOVES_MIN 2 // measured 4.3 ms for 144 pixel, but the 1 ms clock interrupt is disabled while sending so 2-3 interrupts/ms-ticks are lost.
@@ -59,8 +67,8 @@ void PatternsBackground(NeoPatterns *aLedsPtr);
 void PatternsFastMoves(NeoPatterns *aLedsPtr);
 
 // construct the NeoPatterns instances
-NeoPatterns NeoPatternsBackground = NeoPatterns(144, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsBackground);
-NeoPatterns NeoPatternsFastMoves = NeoPatterns(&NeoPatternsBackground, 0, 144, false, &PatternsFastMoves);
+NeoPatterns NeoPatternsBackground = NeoPatterns(NEOPIXEL_STRIP_LENGTH, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsBackground);
+NeoPatterns NeoPatternsFastMoves = NeoPatterns(&NeoPatternsBackground, 0, NEOPIXEL_STRIP_LENGTH, false, &PatternsFastMoves);
 
 /*
  * converts value read at analog pin into exponential scale between 1 and 28
@@ -81,7 +89,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
@@ -148,7 +156,7 @@ void loop() {
 }
 
 /*
- * Handler for background pattern
+ * Callback handler for background pattern
  * since sState starts with (0++) scanner is the first pattern you see
  */
 void PatternsBackground(NeoPatterns *aLedsPtr) {
@@ -235,7 +243,7 @@ void PatternsBackground(NeoPatterns *aLedsPtr) {
 }
 
 /*
- * Handler for fast and seldom patterns
+ * Callback handler for fast and seldom patterns
  * since sState starts with (0++) scanner is the first pattern you see
  */
 void PatternsFastMoves(NeoPatterns *aLedsPtr) {

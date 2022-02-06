@@ -61,14 +61,13 @@
 //#define I2C_TIMEOUT 5000 // costs 350 bytes
 #define I2C_FASTMODE 1
 
-//#define USE_ARDUINO_WIRE // costs additional 2110 bytes FLASH and 200 bytes RAM compared with SoftI2cMaster
+//#define USE_ARDUINO_WIRE // costs additional 2110 bytes program space and 200 bytes RAM compared with SoftI2cMaster and 1700btes more than SoftWire
 #if defined(USE_SOFT_WIRE)
-#include "SoftWire.hpp"
+#include "SoftWire.h"
 #elif defined(USE_ARDUINO_WIRE)
 #include "Wire.h"
 #else
-
-#include "SoftI2CMaster.hpp"
+#include "SoftI2CMaster.h"
 #endif
 
 #include "MPU6050IMUData.h"

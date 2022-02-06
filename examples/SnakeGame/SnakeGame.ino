@@ -30,7 +30,9 @@
  */
 
 #include <Arduino.h>
-#include <MatrixSnake.h>
+
+#define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
+#include <MatrixSnake.hpp>
 
 // Delay between two SNAKE moves / Speed of game
 #define GAME_REFRESH_INTERVAL   400
@@ -57,11 +59,13 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    Serial.print(F("Matrix is attached at pin "));
+    Serial.println(PIN_NEOPIXEL_MATRIX_SNAKE);
 
     // This initializes the NeoPixel library and checks if enough memory was available
     if (!NeoPixelMatrixSnake.begin(&Serial)) {

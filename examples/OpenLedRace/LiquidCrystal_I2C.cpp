@@ -11,7 +11,8 @@ inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 }
 
 #if defined(USE_SOFT_I2C_MASTER)
-#include <SoftI2CMaster.h>
+#define USE_SOFT_I2C_MASTER_H_AS_PLAIN_INCLUDE
+#include "SoftI2CMaster.h"
 #else
 #define printIIC(args)  Wire.write(args)
 #endif

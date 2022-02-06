@@ -62,7 +62,7 @@
 /*
  * Define USE_ATTACH_INTERRUPT to force use of the arduino function attachInterrupt().
  * It is required if you get the error " multiple definition of `__vector_1'" (or `__vector_2'), because another library uses the attachInterrupt() function.
- * For one button it needs additional 160 bytes FLASH, for 2 buttons it needs additional 88 bytes.
+ * For one button it needs additional 160 bytes program space, for 2 buttons it needs additional 88 bytes.
  */
 //#define USE_ATTACH_INTERRUPT
 //
@@ -84,7 +84,7 @@
 #endif
 
 /*
- * Activate this to save 2 bytes RAM and 64 bytes FLASH
+ * Activate this to save 2 bytes RAM and 64 bytes program space
  */
 //#define NO_BUTTON_RELEASE_CALLBACK
 //
@@ -128,7 +128,7 @@
 #endif
 
 /*
- * These defines are here to enable saving of 150 bytes FLASH if only one button is needed
+ * These defines are here to enable saving of 150 bytes program space if only one button is needed
  */
 //#define USE_BUTTON_0
 //#define USE_BUTTON_1

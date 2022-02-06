@@ -26,7 +26,9 @@
  */
 
 #include <Arduino.h>
-#include <MatrixSnake.h>
+
+#define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
+#include <MatrixSnake.hpp>
 
 // Delay between two SNAKE moves / Speed of game
 #define GAME_REFRESH_INTERVAL   200
@@ -46,7 +48,8 @@
 /*
  * In this example parameters are set in setup by calling NeoPixelMatrixSnake.init(...)
  */
-MatrixSnake NeoPixelMatrixSnake = MatrixSnake();
+MatrixSnake NeoPixelMatrixSnake = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX_SNAKE,
+        NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800);
 
 /********************************************
  * Put your Snake solver code here
@@ -67,82 +70,84 @@ MatrixSnake NeoPixelMatrixSnake = MatrixSnake();
  * More functions can be found in MatrixSnake.h / .cpp
  *
  ********************************************/
-uint8_t getNextSnakeDirection(MatrixSnake *aSnake) {
-
-    /*
-     * Call internal solver
-     * Comment / deactivate the next line to enable your own code
-     */
-    return aSnake->getNextSnakeDir();
-
-    /*
-     * Debug output
-     */
-    Serial.print(F("getSnakeDirection CurrentDirection="));
-    Serial.print(DirectionToString(aSnake->Direction));
-    Serial.print(F(" head=("));
-    Serial.print(aSnake->SnakePixelList[0].x);
-    Serial.print(',');
-    Serial.print(aSnake->SnakePixelList[0].y);
-    Serial.println(')');
-
-    int8_t tDeltaX = aSnake->Apple.x - aSnake->SnakePixelList[0].x;
-    int8_t tDeltaY = aSnake->Apple.y - aSnake->SnakePixelList[0].y;
-
-    Serial.print(F("DeltaX="));
-    Serial.print(tDeltaX);
-    Serial.print(F(" DeltaY="));
-    Serial.println(tDeltaY);
-
-    uint8_t tNewDirection = aSnake->Direction;
-
-    /*
-     *  Simple example, go towards the apple.
-     */
-
-    /*
-     * Avoid going to opposite direction, because this is invalid.
-     * Eg. if actual direction is UP, we must not change to DOWN.
-     */
-    if (tDeltaX > 0 && aSnake->Direction != DIRECTION_LEFT) {
-        tNewDirection = DIRECTION_RIGHT;
-    } else if (tDeltaX < 0 && aSnake->Direction != DIRECTION_RIGHT) {
-        tNewDirection = DIRECTION_LEFT;
-    }
-    if (tDeltaY > 0 && aSnake->Direction != DIRECTION_UP) {
-        tNewDirection = DIRECTION_DOWN;
-    } else if (tDeltaY < 0 && aSnake->Direction != DIRECTION_DOWN) {
-        tNewDirection = DIRECTION_UP;
-    }
-
-    // check new direction...
-    if (aSnake->checkDirection(tNewDirection) != 0) {
-        /*
-         * check was not successful just check all available directions
-         */
-        for (tNewDirection = 0; tNewDirection < NUMBER_OF_DIRECTIONS; ++tNewDirection) {
-            if (aSnake->checkDirection(tNewDirection) == 0) {
-                break;
-            }
-        }
-    }
-
-// End of dummy example
-    Serial.print(F("NewDirection="));
-    Serial.println(DirectionToString(tNewDirection));
-
-    return tNewDirection;
-}
+//uint8_t getNextSnakeDirection(MatrixSnake *aSnake) {
+//
+//    /*
+//     * Call internal solver
+//     * Comment / deactivate the next line to enable your own code
+//     */
+//    return aSnake->getNextSnakeDir();
+//
+//    /*
+//     * Debug output
+//     */
+//    Serial.print(F("getSnakeDirection CurrentDirection="));
+//    Serial.print(DirectionToString(aSnake->Direction));
+//    Serial.print(F(" head=("));
+//    Serial.print(aSnake->SnakePixelList[0].x);
+//    Serial.print(',');
+//    Serial.print(aSnake->SnakePixelList[0].y);
+//    Serial.println(')');
+//
+//    int8_t tDeltaX = aSnake->Apple.x - aSnake->SnakePixelList[0].x;
+//    int8_t tDeltaY = aSnake->Apple.y - aSnake->SnakePixelList[0].y;
+//
+//    Serial.print(F("DeltaX="));
+//    Serial.print(tDeltaX);
+//    Serial.print(F(" DeltaY="));
+//    Serial.println(tDeltaY);
+//
+//    uint8_t tNewDirection = aSnake->Direction;
+//
+//    /*
+//     *  Simple example, go towards the apple.
+//     */
+//
+//    /*
+//     * Avoid going to opposite direction, because this is invalid.
+//     * Eg. if actual direction is UP, we must not change to DOWN.
+//     */
+//    if (tDeltaX > 0 && aSnake->Direction != DIRECTION_LEFT) {
+//        tNewDirection = DIRECTION_RIGHT;
+//    } else if (tDeltaX < 0 && aSnake->Direction != DIRECTION_RIGHT) {
+//        tNewDirection = DIRECTION_LEFT;
+//    }
+//    if (tDeltaY > 0 && aSnake->Direction != DIRECTION_UP) {
+//        tNewDirection = DIRECTION_DOWN;
+//    } else if (tDeltaY < 0 && aSnake->Direction != DIRECTION_DOWN) {
+//        tNewDirection = DIRECTION_UP;
+//    }
+//
+//    // check new direction...
+//    if (aSnake->checkDirection(tNewDirection) != 0) {
+//        /*
+//         * check was not successful just check all available directions
+//         */
+//        for (tNewDirection = 0; tNewDirection < NUMBER_OF_DIRECTIONS; ++tNewDirection) {
+//            if (aSnake->checkDirection(tNewDirection) == 0) {
+//                break;
+//            }
+//        }
+//    }
+//
+//// End of dummy example
+//    Serial.print(F("NewDirection="));
+//    Serial.println(DirectionToString(tNewDirection));
+//
+//    return tNewDirection;
+//}
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    Serial.print(F("Matrix is attached at pin "));
+    Serial.println(PIN_NEOPIXEL_MATRIX_SNAKE);
 
     // This initializes the Snake and checks if enough memory was available
     if (!NeoPixelMatrixSnake.init(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX_SNAKE,

@@ -5,7 +5,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -34,11 +34,24 @@
 #ifndef MATRIXSNAKE_H_
 #define MATRIXSNAKE_H_
 
+#if defined(ENABLE_PATTERNS_FOR_SNAKE_AUTORUN)
+#define ENABLE_MATRIX_PATTERN_MOVE // required for SnakeAutorunCompleteHandler() to move the score out.
+#endif
+
+#if defined(ENABLE_PATTERNS_FOR_MATRIX_AND_SNAKE_DEMO_HANDLER)
+#define ENABLE_MATRIX_PATTERN_TICKER
+#define ENABLE_MATRIX_PATTERN_MOVING_PICTURE
+#define ENABLE_PATTERN_PROCESS_SELECTIVE
+#define ENABLE_MATRIX_PATTERN_MOVE
+#define ENABLE_MATRIX_PATTERN_FIRE
+#define ENABLE_MATRIX_PATTERN_SNOW
+#endif
+
 #include "MatrixNeoPatterns.h"
 
 //#define USE_SERIAL_CONTROL // Accepts snake direction commands over the serial line
 
-#define PATTERN_SNAKE   (LAST_MATRIX_NEO_PATTERN + 1)
+#define SPECIAL_PATTERN_SNAKE   (LAST_MATRIX_NEO_PATTERN + 1)
 
 #define APPLE_COLOR COLOR32_RED
 
@@ -63,7 +76,7 @@ struct position {
 // stores the initial shape of the snake. SnakeInitialPixels[0] is head of snake
 position const SnakeInitialPixels[] = { { 4, 4 }, { 5, 4 }, { 6, 4 }, { 6, 5 } };
 
-// extension of NeoPattern Class approximately 85 Byte / object
+// extension of NeoPattern Class approximately 85 byte / object
 class MatrixSnake: public MatrixNeoPatterns {
 public:
     MatrixSnake();
@@ -72,12 +85,13 @@ public:
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
-    void Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
+    bool Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);
 
     bool update();
 
     void SnakeUpdate();
+    void SnakeStop();
     void SnakeInputHandler();
     void SnakeEndHandler();
     void showScore();
@@ -97,7 +111,9 @@ public:
     //
     bool computeNewHeadPosition(uint8_t aActualDirection, position *aSnakeNewHeadPosition);
     bool moveSnakeAndCheckApple(position tSnakeNewHeadPosition);
-
+#ifdef DEBUG
+    void printSnakePosition(position aSnakePosition);
+#endif
     /*
      * internal auto solver functions
      */
@@ -136,11 +152,16 @@ uint8_t computeDirection(position aStartPosition, position aEndPosition);
 extern const char sDefaultTickerText[] PROGMEM; // = "I love Neopixel"
 extern const char *sTickerTextPtr; // = sDefaultTickerText;
 void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *aTextForTicker);
+#if defined(ENABLE_MATRIX_PATTERN_TICKER) && defined(ENABLE_MATRIX_PATTERN_MOVING_PICTURE)  && defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
+        && defined(ENABLE_MATRIX_PATTERN_MOVE) && defined(ENABLE_MATRIX_PATTERN_FIRE) && defined(ENABLE_MATRIX_PATTERN_SNOW)
 void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr);
+#endif
 
-void initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions = 1);
 uint8_t getNextSnakeDirection(MatrixSnake *aSnake);
+#if defined(ENABLE_MATRIX_PATTERN_MOVE)
+bool initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions = 1);
 void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr);
+#endif
 
 #endif /* MATRIXSNAKE_H_ */
 

@@ -1,5 +1,5 @@
 /*
- * MatrixNeoPatterns.cpp
+ * MatrixNeoPatterns.hpp
  *
  * Implements functions especially for 8x8 NeoPixel matrix.
  *
@@ -8,7 +8,7 @@
  *  Extension are made to include more patterns and combined patterns
  *  and patterns for nxn NeoPixel matrix (tested with 8x8 and 10x10).
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -27,6 +27,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
+#ifndef MATRIX_NEOPATTERNS_HPP
+#define MATRIX_NEOPATTERNS_HPP
 
 #include <Arduino.h>
 
@@ -37,6 +39,9 @@
 
 #include "MatrixNeoPatterns.h"
 #include "LongUnion.h"
+
+// include sources
+#include "NeoPatterns.hpp"
 
 // used for Ticker - modify line 12 of fonts.h to change font sizes
 #include "fonts.h"
@@ -64,28 +69,37 @@ bool MatrixNeoPatterns::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint
     return tRetvalue;
 }
 
-// Update the pattern returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
+/*
+ * Update the pattern
+ * @return true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
+ */
 bool MatrixNeoPatterns::update() {
     if ((millis() - lastUpdate) > Interval) {
         bool tPatternEnded = true;
 
         switch (ActivePattern) {
-#ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
-        case PATTERN_FIRE:
+#if defined(ENABLE_MATRIX_PATTERN_FIRE)
+        case MATRIX_PATTERN_FIRE:
             tPatternEnded = FireMatrixUpdate();
             break;
 #endif
-        case PATTERN_TICKER:
+#if defined(ENABLE_MATRIX_PATTERN_TICKER)
+        case MATRIX_PATTERN_TICKER:
             tPatternEnded = TickerUpdate();
             break;
-        case PATTERN_MOVE:
+#endif
+#if defined(ENABLE_MATRIX_PATTERN_MOVE)
+        case MATRIX_PATTERN_MOVE:
             tPatternEnded = MoveUpdate();
             break;
-        case PATTERN_MOVING_PICTURE:
+#endif
+#if defined(ENABLE_MATRIX_PATTERN_MOVING_PICTURE)
+        case MATRIX_PATTERN_MOVING_PICTURE:
             tPatternEnded = MovingPicturePGMUpdate();
             break;
-#ifndef DO_NOT_USE_SNOW_PATTERN
-        case PATTERN_SNOW:
+#endif
+#if defined(ENABLE_MATRIX_PATTERN_SNOW)
+        case MATRIX_PATTERN_SNOW:
             tPatternEnded = SnowUpdate();
             break;
 #endif
@@ -101,10 +115,9 @@ bool MatrixNeoPatterns::update() {
     return false;
 }
 
-int16_t convolutionMatrixIntegerTimes256[3][3];
 #define mapXYToArray(x, y, XColumns) (((y) * (XColumns)) + (x))
 
-#ifndef DO_NOT_USE_MATRIX_FIRE_PATTERN
+#if defined(ENABLE_MATRIX_PATTERN_FIRE)
 // The bottom line of fire which is set by random values every 4 updates
 void MatrixNeoPatterns::setInitHeat() {
     LongUnion tRandomValue;
@@ -145,32 +158,30 @@ void MatrixNeoPatterns::setInitHeat() {
 
 /*
  * initialize for fire -> set all to zero
+ * @return false if calloc() failed
  */
-void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
+bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
     Interval = aIntervalMillis;
     Direction = DIRECTION_UP;
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
-    PatternLength = (MATRIX_FIRE_COOLING_PER_8_ROWS * 8) / Rows; // cooling affects the height of fire, the greater the value the smaller the fire
+    // PatternLength is used as value for cooling. Cooling affects the height of fire, the greater the value the smaller the fire
+    PatternLength = (MATRIX_FIRE_COOLING_PER_8_ROWS * 8) / Rows;
     Index = 3; // to call setInitHeat(); at startup
 
     // just to be sure
-    if (MatrixNew) {
-        free(MatrixNew);
-    }
-    if (MatrixOld) {
-        free(MatrixOld);
-    }
-    if (initalHeatLine) {
-        free(initalHeatLine);
-    }
+    FireMatrixDealloc();
 
     // They have 1 pixel padding on each side for computation of convolution
     MatrixNew = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);
     MatrixOld = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);
     initalHeatLine = (uint8_t*) calloc(Columns + 2, 1);
+    if (MatrixOld == NULL || initalHeatLine == NULL) {
+        FireMatrixDealloc();
+        return false;
+    }
 
 #ifdef INFO
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Starting Fire with refresh interval="));
     Serial.println(aIntervalMillis);
 #endif
@@ -181,16 +192,32 @@ void MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     Serial.println((uintptr_t) MatrixOld, HEX);
 #endif
 
-    for (uint_fast8_t cy = 0; cy < CONVOLUTION_MATRIX_SIZE; cy++) {
-        for (uint_fast8_t cx = 0; cx < CONVOLUTION_MATRIX_SIZE; cx++) {
-            convolutionMatrixIntegerTimes256[cx][cy] = convolutionMatrix[cx][cy] * 256;
-        }
-    }
-
     FireMatrixUpdate();
     showPatternInitially();
     // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
     ActivePattern = PATTERN_FIRE;
+    return true;
+}
+
+void MatrixNeoPatterns::FireMatrixDealloc() {
+// just to be sure
+    if (MatrixNew) {
+        free(MatrixNew);
+    }
+    MatrixNew = NULL;
+    if (MatrixOld) {
+        free(MatrixOld);
+    }
+    MatrixOld = NULL;
+    if (initalHeatLine) {
+        free(initalHeatLine);
+    }
+    initalHeatLine = NULL;
+}
+
+void MatrixNeoPatterns::FireMatrixStop() {
+    TotalStepCounter = 1;
+    FireMatrixUpdate();
 }
 
 /*
@@ -203,14 +230,9 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
         /*
          * End of fire pattern -> cleanup before calling callback
          */
-        free(MatrixOld);
-        MatrixOld = NULL;
-        free(MatrixNew);
-        MatrixNew = NULL;
-        free(initalHeatLine);
-        initalHeatLine = NULL;
+        FireMatrixDealloc();
     }
-    if (decrementTotalStepCounterAndSetNextIndex()) {
+    if (decrementTotalStepCounterAndSetNextIndex()) {  // sets lastUpdate
         return true;
     }
 
@@ -233,7 +255,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             // Convolution takes 11 milli seconds with float or 4 ms with integer
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms
-            int16_t *convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
+            const int16_t *convolutionMatrixIntegerTimes256Ptr = &convolutionMatrixIntegerTimes256[0][0];
             uint8_t *tFireMatrixOldPtr = &MatrixOld[mapXYToArray((x - 1), (y - 1), Columns + 2)];
             for (uint_fast8_t cy = 0; cy < CONVOLUTION_MATRIX_SIZE; cy++) {
                 for (uint_fast8_t cx = 0; cx < CONVOLUTION_MATRIX_SIZE; cx++) {
@@ -244,10 +266,10 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
                 tFireMatrixOldPtr += (Columns + 2) - 3;
             }
 
-            uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Columns + 2)] + (tConvolutionSumTimes256 / 256);
+            uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Columns + 2)] + ((tConvolutionSumTimes256 + 128) / 256);
 
             /*
-             * PatternLength contains the cooling
+             * PatternLength contains the cooling (6 is a good value
              * COOLING and clipping to zero
              */
             if (tNewHeatValue > PatternLength) {
@@ -260,7 +282,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             // Heat color mapping
             setMatrixPixelColor(x - 1, y - 1, HeatColor(tNewHeatValue));
 #ifdef TRACE
-            printPin();
+            printPin(&Serial);
             Serial.print(F("x="));
             Serial.print(x);
             Serial.print(F(" y="));
@@ -278,19 +300,20 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
     MatrixOld = tPtr;
     return false;
 }
-#endif // DO_NOT_USE_MATRIX_FIRE_PATTERN
+#endif // #if defined(ENABLE_MATRIX_PATTERN_FIRE)
 
-#ifndef DO_NOT_USE_SNOW_PATTERN
-// bright version
-//color32_t SnowFlakeBrightnessMap[4] = { COLOR32_WHITE, COLOR32_WHITE_QUARTER, COLOR32_WHITE_16TH, COLOR32_WHITE_64TH };
-// dimmed version
-const color32_t SnowFlakeBrightnessMap[4] = { COLOR32_WHITE_HALF, COLOR32_WHITE_EIGHTH, COLOR32_WHITE_32TH, COLOR32_WHITE_128TH };
+#if defined(ENABLE_MATRIX_PATTERN_SNOW)
+#if defined(USE_SNOW_DIMMED_VERSION)
+const color32_t SnowFlakeBrightnessMap[4] PROGMEM = { COLOR32_WHITE_HALF, COLOR32_WHITE_EIGHTH, COLOR32_WHITE_32TH, COLOR32_WHITE_128TH };
+#else
+const color32_t SnowFlakeBrightnessMap[4] PROGMEM = { COLOR32_WHITE, COLOR32_WHITE_QUARTER, COLOR32_WHITE_16TH, COLOR32_WHITE_64TH };
+#endif
 
 void MatrixNeoPatterns::setRandomFlakeParameters(uint8_t aSnowFlakeIndex) {
     // random parameters for a snow flake
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     // Hack to avoid using a union only for this purpose
-#ifdef SNOW_SUPPORT_MORE_THAN_16_ROWS_AND_COLUMNS
+#if defined(SNOW_SUPPORT_MORE_THAN_16_ROWS_AND_COLUMNS)
     uint32_t *tSnowFakePtr = (uint16_t*) &SnowFlakesArray[aSnowFlakeIndex];
 #else
     uint16_t *tSnowFakePtr = (uint16_t*) &SnowFlakesArray[aSnowFlakeIndex];
@@ -305,41 +328,54 @@ void MatrixNeoPatterns::setRandomFlakeParameters(uint8_t aSnowFlakeIndex) {
 #else
     *tSnowFakePtr = random();
 #endif
-    SnowFlakesArray[aSnowFlakeIndex].Period |= 0x08; // values from 8 to F -> factor 2
+    SnowFlakesArray[aSnowFlakeIndex].Period |= 0x08; // to get values from 8 to F
 }
 
 void MatrixNeoPatterns::drawSnowFlake(uint8_t aSnowFlakeIndex) {
-    addMatrixPixelColor(SnowFlakesArray[aSnowFlakeIndex].Column, SnowFlakesArray[aSnowFlakeIndex].Row,
-            SnowFlakeBrightnessMap[(SnowFlakesArray[aSnowFlakeIndex].Period >> 1) & 0x03]);
+    color32_t tDimmedColor = pgm_read_dword(&SnowFlakeBrightnessMap[(SnowFlakesArray[aSnowFlakeIndex].Period >> 1) & 0x03]);
+    // fast flakes (period = 8 or 9) are in the foreground an therefore brighter;
+    addMatrixPixelColor(SnowFlakesArray[aSnowFlakeIndex].Column, SnowFlakesArray[aSnowFlakeIndex].Row, tDimmedColor);
 }
 
 /*
  * Currently only a maximum of 16 rows and columns are supported
+ * @return false if calloc() failed
  */
-void MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
+bool MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
     Interval = aIntervalMillis;
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
     Direction = DIRECTION_UP; // for dim prescaler
+    // just in case ...
     if (SnowFlakesArray) {
         free(SnowFlakesArray);
     }
-    PatternLength = ((Rows * 2) / 5) * Columns;
-    SnowFlakesArray = (struct SnowFlakeInfoStruct*) malloc(PatternLength * sizeof(struct SnowFlakeInfoStruct));
+    PatternLength = ((Rows * 2) / 5) * Columns; // Formula for number of snow flakes
+    SnowFlakesArray = (struct SnowFlakeInfoStruct*) calloc(PatternLength * sizeof(struct SnowFlakeInfoStruct), 1);
+    if (SnowFlakesArray == NULL) {
+        return false;
+    }
     for (int tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
         // random parameters for a snow flake
         setRandomFlakeParameters(tSnowFlakeIndex);
     }
 
 #ifdef INFO
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Starting Snow with refresh interval="));
     Serial.println(aIntervalMillis);
 #endif
 
+    clear(); // especially clears bottom line
     SnowUpdate();
     showPatternInitially();
     // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
-    ActivePattern = PATTERN_SNOW;
+    ActivePattern = MATRIX_PATTERN_SNOW;
+    return true;
+}
+
+void MatrixNeoPatterns::SnowStop() {
+    TotalStepCounter = 1;
+    SnowUpdate();
 }
 
 bool MatrixNeoPatterns::SnowUpdate() {
@@ -350,38 +386,37 @@ bool MatrixNeoPatterns::SnowUpdate() {
         free(SnowFlakesArray);
         SnowFlakesArray = NULL;
     }
-    if (decrementTotalStepCounterAndSetNextIndex()) {
+    if (decrementTotalStepCounterAndSetNextIndex()) {   // sets lastUpdate
         return true;
     }
 
     /*
      *  clear all but the bottom row
      */
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
-    // TODO 2 for loops instead of memset
+#if defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
+    memset(pixels + (BytesPerPixel * Columns), 0, numBytes - (BytesPerPixel * Columns));
+#else
     for (uint_fast8_t x = 0; x < Columns; x++) {
         for (uint_fast8_t y = 0; y < Rows - 1; y++) {
             setMatrixPixelColor(x, y, COLOR32_BLACK);
         }
     }
-#else
-    memset(pixels + (BytesPerPixel * Columns), 0, numBytes - (BytesPerPixel * Columns));
 #endif
 
     /*
-     * 1. Dim bottom row. reasonable prescaler is between 10 and 30
+     * 1. Dim bottom row (simulate melting). reasonable prescaler is between 10 and 30
      */
     if (Index >= SNOW_BOTTOM_LINE_DIM_PRESCALER) {
         Index = 0;
         for (uint_fast8_t i = 0; i < Columns; i++) {
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
+            dimPixelColor(i);
+#else
             if (LayoutMappingFunction == NULL) {
                 dimPixelColor(LayoutMapping(i, Rows - 1));
             } else {
                 dimPixelColor(LayoutMappingFunction(i, Rows - 1, Columns, Rows));
             }
-#else
-        dimPixelColor(i);
 #endif
         }
     }
@@ -405,7 +440,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
         drawSnowFlake(tSnowFlakeIndex);
 
 #ifdef TRACE
-        printPin();
+        printPin(&Serial);
         Serial.print(F("Index="));
         Serial.print(tSnowFlakeIndex);
         Serial.print(F(" Column="));
@@ -426,9 +461,9 @@ bool MatrixNeoPatterns::SnowUpdate() {
         if (SnowFlakesArray[tSnowFlakeIndex].Row >= Rows - 1) {
             // Reinitialize
             setRandomFlakeParameters(tSnowFlakeIndex);
-            // set row to 0
+            // set row to 0 / upper row
             SnowFlakesArray[tSnowFlakeIndex].Row = 0;
-            uint8_t tTimeoutCounter = Columns;
+            uint8_t tColumnTryCounter = Columns;
             uint8_t tFlakeColumn = SnowFlakesArray[tSnowFlakeIndex].Column;
             /*
              * Try to place the new flake in a column where the three upper rows are empty.
@@ -439,8 +474,8 @@ bool MatrixNeoPatterns::SnowUpdate() {
                 if (tFlakeColumn >= Columns) {
                     tFlakeColumn = 0;
                 }
-                tTimeoutCounter--;
-                if (tTimeoutCounter == 0) {
+                tColumnTryCounter--;
+                if (tColumnTryCounter == 0) {
                     break;
                 }
             }
@@ -450,12 +485,12 @@ bool MatrixNeoPatterns::SnowUpdate() {
             drawSnowFlake(tSnowFlakeIndex);
 
 #ifdef TRACE
-            Serial.print(F("Index="));
+            Serial.print(F("New flake: Index="));
             Serial.print(tSnowFlakeIndex);
             Serial.print(F(" Column="));
             Serial.print(SnowFlakesArray[tSnowFlakeIndex].Column);
-            Serial.print(F(" tTimeoutCounter="));
-            Serial.print(tTimeoutCounter);
+            Serial.print(F(" Columns checked="));
+            Serial.print(Columns - tColumnTryCounter);
             Serial.println();
 #endif
         }
@@ -463,8 +498,9 @@ bool MatrixNeoPatterns::SnowUpdate() {
 
     return false;
 }
-#endif // DO_NOT_USE_SNOW_PATTERN
+#endif // #if defined(ENABLE_MATRIX_PATTERN_SNOW)
 
+#if defined(ENABLE_MATRIX_PATTERN_MOVE)
 /*
  * Moving array content. Only moving out is performed e.g. for moving out the score-points of the snake game.
  * aSteps == 1 is equivalent to just calling moveArrayContent(aDirection, aBackgroundColor),
@@ -476,7 +512,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
 
 #ifdef INFO
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Starting Move with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Direction="));
@@ -486,12 +522,12 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     MoveUpdate();
     showPatternInitially();
     // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
-    ActivePattern = PATTERN_MOVE;
+    ActivePattern = MATRIX_PATTERN_MOVE;
 }
 
 bool MatrixNeoPatterns::MoveUpdate() {
 #ifdef DEBUG
-    printPin();
+    printPin(&Serial);
     Serial.print(F("MoveUpdate TotalSteps="));
     Serial.println(TotalStepCounter);
 #endif
@@ -501,7 +537,9 @@ bool MatrixNeoPatterns::MoveUpdate() {
     moveArrayContent(Direction, LongValue1.Color2);
     return false;
 }
+#endif
 
+#if defined(ENABLE_MATRIX_PATTERN_MOVING_PICTURE)
 /*
  * Display a 8x8 graphic with moving offsets.
  * Can be used for moving in and moving out in contrast to MOVE pattern, which is only capable of moving out.
@@ -521,7 +559,7 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     Direction = aDirection;
 
 #ifdef INFO
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Direction="));
@@ -531,7 +569,7 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     MovingPicturePGMUpdate();
     showPatternInitially();
     // must be after showPatternInitially(), since it needs the old value do detect asynchronous calling
-    ActivePattern = PATTERN_MOVING_PICTURE;
+    ActivePattern = MATRIX_PATTERN_MOVING_PICTURE;
 
 }
 
@@ -551,6 +589,7 @@ bool MatrixNeoPatterns::MovingPicturePGMUpdate() {
     }
     return false;
 }
+#endif
 
 void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
     char tStringBuffer[4];
@@ -586,14 +625,14 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
 #  ifdef TRACE
-        printPin();
+        printPin(&Serial);
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
         Serial.print(F(" NumPixels="));
         Serial.print(numPixels());
         Serial.print(F(" BytesPerPixel="));
         Serial.print(BytesPerPixel);
-        Serial.print(F(" BytesToSkipForOneRow="));
+        Serial.print(F(" bytesToSkipForOneRow="));
         Serial.println(tBytesToSkipForOneRow);
 #  endif
 
@@ -636,14 +675,14 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
 #ifdef TRACE
-        printPin();
+        printPin(&Serial);
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
         Serial.print(F(" NumPixels="));
         Serial.print(numLEDs);
         Serial.print(F(" PixelColorStorageSize="));
         Serial.print(BytesPerPixel);
-        Serial.print(F(" BytesToSkipForOneRow="));
+        Serial.print(F(" bytesToSkipForOneRow="));
         Serial.println(tBytesToSkipForOneRow);
 #endif
         if (aDirection == DIRECTION_UP) {
@@ -719,6 +758,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
 #endif
 }
 
+#if defined(ENABLE_MATRIX_PATTERN_TICKER)
 /*
  * only directions DIRECTION_LEFT,DIRECTION_NONE and DIRECTION_UP are supported yet
  */
@@ -743,7 +783,7 @@ void MatrixNeoPatterns::Ticker(__FlashStringHelper *aStringPtrPGM, color32_t aFo
  */
 void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForegroundColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection, uint8_t aFlags) {
-    ActivePattern = PATTERN_TICKER;
+    ActivePattern = MATRIX_PATTERN_TICKER;
     PatternFlags = aFlags;
     Interval = aIntervalMillis;
 
@@ -753,7 +793,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     Direction = aDirection;
 
 #ifdef INFO
-    printPin();
+    printPin(&Serial);
     Serial.print(F("Starting Ticker with refresh interval="));
     Serial.print(aIntervalMillis);
     Serial.print(F("ms. Text=\""));
@@ -836,7 +876,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
     bool isLastChar = (tNextChar == '\0');
 
 #ifdef TRACE
-    printPin();
+    printPin(&Serial);
 #endif
     if (Direction == DIRECTION_LEFT || Direction == DIRECTION_NONE) {
         int8_t tGraphicsXOffset = GraphicsXOffset; // X offset of current char to be processed
@@ -933,7 +973,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
             }
             // switch to next character
 #if defined(DEBUG) && !defined(TRACE)
-            printPin();
+            printPin(&Serial);
             Serial.print(F("Char "));
             Serial.print(tFirstCurrentChar);
             Serial.print(F(" -> "));
@@ -956,7 +996,10 @@ bool MatrixNeoPatterns::TickerUpdate() {
     }
     return false;
 }
+#endif
 
+#if defined(ENABLE_MATRIX_PATTERN_TICKER) && defined(ENABLE_MATRIX_PATTERN_MOVING_PICTURE) && defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
+    && defined(ENABLE_MATRIX_PATTERN_MOVE) && defined(ENABLE_MATRIX_PATTERN_FIRE)
 /*
  * Sample callback handler for MatrixNeoPatterns
  */
@@ -1072,6 +1115,7 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
 
     sState++;
 }
+#endif
 
 #define TEST_DELAY_MILLIS 2000
 void myMoveTest1(MatrixNeoPatterns *aLedsPtr) {
@@ -1121,3 +1165,5 @@ const uint8_t fontNumbers4x6[] PROGMEM = { 0x03, 0x05, 0x05, 0x05, 0x06, 0x00, /
         0x02, 0x05, 0x03, 0x01, 0x02, 0x00 // 0x39 9
         };
 
+#endif // #ifndef MATRIX_NEOPATTERNS_HPP
+#pragma once

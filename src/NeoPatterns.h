@@ -7,7 +7,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -37,23 +37,44 @@
 #define NEOPATTERNS_H
 
 #if !defined(DO_NOT_USE_MATH_PATTERNS)
-// This pattern needs additional 640 to 1140 bytes FLASH, depending if floating point and sqrt() are already used otherwise.
+// This pattern needs additional 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise.
 // Activate the next line if you do NOT need the BOUNCING_BALL pattern.
 //#define DO_NOT_USE_MATH_PATTERNS
 #endif
 
 #include "NeoPixel.h"
 
-#if !defined(__AVR__) && ! defined(PROGMEM)
+#if !defined(__AVR__) && !defined(PROGMEM)
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "2.3.1"
-#define VERSION_NEOPATTERNS_MAJOR 2
-#define VERSION_NEOPATTERNS_MINOR 3
+#define VERSION_NEOPATTERNS "3.0.0"
+#define VERSION_NEOPATTERNS_MAJOR 3
+#define VERSION_NEOPATTERNS_MINOR 0
 // The change log is at the bottom of the file
 
-extern const char * const PatternNamesArray[] PROGMEM;
+extern const char *const PatternNamesArray[] PROGMEM;
+
+#if (!(defined(ENABLE_PATTERN_RAINBOW_CYCLE) || defined(ENABLE_PATTERN_COLOR_WIPE) || defined(ENABLE_PATTERN_FADE) \
+|| defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
+|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) || defined(ENABLE_PATTERN_EMBER) \
+|| defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
+|| defined(ENABLE_NO_NEO_PATTERN_BY_DEFAULT) ))
+#define ENABLE_PATTERN_RAINBOW_CYCLE
+#define ENABLE_PATTERN_COLOR_WIPE
+#define ENABLE_PATTERN_FADE
+#define ENABLE_PATTERN_SCANNER_EXTENDED
+#define ENABLE_PATTERN_STRIPES
+#define ENABLE_PATTERN_PROCESS_SELECTIVE
+#define ENABLE_PATTERN_HEARTBEAT
+#define ENABLE_PATTERN_FIRE
+#define ENABLE_PATTERN_EMBER
+#define ENABLE_PATTERN_USER_PATTERN1
+#define ENABLE_PATTERN_USER_PATTERN2
+#   if !defined(DO_NOT_USE_MATH_PATTERNS)
+#define ENABLE_PATTERN_BOUNCING_BALL // Requires up to 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise.
+#   endif
+#endif
 
 // Pattern types supported:
 #define PATTERN_NONE                0
@@ -65,18 +86,15 @@ extern const char * const PatternNamesArray[] PROGMEM;
 #define PATTERN_SCANNER_EXTENDED    5
 #define PATTERN_STRIPES             6 // includes the old THEATER_CHASE
 #define PATTERN_PROCESS_SELECTIVE   7
-#define PATTERN_FIRE                8
-#define PATTERN_HEARTBEAT           9
+#define PATTERN_HEARTBEAT           8
+#define PATTERN_FIRE                9
+#define PATTERN_EMBER              10
 
-#define PATTERN_USER_PATTERN1      10
-#define PATTERN_USER_PATTERN2      11
+#define PATTERN_USER_PATTERN1      11
+#define PATTERN_USER_PATTERN2      12
 
-#if !defined(DO_NOT_USE_MATH_PATTERNS)
-#define PATTERN_BOUNCING_BALL      12
+#define PATTERN_BOUNCING_BALL      13
 #define LAST_NEO_PATTERN           PATTERN_BOUNCING_BALL
-#else
-#define LAST_NEO_PATTERN           PATTERN_USER_PATTERN2
-#endif
 
 /*
  * Values for Direction
@@ -135,58 +153,86 @@ public:
 
     /*
      * PATTERNS
+     * *Update() functions return true if pattern has ended, false if pattern has NOT ended
      */
+#if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     void RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection = DIRECTION_UP);
+    bool RainbowCycleUpdate(bool aDoUpdate = true);
+#endif
+#if defined(ENABLE_PATTERN_COLOR_WIPE)
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     void ColorWipeD(color32_t aColor, uint16_t aDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    bool ColorWipeUpdate(bool aDoUpdate = true);
+#endif
+#if defined(ENABLE_PATTERN_FADE)
     void Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
-
+    bool FadeUpdate(bool aDoUpdate = true);
+#endif
     /*
      * PATTERN extensions
      */
+
+    // Delay is always enabled, since it is used by many other patterns
+    void Delay(uint16_t aMillis);
+    bool DelayUpdate(bool aDoUpdate = true);
+
+#if defined(ENABLE_PATTERN_STRIPES)
     void StripesD(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aDurationMillis, uint8_t aDirection = DIRECTION_UP);
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
-    void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode = 0);
+    bool StripesUpdate(bool aDoUpdate = true);
+#endif
+
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
     void ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0,
             uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     void ScannerExtendedD(color32_t aColor, uint8_t aLength, uint16_t aDurationMillis, uint16_t aNumberOfBouncings = 0,
             uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
-    void Delay(uint16_t aMillis);
+    bool ScannerExtendedUpdate(bool aDoUpdate = true);
+#endif
 
+#if defined(ENABLE_PATTERN_HEARTBEAT)
+    void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode = 0);
+    bool HeartbeatUpdate(bool aDoUpdate = true);
+#endif
+
+#if defined(ENABLE_PATTERN_PROCESS_SELECTIVE)
     void ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
             uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
+    bool ProcessSelectiveColorUpdate(bool aDoUpdate = true);
+#endif
 
-    color32_t HeatColor(uint8_t aTemperature);
+#if defined(ENABLE_PATTERN_FIRE)
+    void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
+    bool FireUpdate(bool aDoUpdate = true);
+#endif
+#if defined(ENABLE_PATTERN_EMBER)
+    void Ember(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode, uint8_t aIncreaseIntervalFactor,
+            uint16_t aNumberOfDecreasingSteps, uint16_t aIntervalMillis);
+    void initEmberHeat(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode);
+    bool EmberUpdate(bool aDoUpdate = true);
+#endif
 
-#if !defined(DO_NOT_USE_MATH_PATTERNS)
+    void convertHeatToColor();
+    void printHeat(Print *aSerial);
+
+    static color32_t HeatColor(uint8_t aTemperature);
+    static color32_t HeatColorGamma5(uint8_t aTemperature);
+
+#if defined(ENABLE_PATTERN_BOUNCING_BALL)
     void BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint16_t aIntervalMillis = 70, int8_t aPercentageOfLossAtBounce =
             10, uint8_t aDirection = DIRECTION_DOWN);
     bool BouncingBallUpdate(bool aDoUpdate = true);
 #endif
 
-    /*
-     * UPDATE functions
-     * return true if pattern has ended, false if pattern has NOT ended
-     */
-    bool RainbowCycleUpdate(bool aDoUpdate = true);
-    bool ColorWipeUpdate(bool aDoUpdate = true);
-    bool FadeUpdate(bool aDoUpdate = true);
-
-    /*
-     * Extensions
-     */
-    bool ScannerExtendedUpdate(bool aDoUpdate = true);
-    bool StripesUpdate(bool aDoUpdate = true);
-    bool HeartbeatUpdate(bool aDoUpdate = true);
-    bool FireUpdate(bool aDoUpdate = true);
-    bool DelayUpdate(bool aDoUpdate = true);
-    bool ProcessSelectiveColorUpdate(bool aDoUpdate = true);
+#if defined(ENABLE_PATTERN_USER_PATTERN1)
     bool Pattern1Update(bool aDoUpdate = true);
+#endif
+#if defined(ENABLE_PATTERN_USER_PATTERN2)
     bool Pattern2Update(bool aDoUpdate = true);
+#endif
 
     void ProcessSelectiveColorForAllPixel();
 
@@ -230,7 +276,7 @@ public:
      */
     uint8_t ActivePattern; // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
     uint16_t Interval;   // Milliseconds between updates
-    unsigned long lastUpdate; // Milliseconds of last update of pattern
+    unsigned long lastUpdate; // Milliseconds of last update of pattern. Set by decrementTotalStepCounter(), showPatternInitially() or XXXupdate()
 
     void (*OnPatternComplete)(NeoPatterns*); // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
 
@@ -278,19 +324,32 @@ color32_t DimColor(NeoPatterns *aNeoPatternsPtr);
 color32_t BrightenColor(NeoPatterns *aNeoPatternsPtr);
 
 // multiple pattern example
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
 void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aHalfDelayBetweenStarsMillis,
         uint8_t aRepetitions, void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection = DIRECTION_DOWN);
 void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr);
+#endif
 
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED) && defined(ENABLE_PATTERN_RAINBOW_CYCLE) && defined(ENABLE_PATTERN_STRIPES) \
+    && defined(ENABLE_PATTERN_FADE) && defined(ENABLE_PATTERN_COLOR_WIPE) && defined(ENABLE_PATTERN_HEARTBEAT)
 void allPatternsRandomHandler(NeoPatterns *aLedsPtr);
+#endif
 
+#if defined(ENABLE_PATTERN_USER_PATTERN1)
 void __attribute__((weak)) UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
         uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
+#endif
+#if defined(ENABLE_PATTERN_USER_PATTERN2)
 void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
         uint16_t aRepetitions = 0, uint8_t aDirection = DIRECTION_UP);
+#endif
 
 /*
- * Version 2.3.2 - 11/2021
+ *
+ * Version 3.0.0 - 2/2022
+ * - Enabled individual selection of patterns to save program space.
+ * - Renamed NeoPatterns.cpp, MatrixNeoPatterns.cpp and MatrixSnake.cpp to NeoPatterns.hpp, MatrixNeoPatterns.hpp and MatrixSnake.hpp.
+ * - Renamed matrix pattern macros from PATTERN_* to MATRIX_PATTERN_*.
  * - Changed parameter for endless repeats in initMultipleFallingStars().
  * - Improved usage of random().
  * - Added function fillRegion(), isActive() and setAdafruitBrightnessValue().
@@ -317,7 +376,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  *
  * Version 2.2.0 - 4/2020
  * - Added support for RGBW patterns. Requires additional 200 bytes for AllPatternsOnMultiDevices example.
- *   Not defining SUPPORT_RGBW saves 400 bytes FLASH for AllPatternsOnMultiDevices example.
+ *   Not defining SUPPORT_RGBW saves 400 bytes program space for AllPatternsOnMultiDevices example.
  * - Use type `Print *` instead of `Stream *`.
  * - Changed function `addPixelColor()`.
  * - Added function `NeoPixel::printInfo(aSerial)`.

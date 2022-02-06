@@ -5,7 +5,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2019  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -26,13 +26,30 @@
  */
 
 #include <Arduino.h>
-#include <MatrixNeoPatterns.h>
-#include <NeoPixel.h>
 
+//#define ENABLE_MATRIX_PATTERN_SNOW // not required since we call SnowUpdate() directly and do not call update().
+#include <MatrixNeoPatterns.hpp>
+
+#if defined(__AVR__)
+#include "AVRUtils.h" // for printFreeHeap()
+#endif
+
+#define USE_16_X_16_MATRIX
+#if defined(USE_16_X_16_MATRIX)
+#define PIN_NEOPIXEL_MATRIX         5
+#define MATRIX_NUMBER_OF_COLUMNS   16
+#define MATRIX_NUMBER_OF_ROWS      16
+/*
+ * Specify your matrix geometry as 4th parameter.
+ * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
+ * See MatrixNeoPatterns.h for further explanation.
+ */
+MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
+NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800, NULL);
+#else
 #define PIN_NEOPIXEL_MATRIX         8
 #define MATRIX_NUMBER_OF_COLUMNS    8
 #define MATRIX_NUMBER_OF_ROWS       8
-
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
@@ -40,12 +57,13 @@
  */
 MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, NULL);
+#endif
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
@@ -65,6 +83,10 @@ void setup() {
 
     Serial.println(F("Snow"));
     NeoPixelMatrix.Snow();
+
+#if defined(__AVR__)
+    printFreeHeap(&Serial);
+#endif
 }
 
 void loop() {

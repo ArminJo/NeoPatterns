@@ -2,7 +2,7 @@
  * MatrixNeoPixel.h
  *
  * Implements basic functions for NeoPixel matrix. Tested with 8x8 matrix.
- * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and DOWN.
+ * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
  *
  *  Copyright (C) 2019  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
@@ -43,7 +43,7 @@
  * If you have only default geometry (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE),
  * i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag)
  * then you can save program space by defining symbol `SUPPORT_ONLY_DEFAULT_GEOMETRY`.
- * This saves 560 bytes FLASH and 3 bytes RAM.
+ * This saves 560 bytes program space and 3 bytes RAM.
  */
 //#define SUPPORT_ONLY_DEFAULT_GEOMETRY
 //
@@ -120,6 +120,7 @@ public:
     uint8_t Columns;    // X Direction / size
 
 #ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+    // Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
     uint8_t Geometry;    // Flags for geometry
     uint16_t (*LayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t); // Pointer to function, which implements the mapping between X/Y and pixel number
 #endif
