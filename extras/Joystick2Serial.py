@@ -1,9 +1,6 @@
 import sys
 import serial
 import time
-# import os
-
-# os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 import pygame as pg
 
@@ -33,7 +30,6 @@ for j in joysticks:
         
 if joystick == None:
     print("could not detect: ", joystick_type, "\n")
-    print("please connect device and restart program\n")
 else:
     joystick.init()
     print("Joystick: " + joystick.get_name())
@@ -78,32 +74,25 @@ hat_to_button = {
     (0, -1): "A"
 }
 
-
-def send_serial(button):
-    ser.write((button.encode()))
-
-
 def my_quit():
     global loop
     loop = False
-
-
+    
+def send_serial(button):
+    ser.write((button.encode()))
+    
 def key_up():
     send_serial("w")
-    
- 
+     
 def key_down():
     send_serial("s")
-    
-    
+        
 def key_left():
     send_serial("a")
     
-
 def key_right():
     send_serial("d")
     
-
 keydown_func = {
     pg.K_ESCAPE: my_quit,
     pg.K_RIGHT: key_right,

@@ -1276,6 +1276,9 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
 #define SPARKING 120
 
 // initialize for fire -> set all to zero
+/*
+ * @param aDirection if not DIRECTION_UP show pattern bottom up
+ */
 void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_t aDirection) {
     Interval = aIntervalMillis;
     Direction = aDirection;

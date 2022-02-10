@@ -17,6 +17,8 @@ Available as Arduino library "NeoPatterns"
 | [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
 | YouTube Video of NeoPatternsDemo on a long matrix | YouTube Video of Fire on on a long matrix |
 | [![Demonstration of NeoPatterns on a long matrix ](https://i.ytimg.com/vi/y_fmAEUqhFg/hqdefault.jpg)](https://www.youtube.com/watch?v=y_fmAEUqhFg) | [![Demonstration of Fire on a long matrix ](https://i.ytimg.com/vi/CgW5T-mRSvQ/hqdefault.jpg)](https://youtu.be/CgW5T-mRSvQ?t=43) |
+| YouTube Video of OpenLedRace at the Cologne public library MINTköln-Festival |  |
+| [![OpenLedRace in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g) |  |
 
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
@@ -134,18 +136,43 @@ WOKWI online simulation of the AllPatternOnOneStrip example.<br/>
 WOKWI online simulation of the MatrixDemo example.<br/>
 [![WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)](https://wokwi.com/arduino/projects/299560666027524617).
 
-# SNAKE GAME
+# Examples
 ## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD). To enable serial input control you must activate the line `#define USE_SERIAL_CONTROL` in the library file *MatrixSnake.h* or define global symbol with `-DUSE_SERIAL_CONTROL` which is not yet possible in Arduino IDE :disappointed:.<br/>
-The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.<br/>
-After 7 seconds of inactivity the Snake demo with a simple AI is started.
+The game can be controlled by 2 or 4 buttons or by serial input (WASD) on the keboard.<br/>
+For keyboard control, start the Python script in the extras folder of the library with *RunPythonKeybordForInput.cmd*.
+This script **sends a wasd key press immediately** and does not wait for a return or a press of the send button, as the Arduino Serial Monitor does.<br/>
+The experimental script *Joystick2Serial.py* converts game controller input to appropriate serial output for the game.<br/>
+After 7 seconds of inactivity after boot, the Snake demo with a simple AI is started.
+
+SnakeGame with 4 buttons on breadboard
+![SnakeGame with 4 buttons on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/SnakeGame.jpg)
+
 ## SnakeAutorun Example
 **With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
 
-NeoPatterns on breadboard
-![NeoPatterns on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/extras/Breadboard_complete.jpg)
+## AllPatternsOnMultiDevices
+Shows all patterns for strips rings and matrixes included in the NeoPattern MatrixNeoPattern and Snake library.
+Uses the included `allPatternsRandomHandler()` to [show all available patterns](https://www.youtube.com/watch?v=CsB7FkywCRQ).
+
+AllPatternsOnMultiDevices on breadboard
+![AllPatternsOnMultiDevices on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Breadboard_complete.jpg)
+
+## OpenLedRace
+Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Player, without Boxes Track".<br/>
+See also the [dedicated repository for OpenLedRace](https://github.com/ArminJo/OpenledRace).
+
+OpenLedRace at the Cologne public library MINTköln-Festival
+![OpenLedRace at the Cologne public library MINTköln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
 
 # Revision History
+### Version 3.0.0
+- Enabled individual selection of patterns to save program space.
+- Renamed *NeoPatterns.cpp*, *MatrixNeoPatterns.cpp* and *MatrixSnake.cpp* to *NeoPatterns.hpp*, *MatrixNeoPatterns.hpp* and *MatrixSnake.hpp*.
+- Renamed matrix pattern macros from `PATTERN_*` to `MATRIX_PATTERN_*`.
+- Changed parameter for endless repeats in `initMultipleFallingStars()`.
+- Improved usage of `random()`.
+- Added function `fillRegion()`, `isActive()` and `setAdafruitBrightnessValue()`.
+
 ### Version 2.4.0
 - Added macros `ENABLE_PATTERN_<pattern_name>` to enable reducing size, if some patterns are not used.
 - Renamed `NeoPatterns.cpp` to `NeoPatterns.hpp` to enable easy configuration by main program.

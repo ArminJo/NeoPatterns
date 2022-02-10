@@ -327,13 +327,13 @@ void MatrixSnake::SnakeInputHandler() {
     if (Serial.available()) {
         char tReceivedChar = Serial.read();
         if (char(tReceivedChar) == 'd') {
-            tNewDirection = DIRECTION_RIGHT;
+            Direction = DIRECTION_RIGHT;
         } else if (char(tReceivedChar) == 'a') {
-            tNewDirection = DIRECTION_LEFT;
+            Direction = DIRECTION_LEFT;
         } else if (char(tReceivedChar) == 's') {
-            tNewDirection = DIRECTION_DOWN;
+            Direction = DIRECTION_DOWN;
         } else if (char(tReceivedChar) == 'w') {
-            tNewDirection = DIRECTION_UP;
+            Direction = DIRECTION_UP;
         }
 #ifdef DEBUG
         Serial.println(tReceivedChar);

@@ -32,6 +32,7 @@
 #include <Arduino.h>
 
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
+#define USE_SERIAL_CONTROL // control the snake direction with sending characters a,s,d,f over serial
 #include <MatrixSnake.hpp>
 
 // Delay between two SNAKE moves / Speed of game

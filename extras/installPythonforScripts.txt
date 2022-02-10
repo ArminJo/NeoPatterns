@@ -4,7 +4,8 @@ choose "extend PATH length limit" or similar.
 
 run "pip install pygame"
 run "pip install pyserial"
+run "pip install pynput"
 
-edit baudrate and port at line 15ff. of the JoystickAndKeyboard2Serial.py code
+edit baudrate and port at line 15ff. of the Keyboard2Serial.py and Joystick2Serial.py code
 
-run  "RunPythonForInput.cmd"
+run  "RunPythonKeybordForInput.cmd" or "RunPythonJoystickForInput.cmd"
