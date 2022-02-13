@@ -248,13 +248,21 @@ public:
 #endif
 
     /*
+     * Internal control variables
+     */
+    uint8_t ActivePattern; // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
+    uint16_t Interval;   // Milliseconds between updates
+    unsigned long lastUpdate; // Milliseconds of last update of pattern. Set by decrementTotalStepCounter(), showPatternInitially() or XXXupdate()
+
+    void (*OnPatternComplete)(NeoPatterns*); // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
+
+    /*
      * Variables for almost each pattern
      */
     int16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
-    uint16_t Index;         // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
-    color32_t Color1;       // Main pattern color
-    int8_t Direction;       // Direction to run the pattern
-    uint8_t PatternLength; // Length of a (scanner) pattern - BouncingBall: Current integer IndexOfTopPixel - Fire: Cooling - Snow: Number of flakes
+    uint16_t Index;             // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
+    color32_t Color1;           // Main pattern color
+    int8_t Direction;           // Direction to run the pattern
 
     // For ScannerExtended()
     // PatternFlags 0 -> one pass scanner (rocket or falling star)
@@ -271,29 +279,34 @@ public:
 #define FLAG_DO_NOT_CLEAR                   0x10
     uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce
 
-    /*
-     * Internal control variables
-     */
-    uint8_t ActivePattern; // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
-    uint16_t Interval;   // Milliseconds between updates
-    unsigned long lastUpdate; // Milliseconds of last update of pattern. Set by decrementTotalStepCounter(), showPatternInitially() or XXXupdate()
-
-    void (*OnPatternComplete)(NeoPatterns*); // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
+    union {
+        uint8_t PatternLength;  // Length of a (scanner, stripes) pattern
+        uint8_t NumberOfSteps;  // For Fade
+        uint8_t IndexOfTopPixel; // BouncingBall: Current integer IndexOfTopPixel
+        uint8_t Cooling;        // Fire: Cooling
+        uint8_t NumberOfFlakes; // Snow: Number of flakes
+    } ByteValue1;
 
     /*
      * 3 Extra variables used by some patterns
      */
     union {
+        uint8_t PatternLength;  // 2. length of a (stripes) pattern
+        uint8_t SnakeAutorunStep;
+        uint8_t ScannerIntervalMillis; // for delay of multiple falling stars
+    } ByteValue2;
+
+    union {
         color32_t BackgroundColor;
-        color32_t Color2; // second pattern color
-        uint8_t *heatOfPixelArrayPtr; // Allocated array for current heat values for Fire pattern
-        uint16_t StartIntervalMillis; // BouncingBall: interval for first step
-        uint16_t NumberOfBouncings; // ScannerExtended: Number of bounces
+        color32_t Color2;               // second pattern color
+        uint8_t *heatOfPixelArrayPtr;   // Allocated array for current heat values for Fire pattern
+        uint16_t StartIntervalMillis;   // BouncingBall: interval for first step
+        uint16_t NumberOfBouncings;     // ScannerExtended: Number of bounces
     } LongValue1;
 
     union {
-        color32_t ColorTmp; // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
-        float TopPixelIndex; // BouncingBall: float index of TopPixel
+        color32_t ColorTmp;         // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
+        float TopPixelIndex;            // BouncingBall: float index of TopPixel
 
         uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for
     } LongValue2;
@@ -306,8 +319,7 @@ public:
     /*
      * for multiple pattern extensions
      */
-    uint16_t Repetitions; // counter for multipleHandler
-    uint8_t MultipleExtension; // for delay of multiple falling stars and snake flags and length of stripes
+    uint16_t Repetitions;               // counter for multipleHandler
     void (*NextOnPatternCompleteHandler)(NeoPatterns*);  // Next callback after completion of multiple pattern
     /*
      * List of all NeoPatterns

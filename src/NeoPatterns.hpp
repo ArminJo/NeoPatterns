@@ -674,7 +674,7 @@ bool NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
 void NeoPatterns::Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis) {
     Interval = aIntervalMillis;
     TotalStepCounter = aNumberOfSteps + 1; // + 1 for the last step to show BackgroundColor
-    PatternLength = aNumberOfSteps; // original start value of aNumberOfSteps
+    ByteValue1.NumberOfSteps = aNumberOfSteps; // original start value of aNumberOfSteps
     Color1 = aColorStart;
     LongValue1.Color2 = aColorEnd;
     Index = 0;
@@ -700,14 +700,15 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
          */
 // Calculate linear interpolation between Color1 and BackgroundColor
 // Optimize order of operations to minimize truncation error
-        uint8_t tRed = ((getRedPart(Color1) * (PatternLength - Index)) + (getRedPart(LongValue1.Color2) * Index)) / PatternLength;
-        uint8_t tGreen = ((getGreenPart(Color1) * (PatternLength - Index)) + (getGreenPart(LongValue1.Color2) * Index))
-                / PatternLength;
-        uint8_t tBlue = ((getBluePart(Color1) * (PatternLength - Index)) + (getBluePart(LongValue1.Color2) * Index))
-                / PatternLength;
+        uint8_t tRed = ((getRedPart(Color1) * (ByteValue1.NumberOfSteps - Index)) + (getRedPart(LongValue1.Color2) * Index))
+                / ByteValue1.NumberOfSteps;
+        uint8_t tGreen = ((getGreenPart(Color1) * (ByteValue1.NumberOfSteps - Index))
+                + (getGreenPart(LongValue1.Color2) * Index)) / ByteValue1.NumberOfSteps;
+        uint8_t tBlue = ((getBluePart(Color1) * (ByteValue1.NumberOfSteps - Index))
+                + (getBluePart(LongValue1.Color2) * Index)) / ByteValue1.NumberOfSteps;
 #ifdef SUPPORT_RGBW
-        uint8_t tWhite = ((getWhitePart(Color1) * (PatternLength - Index)) + (getWhitePart(LongValue1.Color2) * Index))
-                / PatternLength;
+        uint8_t tWhite = ((getWhitePart(Color1) * (ByteValue1.NumberOfSteps - Index))
+                + (getWhitePart(LongValue1.Color2) * Index)) / ByteValue1.NumberOfSteps;
         ColorSet(Color(tRed, tGreen, tBlue, tWhite));
 #else
         ColorSet(Color(tRed, tGreen, tBlue));
@@ -821,12 +822,12 @@ void NeoPatterns::ScannerExtendedD(color32_t aColor, uint8_t aLength, uint16_t a
 }
 void NeoPatterns::ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings,
         uint8_t aMode, uint8_t aDirection) {
-// The variables MultipleExtension, Repetitions and NextOnPatternCompleteHandler are used by MultipleFallingStars and cannot be used here
+// The variables ByteValue2, Repetitions and NextOnPatternCompleteHandler are used by MultipleFallingStars and cannot be used here
     Color1 = aColor;
     LongValue1.NumberOfBouncings = aNumberOfBouncings;
     LongValue2.DeltaBrightnessShift8 = 0x10000 / aLength; // Delta for each step
 
-    PatternLength = aLength;
+    ByteValue1.PatternLength = aLength;
     PatternFlags = aMode;
     Direction = aDirection & DIRECTION_MASK;
     TotalStepCounter = numLEDs - aLength; // pattern is completely visible at start and end
@@ -899,7 +900,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
                     tNumberOfBouncings--;
                 }
                 if (PatternFlags & FLAG_SCANNER_EXT_CYLON) {
-                    if (Index + PatternLength == numLEDs + 1) {
+                    if (Index + ByteValue1.PatternLength == numLEDs + 1) {
                         Index -= 2;
                         Direction = DIRECTION_DOWN;
                         tNumberOfBouncings--;
@@ -913,8 +914,8 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
                     tNumberOfBouncings--;
                 }
                 if (PatternFlags & FLAG_SCANNER_EXT_CYLON) {
-                    if (Index - (PatternLength - 2) == 0) {
-                        Index = PatternLength;
+                    if (Index - (ByteValue1.PatternLength - 2) == 0) {
+                        Index = ByteValue1.PatternLength;
                         Direction = DIRECTION_UP;
                         tNumberOfBouncings--;
                     }
@@ -934,7 +935,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
     uint16_t tBrightnessDelta = LongValue2.DeltaBrightnessShift8;
 
     uint8_t tPatternIndex;
-    for (tPatternIndex = 0; tPatternIndex < PatternLength; ++tPatternIndex) {
+    for (tPatternIndex = 0; tPatternIndex < ByteValue1.PatternLength; ++tPatternIndex) {
         uint8_t tBrightness = tBrightnessHighResolution >> 8;
         /*
          * compute new dimmed color value
@@ -1043,9 +1044,9 @@ void NeoPatterns::StripesD(color32_t aColor1, uint8_t aLength1, color32_t aColor
 void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
         uint16_t aIntervalMillis, uint8_t aDirection) {
     Color1 = aColor1;
-    PatternLength = aLength1;
+    ByteValue1.PatternLength = aLength1;
+    ByteValue2.PatternLength = aLength2;
     LongValue1.Color2 = aColor2;
-    MultipleExtension = aLength2;     // abuse it for Length2
     if (aDirection & PARAMETER_IS_DURATION) {
         Interval = aIntervalMillis / aNumberOfSteps;
     } else {
@@ -1075,9 +1076,9 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
     Serial.print(F("Index="));
     Serial.print(Index);
     Serial.print(F(" Length1="));
-    Serial.print(PatternLength);
+    Serial.print(ByteValue1.PatternLength);
     Serial.print(F(" Length2="));
-    Serial.print(MultipleExtension);
+    Serial.print(ByteValue2.PatternLength);
     Serial.print(F(" Direction="));
     Serial.print(Direction);
     Serial.println();
@@ -1105,13 +1106,13 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
          */
         if (Direction == DIRECTION_UP) {
             Index++;
-            if (Index >= PatternLength + MultipleExtension) {
+            if (Index >= ByteValue1.PatternLength + ByteValue2.PatternLength) {
                 Index = 0;
             }
         } else {
             Index--;
             if (Index == 0xFFFF) {
-                Index = PatternLength + MultipleExtension - 1;
+                Index = ByteValue1.PatternLength + ByteValue2.PatternLength - 1;
             }
         }
     }
@@ -1121,7 +1122,7 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
      */
     uint8_t tRunningIndex = Index;
     for (uint_fast16_t i = 0; i < numLEDs; i++) {
-        if (tRunningIndex < PatternLength) {
+        if (tRunningIndex < ByteValue1.PatternLength) {
             // first color
             setPixelColor(i, Color1);
         } else {
@@ -1129,8 +1130,8 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
             setPixelColor(i, LongValue1.Color2);
         }
         tRunningIndex++;
-        // check for end of pattern - MultipleExtension is Length2
-        if (tRunningIndex >= PatternLength + MultipleExtension) {
+        // check for end of pattern
+        if (tRunningIndex >= ByteValue1.PatternLength + ByteValue2.PatternLength) {
             tRunningIndex = 0;
         }
     }
@@ -1159,7 +1160,7 @@ void NeoPatterns::BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint
     Direction = aDirection;
     LongValue1.StartIntervalMillis = aIntervalMillis; // Interval for first step - the t of the formula for s=1.
     LongValue2.TopPixelIndex = aIndexOfTopPixel;
-    PatternLength = aIndexOfTopPixel;
+    ByteValue1.IndexOfTopPixel = aIndexOfTopPixel;
     TotalStepCounter = 2;
     if (aDirection == DIRECTION_UP) {
         Index = 0;
@@ -1198,8 +1199,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
         float tSqrtOfDistanceToTopPixel = sqrt(tDistanceToTopPixel);
         float tDifferenceOfSquareRoots;
         if (Direction == DIRECTION_UP) {
-            // in PatternLength is IndexOfTopPixel
-            if (Index == PatternLength) {
+            if (Index == ByteValue1.IndexOfTopPixel) {
                 /*
                  * Reached top pixel -> change direction but use this pixel twice (by Index++).
                  * Compute time for vertex of parabola from the top integer index to the top float index and back.
@@ -1207,7 +1207,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
                  */
                 Direction = DIRECTION_DOWN;
                 Index++;
-                tDifferenceOfSquareRoots = 2 * sqrt(LongValue2.TopPixelIndex - PatternLength);
+                tDifferenceOfSquareRoots = 2 * sqrt(LongValue2.TopPixelIndex - ByteValue1.IndexOfTopPixel);
             } else {
                 // for the next step up we decelerate, e.g. we increase the time to next position
                 tDifferenceOfSquareRoots = (tSqrtOfDistanceToTopPixel - sqrt(tDistanceToTopPixel - 1));
@@ -1228,9 +1228,8 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
                  */
                 LongValue2.TopPixelIndex = ((LongValue2.TopPixelIndex + 1.0) * (100 - PatternFlags) /*aPercentageOfLossAtBounce*/
                 / 100.0) - 1.0;
-                // in PatternLength is IndexOfTopPixel
-                PatternLength = LongValue2.TopPixelIndex; // integer value of TopPixelIndex
-                if (PatternLength < 1) {
+                ByteValue1.IndexOfTopPixel = LongValue2.TopPixelIndex; // integer value of TopPixelIndex
+                if (ByteValue1.IndexOfTopPixel < 1) {
                     TotalStepCounter = 1; // last step
                 }
                 tDifferenceOfSquareRoots = (sqrt(LongValue2.TopPixelIndex) - sqrt(LongValue2.TopPixelIndex - 1));
@@ -1249,7 +1248,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
     Serial.print(F(" tIndexToDraw="));
     Serial.print(tIndexToDraw);
     Serial.print(F(" TopPixelIndex="));
-    Serial.print(PatternLength);
+    Serial.print(ByteValue1.IndexOfTopPixel);
     Serial.print(F(" IntervalToNext="));
     Serial.print(Interval);
     Serial.println();
@@ -1912,7 +1911,7 @@ bool NeoPatterns::Pattern2Update(bool aDoUpdate) {
 void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t aLength, uint8_t aScannerIntervalMillis,
         uint8_t aRepetitions, void (*aNextOnCompleteHandler)(NeoPatterns*), uint8_t aDirection) {
 
-    aLedsPtr->MultipleExtension = aScannerIntervalMillis;
+    aLedsPtr->ByteValue2.ScannerIntervalMillis = aScannerIntervalMillis;
     if (aRepetitions < (0xFF / 2)) {
         aLedsPtr->Repetitions = (aRepetitions * 2) - 1; // get an odd number
     } else {
@@ -1938,7 +1937,7 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
  * if ENDLESS_HANDLER_POINTER is used then run falling star forever with random delay between 10 and 1000 times the aScannerIntervalMillis
  */
 void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
-    uint8_t tScannerIntervalMillis = aLedsPtr->MultipleExtension;
+    uint8_t tScannerIntervalMillis = aLedsPtr->ByteValue2.ScannerIntervalMillis;
     uint16_t tRepetitions = aLedsPtr->Repetitions;
 #ifdef TRACE
     Serial.print(F("Repetitions="));
@@ -1964,7 +1963,7 @@ void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
             aLedsPtr->Delay(tScannerIntervalMillis * 2);
         } else {
             // for even Repetitions 2,4,6, etc. -> do scanner
-            aLedsPtr->ScannerExtended(aLedsPtr->Color1, aLedsPtr->PatternLength, tScannerIntervalMillis, 0,
+            aLedsPtr->ScannerExtended(aLedsPtr->Color1, aLedsPtr->ByteValue1.PatternLength, tScannerIntervalMillis, 0,
             FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, aLedsPtr->Direction);
         }
         aLedsPtr->Repetitions--;

@@ -12,7 +12,7 @@ Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Playe
 
 #### YouTube Video of Open Led Race
 
-[![Inspection car in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g)
+[![OpenLedRace in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g)
 
  Extensions are:
  *  **Accelerator MPU6050 input**.

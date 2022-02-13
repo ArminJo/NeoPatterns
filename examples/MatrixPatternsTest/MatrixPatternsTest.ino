@@ -211,11 +211,11 @@ void loop() {
              * Can set cooling and sparking parameters by potentiometers
              */
             // set cooling. 10 to 25 are sensible with optimum around 14 to 20
-            uint8_t tOldCooling = NeoPixelMatrix.PatternLength;
-            NeoPixelMatrix.PatternLength = map(analogRead(A0), 0, 1023, 2, 40);
-            if (tOldCooling != NeoPixelMatrix.PatternLength) {
+            uint8_t tOldCooling = NeoPixelMatrix.ByteValue1.Cooling;
+            NeoPixelMatrix.ByteValue1.Cooling = map(analogRead(A0), 0, 1023, 2, 40);
+            if (tOldCooling != NeoPixelMatrix.ByteValue1.Cooling) {
                 Serial.print(F("Cooling="));
-                Serial.println(NeoPixelMatrix.PatternLength);
+                Serial.println(NeoPixelMatrix.ByteValue1.Cooling);
             }
 
             // Not yet implemented

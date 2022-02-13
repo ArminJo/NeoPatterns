@@ -2,7 +2,7 @@
 This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).
 New Patterns are added, a snake game running on a matrix is included and you can run multiple patterns simultaneously on the same strip.
 
-### [Version 2.4.0](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
+### [Version 3.0.0](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)

@@ -923,7 +923,7 @@ bool initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t
 #ifdef INFO
     Serial.print(F("Autorun: "));
 #endif
-    aLedsPtr->MultipleExtension = AUTORUN_MODE_SHOW_END;
+    aLedsPtr->ByteValue2.SnakeAutorunStep = AUTORUN_MODE_SHOW_END;
     aLedsPtr->Repetitions = aRepetitions;
     aLedsPtr->NextOnPatternCompleteHandler = aLedsPtr->OnPatternComplete;
     aLedsPtr->OnPatternComplete = &SnakeAutorunCompleteHandler;
@@ -941,7 +941,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     static unsigned long sOriginalInterval; // store for original interval, since move needs its separate interval
     MatrixSnake *tLedsPtr = (MatrixSnake*) aLedsPtr;
 
-    uint8_t tStep = tLedsPtr->MultipleExtension;
+    uint8_t tStep = tLedsPtr->ByteValue2.SnakeAutorunStep;
 
 #ifdef DEBUG
     Serial.print(F("SnakeAutorunCompleteHandler Step="));
@@ -953,7 +953,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
         tLedsPtr->Repetitions--;
         if (tLedsPtr->Repetitions != 0 || tLedsPtr->NextOnPatternCompleteHandler == NULL) {
             // set value to enable next turn
-            tLedsPtr->MultipleExtension = AUTORUN_MODE_SHOW_END;
+            tLedsPtr->ByteValue2.SnakeAutorunStep = AUTORUN_MODE_SHOW_END;
             tLedsPtr->Snake(sOriginalInterval, tLedsPtr->Color1);
         } else {
             // perform delay and then switch back to NextOnComplete
@@ -978,7 +978,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     }
 
     tStep++;
-    tLedsPtr->MultipleExtension = tStep;
+    tLedsPtr->ByteValue2.SnakeAutorunStep = tStep;
 }
 #endif // defined(ENABLE_MATRIX_PATTERN_MOVE)
 

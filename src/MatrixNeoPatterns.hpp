@@ -164,8 +164,8 @@ bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     Interval = aIntervalMillis;
     Direction = DIRECTION_UP;
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
-    // PatternLength is used as value for cooling. Cooling affects the height of fire, the greater the value the smaller the fire
-    PatternLength = (MATRIX_FIRE_COOLING_PER_8_ROWS * 8) / Rows;
+    // Cooling affects the height of fire, the greater the value the smaller the fire
+    ByteValue1.Cooling = (MATRIX_FIRE_COOLING_PER_8_ROWS * 8) / Rows;
     Index = 3; // to call setInitHeat(); at startup
 
     // just to be sure
@@ -269,11 +269,10 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             uint8_t tNewHeatValue = MatrixOld[mapXYToArray(x, y, Columns + 2)] + ((tConvolutionSumTimes256 + 128) / 256);
 
             /*
-             * PatternLength contains the cooling (6 is a good value
-             * COOLING and clipping to zero
+             * COOLING and clipping to zero (6 is a good value)
              */
-            if (tNewHeatValue > PatternLength) {
-                tNewHeatValue -= PatternLength;
+            if (tNewHeatValue > ByteValue1.Cooling) {
+                tNewHeatValue -= ByteValue1.Cooling;
             } else {
                 tNewHeatValue = 0;
             }
@@ -349,12 +348,12 @@ bool MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     if (SnowFlakesArray) {
         free(SnowFlakesArray);
     }
-    PatternLength = ((Rows * 2) / 5) * Columns; // Formula for number of snow flakes
-    SnowFlakesArray = (struct SnowFlakeInfoStruct*) calloc(PatternLength * sizeof(struct SnowFlakeInfoStruct), 1);
+    ByteValue1.NumberOfFlakes = ((Rows * 2) / 5) * Columns; // Formula for number of snow flakes
+    SnowFlakesArray = (struct SnowFlakeInfoStruct*) calloc(ByteValue1.NumberOfFlakes * sizeof(struct SnowFlakeInfoStruct), 1);
     if (SnowFlakesArray == NULL) {
         return false;
     }
-    for (int tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+    for (int tSnowFlakeIndex = 0; tSnowFlakeIndex < ByteValue1.NumberOfFlakes; ++tSnowFlakeIndex) {
         // random parameters for a snow flake
         setRandomFlakeParameters(tSnowFlakeIndex);
     }
@@ -424,7 +423,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
     /*
      * 2. Do individual flake delay, move and draw all flakes
      */
-    for (uint_fast8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+    for (uint_fast8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < ByteValue1.NumberOfFlakes; ++tSnowFlakeIndex) {
         uint8_t tCount = SnowFlakesArray[tSnowFlakeIndex].Counter;
         if (tCount == 0) {
             // Move flake
@@ -457,7 +456,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
     /*
      * 3. Reinitialize all flakes, which were arrived at bottom row
      */
-    for (uint_fast8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < PatternLength; ++tSnowFlakeIndex) {
+    for (uint_fast8_t tSnowFlakeIndex = 0; tSnowFlakeIndex < ByteValue1.NumberOfFlakes; ++tSnowFlakeIndex) {
         if (SnowFlakesArray[tSnowFlakeIndex].Row >= Rows - 1) {
             // Reinitialize
             setRandomFlakeParameters(tSnowFlakeIndex);
