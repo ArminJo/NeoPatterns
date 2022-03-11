@@ -9,7 +9,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -31,6 +31,10 @@
 
 #include <Arduino.h>
 
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
 #define USE_SERIAL_CONTROL // control the snake direction with sending characters a,s,d,f over serial
 #include <MatrixSnake.hpp>
@@ -38,15 +42,18 @@
 // Delay between two SNAKE moves / Speed of game
 #define GAME_REFRESH_INTERVAL   400
 
+// Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_MATRIX_SNAKE 8
 #define MATRIX_NUMBER_OF_COLUMNS  8
 #define MATRIX_NUMBER_OF_ROWS     8
 
-#define RIGHT_BUTTON_PIN     2
-#define LEFT_BUTTON_PIN      3
+#define BRIGHTNESS_INPUT_PIN     A0
+
+#define RIGHT_BUTTON_PIN          2
+#define LEFT_BUTTON_PIN           3
 // If one of the up or down button is used, 4 button mode is entered automatically.
-#define UP_BUTTON_PIN        4
-#define DOWN_BUTTON_PIN      5
+#define UP_BUTTON_PIN             4
+#define DOWN_BUTTON_PIN           5
 
 /*
  * Specify your matrix geometry as 4th parameter.
@@ -68,8 +75,15 @@ void setup() {
     Serial.print(F("Matrix is attached at pin "));
     Serial.println(PIN_NEOPIXEL_MATRIX_SNAKE);
 
-    // This initializes the NeoPixel library and checks if enough memory was available
-    if (!NeoPixelMatrixSnake.begin(&Serial)) {
+#if defined(SUPPORT_BRIGHTNESS)
+    uint8_t tBrightness = NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
+    randomSeed(tBrightness);
+#else
+    uint8_t tBrightness = 0; // value is ignored :-)
+#endif
+
+    // This initializes the NeoPixel library and checks if enough memory was available. true for EnableBrightnessNonZeroMode
+    if (!NeoPixelMatrixSnake.begin(&Serial, tBrightness, true)) {
         Serial.println(F("Not enough memory for Snake matrix"));
         // Blink forever as error indicator
         while (true) {
@@ -87,6 +101,9 @@ void setup() {
 
 void loop() {
     static bool sButtonWasPressedOnce = false;
+#if defined(SUPPORT_BRIGHTNESS)
+    static uint8_t sLastBrightness;
+#endif
 
     if (NeoPixelMatrixSnake.Direction != DIRECTION_NONE) {
         // Direction is DIRECTION_NONE at start => direction != NONE indicates a pressed button
@@ -103,5 +120,18 @@ void loop() {
             initSnakeAutorun(&NeoPixelMatrixSnake, GAME_REFRESH_INTERVAL / 2, COLOR32_BLUE);
         }
     }
+#if defined(SUPPORT_BRIGHTNESS)
+    uint8_t tBrightness = NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
+    if (sLastBrightness != tBrightness) {
+        sLastBrightness = tBrightness;
+        Serial.print(F("Brightness="));
+        Serial.println(tBrightness);
+        NeoPixelMatrixSnake.updateOrRedraw(true, tBrightness);
+    } else {
+        NeoPixelMatrixSnake.updateOrRedraw(false, tBrightness);
+    }
+#else
     NeoPixelMatrixSnake.update();
+#endif
+    delay(50);
 }

@@ -28,31 +28,43 @@
 #include <Arduino.h>
 
 #define INFO
+
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+
 #include <MatrixSnake.hpp>
 
 #if defined(__AVR__)
+//#define DEBUG
+#  if defined(DEBUG)
+#include "AvrTracing.hpp"
+#include "AVRUtils.h"
+#  endif
 #include "ADCUtils.h"
-#include <avr/power.h>
-#include <avr/pgmspace.h>
 
 //#define ALL_PATTERN_ON_ONE_STRIP // shows all patterns on one consecutive device / multiple chained devices
 
 #define VCC_STOP_THRESHOLD_MILLIVOLT 3400   // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
 #define VCC_STOP_MIN_MILLIVOLT 3200         // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
-#define VCC_CHECK_PERIOD_MILLIS 2000         // Period of VCC checks
+#define VCC_CHECK_PERIOD_MILLIS 10000       // Period of VCC checks
 #define VCC_STOP_PERIOD_REPETITIONS 9       // Shutdown after 9 times (18 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_STOP_MIN_MILLIVOLT
 #define FALLING_STAR_DURATION 12
+char sStringBufferForVCC[7] = "xxxxmV";
 #endif // (__AVR__)
 
-// Which pin on the Arduino is connected to the NeoPixels?
-#define PIN_NEOPIXEL_BAR_24     2
-#define PIN_NEOPIXEL_BAR_16     3
+#define BRIGHTNESS_INPUT_PIN    A0
 
-#define PIN_NEOPIXEL_RING_16    4
-#define PIN_NEOPIXEL_RING_24    5
-#define PIN_NEOPIXEL_RING_12    6
+// Which pin on the Arduino is connected to the NeoPixels?
+#define PIN_NEOPIXEL_BAR_24     3
+#define PIN_NEOPIXEL_BAR_16     4
+
+#define PIN_NEOPIXEL_RING_16    5
+#define PIN_NEOPIXEL_RING_24    6
+#define PIN_NEOPIXEL_RING_12    7
 
 #define PIN_NEOPIXEL_MATRIX      8
+
 #define MATRIX_NUMBER_OF_COLUMNS 8
 #define MATRIX_NUMBER_OF_ROWS    8
 
@@ -84,7 +96,9 @@ MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800,
         &MatrixAndSnakePatternsDemoHandler);
 
+uint8_t readBrightness();
 void checkAndHandleVCCTooLow();
+
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -109,19 +123,25 @@ void setup() {
     }
 
 #if defined(__AVR__)
+#  if defined(DEBUG)
+    initStackFreeMeasurement();
+    initTrace();
+    printFreeRam(&Serial);
+#  endif
     // setup ADC reference and channel
     getVCCVoltageMillivoltSimple();
-
-    extern void *__brkval;
-    Serial.print(F("Free Ram/Stack[bytes]="));
-    Serial.println(SP - (uint16_t) __brkval);
 #endif
-
-    bar16.begin(); // This initializes the NeoPixel library.
-    bar24.begin(); // This initializes the NeoPixel library.
-    ring12.begin(); // This initializes the NeoPixel library.
-    ring16.begin(); // This initializes the NeoPixel library.
-    ring24.begin(); // This initializes the NeoPixel library.
+#if defined(SUPPORT_BRIGHTNESS)
+    uint8_t tBrightness = readBrightness();
+    randomSeed(tBrightness);
+#else
+    uint8_t tBrightness = 0; // value is ignored :-)
+#endif
+    bar16.begin(tBrightness, true); // This initializes the NeoPixel library. true for EnableBrightnessNonZeroMode
+    bar24.begin(tBrightness, true); // This initializes the NeoPixel library.
+    ring12.begin(tBrightness, true); // This initializes the NeoPixel library.
+    ring16.begin(tBrightness, true); // This initializes the NeoPixel library.
+    ring24.begin(tBrightness, true); // This initializes the NeoPixel library.
 
     ring12.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
     ring16.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
@@ -138,19 +158,20 @@ void setup() {
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
     NeoPixelMatrix.clear(); // Clear matrix
     NeoPixelMatrix.show();
-    NeoPixelMatrix.Delay(7000); // start later
-    setMatrixAndSnakePatternsDemoHandlerTickerText(F("I love NeoPixel"));
 
 #if defined(__AVR__)
     /*
      * Print voltage once on matrix
      */
-    char sStringBufferForVCC[7] = "xxxxmV";
-    uint16_t tVCC = getVCCVoltageMillivoltSimple();
+    uint16_t tVCC = getVCCVoltageMillivolt();
     if (tVCC < 4300) {
         itoa(tVCC, sStringBufferForVCC, 10);
         NeoPixelMatrix.Ticker(sStringBufferForVCC, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, DIRECTION_LEFT);
+    } else {
+        NeoPixelMatrix.Delay(7000); // start later
     }
+#else
+    NeoPixelMatrix.Delay(7000); // start later
 #endif // defined(__AVR__)
 
     Serial.println("started");
@@ -158,17 +179,43 @@ void setup() {
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors
 
+class PrintIfChanged {
+public:
+    const char *PGMTextPtr;
+    uint8_t LastValuePrinted;
+    PrintIfChanged(const char *aPGMText) {
+        PGMTextPtr = aPGMText;
+    }
+    void printIfChanged(uint8_t tValueToPrint) {
+        if (LastValuePrinted != tValueToPrint) {
+            LastValuePrinted = tValueToPrint;
+            Serial.print(reinterpret_cast<const __FlashStringHelper*>(PGMTextPtr));
+            Serial.println(tValueToPrint);
+        }
+    }
+};
+
+const char BrightnessPGM[] PROGMEM = "Brightness=";
+PrintIfChanged sBrightnessPrint(BrightnessPGM);
+
 void loop() {
 #if defined(__AVR__)
     checkAndHandleVCCTooLow();
 #endif // defined(__AVR__)
 
-    bar16.update();
-    bar24.update();
-    ring12.update();
-    ring16.update();
-    ring24.update();
-    if (NeoPixelMatrix.update()) {
+#if defined(SUPPORT_BRIGHTNESS)
+    uint8_t tBrightness = readBrightness();
+#else
+    uint8_t tBrightness = 0; // value is ignored :-)
+#endif
+    //    sBrightnessPrint.printIfChanged(tBrightness);
+
+    bar16.update(tBrightness);
+    bar24.update(tBrightness);
+    ring12.update(tBrightness);
+    ring16.update(tBrightness);
+    ring24.update(tBrightness);
+    if (NeoPixelMatrix.update(tBrightness)) {
         if (NeoPixelMatrix.ActivePattern == MATRIX_PATTERN_TICKER) {
             // change color of ticker after each update
             NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
@@ -238,13 +285,17 @@ void TestPatterns(NeoPatterns *aLedsPtr) {
     sState++;
 }
 
+uint8_t readBrightness() {
+    return NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
+}
+
 #if defined(__AVR__)
 /*
  * If voltage too low for VCC_STOP_PERIOD_REPETITIONS times clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
 void checkAndHandleVCCTooLow() {
     /*
-     * Check VCC every 2 seconds
+     * Check VCC every 10 seconds
      */
     static long sLastMillisOfVoltageCheck;
     static bool sVoltageTooLowDetectedOnce = false; // one time flag
@@ -252,10 +303,7 @@ void checkAndHandleVCCTooLow() {
 
     if (millis() - sLastMillisOfVoltageCheck >= VCC_CHECK_PERIOD_MILLIS) {
         sLastMillisOfVoltageCheck = millis();
-        uint16_t tVCC = getVCCVoltageMillivoltSimple();
-        Serial.print(F("VCC="));
-        Serial.print(tVCC);
-        Serial.println(F("mV"));
+        uint16_t tVCC = printVCCVoltageMillivolt(&Serial);
 
         if (!sVoltageTooLowDetectedOnce) {
 

@@ -57,7 +57,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 
 #if (!(defined(ENABLE_PATTERN_RAINBOW_CYCLE) || defined(ENABLE_PATTERN_COLOR_WIPE) || defined(ENABLE_PATTERN_FADE) \
 || defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
-|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) || defined(ENABLE_PATTERN_EMBER) \
+|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) \
 || defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
 || defined(ENABLE_NO_NEO_PATTERN_BY_DEFAULT) ))
 #define ENABLE_PATTERN_RAINBOW_CYCLE
@@ -68,7 +68,6 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define ENABLE_PATTERN_PROCESS_SELECTIVE
 #define ENABLE_PATTERN_HEARTBEAT
 #define ENABLE_PATTERN_FIRE
-#define ENABLE_PATTERN_EMBER
 #define ENABLE_PATTERN_USER_PATTERN1
 #define ENABLE_PATTERN_USER_PATTERN2
 #   if !defined(DO_NOT_USE_MATH_PATTERNS)
@@ -88,12 +87,11 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define PATTERN_PROCESS_SELECTIVE   7
 #define PATTERN_HEARTBEAT           8
 #define PATTERN_FIRE                9
-#define PATTERN_EMBER              10
 
-#define PATTERN_USER_PATTERN1      11
-#define PATTERN_USER_PATTERN2      12
+#define PATTERN_USER_PATTERN1      10
+#define PATTERN_USER_PATTERN2      11
 
-#define PATTERN_BOUNCING_BALL      13
+#define PATTERN_BOUNCING_BALL      12
 #define LAST_NEO_PATTERN           PATTERN_BOUNCING_BALL
 
 /*
@@ -125,10 +123,10 @@ class NeoPatterns: public virtual NeoPixel {
 public:
     NeoPatterns();
     void init();
-    NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
-            bool aShowOnlyAtUpdate = false);
-    bool init(uint16_t aNumberOfPixels, uint8_t aPin, uint8_t aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)=NULL,
-            bool aShowOnlyAtUpdate = false);
+    NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel,
+            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL, bool aShowOnlyAtUpdate = false);
+    bool init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel,
+            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL, bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
@@ -140,16 +138,21 @@ public:
 
     bool isActive();
     bool checkForUpdate();
-    bool updateOrRedraw();
     bool update();
+    bool update(uint8_t aBrightness);
+    bool updateOrRedraw(bool aDoRedrawIfNoUpdate);
+    bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness);
     bool updateAllPartialPatterns();
+    bool updateAllPartialPatterns(uint8_t aBrightness);
+    void updateAndWaitForPatternToStop();
+    void updateAndWaitForPatternToStop(uint8_t aBrightness);
+    void updateAllPartialPatternsAndWaitForPatternsToStop();
+    void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness);
+
     void showPatternInitially();
     bool decrementTotalStepCounter();
     void setNextIndex();
     bool decrementTotalStepCounterAndSetNextIndex();
-
-    void updateAndWaitForPatternToStop();
-    void updateAllPartialPatternsAndWaitForPatternsToStop();
 
     /*
      * PATTERNS
@@ -207,12 +210,6 @@ public:
 #if defined(ENABLE_PATTERN_FIRE)
     void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
     bool FireUpdate(bool aDoUpdate = true);
-#endif
-#if defined(ENABLE_PATTERN_EMBER)
-    void Ember(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode, uint8_t aIncreaseIntervalFactor,
-            uint16_t aNumberOfDecreasingSteps, uint16_t aIntervalMillis);
-    void initEmberHeat(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode);
-    bool EmberUpdate(bool aDoUpdate = true);
 #endif
 
     void convertHeatToColor();
@@ -277,6 +274,7 @@ public:
 #define FLAG_DO_CLEAR                       0x00
     // Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
 #define FLAG_DO_NOT_CLEAR                   0x10
+// see also: #define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH.
     uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce
 
     union {
@@ -358,13 +356,14 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 
 /*
  *
- * Version 3.0.0 - 2/2022
+ * Version 3.0.0 - 3/2022
  * - Enabled individual selection of patterns to save program space.
  * - Renamed NeoPatterns.cpp, MatrixNeoPatterns.cpp and MatrixSnake.cpp to NeoPatterns.hpp, MatrixNeoPatterns.hpp and MatrixSnake.hpp.
  * - Renamed matrix pattern macros from PATTERN_* to MATRIX_PATTERN_*.
  * - Changed parameter for endless repeats in initMultipleFallingStars().
  * - Improved usage of random().
- * - Added function fillRegion(), isActive() and setAdafruitBrightnessValue().
+ * - Added function fillRegion(), isActive() and setBrightnessValue().
+ * - Added support for brightness and brightness non zero mode.
  *
  * Version 2.3.1 - 02/2021
  * - Changed type of TotalStepCounter from uint16_t to int16_t.

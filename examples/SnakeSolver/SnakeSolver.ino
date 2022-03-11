@@ -1,11 +1,11 @@
 /*
- * SnakeAutorun.cpp
+ * SnakeSolver.cpp
  *
- *  It runs the snake game using your AI code in the findBestSnakeDirection() function.
+ *  It runs the snake game using your AI code in the getNextSnakeDirection() function.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -26,6 +26,8 @@
  */
 
 #include <Arduino.h>
+
+#define ENABLE_USER_SNAKE_SOLVER // activates function getNextSnakeDirection() below
 
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
 #include <MatrixSnake.hpp>
@@ -51,7 +53,7 @@
 MatrixSnake NeoPixelMatrixSnake = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX_SNAKE,
         NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800);
 
-/********************************************
+/******************************************************************************************************
  * Put your Snake solver code here
  * This function is called before every snake move and must return the new direction for the snake.
  *
@@ -67,75 +69,77 @@ MatrixSnake NeoPixelMatrixSnake = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_N
  *                       computeDirection(position aStartPosition, position aEndPosition)
  *                       computeNewHeadPosition(uint8_t aDirection, position * aSnakeNewHeadPosition)
  *
- * More functions can be found in MatrixSnake.h / .cpp
+ * More functions can be found in MatrixSnake.hpp
  *
- ********************************************/
-//uint8_t getNextSnakeDirection(MatrixSnake *aSnake) {
-//
-//    /*
-//     * Call internal solver
-//     * Comment / deactivate the next line to enable your own code
-//     */
-//    return aSnake->getNextSnakeDir();
-//
-//    /*
-//     * Debug output
-//     */
-//    Serial.print(F("getSnakeDirection CurrentDirection="));
-//    Serial.print(DirectionToString(aSnake->Direction));
-//    Serial.print(F(" head=("));
-//    Serial.print(aSnake->SnakePixelList[0].x);
-//    Serial.print(',');
-//    Serial.print(aSnake->SnakePixelList[0].y);
-//    Serial.println(')');
-//
-//    int8_t tDeltaX = aSnake->Apple.x - aSnake->SnakePixelList[0].x;
-//    int8_t tDeltaY = aSnake->Apple.y - aSnake->SnakePixelList[0].y;
-//
-//    Serial.print(F("DeltaX="));
-//    Serial.print(tDeltaX);
-//    Serial.print(F(" DeltaY="));
-//    Serial.println(tDeltaY);
-//
-//    uint8_t tNewDirection = aSnake->Direction;
-//
-//    /*
-//     *  Simple example, go towards the apple.
-//     */
-//
-//    /*
-//     * Avoid going to opposite direction, because this is invalid.
-//     * Eg. if actual direction is UP, we must not change to DOWN.
-//     */
-//    if (tDeltaX > 0 && aSnake->Direction != DIRECTION_LEFT) {
-//        tNewDirection = DIRECTION_RIGHT;
-//    } else if (tDeltaX < 0 && aSnake->Direction != DIRECTION_RIGHT) {
-//        tNewDirection = DIRECTION_LEFT;
-//    }
-//    if (tDeltaY > 0 && aSnake->Direction != DIRECTION_UP) {
-//        tNewDirection = DIRECTION_DOWN;
-//    } else if (tDeltaY < 0 && aSnake->Direction != DIRECTION_DOWN) {
-//        tNewDirection = DIRECTION_UP;
-//    }
-//
-//    // check new direction...
-//    if (aSnake->checkDirection(tNewDirection) != 0) {
-//        /*
-//         * check was not successful just check all available directions
-//         */
-//        for (tNewDirection = 0; tNewDirection < NUMBER_OF_DIRECTIONS; ++tNewDirection) {
-//            if (aSnake->checkDirection(tNewDirection) == 0) {
-//                break;
-//            }
-//        }
-//    }
-//
-//// End of dummy example
-//    Serial.print(F("NewDirection="));
-//    Serial.println(DirectionToString(tNewDirection));
-//
-//    return tNewDirection;
-//}
+ ******************************************************************************************************/
+#if defined(ENABLE_USER_SNAKE_SOLVER)
+uint8_t getNextSnakeDirection(MatrixSnake *aSnake) {
+
+    /*
+     * Call internal solver
+     * Comment / deactivate the next line to enable your own code
+     */
+    return aSnake->builtinGetNextSnakeDirection();
+
+    /*
+     * Debug output
+     */
+    Serial.print(F("getSnakeDirection CurrentDirection="));
+    Serial.print(DirectionToString(aSnake->Direction));
+    Serial.print(F(" head=("));
+    Serial.print(aSnake->SnakePixelList[0].x);
+    Serial.print(',');
+    Serial.print(aSnake->SnakePixelList[0].y);
+    Serial.println(')');
+
+    int8_t tDeltaX = aSnake->Apple.x - aSnake->SnakePixelList[0].x;
+    int8_t tDeltaY = aSnake->Apple.y - aSnake->SnakePixelList[0].y;
+
+    Serial.print(F("DeltaX="));
+    Serial.print(tDeltaX);
+    Serial.print(F(" DeltaY="));
+    Serial.println(tDeltaY);
+
+    uint8_t tNewDirection = aSnake->Direction;
+
+    /*
+     *  Simple example, go towards the apple.
+     */
+
+    /*
+     * Avoid going to opposite direction, because this is invalid.
+     * Eg. if actual direction is UP, we must not change to DOWN.
+     */
+    if (tDeltaX > 0 && aSnake->Direction != DIRECTION_LEFT) {
+        tNewDirection = DIRECTION_RIGHT;
+    } else if (tDeltaX < 0 && aSnake->Direction != DIRECTION_RIGHT) {
+        tNewDirection = DIRECTION_LEFT;
+    }
+    if (tDeltaY > 0 && aSnake->Direction != DIRECTION_UP) {
+        tNewDirection = DIRECTION_DOWN;
+    } else if (tDeltaY < 0 && aSnake->Direction != DIRECTION_DOWN) {
+        tNewDirection = DIRECTION_UP;
+    }
+
+    // check new direction...
+    if (aSnake->checkDirection(tNewDirection) != 0) {
+        /*
+         * check was not successful just check all available directions
+         */
+        for (tNewDirection = 0; tNewDirection < NUMBER_OF_DIRECTIONS; ++tNewDirection) {
+            if (aSnake->checkDirection(tNewDirection) == 0) {
+                break;
+            }
+        }
+    }
+
+// End of dummy example
+    Serial.print(F("NewDirection="));
+    Serial.println(DirectionToString(tNewDirection));
+
+    return tNewDirection;
+}
+#endif // ENABLE_USER_SNAKE_SOLVER
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);

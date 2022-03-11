@@ -28,6 +28,12 @@
 
 #include <Arduino.h>
 
+#define TRACE
+
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+
 #include <MatrixNeoPatterns.hpp>
 
 #define PIN_NEOPIXEL_MATRIX      8

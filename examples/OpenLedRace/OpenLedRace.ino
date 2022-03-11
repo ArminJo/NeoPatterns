@@ -805,7 +805,7 @@ public:
         bool tCarIsOnRamp = isCarInRegion(StartPositionOnTrack, RampLength);
         color32_t tColor = RAMP_COLOR;
         if (tCarIsOnRamp) {
-            tColor = TrackPtr->dimColorWithGamma32(tColor, 160);
+            tColor = TrackPtr->dimColorWithGamma5(tColor, 160);
         }
 #if !defined(BRIDGE_NO_NEOPATTERNS)
         if (isInitialized && aDoAnimation) {
@@ -976,7 +976,7 @@ public:
         (void) aDoAnimation; // to avoid compiler warning
 #endif
         if (tCarIsOnLoop) {
-            tColor = TrackPtr->dimColorWithGamma32(tColor, 160);
+            tColor = TrackPtr->dimColorWithGamma5(tColor, 160);
         }
         TrackPtr->fillRegion(tColor, StartPositionOnTrack, LoopLength);
     }

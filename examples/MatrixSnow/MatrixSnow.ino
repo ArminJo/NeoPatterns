@@ -28,6 +28,10 @@
 #include <Arduino.h>
 
 //#define ENABLE_MATRIX_PATTERN_SNOW // not required since we call SnowUpdate() directly and do not call update().
+//#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+
 #include <MatrixNeoPatterns.hpp>
 
 #if defined(__AVR__)
@@ -36,7 +40,7 @@
 
 #define USE_16_X_16_MATRIX
 #if defined(USE_16_X_16_MATRIX)
-#define PIN_NEOPIXEL_MATRIX         5
+#define PIN_NEOPIXEL_MATRIX         8
 #define MATRIX_NUMBER_OF_COLUMNS   16
 #define MATRIX_NUMBER_OF_ROWS      16
 /*

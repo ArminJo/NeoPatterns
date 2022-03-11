@@ -55,11 +55,11 @@ jobs:
 
           - arduino-boards-fqbn: esp8266:esp8266:huzzah:eesz=4M3M,xtal=80
             platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-            sketches-exclude: OpenLedRace,TwoPatternsOnOneStrip # Comma separated list of example names to exclude in build
+            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip # Comma separated list of example names to exclude in build
 
           - arduino-boards-fqbn: esp32:esp32:featheresp32:FlashFreq=80
             platform-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-            sketches-exclude: OpenLedRace,TwoPatternsOnOneStrip # TwoPatternsOnOneStrip because of missing EasyButton library
+            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip # MatrixPatternsTest,TwoPatternsOnOneStrip because of missing EasyButton library
 
       # Do not cancel all jobs / architectures if one job fails
       fail-fast: false

@@ -72,13 +72,13 @@ extern const uint8_t fontNumbers4x6[] PROGMEM; // the font for showing numbers
  */
 #define CONVOLUTION_MATRIX_SIZE 3
 //float const convolutionMatrix[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] =
-//        { { 0.02, 0.02, 0.02 } /*weights of values above*/, { 0.05, -1 /*own value*/, 0.05 }, { 0.05, 0.74, 0.05 }/*weights of values below*/};
+//        { { 0.05, 0.74, 0.05 }/*weights of values below*/, { 0.05, -1 /*own value*/, 0.05 }, { 0.02, 0.02, 0.02 } /*weights of values above*/};
 //int16_t const convolutionMatrixIntegerTimes256[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] =
-//{ { 5, 5, 5 } /*weights of values above*/, { 13, -256 /*own value*/, 13 }, { 13, 189, 13 }/*weights of values below*/};
+//{ { 13, 189, 13 }/*weights of values below*/, { 13, -256 /*own value*/, 13 }, { 5, 5, 5 } /*weights of values above*/};
 //int16_t const convolutionMatrixIntegerTimes256[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] =
-//{ { 0, 0, 0 } /*weights of values above*/, { 6, -128 /*own value*/, 6 }, { 13, 90, 13 }/*weights of values below*/};
+//{  { 13, 90, 13 }/*weights of values below*/, { 6, -128 /*own value*/, 6 },{ 0, 0, 0 } /*weights of values above*/};
 int16_t const convolutionMatrixIntegerTimes256[CONVOLUTION_MATRIX_SIZE][CONVOLUTION_MATRIX_SIZE] = {
-        { 0, 0, 0 } /*weights of values above*/, { 0, -128 /*own value*/, 0 }, { 13, 102, 13 }/*weights of values below*/};
+        { 13, 102, 13 } /*weights of values below*/, { 0, -128 /*own value*/, 0 }, { 0, 0, 0 } /*weights of values above*/};
 
 #define SNOW_BOTTOM_LINE_DIM_PRESCALER  20
 // Bit-fields save 2 bytes RAM per flake but costs 120 bytes program space
@@ -101,9 +101,9 @@ class MatrixNeoPatterns: public MatrixNeoPixel, public NeoPatterns {
 public:
     MatrixNeoPatterns();
     void init();
-    MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+    MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
-    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
@@ -134,6 +134,7 @@ public:
     void moveArrayContent(uint8_t aDirection, color32_t aBackgroundColor);
 
     bool update();
+    bool update(uint8_t aBrightness);
 
 #if defined(ENABLE_MATRIX_PATTERN_SNOW)
     bool Snow(uint16_t aNumberOfSteps = 500, uint16_t aIntervalMillis = 20);
@@ -159,7 +160,6 @@ public:
      */
     uint8_t *MatrixNew;
     uint8_t *MatrixOld;
-    uint8_t *initalHeatLine;
 #endif
 
     // for movingPicture and Ticker patterns

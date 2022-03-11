@@ -89,8 +89,11 @@ public:
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);
 
     bool update();
+    bool update(uint8_t aBrightness);
+    bool updateOrRedraw(bool aDoRedrawIfNoUpdate);
+    bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness);
 
-    void SnakeUpdate();
+    void SnakeUpdate(bool aDoUpdate = true);
     void SnakeStop();
     void SnakeInputHandler();
     void SnakeEndHandler();
@@ -111,7 +114,7 @@ public:
     //
     bool computeNewHeadPosition(uint8_t aActualDirection, position *aSnakeNewHeadPosition);
     bool moveSnakeAndCheckApple(position tSnakeNewHeadPosition);
-#ifdef DEBUG
+#ifdef TRACE
     void printSnakePosition(position aSnakePosition);
 #endif
     /*
@@ -119,7 +122,7 @@ public:
      */
     uint8_t findNextDir();
     uint8_t runAndCheckIfAppleCanBeReached();
-    uint8_t getNextSnakeDir();
+    uint8_t builtinGetNextSnakeDirection();
 
     // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
     // SnakePixelList[0] is head of snake
@@ -152,6 +155,7 @@ uint8_t computeDirection(position aStartPosition, position aEndPosition);
 extern const char sDefaultTickerText[] PROGMEM; // = "I love Neopixel"
 extern const char *sTickerTextPtr; // = sDefaultTickerText;
 void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *aTextForTicker);
+void setMatrixAndSnakePatternsDemoHandlerTickerText(const char *aTextForTicker);
 #if defined(ENABLE_MATRIX_PATTERN_TICKER) && defined(ENABLE_MATRIX_PATTERN_MOVING_PICTURE)  && defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
         && defined(ENABLE_MATRIX_PATTERN_MOVE) && defined(ENABLE_MATRIX_PATTERN_FIRE) && defined(ENABLE_MATRIX_PATTERN_SNOW)
 void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr);

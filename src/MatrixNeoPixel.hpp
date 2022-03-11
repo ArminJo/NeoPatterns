@@ -1,12 +1,12 @@
 /*
- * MatrixNeoPixel.cpp
+ * MatrixNeoPixel.hpp
  *
- * Implements basic functions for NeoPixel matrix. Tested with 8x8 matrix.
+ * Implements basic functions for NeoPixel matrix. Tested with 8x8 10x10 and 16x16 matrix.
  *
  *  SUMMARY
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
  *
- *  Copyright (C) 2019  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -26,11 +26,14 @@
  *
  */
 
-//#define TRACE
-//#define DEBUG
-#include "MatrixNeoPixel.h"
+#ifndef NEOPATTERNS_MATRIX_NEOPIXEL_HPP
+#define NEOPATTERNS_MATRIX_NEOPIXEL_HPP
 
-// Demo 8x8 heart graphics
+#include "MatrixNeoPixel.h"
+// include sources
+#include "NeoPixel.hpp"
+
+// For demo 8x8 heart graphics
 const uint8_t heart8x8[] PROGMEM = { 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18, 0x00 };
 
 MatrixNeoPixel::MatrixNeoPixel() :
@@ -156,6 +159,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 
 /*
  * If LayoutMappingFunction is not set, use ZTypeMapping.
+ * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
  * @param aColumnX from 0 to (Columns - 1)
  * @param aRowY from 0 to (Rows - 1)
  */
@@ -258,6 +262,8 @@ uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
 
 #ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
 /*
+ * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
+ *
  *   Example Pixel mappings supported (bottom up mappings not shown here)
  *
  *   ProgressiveMapping                  ZigzagTypeMapping
@@ -740,9 +746,9 @@ void MatrixNeoPixel::drawAllColors() {
                 uint8_t red = yAscending;
 
                 // Gamma corrected values
-                uint8_t greenC = NeoPixel::gamma32(green);
-                uint8_t blueC = NeoPixel::gamma32(blue);
-                uint8_t redC = NeoPixel::gamma32(red);
+                uint8_t greenC = NeoPixel::gamma5(green);
+                uint8_t blueC = NeoPixel::gamma5(blue);
+                uint8_t redC = NeoPixel::gamma5(red);
 
 #ifdef TRACE
                 printPin(&Serial);
@@ -897,4 +903,6 @@ uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aC
         return (aColumnsTotal * ((aRowsTotal - aRowY) - 1)) + aColumnX;
     }
 }
+#endif // NEOPATTERNS_MATRIX_NEOPIXEL_HPP
+#pragma once
 

@@ -27,8 +27,21 @@
 
 #include <Arduino.h>
 
+#define INFO
+
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+
 #define ENABLE_PATTERNS_FOR_MATRIX_AND_SNAKE_DEMO_HANDLER
 #include <MatrixSnake.hpp>
+
+#if defined(__AVR__)
+#  if defined(DEBUG)
+#include "AvrTracing.hpp"
+#include "AVRUtils.h"
+#  endif
+#endif
 
 #if defined(ESP32)
 #define PIN_NEOPIXEL_MATRIX        2
@@ -69,12 +82,14 @@ void setup() {
     }
 
 #if defined(__AVR__)
-    extern void *__brkval;
-    Serial.print(F("Free Ram/Stack[bytes]="));
-    Serial.println(SP - (uint16_t) __brkval);
+#  if defined(DEBUG)
+    initStackFreeMeasurement();
+    initTrace();
+    printFreeRam(&Serial);
+#  endif
 #endif
 
-    MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix);
+    MatrixAndSnakePatternsDemoHandler(&NeoPixelMatrix); // start pattern
 }
 
 uint8_t sWheelPosition = 0; // hold the color index for the changing ticker colors

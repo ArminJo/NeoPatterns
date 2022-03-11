@@ -135,8 +135,8 @@ void loop() {
              * First the background pattern is completely generated
              * Then the fast moves pattern overwrites the background. Therefore we can only use small patterns which do not draw black pixels
              */
-            NeoPatternsBackground.updateOrRedraw();
-            NeoPatternsFastMoves.updateOrRedraw();
+            NeoPatternsBackground.updateOrRedraw(true);
+            NeoPatternsFastMoves.updateOrRedraw(true);
 #ifdef DEBUG
 
             uint32_t tEndMillis = millis();
