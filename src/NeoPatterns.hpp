@@ -35,11 +35,11 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
-#ifndef NEOPATTERNS_HPP
-#define NEOPATTERNS_HPP
+#ifndef _NEOPATTERNS_HPP
+#define _NEOPATTERNS_HPP
 
 #include <Arduino.h>
 
@@ -249,7 +249,7 @@ bool NeoPatterns::updateAllPartialPatterns() {
     bool tAtLeastOnePatternIsActive = false;
     NeoPatterns *NextObjectPointer = FirstNeoPatternsObject;
     while (NextObjectPointer != NULL) {
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("&Pattern=0x"));
         Serial.print((uintptr_t) NextObjectPointer, HEX);
@@ -300,13 +300,13 @@ void NeoPatterns::showPatternInitially() {
     if ((ActivePattern == PATTERN_NONE) || (PixelFlags & PIXEL_FLAG_SHOW_ONLY_AT_UPDATE) == 0) {
         show();
         lastUpdate = millis(); // to schedule the next update
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("Init lastUpdate to "));
         Serial.println(lastUpdate);
 #endif
     }
-#ifdef DEBUG
+#if defined(DEBUG)
     else {
         printPin(&Serial);
         Serial.println(F("Called asynchronously -> do not show"));
@@ -508,7 +508,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
         // Safety net. The pattern has ended, but the callback has not set a new pattern
         TotalStepCounter = 0;
         ActivePattern = PATTERN_NONE;
-#ifdef INFO
+#if defined(INFO)
         printPin(&Serial);
         Serial.println(F("Reset pattern to NONE"));
 #endif
@@ -519,21 +519,21 @@ bool NeoPatterns::decrementTotalStepCounter() {
             /*
              * Do not set activePattern to PATTERN_NONE, to enable the callback to see the finished one.
              */
-#ifdef DEBUG
+#if defined(DEBUG)
             printPin(&Serial);
             printPattern();
             Serial.print(F(": Call completion callback 0x"));
             Serial.println((__SIZE_TYPE__) (OnPatternComplete) << 1, HEX);
 #endif
             OnPatternComplete(this); // call the completion callback
-#ifdef DEBUG
+#if defined(DEBUG)
             printPin(&Serial);
             Serial.print(F("New "));
             printPattern();
             Serial.println();
 #endif
         } else {
-#ifdef DEBUG
+#if defined(DEBUG)
             printPin(&Serial);
             printPattern();
             Serial.println(F(": No completion callback, ActivePattern = PATTERN_NONE"));
@@ -542,7 +542,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
         }
         return true;
     }
-#ifdef TRACE
+#if defined(TRACE)
     Serial.print(F(" lastUpdate="));
     Serial.println(lastUpdate);
 #endif
@@ -558,7 +558,7 @@ void NeoPatterns::setNextIndex() {
     } else {
         Index--;
     }
-#ifdef DEBUG
+#if defined(DEBUG)
     printPin(&Serial);
     printPattern();
     Serial.print(F("TotalSteps="));
@@ -609,7 +609,7 @@ void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection) {
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_RAINBOW_CYCLE;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -663,7 +663,7 @@ void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t 
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_COLOR_WIPE;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -711,7 +711,7 @@ void NeoPatterns::Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNum
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FADE;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -733,7 +733,7 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
                 / ByteValue1.NumberOfSteps;
         uint8_t tBlue = ((getBluePart(Color1) * (ByteValue1.NumberOfSteps - Index)) + (getBluePart(LongValue1.Color2) * Index))
                 / ByteValue1.NumberOfSteps;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
         uint8_t tWhite = ((getWhitePart(Color1) * (ByteValue1.NumberOfSteps - Index)) + (getWhitePart(LongValue1.Color2) * Index))
                 / ByteValue1.NumberOfSteps;
         ColorSet(Color(tRed, tGreen, tBlue, tWhite));
@@ -768,7 +768,7 @@ void NeoPatterns::Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_HEARTBEAT;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -802,7 +802,7 @@ bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
                 }
             }
         }
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("Index="));
         Serial.println(Index);
@@ -817,7 +817,7 @@ bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
             if (tDimmedColor == 0) {
                 // now we have black, which should be skipped
                 aDoUpdate = true; // enable next index for next loop
-#ifdef TRACE
+#if defined(TRACE)
                 Serial.println(F("Skip black color index"));
 #endif
             } else {
@@ -901,7 +901,7 @@ void NeoPatterns::ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aI
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_SCANNER_EXTENDED;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -993,7 +993,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
             }
         }
 
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("ScannerExtendedUpdate: Index="));
         Serial.print(Index);
@@ -1015,7 +1015,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
     }
 
     if (aDoUpdate) {
-#ifdef TRACE
+#if defined(TRACE)
         Serial.println(F("clear tail"));
 #endif
         /*
@@ -1098,7 +1098,7 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
             Index = ((aLength1 + (aLength1 + aLength2)) - tNumPixels);
         }
     }
-#ifdef DEBUG
+#if defined(DEBUG)
     printPin(&Serial);
     Serial.print(F("Index="));
     Serial.print(Index);
@@ -1115,7 +1115,7 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_STRIPES;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1180,7 +1180,7 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
  * A ball needs for the first meter of free fall in real life 0,45 seconds using
  * And for 10 cm 0,143 seconds
  *
- * Requires up to 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise.
+ * Requires up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise.
  */
 void NeoPatterns::BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint16_t aIntervalMillis,
         int8_t aPercentageOfLossAtBounce, uint8_t aDirection) {
@@ -1269,7 +1269,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
      * Refresh pattern
      */
     setPixelColor(tIndexToDraw, Color1);
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
     Serial.print(F("Ball: Index="));
     Serial.print(Index);
@@ -1319,7 +1319,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FIRE;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1501,7 +1501,7 @@ void NeoPatterns::ProcessSelectiveColor(color32_t aColorForSelection, color32_t 
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_PROCESS_SELECTIVE;
-#ifdef TRACE
+#if defined(TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1547,7 +1547,7 @@ color32_t FadeColor(NeoPatterns *aNeoPatternsPtr) {
     uint8_t tRed = ((getRedPart(tColor1) * (tTotalSteps - tIndex)) + (getRedPart(tColor2) * tIndex)) / tTotalSteps;
     uint8_t tGreen = ((getGreenPart(tColor1) * (tTotalSteps - tIndex)) + (getGreenPart(tColor2) * tIndex)) / tTotalSteps;
     uint8_t tBlue = ((getBluePart(tColor1) * (tTotalSteps - tIndex)) + (getBluePart(tColor2) * tIndex)) / tTotalSteps;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint8_t tWhite = ((getWhitePart(tColor1) * (tTotalSteps - tIndex)) + (getWhitePart(tColor2) * tIndex)) / tTotalSteps;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
@@ -1563,11 +1563,11 @@ color32_t DimColor(NeoPatterns *aNeoPatternsPtr) {
     uint8_t tRed = getRedPart(tColor) >> 1;
     uint8_t tGreen = getGreenPart(tColor) >> 1;
     uint8_t tBlue = getBluePart(tColor) >> 1;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint8_t tWhite = getWhitePart(tColor) >> 1;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
-    // call to function saves 6 byte program space
+    // call to function saves 6 byte program memory
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
 #endif
 
@@ -1582,11 +1582,11 @@ color32_t BrightenColor(NeoPatterns *aNeoPatternsPtr) {
     uint8_t tRed = getRedPart(tColor) << 1;
     uint8_t tGreen = getGreenPart(tColor) << 1;
     uint8_t tBlue = getBluePart(tColor) << 1;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint8_t tWhite = getWhitePart(tColor) << 1;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
-// call to function saves 22 byte program space
+// call to function saves 22 byte program memory
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);//    return COLOR32(red, green, blue);
 #endif
 }
@@ -1624,7 +1624,7 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 /*
  * For debugging purposes
  */
-#ifdef INFO
+#if defined(INFO)
 void NeoPatterns::printPattern() {
     Serial.print(F("Pattern="));
     printPatternName(ActivePattern, &Serial);
@@ -1711,7 +1711,7 @@ void __attribute__((weak)) UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPi
     aNeoPatterns->showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
-#ifdef TRACE
+#if defined(TRACE)
     aNeoPatterns->printInfo(&Serial, true);
 #endif
 }
@@ -1769,7 +1769,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
     aNeoPatterns->showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN2;
-#ifdef TRACE
+#if defined(TRACE)
     aNeoPatterns->printInfo(&Serial, true);
 #endif
 }
@@ -1836,7 +1836,7 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
      * Start with one scanner
      */
     aLedsPtr->ScannerExtended(aColor, aLength, aScannerIntervalMillis, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, aDirection);
-#ifdef DEBUG
+#if defined(DEBUG)
     aLedsPtr->printPin(&Serial);
     aLedsPtr->printPattern();
     Serial.print(F("Repetitions="));
@@ -1852,7 +1852,7 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
 void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
     uint8_t tScannerIntervalMillis = aLedsPtr->ByteValue2.ScannerIntervalMillis;
     uint16_t tRepetitions = aLedsPtr->Repetitions;
-#ifdef TRACE
+#if defined(TRACE)
     Serial.print(F("Repetitions="));
     Serial.println(tRepetitions);
 #endif
@@ -1999,13 +1999,13 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
         break;
     }
 
-#ifdef INFO
+#if defined(INFO)
     Serial.print(F("Pin="));
     Serial.print(aLedsPtr->getPin());
     Serial.print(F(" Length="));
     Serial.print(aLedsPtr->numPixels());
     Serial.print(F(" ActivePattern="));
-#ifdef DEBUG
+#if defined(DEBUG)
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
     Serial.print('|');
 #endif
@@ -2016,5 +2016,5 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 }
 #endif
 
-#endif // #ifndef NEOPATTERNS_HPP
+#endif // _NEOPATTERNS_HPP
 #pragma once

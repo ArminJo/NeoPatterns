@@ -21,7 +21,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -31,8 +31,8 @@
  *                                     `o--> NeoPatterns    /
  */
 
-#ifndef MATRIXSNAKE_H_
-#define MATRIXSNAKE_H_
+#ifndef _MATRIX_SNAKE_H
+#define _MATRIX_SNAKE_H
 
 #if defined(ENABLE_PATTERNS_FOR_SNAKE_AUTORUN)
 #define ENABLE_MATRIX_PATTERN_MOVE // required for SnakeAutorunCompleteHandler() to move the score out.
@@ -114,7 +114,7 @@ public:
     //
     bool computeNewHeadPosition(uint8_t aActualDirection, position *aSnakeNewHeadPosition);
     bool moveSnakeAndCheckApple(position tSnakeNewHeadPosition);
-#ifdef TRACE
+#if defined(TRACE)
     void printSnakePosition(position aSnakePosition);
 #endif
     /*
@@ -167,7 +167,5 @@ bool initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t
 void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr);
 #endif
 
-#endif /* MATRIXSNAKE_H_ */
-
+#endif // _MATRIX_SNAKE_H
 #pragma once
-

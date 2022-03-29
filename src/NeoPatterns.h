@@ -23,7 +23,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -33,11 +33,11 @@
  *                                     `o--> NeoPatterns    /
  */
 
-#ifndef NEOPATTERNS_H
-#define NEOPATTERNS_H
+#ifndef _NEOPATTERNS_H
+#define _NEOPATTERNS_H
 
 #if !defined(DO_NOT_USE_MATH_PATTERNS)
-// This pattern needs additional 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise.
+// This pattern needs additional 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise.
 // Activate the next line if you do NOT need the BOUNCING_BALL pattern.
 //#define DO_NOT_USE_MATH_PATTERNS
 #endif
@@ -71,7 +71,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define ENABLE_PATTERN_USER_PATTERN1
 #define ENABLE_PATTERN_USER_PATTERN2
 #   if !defined(DO_NOT_USE_MATH_PATTERNS)
-#define ENABLE_PATTERN_BOUNCING_BALL // Requires up to 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise.
+#define ENABLE_PATTERN_BOUNCING_BALL // Requires up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise.
 #   endif
 #endif
 
@@ -240,7 +240,7 @@ public:
 #endif
     void printPatternName(uint8_t aPatternNumber, Print *aSerial);
     void printInfo(Print *aSerial, bool aFullInfo = true);
-#ifdef INFO
+#if defined(INFO)
     void printPattern();
 #endif
 
@@ -259,7 +259,7 @@ public:
     int16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
     uint16_t Index;             // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
     color32_t Color1;           // Main pattern color
-    int8_t Direction;           // Direction to run the pattern
+    int8_t Direction;           // Direction to run the pattern  DIRECTION_UP, DIRECTION_LEFT, DIRECTION_DOWN or DIRECTION_RIGHT
 
     // For ScannerExtended()
     // PatternFlags 0 -> one pass scanner (rocket or falling star)
@@ -357,7 +357,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 /*
  *
  * Version 3.0.0 - 3/2022
- * - Enabled individual selection of patterns to save program space.
+ * - Enabled individual selection of patterns to save program memory.
  * - Renamed NeoPatterns.cpp, MatrixNeoPatterns.cpp and MatrixSnake.cpp to NeoPatterns.hpp, MatrixNeoPatterns.hpp and MatrixSnake.hpp.
  * - Renamed matrix pattern macros from PATTERN_* to MATRIX_PATTERN_*.
  * - Changed parameter for endless repeats in initMultipleFallingStars().
@@ -387,7 +387,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  *
  * Version 2.2.0 - 4/2020
  * - Added support for RGBW patterns. Requires additional 200 bytes for AllPatternsOnMultiDevices example.
- *   Not defining SUPPORT_RGBW saves 400 bytes program space for AllPatternsOnMultiDevices example.
+ *   Not defining SUPPORT_RGBW saves 400 bytes program memory for AllPatternsOnMultiDevices example.
  * - Use type `Print *` instead of `Stream *`.
  * - Changed function `addPixelColor()`.
  * - Added function `NeoPixel::printInfo(aSerial)`.
@@ -409,7 +409,5 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  * - Removed helper function `setDirectionAndTotalStepsAndIndex()`.
  */
 
-#endif // NEOPATTERNS_H
-
+#endif // _NEOPATTERNS_H
 #pragma once
-

@@ -144,12 +144,12 @@ uint8_t __attribute__ ((noinline)) i2c_read(bool last) __attribute__ ((used));
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 // If you want to use the TWI hardware, you have to define I2C_HARDWARE to be 1
-#ifndef I2C_HARDWARE
+#if !defined(I2C_HARDWARE)
 #define I2C_HARDWARE 0
 #endif
 
 #if I2C_HARDWARE
-#ifndef TWDR
+#if !defined(TWDR)
 #error This chip does not support hardware I2C. Please undefine I2C_HARDWARE
 #endif
 #endif
@@ -157,13 +157,13 @@ uint8_t __attribute__ ((noinline)) i2c_read(bool last) __attribute__ ((used));
 // You can set I2C_CPUFREQ independently of F_CPU if you
 // change the CPU frequency on the fly. If you do not define it,
 // it will use the value of F_CPU
-#ifndef I2C_CPUFREQ
+#if !defined(I2C_CPUFREQ)
 #define I2C_CPUFREQ F_CPU
 #endif
 
 // If I2C_FASTMODE is set to 1, then the highest possible frequency below 400kHz
 // is selected. Be aware that not all slave chips may be able to deal with that!
-#ifndef I2C_FASTMODE
+#if !defined(I2C_FASTMODE)
 #define I2C_FASTMODE 0
 #endif
 
@@ -171,7 +171,7 @@ uint8_t __attribute__ ((noinline)) i2c_read(bool last) __attribute__ ((used));
 // I2C_SLOWMODE to 1. In this case, the I2C frequency will not be higher
 // than 25KHz. This could be useful for problematic buses with high pull-ups
 // and high capacitance.
-#ifndef I2C_SLOWMODE
+#if !defined(I2C_SLOWMODE)
 #define I2C_SLOWMODE 0
 #endif
 
@@ -179,7 +179,7 @@ uint8_t __attribute__ ((noinline)) i2c_read(bool last) __attribute__ ((used));
 // This does not conform with the I2C specs, since the bus lines will be
 // temporarily in high-state and the internal resistors have roughly 50k.
 // With low bus speeds und short buses it usually works, though (hopefully).
-#ifndef I2C_PULLUP
+#if !defined(I2C_PULLUP)
 #define I2C_PULLUP 0
 #endif
 
@@ -188,14 +188,14 @@ uint8_t __attribute__ ((noinline)) i2c_read(bool last) __attribute__ ((used));
 // you are communicating with a SMBus device, and you want to avoid timeouts.
 // Be aware that the interrupt bit is enabled after each call. So the
 // I2C functions should not be called in interrupt routines or critical regions.
-#ifndef I2C_NOINTERRUPT
+#if !defined(I2C_NOINTERRUPT)
 #define I2C_NOINTERRUPT 0
 #endif
 
 // I2C_TIMEOUT can be set to a value between 1 and 10000.
 // If it is defined and nonzero, it leads to a timeout if the
 // SCL is low longer than I2C_TIMEOUT milliseconds, i.e., max timeout is 10 sec
-#ifndef I2C_TIMEOUT
+#if !defined(I2C_TIMEOUT)
 #define I2C_TIMEOUT 0
 #else
 #if I2C_TIMEOUT > 10000
@@ -204,7 +204,7 @@ uint8_t __attribute__ ((noinline)) i2c_read(bool last) __attribute__ ((used));
 #endif
 
 // I2C_MAXWAIT can be set to any value between 0 and 32767. 0 means no time out.
-#ifndef I2C_MAXWAIT
+#if !defined(I2C_MAXWAIT)
 #define I2C_MAXWAIT 500
 #else
 #if I2C_MAXWAIT > 32767 || I2C_MAXWAIT < 0

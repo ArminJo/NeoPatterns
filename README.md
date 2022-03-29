@@ -107,34 +107,34 @@ To customize the library to different requirements, there are some compile optio
 These macros must be defined in your program before the line `#include <NeoPixel.hpp>` or `#include MatrixNeoPixel.hpp` to take effect.
 Modify them by enabling / disabling them, or change the values if applicable.
 
-| Macro | Default | Description |
+| Name | Default value | Description |
 |-|-|-|
-| `DO_NOT_SUPPORT_RGBW` | disabled | Enable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 428 bytes program space for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_SUPPORT_BRIGHTNESS` | disabled | Enable it if you do not require brightness functions. Disabling saves up to 428 bytes program space for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS` | disabled | Enable it if you do not require the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Disabling saves up to 144 bytes program space for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_SUPPORT_400KHZ` | disabled | Enable it if you do not require the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Disabling saves up to 144 bytes program space for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_SUPPORT_RGBW` | disabled | Enable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_SUPPORT_BRIGHTNESS` | disabled | Enable it if you do not require brightness functions. Disabling saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS` | disabled | Enable it if you do not require the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Disabling saves up to 144 bytes program memory for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_SUPPORT_400KHZ` | disabled | Enable it if you do not require the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Disabling saves up to 144 bytes program memory for the AllPatternsOnMultiDevices example. |
 
-If you do not require the legacy 400 kHz functionality, you can disable the line 138 `#define NEO_KHZ400 0x0100 ///< 400 KHz data transmission` in Adafruit_NeoPixel.h. This saves 164 bytes program space for the AllPatternsOnMultiDevices example.
+If you do not require the legacy 400 kHz functionality, you can disable the line 138 `#define NEO_KHZ400 0x0100 ///< 400 KHz data transmission` in Adafruit_NeoPixel.h. This saves 164 bytes program memory for the AllPatternsOnMultiDevices example.
 
 ## NeoPatterns
 These macros must be defined in your program before the line `#include <NeoPatterns.hpp>` or `#include MatrixNeoPatterns.hpp` or `#include MatrixSnake.hpp` to take effect.
 Modify them by enabling / disabling them, or change the values if applicable.
 
-| Macro | Default | Description |
+| Name | Default value | Description |
 |-|-|-|
 | `ENABLE_PATTERN_<Pattern name>` | all | Selection of individual pattern(s) to be enabled for your program. You can specify multiple pattern. See [NeoPatterns.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/NeoPatterns.h#L58-L77) |
 | `ENABLE_MATRIX_PATTERN_<Pattern name>` | all | Selection of individual matrix pattern(s) to be enabled for your program. You can specify multiple pattern. See [MatrixNeoPatterns.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/MatrixNeoPatterns.h#L41-L51) |
 | `ENABLE_SPECIAL_PATTERN_<Pattern name>` | all | Selection of individual special pattern(s) (currently only snake pattern) to be enabled for your program. You can specify multiple pattern. See  [MatrixSnake.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/MatrixSnake.h#L41-L48) |
 | `ENABLE_NO_NEO_PATTERN_BY_DEFAULT` | disabled | Disables the default selection of all non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> is specified. Enables the exclusively use compilation of matrix NeoPattern. |
-| `ENABLE_NO_MATRIX_AND_NEO_PATTERN_BY_DEFAULT` | disabled | Disables default selection of all matrix and non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> or ENABLE_MATRIX_PATTERN_<Pattern name> is specified. Thus it enables the exclusively use of special Snake pattern which saves program space. |
-| `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes program space, depending if floating point and sqrt() are already used otherwise. |
+| `ENABLE_NO_MATRIX_AND_NEO_PATTERN_BY_DEFAULT` | disabled | Disables default selection of all matrix and non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> or ENABLE_MATRIX_PATTERN_<Pattern name> is specified. Thus it enables the exclusively use of special Snake pattern which saves program memory. |
+| `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise. |
 | `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes (and more) FLASH and 3 bytes RAM. |
 
 ## Snake
 These macros must be defined in your program before the line `#include MatrixSnake.hpp` to take effect.
 Modify them by enabling / disabling them, or change the values if applicable.
 
-| Macro | Default | Description |
+| Name | Default value | Description |
 |-|-|-|
 | `ENABLE_PATTERNS_FOR_SNAKE_AUTORUN` | disabled | Selects all matrix and non matrix NeoPattern patterns used for the snake game. |
 | `ENABLE_USER_SNAKE_SOLVER` | disabled | This disables the built in solver function getNextSnakeDirection() and enables the [user provided solver function](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeSolver/SnakeSolver.ino#L56). |
@@ -189,7 +189,7 @@ OpenLedRace at the Cologne public library MINTköln-Festival
 
 # Revision History
 ### Version 3.0.0
-- Enabled individual selection of patterns to save program space.
+- Enabled individual selection of patterns to save program memory.
 - Renamed *NeoPatterns.cpp*, *MatrixNeoPatterns.cpp* and *MatrixSnake.cpp* to *NeoPatterns.hpp*, *MatrixNeoPatterns.hpp* and *MatrixSnake.hpp*.
 - Renamed matrix pattern macros from `PATTERN_*` to `MATRIX_PATTERN_*`.
 - Changed parameter for endless repeats in `initMultipleFallingStars()`.
@@ -226,7 +226,7 @@ OpenLedRace at the Cologne public library MINTköln-Festival
 - Removed blocking wait for ATmega32U4 Serial in examples.
 
 ### Version 2.2.0
-- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Deactivate the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes program space for the AllPatternsOnMultiDevices example.
+- Added support for RGBW patterns. Requires additional 200 bytes for the AllPatternsOnMultiDevices example. Deactivate the line `#define SUPPORT_RGBW` or defining `DO_NOT_SUPPORT_RGBW` saves 400 bytes program memory for the AllPatternsOnMultiDevices example.
 - Use type `Print *` instead of `Stream *`.
 - Changed function `addPixelColor()`.
 - Added function `NeoPixel::printInfo(aSerial)`.

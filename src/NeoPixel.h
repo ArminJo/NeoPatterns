@@ -19,7 +19,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef NEOPATTERNS_NEOPIXEL_H
-#define NEOPATTERNS_NEOPIXEL_H
+#ifndef _NEOPATTERNS_NEOPIXEL_H
+#define _NEOPATTERNS_NEOPIXEL_H
 
 // To support various debug levels set in different sources
 #include "DebugLevel.h"
@@ -47,18 +47,18 @@
 #include "Adafruit_NeoPixel.h" // Click here to get the library: http://librarymanager/All#Adafruit_NeoPixel
 #include "Colors.h"
 
-//#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 #if !defined(DO_NOT_SUPPORT_RGBW)
 // Support rgbw colors for pattern.
-// Deactivate this, if you do NOT need RGBW support and want to save program space (max 300 bytes).
+// Deactivate this, if you do NOT need RGBW support and want to save program memory (max 300 bytes).
 #define SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
 #endif
 
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 #if !defined(DO_NOT_SUPPORT_BRIGHTNESS)
 #define SUPPORT_BRIGHTNESS // Introduced to avoid double negations
 
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 #  if !defined(DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS)
 // // Pixel is set to zero, only if brightness or input color is zero, otherwise it is clipped at e.g. 0x000100
 #define SUPPORT_NO_ZERO_BRIGHTNESS // Introduced to avoid double negations
@@ -66,7 +66,7 @@
 #endif
 #define MAX_BRIGHTNESS  0xFF // is internally stored as 0
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
 uint8_t getWhitePart(color32_t color);
 uint8_t White(color32_t color) __attribute__ ((deprecated ("Renamed to getWhitePart()"))); // deprecated
 #endif
@@ -120,7 +120,7 @@ public:
     void clear(void);
     void clearPixel(uint16_t aPixelIndex);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
 #endif
     void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
@@ -150,7 +150,7 @@ public:
 
     void TestWS2812Resolution();
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint8_t BytesPerPixel;  // can be 3 or 4
 #else
 #define BytesPerPixel 3
@@ -175,5 +175,5 @@ public:
 
 extern const uint8_t GammaTable32[32] PROGMEM;
 
-#endif /* NEOPATTERNS_NEOPIXEL_H */
+#endif /* _NEOPATTERNS_NEOPIXEL_H */
 #pragma once

@@ -24,11 +24,11 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
-#ifndef MATRIX_NEOPATTERNS_HPP
-#define MATRIX_NEOPATTERNS_HPP
+#ifndef _MATRIX_NEOPATTERNS_HPP
+#define _MATRIX_NEOPATTERNS_HPP
 
 #include <Arduino.h>
 
@@ -155,7 +155,7 @@ void MatrixNeoPatterns::setInitHeat() {
             tIndex++;
             // The initalHeatLine is of size Columns + 2
             if (tIndex >= (Columns + 2)) {
-//#ifdef TRACE
+//#if defined(TRACE)
                 Serial.print(F("initalHeatLine="));
                 for (uint_fast8_t i = 0; i < (Columns + 2); ++i) {
                     Serial.print(MatrixOld[i]);
@@ -190,7 +190,7 @@ bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     MatrixNew = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);   // 100 for 8x8, 324 for 16x16
     MatrixOld = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);   // 100 for 8x8, 324 for 16x16
     if (MatrixNew == NULL || MatrixOld == NULL) {
-#ifdef INFO
+#if defined(INFO)
         printPin(&Serial);
         Serial.print(F("Fire: Requested heap of "));
         Serial.print((2 * (Rows + 2) * (Columns + 2)) + (Columns + 2));
@@ -202,12 +202,12 @@ bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
         return false;
     }
 
-#ifdef INFO
+#if defined(INFO)
     printPin(&Serial);
     Serial.print(F("Starting Fire with refresh interval="));
     Serial.println(aIntervalMillis);
 #endif
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(F("MatrixNew=0x"));
     Serial.println((uintptr_t) MatrixNew, HEX);
     Serial.print(F("MatrixOld=0x"));
@@ -304,7 +304,7 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
             // Heat color mapping
             // Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
             setMatrixPixelColor(x - 1, (Rows - 1) - (y - 1), HeatColor(tNewHeatValue));
-#ifdef TRACE
+#if defined(TRACE)
             printPin(&Serial);
             Serial.print(F("x="));
             Serial.print(x);
@@ -381,7 +381,7 @@ bool MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
         setRandomFlakeParameters(tSnowFlakeIndex);
     }
 
-#ifdef INFO
+#if defined(INFO)
     printPin(&Serial);
     Serial.print(F("Starting Snow with refresh interval="));
     Serial.println(aIntervalMillis);
@@ -461,7 +461,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
         // set pixel
         drawSnowFlake(tSnowFlakeIndex);
 
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("Index="));
         Serial.print(tSnowFlakeIndex);
@@ -506,7 +506,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
             // set pixel
             drawSnowFlake(tSnowFlakeIndex);
 
-#ifdef TRACE
+#if defined(TRACE)
             Serial.print(F("New flake: Index="));
             Serial.print(tSnowFlakeIndex);
             Serial.print(F(" Column="));
@@ -533,7 +533,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     Interval = aIntervalMillis;
     TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
 
-#ifdef INFO
+#if defined(INFO)
     printPin(&Serial);
     Serial.print(F("Starting Move with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -548,7 +548,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
 }
 
 bool MatrixNeoPatterns::MoveUpdate() {
-#ifdef DEBUG
+#if defined(DEBUG)
     printPin(&Serial);
     Serial.print(F("MoveUpdate TotalSteps="));
     Serial.println(TotalStepCounter);
@@ -581,7 +581,7 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     TotalStepCounter = aSteps + 1; // for the last pattern to show
     Direction = aDirection;
 
-#ifdef INFO
+#if defined(INFO)
     printPin(&Serial);
     Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -640,9 +640,9 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
  * assumes Z type mapping
  */
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     if (LayoutMappingFunction != NULL) {
-#  ifdef WARN
+#  if defined(WARN)
         Serial.print(F("moveArrayContent with one parameter does not support other than Z type mappings."));
 #  endif
     } else
@@ -650,7 +650,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
     {
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
-#  ifdef TRACE
+#  if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
@@ -691,7 +691,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
  *  156/136(UP/DOWN) or 246 (LEFT/RIGHT)  usec for moving 8x8
  */
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgroundColor) {
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     if (Geometry == NEO_MATRIX_DEFAULT_GEOMETRY) {
 #endif
         /*
@@ -700,7 +700,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         uint16_t tNumBytes = numBytes;
         uint8_t tBytesToSkipForOneRow = Columns * BytesPerPixel;
 
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("moveArrayContent Direction="));
         Serial.print(aDirection);
@@ -736,7 +736,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
                 setPixelColor(i, aBackgroundColor);
             }
         }
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     } else {
         /*
          * Use slower setMatrixPixelColor() function in all other cases
@@ -820,7 +820,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     LongValue1.Color2 = aBackgroundColor;
     Direction = aDirection;
 
-#ifdef INFO
+#if defined(INFO)
     printPin(&Serial);
     Serial.print(F("Starting Ticker with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -863,7 +863,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
         }
         GraphicsYOffset = (Rows - 1) - ((Rows - FONT_HEIGHT) / 2);
     } else {
-#ifdef WARN
+#if defined(WARN)
         Serial.println(F("Direction="));
         Serial.print(aDirection);
         Serial.println(F(" not supported (yet)"));
@@ -907,7 +907,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
 // Must be set here and is required for testing of end of string below in update part
     bool isLastChar = (tNextChar == '\0');
 
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
 #endif
     if (Direction == DIRECTION_LEFT || Direction == DIRECTION_NONE) {
@@ -917,7 +917,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
          * Check if current character is visible
          */
         while (tGraphicsXOffset < Columns && tCurrentChar != '\0') {
-#ifdef TRACE
+#if defined(TRACE)
             Serial.print(F("GraphicsXOffset="));
             Serial.print(tGraphicsXOffset);
             Serial.print(F(" CurrentChar="));
@@ -955,7 +955,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
          * Check if current character is visible
          */
         while (tGraphicsYOffset < (Rows + FONT_HEIGHT - 1) && tCurrentChar != '\0') {
-#ifdef TRACE
+#if defined(TRACE)
             Serial.print(F("GraphicsYOffset="));
             Serial.print(tGraphicsYOffset);
             Serial.print(F(" CurrentChar="));
@@ -1044,7 +1044,7 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
     static uint8_t sHeartDirection = DIRECTION_DOWN;
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
-#ifdef INFO
+#if defined(INFO)
     Serial.print(aLedsPtr->getPin());
     Serial.print(F(" State="));
     Serial.println(sState);
@@ -1140,7 +1140,7 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
 
     default:
         aLedsPtr->Delay(1);
-#ifdef WARN
+#if defined(WARN)
         Serial.print(F("case "));
         Serial.print(tState);
         Serial.println(F(" not implemented"));
@@ -1200,5 +1200,5 @@ const uint8_t fontNumbers4x6[] PROGMEM = { 0x03, 0x05, 0x05, 0x05, 0x06, 0x00, /
         0x02, 0x05, 0x03, 0x01, 0x02, 0x00 // 0x39 9
         };
 
-#endif // #ifndef MATRIX_NEOPATTERNS_HPP
+#endif // _MATRIX_NEOPATTERNS_HPP
 #pragma once

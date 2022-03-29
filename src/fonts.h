@@ -1,5 +1,5 @@
-#ifndef fonts_h
-#define fonts_h
+#ifndef _FONTS_H
+#define _FONTS_H
 
 #if !defined(__AVR__) && ! defined(PROGMEM)
 #define PROGMEM
@@ -74,7 +74,5 @@
 
 extern const uint8_t font_PGM[];
 
-#endif //fonts_h
-
+#endif // _FONTS_H
 #pragma once
-

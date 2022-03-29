@@ -18,35 +18,34 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
-#ifndef DEBUGLEVEL_H_
-#define DEBUGLEVEL_H_
+#ifndef _DEBUGLEVEL_H
+#define _DEBUGLEVEL_H
 
 // Propagate debug level
-#ifdef TRACE    // Information you need to understand details of a function or if you hunt a bug.
-#  ifndef DEBUG
+#if defined(TRACE)    // Information you need to understand details of a function or if you hunt a bug.
+#  if !defined(DEBUG)
 #define DEBUG   // Information need to understand the operating of your program. E.g. function calls and values of control variables.
 #  endif
 #endif
-#ifdef DEBUG
-#  ifndef INFO
+#if defined(DEBUG)
+#  if !defined(INFO)
 #define INFO    // Information you want to see in regular operation to see what the program is doing. E.g. "START ../src/LightToTone.cpp Version 1.2 from Dec 31 2019" or "Now playing Muppets melody".
 #  endif
 #endif
-#ifdef INFO
-#  ifndef WARN
+#if defined(INFO)
+#  if !defined(WARN)
 #define WARN    // Information that the program may encounter problems, like small Heap/Stack area.
 #  endif
 #endif
-#ifdef WARN
-#  ifndef ERROR
+#if defined(WARN)
+#  if !defined(ERROR)
 #define ERROR   // Informations to explain why the program will not run. E.g. not enough Ram for all created objects.
 #  endif
 #endif
 
-#endif /* DEBUGLEVEL_H_ */
-
+#endif // _DEBUGLEVEL_H
 #pragma once

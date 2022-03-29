@@ -29,7 +29,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -89,7 +89,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
@@ -128,7 +128,7 @@ void loop() {
         bool tMustUpdate = NeoPatternsBackground.checkForUpdate();
         tMustUpdate |= NeoPatternsFastMoves.checkForUpdate();
         if (tMustUpdate) {
-#ifdef DEBUG
+#if defined(DEBUG)
             uint32_t tStartMillis = millis();
 #endif
             /*
@@ -137,7 +137,7 @@ void loop() {
              */
             NeoPatternsBackground.updateOrRedraw(true);
             NeoPatternsFastMoves.updateOrRedraw(true);
-#ifdef DEBUG
+#if defined(DEBUG)
 
             uint32_t tEndMillis = millis();
             if ((tEndMillis - tStartMillis) > 2) {
@@ -193,7 +193,7 @@ void PatternsBackground(NeoPatterns *aLedsPtr) {
         // clear pattern
         aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
         sNoDelay = false;
-#ifdef DEBUG
+#if defined(DEBUG)
         aLedsPtr->Debug(true);
 #endif
         break;
@@ -282,7 +282,7 @@ void PatternsFastMoves(NeoPatterns *aLedsPtr) {
     case 3:
         aLedsPtr->ScannerExtended(COLOR32_GREEN, 8, tInterval, 0,
         FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE);
-#ifdef DEBUG
+#if defined(DEBUG)
         aLedsPtr->Debug(true);
 #endif
         break;

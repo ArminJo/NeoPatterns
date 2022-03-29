@@ -21,10 +21,10 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  */
-#ifndef MPU6050_IMU_DATA_HPP
-#define MPU6050_IMU_DATA_HPP
+#ifndef _MPU6050_IMU_DATA_HPP
+#define _MPU6050_IMU_DATA_HPP
 
 //#define DO_NOT_USE_GYRO           // do not read gyro parameter from IMU
 /*
@@ -61,7 +61,7 @@
 //#define I2C_TIMEOUT 5000 // costs 350 bytes
 #define I2C_FASTMODE 1
 
-//#define USE_ARDUINO_WIRE // costs additional 2110 bytes program space and 200 bytes RAM compared with SoftI2cMaster and 1700btes more than SoftWire
+//#define USE_ARDUINO_WIRE // costs additional 2110 bytes program memory and 200 bytes RAM compared with SoftI2cMaster and 1700btes more than SoftWire
 #if defined(USE_SOFT_WIRE)
 #include "SoftWire.h"
 #elif defined(USE_ARDUINO_WIRE)
@@ -136,7 +136,7 @@ bool MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t
         }
     }
     LowPassShiftValue = tLowPassShiftValue;
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(F("LowPassShiftValue="));
     Serial.println(LowPassShiftValue);
 #endif
@@ -174,7 +174,7 @@ void MPU6050IMUData::initMPU6050FifoForAccelAndGyro() {
 uint8_t MPU6050IMUData::readMPU6050Fifo() {
     // Get FIFO count
     uint16_t tFifoCount = MPU6050ReadWordSwapped(MPU6050_RA_FIFO_COUNTH);
-#ifdef DEBUG
+#if defined(DEBUG)
     Serial.print(F("FiFoCnt="));
     Serial.print(tFifoCount);
     Serial.print(" ");
@@ -185,7 +185,7 @@ uint8_t MPU6050IMUData::readMPU6050Fifo() {
     if (tFifoCount > 0x300) {
         // Fifo is over 3/4 full -> reset it
         resetMPU6050Fifo();
-#ifdef DEBUG
+#if defined(DEBUG)
         Serial.println(F("Reset Fifo"));
 #endif
         return 0;
@@ -602,5 +602,5 @@ unsigned int MPU6050IMUData::computeAccelerationWithFloatingOffset() {
     return computeAccelerationWithInitialOffset();
 #endif
 }
-#endif // #ifndef MPU6050_IMU_DATA_HPP
+#endif // _MPU6050_IMU_DATA_HPP
 #pragma once

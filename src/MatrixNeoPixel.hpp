@@ -22,12 +22,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
-#ifndef NEOPATTERNS_MATRIX_NEOPIXEL_HPP
-#define NEOPATTERNS_MATRIX_NEOPIXEL_HPP
+#ifndef _NEOPATTERNS_MATRIX_NEOPIXEL_HPP
+#define _NEOPATTERNS_MATRIX_NEOPIXEL_HPP
 
 #include "MatrixNeoPixel.h"
 // include sources
@@ -45,7 +45,7 @@ MatrixNeoPixel::MatrixNeoPixel() :
 void MatrixNeoPixel::init() {
     Rows = 0;
     Columns = 0;
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     Geometry = NEO_MATRIX_DEFAULT_GEOMETRY;
     LayoutMappingFunction = NULL;
 #endif
@@ -56,7 +56,7 @@ MatrixNeoPixel::MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, ui
 
     Rows = aRows;
     Columns = aColumns;
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     Geometry = aMatrixGeometry;
     LayoutMappingFunction = NULL;
 #endif
@@ -70,14 +70,14 @@ bool MatrixNeoPixel::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t
 
     Rows = aRows;
     Columns = aColumns;
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     Geometry = aMatrixGeometry;
     LayoutMappingFunction = NULL;
 #endif
     return tRetval;
 }
 
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
 void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t)) {
     LayoutMappingFunction = aLayoutMappingFunction;
 }
@@ -85,7 +85,7 @@ void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)
 
 void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
     if (aColumnX < Columns && aRowY < Rows) {
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("set x="));
         Serial.print(aColumnX);
@@ -100,7 +100,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
         Serial.print('|');
         Serial.println(aBlue);
 #endif
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
         if (LayoutMappingFunction == NULL) {
             setPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
         } else {
@@ -109,7 +109,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 #else
     setPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, aRed, aGreen, aBlue);
 #endif
-#ifdef TRACE
+#if defined(TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -122,7 +122,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 
 void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
     if (aColumnX < Columns && aRowY < Rows) {
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("set x="));
         Serial.print(aColumnX);
@@ -137,7 +137,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
         Serial.print('|');
         Serial.println(aBlue);
 #endif
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
         if (LayoutMappingFunction == NULL) {
             addPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
         } else {
@@ -146,7 +146,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 #else
     addPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, aRed, aGreen, aBlue);
 #endif
-#ifdef TRACE
+#if defined(TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -165,7 +165,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
  */
 void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
     if (aColumnX < Columns && aRowY < Rows) {
-#ifdef TRACE
+#if defined(TRACE)
         if (a32BitColor != 0) {
             printPin(&Serial);
             Serial.print(F("set x="));
@@ -178,7 +178,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
             Serial.println(a32BitColor, HEX);
         }
 #endif
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
         if (LayoutMappingFunction == NULL) {
             setPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
         } else {
@@ -187,7 +187,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 #else
         setPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, a32BitColor);
 #endif
-#ifdef TRACE
+#if defined(TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -200,7 +200,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 
 void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
     if (aColumnX < Columns && aRowY < Rows) {
-#ifdef TRACE
+#if defined(TRACE)
         if (a32BitColor != 0) {
             printPin(&Serial);
             Serial.print(F("set x="));
@@ -213,7 +213,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
             Serial.println(a32BitColor, HEX);
         }
 #endif
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
         if (LayoutMappingFunction == NULL) {
             addPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
         } else {
@@ -222,7 +222,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 #else
         addPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, a32BitColor);
 #endif
-#ifdef TRACE
+#if defined(TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -237,7 +237,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
  */
 uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
     uint32_t tColor;
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     if (LayoutMappingFunction == NULL) {
         tColor = getPixelColor(LayoutMapping(aColumnX, aRowY));
     } else {
@@ -246,7 +246,7 @@ uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
 #else
     tColor = getPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1);
 #endif
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
     Serial.print(F("set x="));
     Serial.print(aColumnX);
@@ -260,7 +260,7 @@ uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
     return tColor;
 }
 
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
 /*
  * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
  *
@@ -290,7 +290,7 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
         aColumnX = Columns -1;
     }
     if ((Geometry & NEO_MATRIX_COLUMNS) == NEO_MATRIX_COLUMNS) {
-#ifdef ERROR
+#if defined(ERROR)
         Serial.print(F("NEO_MATRIX_COLUMNS not yet implemented. Try to rotate your Matrix and use NEO_MATRIX_ROWS."));
 #endif
 
@@ -398,7 +398,7 @@ void MatrixNeoPixel::loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t 
 void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
         color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding, bool IsPGMData) {
 
-#ifdef DEBUG
+#if defined(DEBUG)
     printPin(&Serial);
     Serial.print(F("loadPicture aGraphicsPtr="));
     Serial.print((uintptr_t) aGraphicsArrayPtr, HEX);
@@ -446,7 +446,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
 
             uint8_t tCurrentBitmask = tBitmaskToStart; // shifting mask
 
-#ifdef TRACE
+#if defined(TRACE)
             Serial.print(F(" tGraphicsPointer="));
             Serial.print((uintptr_t) tGraphicsPointer, HEX);
             Serial.print(F(" tLineBitPattern="));
@@ -456,7 +456,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
              * Process one horizontal line
              */
             for (int8_t x = aXOffset; x < (aXOffset + aWidthOfGraphic); ++x) {
-#ifdef TRACE
+#if defined(TRACE)
                 Serial.print(F(" tBitmask="));
                 Serial.print(tCurrentBitmask);
                 Serial.print(F(" x="));
@@ -496,7 +496,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
 void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
         color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding, bool IsPGMData) {
 
-#ifdef DEBUG
+#if defined(DEBUG)
     printPin(&Serial);
     Serial.print(F("loadPicture aGraphicsPtr="));
     Serial.print((uintptr_t) aGraphicsArrayPtr, HEX);
@@ -544,7 +544,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
             }
             uint16_t tCurrentBitmask = tBitmaskToStart; // shifting mask
 
-#ifdef TRACE
+#if defined(TRACE)
             Serial.print(F("tGraphicsPointer="));
             Serial.print((uintptr_t) tGraphicsPointer, HEX);
             Serial.print(F(" tLineBitPattern="));
@@ -554,7 +554,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
              * Process one horizontal line
              */
             for (int8_t x = aXOffset; x < (aXOffset + aWidthOfGraphic); ++x) {
-#ifdef TRACE
+#if defined(TRACE)
                 Serial.print(F(" tBitmask="));
                 Serial.print(tCurrentBitmask);
                 Serial.print(F(" x="));
@@ -601,7 +601,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
  */
 void MatrixNeoPixel::drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor) {
     uint16_t tBitMask = 0x0001;
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
     Serial.print(F("drawQuarterPatternOdd aPatternValue=0x"));
     Serial.println(aPatternValue, HEX);
@@ -671,7 +671,7 @@ void MatrixNeoPixel::drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aFo
  */
 void MatrixNeoPixel::drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor) {
     uint16_t tBitMask = 0x0001;
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
     Serial.print(F("drawQuarterPatternEven aPatternValue=0x"));
     Serial.println(aPatternValue, HEX);
@@ -750,7 +750,7 @@ void MatrixNeoPixel::drawAllColors() {
                 uint8_t blueC = NeoPixel::gamma5(blue);
                 uint8_t redC = NeoPixel::gamma5(red);
 
-#ifdef TRACE
+#if defined(TRACE)
                 printPin(&Serial);
                 Serial.print(F("x="));
                 Serial.print(x);
@@ -796,7 +796,7 @@ void MatrixNeoPixel::drawAllColors2() {
             uint8_t green = yDescending - xAscending;
             uint8_t red = yAscending;
 
-#ifdef TRACE
+#if defined(TRACE)
             printPin(&Serial);
             Serial.print(F("x="));
             Serial.print(x);
@@ -903,6 +903,5 @@ uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aC
         return (aColumnsTotal * ((aRowsTotal - aRowY) - 1)) + aColumnX;
     }
 }
-#endif // NEOPATTERNS_MATRIX_NEOPIXEL_HPP
+#endif // _NEOPATTERNS_MATRIX_NEOPIXEL_HPP
 #pragma once
-

@@ -20,7 +20,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -218,7 +218,7 @@ bool isAddressBelowHeap(void *aAddressToCheck) {
  ********************************************/
 volatile uint16_t sNumberOfSleeps = 0;
 
-#ifndef MILLIS_UTILS_H_
+#ifndef _MILLIS_UTILS_H
 // copied from MillisUtils.h
 /*
  * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.

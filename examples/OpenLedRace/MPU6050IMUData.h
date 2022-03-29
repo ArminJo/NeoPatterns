@@ -20,11 +20,11 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  */
 
-#ifndef MPU6050_IMU_DATA_H
-#define MPU6050_IMU_DATA_H
+#ifndef _MPU6050_IMU_DATA_H
+#define _MPU6050_IMU_DATA_H
 
 #include <stdint.h>
 #include "MPU6050Defines.h"
@@ -101,7 +101,5 @@ public:
 
 bool initWire();
 
-#endif // MPU6050_IMU_DATA_H
-
+#endif // _MPU6050_IMU_DATA_H
 #pragma once
-

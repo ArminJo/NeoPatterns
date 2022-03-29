@@ -17,12 +17,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
-#ifndef LONG_UNION_H
-#define LONG_UNION_H
+#ifndef _LONG_UNION_H
+#define _LONG_UNION_H
 
 #include <Arduino.h>
 #include <stdint.h>
@@ -89,6 +89,5 @@ union LongUnion {
     int32_t Long;
 };
 
-#endif // LONG_UNION_H
-
+#endif // _LONG_UNION_H
 #pragma once

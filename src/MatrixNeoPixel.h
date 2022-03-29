@@ -20,7 +20,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -42,8 +42,8 @@
 /*
  * If you have only default geometry (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE),
  * i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag)
- * then you can save program space by defining symbol `SUPPORT_ONLY_DEFAULT_GEOMETRY`.
- * This saves 560 bytes program space and 3 bytes RAM.
+ * then you can save program memory by defining symbol `SUPPORT_ONLY_DEFAULT_GEOMETRY`.
+ * This saves 560 bytes program memory and 3 bytes RAM.
  */
 //#define SUPPORT_ONLY_DEFAULT_GEOMETRY
 //
@@ -85,7 +85,7 @@ public:
     MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
 
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     void setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t));
     uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);
 #endif
@@ -119,7 +119,7 @@ public:
     uint8_t Rows;       // Y Direction / size
     uint8_t Columns;    // X Direction / size
 
-#ifndef SUPPORT_ONLY_DEFAULT_GEOMETRY
+#if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     // Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
     uint8_t Geometry;    // Flags for geometry
     uint16_t (*LayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t); // Pointer to function, which implements the mapping between X/Y and pixel number

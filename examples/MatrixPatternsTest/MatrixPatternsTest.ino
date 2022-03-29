@@ -22,7 +22,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -30,9 +30,9 @@
 
 #define INFO
 
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 
 #define ENABLE_MATRIX_PATTERN_FIRE
 #define ENABLE_MATRIX_PATTERN_SNOW
@@ -111,7 +111,7 @@ void setup() {
     pinMode(MODE_PIN_1, INPUT_PULLUP);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino

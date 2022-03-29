@@ -17,11 +17,11 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
-#ifndef AVRUTILS_H_
-#define AVRUTILS_H_
+#ifndef _AVR_UTILS_H
+#define _AVR_UTILS_H
 
 #if defined(__AVR__)
 #include <stdint.h>
@@ -52,6 +52,5 @@ void printFreeRam(Print *aSerial);
 bool isAddressInRAM(void *aAddressToCheck);
 bool isAddressBelowHeap(void *aAddressToCheck);
 #endif //  defined(__AVR__)
-#endif // AVRUTILS_H_
-
+#endif // _AVR_UTILS_H
 #pragma once

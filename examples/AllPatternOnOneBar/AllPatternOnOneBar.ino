@@ -21,7 +21,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -40,7 +40,7 @@
 void allPatterns(NeoPatterns *aLedsPtr);
 
 // construct the NeoPatterns instances
-#ifdef TEST_USER_PATTERNS
+#if defined(TEST_USER_PATTERNS)
 void userPatternsHandler(NeoPatterns *aLedsPtr);
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &userPatternsHandler);
 #else
@@ -50,9 +50,9 @@ NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
-#ifdef INFO
+#if defined(INFO)
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
@@ -62,7 +62,7 @@ void setup() {
     bar16.begin(); // This initializes the NeoPixel library.
     bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, REVERSE); // light Blue
 
-#ifdef INFO
+#if defined(INFO)
     Serial.println("started");
 #endif
     delay(500);
@@ -82,7 +82,7 @@ void allPatterns(NeoPatterns *aLedsPtr) {
     uint8_t tDuration = random(40, 81);
     uint8_t tColor = random(255);
 
-#ifdef INFO
+#if defined(INFO)
     Serial.print("Pin=");
     Serial.print(aLedsPtr->getPin());
     Serial.print(" Length=");
@@ -144,13 +144,13 @@ void allPatterns(NeoPatterns *aLedsPtr) {
         sState = -1; // Start from beginning
         break;
     default:
-#ifdef INFO
+#if defined(INFO)
         Serial.println("ERROR");
 #endif
         break;
     }
 
-#ifdef INFO
+#if defined(INFO)
     Serial.print(" ActivePattern=");
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
     Serial.print("|");

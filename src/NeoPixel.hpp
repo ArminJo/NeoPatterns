@@ -19,7 +19,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -31,7 +31,7 @@
 NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel() {
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     BytesPerPixel = 0;
 #endif
     PixelOffset = 0;
@@ -43,7 +43,7 @@ NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initializ
 NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel) : // @suppress("Class members should be properly initialized")
         Adafruit_NeoPixel(aNumberOfPixels, aPin, aTypeOfPixel) {
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
 #endif
     PixelOffset = 0;  // 8 byte Flash
@@ -68,7 +68,7 @@ bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOf
     AdafruitNeoPixelIinit(aNumberOfPixels, aPin, aTypeOfPixel);
     Adafruit_NeoPixel::begin(); // sets pin to output
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
 #endif
     PixelOffset = 0;  // 8 byte Flash
@@ -95,7 +95,7 @@ NeoPixel::NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, u
         Adafruit_NeoPixel(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
 #endif
     PixelOffset = aPixelOffset;
@@ -122,7 +122,7 @@ void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     Adafruit_NeoPixel::begin(); // sets pin to output
 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
 #endif
     PixelOffset = aPixelOffset;
@@ -230,14 +230,14 @@ void NeoPixel::printContent(Print *aSerial) {
 void NeoPixel::show() {
     if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
         if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
-#ifdef TRACE
+#if defined(TRACE)
             printPin(&Serial);
             Serial.println(F("Underlying->show"));
 #endif
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("show brightness="));
         Serial.println(Brightness);
@@ -251,7 +251,7 @@ uint8_t NeoPixel::getBytesPerPixel() {
 }
 
 neoPixelType NeoPixel::getType() {
-#ifdef NEO_KHZ400
+#if defined(NEO_KHZ400)
     neoPixelType tReturnValue = (wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
     if (is800KHz) {
         tReturnValue |= 0x100;
@@ -359,7 +359,7 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
 }
 
 /*
- * Needs 50 bytes program space, but is faster
+ * Needs 50 bytes program memory, but is faster
  */
 void NeoPixel::clearPixel(uint16_t aPixelIndex) {
     if (aPixelIndex < numLEDs) {
@@ -369,7 +369,7 @@ void NeoPixel::clearPixel(uint16_t aPixelIndex) {
     *tPixelPtr++ = 0;
     *tPixelPtr++ = 0;
     *tPixelPtr++ = 0;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     if (BytesPerPixel == 4) {
         *tPixelPtr = 0;
     }
@@ -404,7 +404,7 @@ void NeoPixel::setBrightnessNonZeroMode(bool aEnableBrightnessNonZeroMode) {
  * Checks for valid pixel index / skips invalid ones
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
@@ -421,7 +421,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
         aPixelIndex += PixelOffset; // support offsets
         uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
         if (BytesPerPixel == 4) {
             tPixelPtr[wOffset] = 0;        // But only R,G,B passed -- set W to 0
         }
@@ -477,9 +477,9 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
     }
 }
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
-#ifdef TRACE
+#if defined(TRACE)
     printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
@@ -560,7 +560,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
  * Version with rounded brightness computation and special non zero brightness mode
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("Pixel="));
         Serial.print(aPixelIndex);
@@ -588,7 +588,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 #  endif
 #endif
 
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
         uint8_t tWhite;
         if (BytesPerPixel == 4) {
             tWhite = (uint8_t) (aColor >> 24);
@@ -614,7 +614,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
             }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#    ifdef SUPPORT_RGBW
+#    if defined(SUPPORT_RGBW)
             if (BytesPerPixel == 4 && tWhite > tMax) {
                 tMax = tWhite;
                 tMaxOffset = wOffset;
@@ -635,12 +635,12 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 
 #if defined(SUPPORT_BRIGHTNESS) && defined(SUPPORT_NO_ZERO_BRIGHTNESS)
         if ((PixelFlags & PIXEL_FLAG_USE_NON_ZERO_BRIGHTNESS) && tBrightness != 0 && aColor != 0) {
-#  ifdef SUPPORT_RGBW
+#  if defined(SUPPORT_RGBW)
             if (tRed == 0 && tGreen == 0 && tBlue == 0 && (BytesPerPixel != 4 || (BytesPerPixel == 4 && tWhite == 0))) {
 #  else
             if (tRed == 0 && tGreen == 0 && tBlue == 0) {
 #  endif
-#ifdef TRACE
+#if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("MaxOffset="));
         Serial.println(tMaxOffset);
@@ -710,7 +710,7 @@ void NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 
 // Set all pixels to a color (synchronously)
 void NeoPixel::ColorSet(color32_t aColor) {
-// This is faster but costs 82 bytes program space
+// This is faster but costs 82 bytes program memory
 //    if (BytesPerPixel == 3) {
 //        setPixelColor(0, aColor);
 //        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
@@ -726,7 +726,7 @@ color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
     if (BytesPerPixel == 3) {
         return (uint32_t) tPixelPointer[rOffset] << 16 | (uint32_t) tPixelPointer[gOffset] << 8 | tPixelPointer[bOffset];
     }
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     return (uint32_t) tPixelPointer[wOffset] << 24 | (uint32_t) tPixelPointer[rOffset] << 16 | tPixelPointer[gOffset] << 8
             | tPixelPointer[bOffset];
 #endif
@@ -744,7 +744,7 @@ void NeoPixel::dimPixelColor(uint16_t aPixelIndex) {
 // Calculate 50% dimmed version of a color
 uint32_t NeoPixel::dimColor(color32_t aColor) {
 // Shift R, G and B components one bit to the right
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1,
             getWhitePart(aColor) >> 1);
 #else
@@ -802,7 +802,7 @@ uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
 
 /*
  * Returns only 0 if value is 0. Returns 1 for input 1 to 7 (and for 8 to 39).
- * used for snake tail, not to blank out the last elements of a tail with more than 32 elements
+ * Can be used in conjunction with PIXEL_FLAG_USE_NON_ZERO_BRIGHTNESS, not to blank out pixels which are heavily dimmed
  */
 uint8_t NeoPixel::gamma5WithSpecialZero(uint8_t aLinearBrightnessValue) {
     if (aLinearBrightnessValue <= 7 && aLinearBrightnessValue >= 1) {
@@ -818,7 +818,7 @@ color32_t NeoPixel::convertLinearToGamma5Color(color32_t aLinearBrightnessColor)
     uint8_t tRed = pgm_read_byte(&GammaTable32[(getRedPart(aLinearBrightnessColor) / 8)]);
     uint8_t tGreen = pgm_read_byte(&GammaTable32[(getGreenPart(aLinearBrightnessColor) / 8)]);
     uint8_t tBlue = pgm_read_byte(&GammaTable32[(getBluePart(aLinearBrightnessColor) / 8)]);
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint8_t tWhite = pgm_read_byte(&GammaTable32[(getWhitePart(aLinearBrightnessColor) / 8)]);
     return Color(tRed, tGreen, tBlue, tWhite);
 #else
@@ -831,7 +831,7 @@ color32_t NeoPixel::convertLinearToGamma5Color(color32_t aLinearBrightnessColor)
  * doSpecialZero -> tGamma32Brightness returns only 0 if aBrightness value is 0. Returns 1 for aBrightness 1 to 7 (and for 8 to 15).
  */
 color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     uint8_t tWhiteDimmed = (uint8_t) (aLinearBrightnessColor >> 24);
 #endif
     uint8_t tRedDimmed = (uint8_t) (aLinearBrightnessColor >> 16);
@@ -849,11 +849,11 @@ color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t
     tRedDimmed = ((tRedDimmed + 1) * tGamma5Brightness) >> 8;
     tGreenDimmed = ((tGreenDimmed + 1) * tGamma5Brightness) >> 8;
     tBlueDimmed = ((tBlueDimmed + 1) * tGamma5Brightness) >> 8;
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     tWhiteDimmed = ((tWhiteDimmed + 1) * tGamma5Brightness) >> 8;
 #endif
 
-#ifdef TRACE
+#if defined(TRACE)
             Serial.print(F("dimColorWithGamma5 aBrightness="));
             Serial.print(aBrightness);
             Serial.print(F(" Gamma="));
@@ -861,13 +861,13 @@ color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t
             Serial.print(F(" 0x"));
             Serial.print(aLinearBrightnessColor, HEX);
             Serial.print(F("->0x"));
-#  ifdef SUPPORT_RGBW
+#  if defined(SUPPORT_RGBW)
             Serial.println(((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
 #  else
             Serial.println(((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed, HEX);
 #  endif
 #endif
-#ifdef SUPPORT_RGBW
+#if defined(SUPPORT_RGBW)
     return ((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
 #else
             return ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;

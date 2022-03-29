@@ -21,7 +21,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -33,8 +33,8 @@
  *                                     `o--> NeoPatterns    (virtual) /
  */
 
-#ifndef MATRIXNEOPATTERNS_H_
-#define MATRIXNEOPATTERNS_H_
+#ifndef _MATRIX_NEOPATTERNS_H
+#define _MATRIX_NEOPATTERNS_H
 
 #include "MatrixNeoPixel.h"
 
@@ -81,9 +81,9 @@ int16_t const convolutionMatrixIntegerTimes256[CONVOLUTION_MATRIX_SIZE][CONVOLUT
         { 13, 102, 13 } /*weights of values below*/, { 0, -128 /*own value*/, 0 }, { 0, 0, 0 } /*weights of values above*/};
 
 #define SNOW_BOTTOM_LINE_DIM_PRESCALER  20
-// Bit-fields save 2 bytes RAM per flake but costs 120 bytes program space
+// Bit-fields save 2 bytes RAM per flake but costs 120 bytes program memory
 struct SnowFlakeInfoStruct {
-#ifdef SNOW_SUPPORT_MORE_THAN_16_ROWS_AND_COLUMNS
+#if defined(SNOW_SUPPORT_MORE_THAN_16_ROWS_AND_COLUMNS)
     uint8_t Period;
     uint8_t Counter;
     uint8_t Row; // starting with 0 / top
@@ -174,7 +174,5 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr);
 
 void myLoadTest(MatrixNeoPatterns *aLedsPtr);
 
-#endif /* MATRIXNEOPATTERNS_H_ */
-
+#endif // _MATRIX_NEOPATTERNS_H
 #pragma once
-

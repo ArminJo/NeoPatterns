@@ -29,8 +29,8 @@ THE SOFTWARE.
 ===============================================
 */
 
-#ifndef MPU6050_DEFINES_H
-#define MPU6050_DEFINES_H
+#ifndef _MPU6050_DEFINES_H
+#define _MPU6050_DEFINES_H
 
 //#define MPU6050_INCLUDE_DMP_MOTIONAPPS41
 
@@ -506,5 +506,5 @@ typedef enum {
 #define MPU6050_DMP_MEMORY_BANK_SIZE    256
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
-#endif // MPU6050_DEFINES_H
+#endif // _MPU6050_DEFINES_H
 #pragma once

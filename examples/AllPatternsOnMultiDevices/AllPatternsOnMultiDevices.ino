@@ -21,7 +21,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
  *
  */
 
@@ -29,9 +29,9 @@
 
 #define INFO
 
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program space for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program space for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 
 #include <MatrixSnake.hpp>
 
@@ -70,7 +70,7 @@ char sStringBufferForVCC[7] = "xxxxmV";
 
 // onComplete callback functions
 void TestPatterns(NeoPatterns *aLedsPtr);
-#ifdef ALL_PATTERN_ON_ONE_STRIP
+#if defined(ALL_PATTERN_ON_ONE_STRIP)
 #define PIN_NEOPIXEL_ALL        2
 NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
 NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, true, &allPatternsRandomHandler);
@@ -99,20 +99,26 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 uint8_t readBrightness();
 void checkAndHandleVCCTooLow();
 
-
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) || defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
 
+#if defined(SUPPORT_BRIGHTNESS)
+    uint8_t tBrightness = readBrightness();
+    randomSeed(tBrightness);
+#else
+    uint8_t tBrightness = 0; // value is ignored :-)
+#endif
+
     // This initializes the NeoPixel library and checks if enough memory was available
     // check the last object defined
-    if (!NeoPixelMatrix.begin(&Serial)) {
+    if (!NeoPixelMatrix.begin(&Serial, tBrightness, true)) {
         // Blink forever
         while (true) {
             digitalWrite(LED_BUILTIN, HIGH);
@@ -128,15 +134,8 @@ void setup() {
     initTrace();
     printFreeRam(&Serial);
 #  endif
-    // setup ADC reference and channel
-    getVCCVoltageMillivoltSimple();
 #endif
-#if defined(SUPPORT_BRIGHTNESS)
-    uint8_t tBrightness = readBrightness();
-    randomSeed(tBrightness);
-#else
-    uint8_t tBrightness = 0; // value is ignored :-)
-#endif
+
     bar16.begin(tBrightness, true); // This initializes the NeoPixel library. true for EnableBrightnessNonZeroMode
     bar24.begin(tBrightness, true); // This initializes the NeoPixel library.
     ring12.begin(tBrightness, true); // This initializes the NeoPixel library.
