@@ -51,7 +51,15 @@
 #define VERSION_NEOPATTERNS "3.0.0"
 #define VERSION_NEOPATTERNS_MAJOR 3
 #define VERSION_NEOPATTERNS_MINOR 0
+#define VERSION_NEOPATTERNS_PATCH 0
 // The change log is at the bottom of the file
+
+/*
+ * Macro to convert 3 version parts into an integer
+ * To be used in preprocessor comparisons, such as #if VERSION_NEOPATTERNS_HEX >= VERSION_HEX_VALUE(3, 7, 0)
+ */
+#define VERSION_HEX_VALUE(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+#define VERSION_NEOPATTERNS_HEX  VERSION_HEX_VALUE(VERSION_NEOPATTERNS_MAJOR, VERSION_NEOPATTERNS_MINOR, VERSION_NEOPATTERNS_PATCH)
 
 extern const char *const PatternNamesArray[] PROGMEM;
 
@@ -357,7 +365,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 
 /*
  *
- * Version 3.0.0 - 3/2022
+ * Version 3.0.0 - 5/2022
  * - Enabled individual selection of patterns to save program memory.
  * - Renamed NeoPatterns.cpp, MatrixNeoPatterns.cpp and MatrixSnake.cpp to NeoPatterns.hpp, MatrixNeoPatterns.hpp and MatrixSnake.hpp.
  * - Renamed matrix pattern macros from PATTERN_* to MATRIX_PATTERN_*.
@@ -365,6 +373,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  * - Improved usage of random().
  * - Added function fillRegion(), isActive() and setBrightnessValue().
  * - Added support for brightness and brightness non zero mode.
+ * - Fixed aDoUpdate bug for FADE.
  *
  * Version 2.3.1 - 02/2021
  * - Changed type of TotalStepCounter from uint16_t to int16_t.
