@@ -157,6 +157,7 @@ public:
     /*
      * PATTERNS
      * *Update() functions return true if pattern has ended, false if pattern has NOT ended
+     * If aDoUpdate is true, update pattern, otherwise only redraw the pattern
      */
 #if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
@@ -172,10 +173,10 @@ public:
     void Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
     bool FadeUpdate(bool aDoUpdate = true);
 #endif
+
     /*
      * PATTERN extensions
      */
-
     // Delay is always enabled, since it is used by many other patterns
     void Delay(uint16_t aMillis);
     bool DelayUpdate(bool aDoUpdate = true);
@@ -278,20 +279,20 @@ public:
     uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce
 
     union {
-        uint8_t PatternLength;  // Length of a (scanner, stripes) pattern
-        uint8_t NumberOfSteps;  // For Fade
-        uint8_t IndexOfTopPixel; // BouncingBall: Current integer IndexOfTopPixel
-        uint8_t Cooling;        // Fire: Cooling
-        uint8_t NumberOfFlakes; // Snow: Number of flakes
+        uint8_t PatternLength;      // Length of a (scanner, stripes) pattern
+        uint8_t NumberOfSteps;      // For Fade
+        uint8_t IndexOfTopPixel;    // BouncingBall: Current integer IndexOfTopPixel
+        uint8_t Cooling;            // Fire: Cooling
+        uint8_t NumberOfFlakes;     // Snow: Number of flakes
     } ByteValue1;
 
     /*
      * 3 Extra variables used by some patterns
      */
     union {
-        uint8_t PatternLength;  // 2. length of a (stripes) pattern
+        uint8_t PatternLength;          // 2. length of a (stripes) pattern
         uint8_t SnakeAutorunStep;
-        uint8_t ScannerIntervalMillis; // for delay of multiple falling stars
+        uint8_t ScannerIntervalMillis;  // for delay of multiple falling stars
     } ByteValue2;
 
     union {
@@ -303,7 +304,7 @@ public:
     } LongValue1;
 
     union {
-        color32_t ColorTmp;         // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
+        color32_t ColorTmp;             // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
         float TopPixelIndex;            // BouncingBall: float index of TopPixel
 
         uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for

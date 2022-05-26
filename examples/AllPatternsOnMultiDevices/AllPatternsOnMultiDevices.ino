@@ -41,7 +41,7 @@
 #include "AvrTracing.hpp"
 #include "AVRUtils.h"
 #  endif
-#include "ADCUtils.h"
+#include "ADCUtils.hpp"
 
 //#define ALL_PATTERN_ON_ONE_STRIP // shows all patterns on one consecutive device / multiple chained devices
 
@@ -182,7 +182,7 @@ class PrintIfChanged {
 public:
     const char *PGMTextPtr;
     uint8_t LastValuePrinted;
-    PrintIfChanged(const char *aPGMText) {
+    PrintIfChanged(const char *aPGMText) { // @suppress("Class members should be properly initialized")
         PGMTextPtr = aPGMText;
     }
     void printIfChanged(uint8_t tValueToPrint) {

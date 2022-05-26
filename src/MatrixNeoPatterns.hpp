@@ -1201,4 +1201,3 @@ const uint8_t fontNumbers4x6[] PROGMEM = { 0x03, 0x05, 0x05, 0x05, 0x06, 0x00, /
         };
 
 #endif // _MATRIX_NEOPATTERNS_HPP
-#pragma once

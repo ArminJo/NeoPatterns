@@ -27,7 +27,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  You also need to install "NeoPatterns" and "PlayRtttl" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I"
  *
- *  Copyright (C) 2020-2021  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of OpenledRace https://github.com/ArminJo/OpenledRace.
@@ -66,6 +66,9 @@
 
 #include "PlayRtttl.hpp"
 
+/*
+ * Enable only these 3 patterns to save program space
+ */
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_COLOR_WIPE
 #define ENABLE_PATTERN_STRIPES
@@ -85,6 +88,7 @@
 
 #define VERSION_EXAMPLE "1.0"
 
+//#define USE_NO_LCD   // this suppresses the error tone and print if LCD was not found
 //#define TEST_MODE
 //#define TIMING_TEST
 #define USE_ACCELERATOR_INPUT
@@ -93,7 +97,8 @@
 #endif
 //#define BRIDGE_NO_NEOPATTERNS // to save RAM
 //#define LOOP_NO_NEOPATTERNS // to save RAM
-#define USE_SERIAL_LCD
+
+#define USE_SOFT_I2C_MASTER // Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
 
 #if defined(USE_ACCELERATOR_INPUT)
 /*
@@ -101,24 +106,22 @@
  */
 #define DO_NOT_USE_GYRO
 #define USE_ONLY_ACCEL_FLOATING_OFFSET
-#include "MPU6050IMUData.hpp"
-#elif defined(USE_SERIAL_LCD)
-#define I2C_HARDWARE 1 // use I2C Hardware
-#define I2C_PULLUP 1
-//#define I2C_TIMEOUT 5000 // costs 350 bytes
-#define I2C_FASTMODE 1
-#include "SoftI2CMaster.hpp" // is also included in MPU6050IMUData.hpp
+#include "MPU6050IMUData.hpp" // this configures and includes SoftI2CMaster
+#else
+// No MPU6050, but SerialLCD -> configure and include SoftI2CMaster here
+#include "SoftI2CMasterConfig.h"
+#include "SoftI2CMaster.h"
 #endif // #if defined(USE_ACCELERATOR_INPUT)
+
 #include "LongUnion.h"
 
-#if defined(USE_SERIAL_LCD)
 #define LCD_I2C_ADDRESS 0x27
 #include "LiquidCrystal_I2C.h" // Use an up to date library version which has the init method
 LiquidCrystal_I2C myLCD(LCD_I2C_ADDRESS, 20, 4);  // set the LCD address to 0x27 for a 20 chars and 2 line display
 void printBigNumber4(byte digit, byte leftAdjust);
 void initBigNumbers();
 void checkForLCDConnected();
-#endif
+bool sSerialLCDAvailable;
 
 /*
  * Pin layout
@@ -296,7 +299,8 @@ public:
 #  if defined(USE_ACCELERATION_NEOPIXEL_BARS)
     uint8_t AccelerationBarPin;
 #  endif
-#endif
+#endif // defined(USE_ACCELERATOR_INPUT)
+
     uint8_t NumberOfThisCar; // 1, 2...
     uint8_t AcceleratorButtonPin;
     color32_t Color;
@@ -330,22 +334,21 @@ public:
         if (aNumberOfThisCar == 2) {
             AcceleratorInput.setI2CAddress(MPU6050_ADDRESS_AD0_HIGH);
         }
-        // use maximum filtering. If it works ??? it prefers slow and huge movements :-)
+        // use maximum filtering. It prefers slow and huge movements :-)
 
-        if (!AcceleratorInput.initMPU6050(20, MPU6050_BAND_5_HZ)) {
+        if (!AcceleratorInput.initMPU6050AndCalculateAllOffsetsAndWait(20, MPU6050_BAND_5_HZ)) {
             Serial.print(F("No MPU6050 IMU connected at address 0x"));
-            Serial.print(AcceleratorInput.I2CAddress, HEX);
+            Serial.print(AcceleratorInput.I2CAddress >> 1, HEX);
             Serial.print(F(" for car "));
             Serial.print(aNumberOfThisCar);
-            Serial.println(F(". Disable \"#define USE_ACCELERATOR_INPUT\""));
-#if defined(USE_SERIAL_LCD)
-            myLCD.setCursor(0, 2);
-            myLCD.print(F("No IMU for car "));
-            myLCD.print(aNumberOfThisCar);
-#endif
+            Serial.println(F(". You may want to disable \"#define USE_ACCELERATOR_INPUT\""));
+            if (sSerialLCDAvailable) {
+                myLCD.setCursor(0, 2);
+                myLCD.print(F("No IMU for car "));
+                myLCD.print(aNumberOfThisCar);
+            }
             playMelodyAndShutdown();
         }
-        AcceleratorInput.calculateAllOffsets();
 #  if defined(INFO)
         if (!sOnlyPlotterOutput) {
             Serial.print(NumberOfThisCar);
@@ -353,7 +356,7 @@ public:
             AcceleratorInput.printAllOffsets(&Serial);
         }
 #  endif
-#endif
+#endif // defined(USE_ACCELERATOR_INPUT)
 
     }
 
@@ -420,8 +423,8 @@ public:
      * @return 4 g for 16 bit full range
      */
     uint8_t getAcceleratorValueShift8() {
-        AcceleratorInput.readMPU6050Raw();
-//        AcceleratorInput.readMPU6050Fifo();
+        AcceleratorInput.readDataFromMPU6050();
+//        AcceleratorInput.readDataFromMPU6050Fifo();
         uint16_t tAcceleration16Bit = AcceleratorInput.computeAccelerationWithFloatingOffset();
         AcceleratorLowPassValue += (((int16_t) (tAcceleration16Bit - AcceleratorLowPassValue))) >> 3;
 #  if defined(USE_ACCELERATION_NEOPIXEL_BARS)
@@ -442,7 +445,7 @@ public:
 #  endif
         return tAcceleration;
     }
-#endif
+#endif // defined(USE_ACCELERATOR_INPUT)
 
     /*
      * Check if button was just pressed
@@ -650,9 +653,9 @@ public:
                     Serial.println(F(". lap"));
                 }
 #endif
-#if defined(USE_SERIAL_LCD)
-                printBigNumber4(Laps, ((NumberOfThisCar - 1) * 13) + 2);
-#endif
+                if (sSerialLCDAvailable) {
+                    printBigNumber4(Laps, ((NumberOfThisCar - 1) * 13) + 2);
+                }
                 tRetval = CAR_LAP_CONDITION;
             }
 
@@ -740,20 +743,26 @@ public:
          * Call malloc() and free() before, since the compiler calls the constructor even
          * when the result of malloc() is NULL, which leads to overwrite low memory.
          */
-        void *tMallocTest = malloc(sizeof(NeoPatterns));
+        void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67 + 2
         if (tMallocTest != NULL) {
             free(tMallocTest);
             RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, false);
             isInitialized = true;
-        } else {
-            Serial.println(F("Not enough heap memory for RampPatterns."));
-        }
 #  if defined(__AVR__) && defined(DEBUG)
-        printFreeHeap(&Serial);
+            printFreeHeap(&Serial);
 #  endif
+        } else {
+            Serial.print(F("Not enough heap memory ("));
+            Serial.print(sizeof(NeoPatterns) + 2);
+            Serial.println(F(") for RampPatterns."));
+#  if defined(__AVR__)
+            printFreeHeap(&Serial);
+#  endif
+        }
+
 #else
         (void) aTrackPtr;
-#endif
+#endif // !defined(BRIDGE_NO_NEOPATTERNS)
         setGravity();
     }
 
@@ -894,17 +903,22 @@ public:
          * NeoPatterns segments to control light effects on both ramps
          * Call malloc() and free() before, since the compiler calls the constructor even when the result of malloc() is NULL, which leads to overwrite low memory.
          */
-        void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67
+        void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67 + 2
         if (tMallocTest != NULL) {
             free(tMallocTest);
             LoopPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, LoopLength, false);
             isInitialized = true;
-        } else {
-            Serial.println(F("Not enough heap memory for LoopPatterns."));
-        }
 #  if defined(__AVR__) && defined(DEBUG)
-        printFreeHeap(&Serial);
+            printFreeHeap(&Serial);
 #  endif
+        } else {
+            Serial.print(F("Not enough heap memory ("));
+            Serial.print(sizeof(NeoPatterns) + 2);
+            Serial.println(F(") for LoopPatterns."));
+#  if defined(__AVR__)
+            printFreeHeap(&Serial);
+#  endif
+        }
 #else
         (void) aTrackPtr;
 #endif
@@ -989,8 +1003,9 @@ public:
 Car cars[NUMBER_OF_CARS];
 Bridge bridges[NUMBER_OF_BRIDGES];
 Loop loops[NUMBER_OF_LOOPS];
-
+extern size_t __malloc_margin;
 void setup() {
+    __malloc_margin = 120; // 128 is the default value
     pinMode(LED_BUILTIN, OUTPUT);
 
     pinMode(PIN_MANUAL_PARAMETER_MODE, INPUT_PULLUP);
@@ -1008,28 +1023,23 @@ void setup() {
 #if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
-    sOnlyPlotterOutput = digitalRead(PIN_SERIAL_MONITOR_OUTPUT);
+
+    sOnlyPlotterOutput = !digitalRead(PIN_SERIAL_MONITOR_OUTPUT);
     bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
 
-// Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ " from " __DATE__));
     if (!sOnlyPlotterOutput) {
+
+        // Just to know which program is running on my Arduino
+        Serial.println(F("START " __FILE__ " from " __DATE__));
+        Serial.println(
+                F(
+                        "Connect pin " STR(PIN_SERIAL_MONITOR_OUTPUT) " to ground, to suppress such prints not suited for Arduino plotter"));
         Serial.print(F("AnalogParameterInputMode is "));
         if (tIsAnalogParameterInputMode) {
-            Serial.print(F("enabled. Pin "));
+            Serial.println(F("enabled. Pin " STR(PIN_MANUAL_PARAMETER_MODE) " is connected to ground"));
         } else {
-            Serial.print(F("disabled. Pin "));
+            Serial.println(F("disabled. Pin " STR(PIN_MANUAL_PARAMETER_MODE) " is disconnected from ground"));
         }
-        Serial.print(PIN_MANUAL_PARAMETER_MODE);
-        if (tIsAnalogParameterInputMode) {
-            Serial.println(F(" is connected to ground"));
-        } else {
-            Serial.println(F(" is disconnected from ground"));
-        }
-    } else {
-        // print Plotter caption
-        Serial.println();
-        Serial.println(F("Accel[1] AccelLP[1] Speed[1] Accel[2] AccelLP[2] Speed[2]"));
     }
 
 #if defined(USE_ACCELERATOR_INPUT)
@@ -1039,23 +1049,27 @@ void setup() {
 #endif
     Serial.flush();
 
+#if !defined(USE_NO_LCD)
     /*
      * LCD initialization
      */
-#if defined(USE_SERIAL_LCD)
     checkForLCDConnected(); // this blocks if no LCD connected
 
-    myLCD.init();
-    myLCD.clear();
-    myLCD.backlight();
-    myLCD.print(F("Open LED Race"));
-    myLCD.setCursor(0, 1);
-    myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
-    initBigNumbers();
+    if (sSerialLCDAvailable) {
+        myLCD.init();
+        myLCD.clear();
+        myLCD.backlight();
+        myLCD.print(F("Open LED Race"));
+        myLCD.setCursor(0, 1);
+        myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
+        initBigNumbers();
+    }
 #endif
 
-    Serial.println(F("Initialize track"));
-    Serial.flush();
+    if (!sOnlyPlotterOutput) {
+        Serial.println(F("Initialize track"));
+        Serial.flush();
+    }
 
 // This initializes the NeoPixel library and checks if enough memory was available
     if (!track.begin(&Serial)) {
@@ -1068,24 +1082,24 @@ void setup() {
     for (int i = 0; i < NUMBER_OF_TRACK_PIXELS - ACCEL_MAP_OFFSET; i++) {
         AccelerationMap[i] = 0;
     }
-
-    Serial.println(F("Initialize bridges and loops"));
-    Serial.flush();
+    if (!sOnlyPlotterOutput) {
+        Serial.println(F("Initialize bridges and loops"));
+        Serial.flush();
+    }
     /*
      * Setup bridges and loops
      */
-#if defined(__AVR__) && defined(DEBUG)
-    printFreeHeap(&Serial);
-#endif
-    bridges[0].init(&track, BRIDGE_1_START, BRIDGE_1_HEIGHT, BRIDGE_1_RAMP_LENGTH, BRIDGE_1_PLATFORM_LENGTH); // 138 bytes on heap
+    bridges[0].init(&track, BRIDGE_1_START, BRIDGE_1_HEIGHT, BRIDGE_1_RAMP_LENGTH, BRIDGE_1_PLATFORM_LENGTH); // Requires 2 x 69 = 138 bytes on heap
 //    myTone(64000);
-    loops[0].init(&track, LOOP_1_UP_START, LOOP_1_LENGTH); // 69 bytes on heap
+    loops[0].init(&track, LOOP_1_UP_START, LOOP_1_LENGTH); // Requires 69 bytes on heap
 
     /*
      * Setup cars
      */
-    Serial.println(F("Initialize cars"));
-    Serial.flush();
+    if (!sOnlyPlotterOutput) {
+        Serial.println(F("Initialize cars"));
+        Serial.flush();
+    }
     cars[0].init(&track, 1, PIN_PLAYER_1_BUTTON, CAR_1_COLOR, MissionImp);
     cars[1].init(&track, 2, PIN_PLAYER_2_BUTTON, CAR_2_COLOR, StarWars);
 //    cars[2].init(&track, 3, PIN_PLAYER_3_BUTTON, CAR_3_COLOR, Entertainer);
@@ -1097,7 +1111,9 @@ void setup() {
     cars[1].AccelerationBarPin = PIN_VU_BAR_2;
 #endif
 
-    Serial.println(F(STR(NUMBER_OF_CARS) " cars initialized"));
+    if (!sOnlyPlotterOutput) {
+        Serial.println(F(STR(NUMBER_OF_CARS) " cars initialized"));
+    }
 #if defined(USE_ACCELERATOR_INPUT)
     randomSeed(cars[0].AcceleratorInput.AcceleratorLowpassSubOneHertz[0].ULong);
 #endif
@@ -1123,30 +1139,29 @@ void setup() {
      */
     resetAndShowTrackWithoutCars();
 
-#if defined(INFO) && defined(__AVR__)
-    if (!sOnlyPlotterOutput) {
-        printStackUnusedAndUsedBytes(&Serial);
-        printFreeHeap(&Serial);
-    }
-#endif
     if (!sOnlyPlotterOutput) {
         Serial.print(F("Press any button"));
 #  if defined(USE_ACCELERATOR_INPUT)
         Serial.print(F(" or move controller"));
 #endif
         Serial.println(F(" to start countdown"));
+    } else {
+        // print Plotter caption after check for LCD
+        Serial.println();
+        Serial.println(F("Accel[1] AccelLP[1] Speed[1] Accel[2] AccelLP[2] Speed[2]"));
     }
-#if defined(USE_SERIAL_LCD)
-    uint8_t tLineIndex = 1;
-    myLCD.setCursor(0, tLineIndex++);
-    myLCD.print(F("Press any button"));
+
+    if (sSerialLCDAvailable) {
+        uint8_t tLineIndex = 1;
+        myLCD.setCursor(0, tLineIndex++);
+        myLCD.print(F("Press any button"));
 #  if defined(USE_ACCELERATOR_INPUT)
-    myLCD.setCursor(0, tLineIndex++);
-    myLCD.print(F("or move controller"));
+        myLCD.setCursor(0, tLineIndex++);
+        myLCD.print(F("or move controller"));
 #  endif
-    myLCD.setCursor(0, tLineIndex);
-    myLCD.print(F("to start countdown"));
-#endif
+        myLCD.setCursor(0, tLineIndex);
+        myLCD.print(F("to start countdown"));
+    }
 }
 
 /*
@@ -1157,6 +1172,13 @@ void loop() {
     static uint32_t sLastAnimationMillis;
 
     sLoopCountForDebugPrint++;
+    sOnlyPlotterOutput = !digitalRead(PIN_SERIAL_MONITOR_OUTPUT);
+
+#if defined(INFO) && defined(__AVR__)
+    if (!sOnlyPlotterOutput) {
+        printStackUnusedAndUsedBytesIfChanged(&Serial);
+    }
+#endif
 
     if (sMode == MODE_WAIT) {
         /*
@@ -1168,12 +1190,6 @@ void loop() {
             if (!sOnlyPlotterOutput) {
                 Serial.println(F("Start loop Animation"));
             }
-
-#if defined(INFO) && defined(__AVR__)
-            if (!sOnlyPlotterOutput) {
-                printStackUnusedAndUsedBytesIfChanged(&Serial);
-            }
-#endif
         }
 
         /*
@@ -1230,11 +1246,6 @@ void loop() {
         if (cars[i].checkForWinner(LAPS_PER_RACE)) {
             resetAllCars();
             sMode = MODE_WAIT;
-#if defined(INFO) && defined(__AVR__)
-            if (!sOnlyPlotterOutput) {
-                printStackUnusedAndUsedBytesIfChanged(&Serial);
-            }
-#endif
             break;
         }
     }
@@ -1364,9 +1375,9 @@ void startRace() {
     }
 //    resetAndShowTrackWithoutCars();
     uint8_t tIndex = 4; // index of last light
-#if defined(USE_SERIAL_LCD)
-    myLCD.clear();
-#endif
+    if (sSerialLCDAvailable) {
+        myLCD.clear();
+    }
     for (int tCountDown = 4; tCountDown >= 0; tCountDown--) {
 
 // delay at start of loop to enable fast start after last countdown
@@ -1398,22 +1409,21 @@ void startRace() {
         if (!sOnlyPlotterOutput) {
             Serial.println(tCountDown);
         }
-#if defined(USE_SERIAL_LCD)
-        printBigNumber4(tCountDown, 9);
-#endif
+        if (sSerialLCDAvailable) {
+            printBigNumber4(tCountDown, 9);
+        }
     }
     if (!sOnlyPlotterOutput) {
         Serial.println(F("Start race"));
     }
     myLCD.clear();
-#if defined(USE_SERIAL_LCD)
-    myLCD.clear();
-    printBigNumber4(0, 2);
-    printBigNumber4(0, 15);
-#endif
+    if (sSerialLCDAvailable) {
+        myLCD.clear();
+        printBigNumber4(0, 2);
+        printBigNumber4(0, 15);
+    }
 }
 
-#if defined(USE_SERIAL_LCD)
 void checkForLCDConnected() {
     if (!sOnlyPlotterOutput) {
         Serial.println(F("Try to connect to I2C LCD"));
@@ -1421,8 +1431,13 @@ void checkForLCDConnected() {
     }
 #if defined(USE_SOFT_I2C_MASTER)
     if (!i2c_start(LCD_I2C_ADDRESS << 1)) {
-        Serial.print(F("No I2C LCD connected at address " STR(LCD_I2C_ADDRESS) ". Disable \"#define USE_SERIAL_LCD\""));
-        playMelodyAndShutdown();
+        if (!sOnlyPlotterOutput) {
+            Serial.println(F("No I2C LCD connected at address " STR(LCD_I2C_ADDRESS)));
+        }
+        playShutdownMelody();
+        sSerialLCDAvailable = false;
+    } else {
+        sSerialLCDAvailable = true;
     }
     i2c_stop();
 #endif
@@ -1463,4 +1478,3 @@ void printBigNumber4(byte digit, byte leftAdjust) {
         }
     }
 }
-#endif

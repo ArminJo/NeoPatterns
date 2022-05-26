@@ -1214,4 +1214,3 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
 #endif
 
 #endif // _MATRIX_SNAKE_HPP
-#pragma once

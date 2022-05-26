@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _NEOPATTERNS_MATRIX_NEOPIXEL_HPP
-#define _NEOPATTERNS_MATRIX_NEOPIXEL_HPP
+#ifndef _MATRIX_NEOPIXEL_HPP
+#define _MATRIX_NEOPIXEL_HPP
 
 #include "MatrixNeoPixel.h"
 // include sources
@@ -903,5 +903,4 @@ uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aC
         return (aColumnsTotal * ((aRowsTotal - aRowY) - 1)) + aColumnX;
     }
 }
-#endif // _NEOPATTERNS_MATRIX_NEOPIXEL_HPP
-#pragma once
+#endif // _MATRIX_NEOPIXEL_HPP

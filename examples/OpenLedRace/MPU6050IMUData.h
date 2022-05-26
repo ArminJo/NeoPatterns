@@ -30,29 +30,24 @@
 #include "MPU6050Defines.h"
 #include "LongUnion.h"
 
-
-#define NUMBER_OF_ACCEL_VALUES      3
-#define NUMBER_OF_GYRO_VALUES       3
-
-
 #if defined(USE_ONLY_ACCEL_FLOATING_OFFSET)
 #define USE_ACCEL_FLOATING_OFFSET
 #endif
 
-// not yet used for car data
 class MPU6050IMUData {
 public:
-    uint8_t I2CAddress;
+    uint8_t I2CAddress; // For USE_SOFT_I2C_MASTER this is the full 8 byte address with LSB == 0
 #if !defined(USE_ONLY_ACCEL_FLOATING_OFFSET)
-    int16_t AcceleratorInitialOffset[NUMBER_OF_ACCEL_VALUES]; // stores the initial offsets for the 3 axes
-    LongUnion Speeds[NUMBER_OF_ACCEL_VALUES];
+    int16_t AcceleratorOffset[NUMBER_OF_ACCEL_VALUES]; // stores the initial offsets for the 3 axes
+    LongUnion Speed[NUMBER_OF_ACCEL_VALUES];
+    bool OffsetsJustHaveChanged;   // To be used for print as flag, that printing once has happened
 #endif
     int16_t Accelerator[NUMBER_OF_ACCEL_VALUES]; // Values compensated with initial offset, +/-2 | 4 g for 16 bit full range
 #if defined(USE_ACCEL_FLOATING_OFFSET)
     // The low pass value is in the HighWord, the LowWord holds the fraction
     LongUnion AcceleratorLowpassSubOneHertz[NUMBER_OF_ACCEL_VALUES]; // stores the low pass (0.6 Hz) values (-> floating offsets) for the 3 axes
+    uint8_t LowPassShiftValue; // Computed at init dependent of the sample frequency, to have a fixed AcceleratorLowpassSubOneHertz filter value
 #endif
-    uint8_t LowPassShiftValue; // used to determine the AcceleratorLowpassSubOneHertz filter value
 
 #if !defined(DO_NOT_USE_GYRO)
     int16_t GyroscopeOffset[NUMBER_OF_GYRO_VALUES];
@@ -61,9 +56,13 @@ public:
      * 1000 samples / second
      * => 17 bit LSB per degree at +/-250 dps range
      * The upper word has a resolution of 1/2 degree at 1000 samples per second
+     * The upper word has a resolution of 1 degree at 500 samples per second
      */
-    LongUnion Rotations[NUMBER_OF_GYRO_VALUES];
+    LongUnion Rotation[NUMBER_OF_GYRO_VALUES];
 #endif
+
+    int16_t CountOfFifoChunksForOffset = 0; // signed, since it is used in formulas with other signed values
+
     MPU6050IMUData();
     MPU6050IMUData(uint8_t aI2CAddress);
 
@@ -72,17 +71,18 @@ public:
      */
     void setI2CAddress(uint8_t aI2CAddress);
     bool initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassIndex);
-    void calculateAllOffsets();
+    bool initMPU6050AndCalculateAllOffsetsAndWait(uint8_t aSampleRateDivider, mpu6050_bandwidth_t aLowPassType);
     void printLP8Offsets(Print *aSerial);
     void printAllOffsets(Print *aSerial);
 
     /*
      * Read data with and without FIFO
      */
-    void initMPU6050FifoForAccelAndGyro();
+    void initMPU6050Fifo();
     void resetMPU6050Fifo();
-    uint8_t readMPU6050Fifo();
-    void readMPU6050Raw();
+    void resetOffset();
+    uint8_t readDataFromMPU6050Fifo();
+    void readDataFromMPU6050();
 
     /*
      * Low level functions

@@ -51,7 +51,7 @@
 #if !defined(DO_NOT_SUPPORT_RGBW)
 // Support rgbw colors for pattern.
 // Deactivate this, if you do NOT need RGBW support and want to save program memory (max 300 bytes).
-#define SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
+#define _SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
 #endif
 
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
@@ -66,7 +66,7 @@
 #endif
 #define MAX_BRIGHTNESS  0xFF // is internally stored as 0
 
-#if defined(SUPPORT_RGBW)
+#if defined(_SUPPORT_RGBW)
 uint8_t getWhitePart(color32_t color);
 uint8_t White(color32_t color) __attribute__ ((deprecated ("Renamed to getWhitePart()"))); // deprecated
 #endif
@@ -120,7 +120,7 @@ public:
     void clear(void);
     void clearPixel(uint16_t aPixelIndex);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
-#if defined(SUPPORT_RGBW)
+#if defined(_SUPPORT_RGBW)
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
 #endif
     void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
@@ -150,7 +150,7 @@ public:
 
     void TestWS2812Resolution();
 
-#if defined(SUPPORT_RGBW)
+#if defined(_SUPPORT_RGBW)
     uint8_t BytesPerPixel;  // can be 3 or 4
 #else
 #define BytesPerPixel 3
