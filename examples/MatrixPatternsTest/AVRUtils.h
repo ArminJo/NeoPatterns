@@ -53,4 +53,3 @@ bool isAddressInRAM(void *aAddressToCheck);
 bool isAddressBelowHeap(void *aAddressToCheck);
 #endif //  defined(__AVR__)
 #endif // _AVR_UTILS_H
-#pragma once

@@ -102,4 +102,3 @@ public:
 bool initWire();
 
 #endif // _MPU6050_IMU_DATA_H
-#pragma once

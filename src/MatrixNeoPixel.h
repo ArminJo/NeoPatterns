@@ -139,6 +139,3 @@ uint16_t ZigzagTypeBottomRightMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t a
 uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aColumnsTotal, uint8_t aRowsTotal);
 
 #endif /* SRC_LIB_NEOPATTERNS_MATRIXNEOPIXEL_H_ */
-
-#pragma once
-

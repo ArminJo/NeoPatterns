@@ -2,7 +2,7 @@
 This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).
 New Patterns are added, a [snake game running on a matrix](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeGame/SnakeGame.ino) is included and you can run [multiple patterns simultaneously on the same strip](https://github.com/ArminJo/NeoPatterns/blob/master/examples/TwoPatternsOnOneStrip/TwoPatternsOnOneStrip.ino).
 
-### [Version 3.0.0](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
+### [Version 3.0.1](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
@@ -188,6 +188,8 @@ OpenLedRace at the Cologne public library MINTköln-Festival
 ![OpenLedRace at the Cologne public library MINTköln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
 
 # Revision History
+### Version 3.0.1 - work in progress
+
 ### Version 3.0.0
 - Enabled individual selection of patterns to save program memory.
 - Renamed *NeoPatterns.cpp*, *MatrixNeoPatterns.cpp* and *MatrixSnake.cpp* to *NeoPatterns.hpp*, *MatrixNeoPatterns.hpp* and *MatrixSnake.hpp*.
@@ -195,6 +197,9 @@ OpenLedRace at the Cologne public library MINTköln-Festival
 - Changed parameter for endless repeats in `initMultipleFallingStars()`.
 - Improved usage of `random()`.
 - Added function `fillRegion()`, `isActive()` and `setAdafruitBrightnessValue()`.
+- Added support for brightness and brightness non zero mode.
+- Fixed aDoUpdate bug for `FADE`.
+- Fixed bugs in *Colors.h*.
 
 ### Version 2.4.0
 - Added macros `ENABLE_PATTERN_<pattern_name>` to enable reducing size, if some patterns are not used.

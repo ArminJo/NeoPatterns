@@ -135,4 +135,3 @@ typedef uint32_t color32_t;
 // end deprecated
 
 #endif // _COLORS_H
-#pragma once

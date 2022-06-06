@@ -509,4 +509,3 @@ typedef enum {
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
 #endif // _MPU6050_DEFINES_H
-#pragma once

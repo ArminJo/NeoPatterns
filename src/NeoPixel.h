@@ -176,4 +176,3 @@ public:
 extern const uint8_t GammaTable32[32] PROGMEM;
 
 #endif /* _NEOPATTERNS_NEOPIXEL_H */
-#pragma once

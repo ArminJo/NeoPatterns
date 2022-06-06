@@ -175,4 +175,3 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr);
 void myLoadTest(MatrixNeoPatterns *aLedsPtr);
 
 #endif // _MATRIX_NEOPATTERNS_H
-#pragma once

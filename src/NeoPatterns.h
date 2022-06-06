@@ -374,6 +374,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  * - Added function fillRegion(), isActive() and setBrightnessValue().
  * - Added support for brightness and brightness non zero mode.
  * - Fixed aDoUpdate bug for FADE.
+ * - Fixed bugs in Colors.h.
  *
  * Version 2.3.1 - 02/2021
  * - Changed type of TotalStepCounter from uint16_t to int16_t.
@@ -420,4 +421,3 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  */
 
 #endif // _NEOPATTERNS_H
-#pragma once

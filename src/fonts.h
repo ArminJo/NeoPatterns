@@ -75,4 +75,3 @@
 extern const uint8_t font_PGM[];
 
 #endif // _FONTS_H
-#pragma once

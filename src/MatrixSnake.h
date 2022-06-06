@@ -168,4 +168,3 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr);
 #endif
 
 #endif // _MATRIX_SNAKE_H
-#pragma once

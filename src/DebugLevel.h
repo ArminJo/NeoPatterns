@@ -48,4 +48,3 @@
 #endif
 
 #endif // _DEBUGLEVEL_H
-#pragma once
