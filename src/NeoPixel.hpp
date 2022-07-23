@@ -62,7 +62,7 @@ void NeoPixel::AdafruitNeoPixelIinit(uint16_t aNumberOfPixels, uint16_t aPin, ne
 }
 
 /*
- * Returns false if no memory available
+ * @return false if no memory available
  */
 bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel) {
     AdafruitNeoPixelIinit(aNumberOfPixels, aPin, aTypeOfPixel);
@@ -92,13 +92,16 @@ bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOf
  */
 NeoPixel::NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel) :
-        Adafruit_NeoPixel(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
+        Adafruit_NeoPixel(
+                (aNumberOfPixels > aUnderlyingNeoPixelObject->numLEDs) ? aUnderlyingNeoPixelObject->numLEDs : aNumberOfPixels,
+                aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
 
     UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
 #if defined(_SUPPORT_RGBW)
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
 #endif
     PixelOffset = aPixelOffset;
+    Brightness = MAX_BRIGHTNESS;
     PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
         PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
@@ -118,6 +121,9 @@ NeoPixel::NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, u
 
 void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
         bool aEnableShowOfUnderlyingPixel) {
+    if (aNumberOfPixels > aUnderlyingNeoPixelObject->numLEDs) {
+        aNumberOfPixels = aUnderlyingNeoPixelObject->numLEDs;
+    }
     AdafruitNeoPixelIinit(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType());
     Adafruit_NeoPixel::begin(); // sets pin to output
 
@@ -126,6 +132,7 @@ void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
 #endif
     PixelOffset = aPixelOffset;
+    Brightness = MAX_BRIGHTNESS;
     PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     if (!aEnableShowOfUnderlyingPixel) {
         PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
@@ -189,6 +196,24 @@ bool NeoPixel::begin(Print *aSerial, uint8_t aBrightness, bool aEnableBrightness
 }
 
 /*
+ * Requires around 140 bytes of program space
+ */
+void NeoPixel::printConnectionInfo(Print *aSerial) {
+    if(PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE){
+        aSerial->print(F("Circular "));
+    }
+    aSerial->print(F("Neopixel of length "));
+    aSerial->print(numLEDs);
+    aSerial->print(F(" is attached to pin "));
+    aSerial->print(pin);
+    if (PixelOffset != 0) {
+        aSerial->print(F(" with pixel offset "));
+        aSerial->print(PixelOffset);
+    }
+    aSerial->println();
+}
+
+/*
  * For debugging purposes
  */
 void NeoPixel::printPin(Print *aSerial) {
@@ -232,14 +257,15 @@ void NeoPixel::show() {
         if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
 #if defined(TRACE)
             printPin(&Serial);
-            Serial.println(F("Underlying->show"));
+            Serial.print(F("Underlying->show, brightness="));
+            Serial.println(Brightness);
 #endif
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
 #if defined(TRACE)
         printPin(&Serial);
-        Serial.print(F("show brightness="));
+        Serial.print(F("Show, brightness="));
         Serial.println(Brightness);
 #endif
         Adafruit_NeoPixel::show();
@@ -257,7 +283,7 @@ neoPixelType NeoPixel::getType() {
         tReturnValue |= 0x100;
     }
 #else
-    neoPixelType tReturnValue=(wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
+    neoPixelType tReturnValue = (wOffset << 6 | rOffset << 4 | gOffset << 2 | bOffset);
 #endif
     return tReturnValue;
 }
@@ -291,6 +317,13 @@ uint16_t NeoPixel::getPixelBufferSize() {
     return numBytes;
 }
 
+/*
+ * The same as numPixels()
+ */
+uint16_t NeoPixel::getNumberOfPixels() {
+    return numLEDs;
+}
+
 void NeoPixel::storePixelBuffer(uint8_t *aPixelBufferPointerDestination) {
     memcpy(aPixelBufferPointerDestination, pixels, numBytes);
 }
@@ -299,8 +332,29 @@ void NeoPixel::restorePixelBuffer(uint8_t *aPixelBufferPointerSource) {
     memcpy(pixels, aPixelBufferPointerSource, numBytes);
 }
 
+/*
+ * Clear allPixels
+ */
 void NeoPixel::clear(void) {
     memset(pixels + (BytesPerPixel * PixelOffset), 0, numBytes);
+}
+
+/*
+ * Requires 50 bytes program memory, but is faster than using setPixelColor()
+ */
+void NeoPixel::clearPixel(uint16_t aPixelIndex) {
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // added line to support offsets
+    }
+    uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
+    *tPixelPtr++ = 0;
+    *tPixelPtr++ = 0;
+    *tPixelPtr++ = 0;
+#if defined(_SUPPORT_RGBW)
+    if (BytesPerPixel == 4) {
+        *tPixelPtr = 0;
+    }
+#endif
 }
 
 /*
@@ -356,24 +410,6 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
             clearPixel(i);
         }
     }
-}
-
-/*
- * Needs 50 bytes program memory, but is faster
- */
-void NeoPixel::clearPixel(uint16_t aPixelIndex) {
-    if (aPixelIndex < numLEDs) {
-        aPixelIndex += PixelOffset; // added line to support offsets
-    }
-    uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
-    *tPixelPtr++ = 0;
-    *tPixelPtr++ = 0;
-    *tPixelPtr++ = 0;
-#if defined(_SUPPORT_RGBW)
-    if (BytesPerPixel == 4) {
-        *tPixelPtr = 0;
-    }
-#endif
 }
 
 /*
@@ -560,6 +596,19 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
  * Version with rounded brightness computation and special non zero brightness mode
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
+
+//    if(aColor == 0) {
+//        // is faster and adds 78 bytes for clearPixel function
+//        clearPixel(aPixelIndex);
+//    }
+    if (aPixelIndex < numLEDs) {
+        aPixelIndex += PixelOffset; // support offsets, no check for overflow
+
+        uint8_t tRed = (uint8_t) (aColor >> 16);
+        uint8_t tGreen = (uint8_t) (aColor >> 8);
+        uint8_t tBlue = (uint8_t) aColor;
+        uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
+
 #if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("Pixel="));
@@ -567,19 +616,10 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
         Serial.print(F(" Offset="));
         Serial.print(PixelOffset);
         Serial.print(F(" Color=0x"));
-        Serial.println(aColor, HEX);
+        Serial.print(aColor, HEX);
+        Serial.print(F(" Brightness=0x"));
+        Serial.println(Brightness);
 #endif
-//    if(aColor == 0) {
-//        // is faster and adds 78 bytes for clearPixel function
-//        clearPixel(aPixelIndex);
-//    }
-    if (aPixelIndex < numLEDs) {
-        aPixelIndex += PixelOffset; // support offsets
-
-        uint8_t tRed = (uint8_t) (aColor >> 16);
-        uint8_t tGreen = (uint8_t) (aColor >> 8);
-        uint8_t tBlue = (uint8_t) aColor;
-        uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
 
 #if defined(SUPPORT_BRIGHTNESS)
         uint8_t tBrightness = Brightness;
@@ -641,9 +681,9 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
             if (tRed == 0 && tGreen == 0 && tBlue == 0) {
 #  endif
 #if defined(TRACE)
-        printPin(&Serial);
-        Serial.print(F("MaxOffset="));
-        Serial.println(tMaxOffset);
+                printPin(&Serial);
+                Serial.print(F("MaxOffset="));
+                Serial.println(tMaxOffset);
 #endif
                 // avoid that pixel is completely off
                 tPixelPtr[tMaxOffset] = 1; // tMaxOffset is set here since if tBrightness = 255 and aColor != 0 then is one of red or green or blue != 0
@@ -748,7 +788,7 @@ uint32_t NeoPixel::dimColor(color32_t aColor) {
     uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1,
             getWhitePart(aColor) >> 1);
 #else
-            uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1);
+    uint32_t dimColor = Color(getRedPart(aColor) >> 1, getGreenPart(aColor) >> 1, getBluePart(aColor) >> 1);
 #endif
     return dimColor;
 }
@@ -822,7 +862,7 @@ color32_t NeoPixel::convertLinearToGamma5Color(color32_t aLinearBrightnessColor)
     uint8_t tWhite = pgm_read_byte(&GammaTable32[(getWhitePart(aLinearBrightnessColor) / 8)]);
     return Color(tRed, tGreen, tBlue, tWhite);
 #else
-            return Color(tRed, tGreen, tBlue);
+    return Color(tRed, tGreen, tBlue);
 #endif
 }
 
@@ -870,11 +910,11 @@ color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t
 #if defined(_SUPPORT_RGBW)
     return ((uint32_t) tWhiteDimmed << 24) | ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
 #else
-            return ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
+    return ((uint32_t) tRedDimmed << 16) | ((uint32_t) tGreenDimmed << 8) | tBlueDimmed;
 #endif
 }
 
-// deprecated
+// deprecated, use dimColorWithGamma5()
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
     return dimColorWithGamma5(aLinearBrightnessColor, aBrightness, doSpecialZero);
 }

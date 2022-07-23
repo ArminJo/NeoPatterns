@@ -85,6 +85,8 @@ public:
     MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
 
+    void printConnectionInfo(Print *aSerial);
+
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     void setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t));
     uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);

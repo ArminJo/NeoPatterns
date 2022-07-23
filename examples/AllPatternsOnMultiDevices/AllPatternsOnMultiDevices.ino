@@ -31,7 +31,7 @@
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 #include <MatrixSnake.hpp>
 
@@ -71,7 +71,7 @@ char sStringBufferForVCC[7] = "xxxxmV";
 // onComplete callback functions
 void TestPatterns(NeoPatterns *aLedsPtr);
 #if defined(ALL_PATTERN_ON_ONE_STRIP)
-#define PIN_NEOPIXEL_ALL        2
+#define PIN_NEOPIXEL_ALL        5
 NeoPatterns allPixel = NeoPatterns(104, PIN_NEOPIXEL_ALL, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
 NeoPatterns bar16 = NeoPatterns(&allPixel, 0, 16, true, &allPatternsRandomHandler);
 NeoPatterns bar24 = NeoPatterns(&allPixel, 19, 24, true, &TestPatterns);
@@ -108,6 +108,19 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    ring12.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
+    ring16.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
+    ring24.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
+
+#if defined(ALL_PATTERN_ON_ONE_STRIP)
+    allPixel.printConnectionInfo(&Serial);
+#endif
+    bar16.printConnectionInfo(&Serial);
+    bar24.printConnectionInfo(&Serial);
+    ring12.printConnectionInfo(&Serial);
+    ring16.printConnectionInfo(&Serial);
+    ring24.printConnectionInfo(&Serial);
+    NeoPixelMatrix.printConnectionInfo(&Serial);
 
 #if defined(SUPPORT_BRIGHTNESS)
     uint8_t tBrightness = readBrightness();
@@ -141,10 +154,6 @@ void setup() {
     ring12.begin(tBrightness, true); // This initializes the NeoPixel library.
     ring16.begin(tBrightness, true); // This initializes the NeoPixel library.
     ring24.begin(tBrightness, true); // This initializes the NeoPixel library.
-
-    ring12.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
-    ring16.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
-    ring24.PixelFlags |= PIXEL_FLAG_GEOMETRY_CIRCLE;
 
     delay(300); // to avoid partial patterns at power up
 

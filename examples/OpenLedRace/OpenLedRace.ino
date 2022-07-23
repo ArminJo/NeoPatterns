@@ -76,7 +76,7 @@
 
 //#define TRACE
 //#define DEBUG
-#define INFO
+#define INFO    // Enable additional informative output like e.g. offsets,
 #include "DebugLevel.h" // to propagate debug level
 
 #if defined(INFO) && defined(__AVR__)
@@ -86,13 +86,13 @@
 // for hunting errors
 //#include "AvrTracing.hpp"
 
-#define VERSION_EXAMPLE "1.0"
+#define VERSION_EXAMPLE "1.1"
 
 //#define USE_NO_LCD   // this suppresses the error tone and print if LCD was not found
 //#define TEST_MODE
 //#define TIMING_TEST
-#define USE_ACCELERATOR_INPUT
-#if defined(USE_ACCELERATOR_INPUT)
+#define ENABLE_ACCELERATOR_INPUT
+#if defined(ENABLE_ACCELERATOR_INPUT)
 #define USE_ACCELERATION_NEOPIXEL_BARS
 #endif
 //#define BRIDGE_NO_NEOPATTERNS // to save RAM
@@ -100,7 +100,7 @@
 
 #define USE_SOFT_I2C_MASTER // Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
 
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
 /*
  * Modifiers for the MPU6050IMUData library to save speed and space
  */
@@ -111,7 +111,7 @@
 // No MPU6050, but SerialLCD -> configure and include SoftI2CMaster here
 #include "SoftI2CMasterConfig.h"
 #include "SoftI2CMaster.h"
-#endif // #if defined(USE_ACCELERATOR_INPUT)
+#endif // #if defined(ENABLE_ACCELERATOR_INPUT)
 
 #include "LongUnion.h"
 
@@ -130,7 +130,7 @@ bool sSerialLCDAvailable;
 #define PIN_PLAYER_2_BUTTON 3
 #define PIN_VU_BAR_1        4
 #define PIN_VU_BAR_2        5
-#if !defined(USE_ACCELERATOR_INPUT)
+#if !defined(ENABLE_ACCELERATOR_INPUT)
 #define PIN_PLAYER_3_BUTTON 6
 #define PIN_PLAYER_4_BUTTON 7
 #endif
@@ -148,8 +148,7 @@ bool sSerialLCDAvailable;
 #define PIN_DRAG           A2
 #define ANALOG_OFFSET      20   // To get real 0 analog value, even if ground has bias because of high LED current on Breadboard
 
-// If connected to ground, verbose output for Arduino Serial Monitor is enabled. This is not suitable for Arduino Plotter.
-#define PIN_SERIAL_MONITOR_OUTPUT   12
+#define PIN_ONLY_PLOTTER_OUTPUT 12 // Verbose output to Arduino Serial Monitor is disabled, if connected to ground. This is intended for Arduino Plotter mode.
 bool sOnlyPlotterOutput;
 
 /*
@@ -162,7 +161,7 @@ bool sOnlyPlotterOutput;
  * Maximum number of cars supported. Each car is individually activated at runtime
  * by first press of its button or movement of its accelerator input.
  */
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
 #define NUMBER_OF_CARS            2 // Currently we can handle only 2 distinct accelerometers.
 #else
 #define NUMBER_OF_CARS            4
@@ -260,6 +259,7 @@ void resetAllCars();
 void resetTrack(bool aDoAnimation);
 void resetAndShowTrackWithoutCars();
 bool isCarInRegion(unsigned int aRegionFirst, unsigned int aRegionLength);
+void playError();
 void playShutdownMelody();
 void playMelodyAndShutdown();
 
@@ -292,14 +292,15 @@ void myTone(int aFrequency) {
 class Car {
 public:
     NeoPatterns *TrackPtr;
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
     MPU6050IMUData AcceleratorInput;
+    bool AcceleratorConnected; // Dynamically detection of accelerator connection true -> accelerator is connected
     bool ButtonInputDetected; // true -> button input was detected and has precedence of acceleration input
     uint16_t AcceleratorLowPassValue;
 #  if defined(USE_ACCELERATION_NEOPIXEL_BARS)
     uint8_t AccelerationBarPin;
 #  endif
-#endif // defined(USE_ACCELERATOR_INPUT)
+#endif // defined(ENABLE_ACCELERATOR_INPUT)
 
     uint8_t NumberOfThisCar; // 1, 2...
     uint8_t AcceleratorButtonPin;
@@ -309,14 +310,13 @@ public:
     float Distance;
     uint16_t PixelPosition; // the index of head of car on the track
     uint8_t Laps;
-    bool CarIsActive;
 
     bool lastButtonState;
     const char *WinnerMelody;
 
     Car() {  // @suppress("Class members should be properly initialized")
         TrackPtr = NULL;
-        CarIsActive = false;
+//        CarIsActive = false;
     }
 
     void init(NeoPatterns *aTrackPtr, uint8_t aNumberOfThisCar, uint8_t aButtonPin, color32_t aCarColor,
@@ -330,34 +330,36 @@ public:
 
         reset();
 
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
         if (aNumberOfThisCar == 2) {
             AcceleratorInput.setI2CAddress(MPU6050_ADDRESS_AD0_HIGH);
         }
         // use maximum filtering. It prefers slow and huge movements :-)
 
         if (!AcceleratorInput.initMPU6050AndCalculateAllOffsetsAndWait(20, MPU6050_BAND_5_HZ)) {
+            AcceleratorConnected = false;
             Serial.print(F("No MPU6050 IMU connected at address 0x"));
             Serial.print(AcceleratorInput.I2CAddress >> 1, HEX);
             Serial.print(F(" for car "));
             Serial.print(aNumberOfThisCar);
-            Serial.println(F(". You may want to disable \"#define USE_ACCELERATOR_INPUT\""));
+            Serial.println(F(". You may want to disable \"#define ENABLE_ACCELERATOR_INPUT\""));
             if (sSerialLCDAvailable) {
-                myLCD.setCursor(0, 2);
+                myLCD.setCursor(0, aNumberOfThisCar + 1);
                 myLCD.print(F("No IMU for car "));
                 myLCD.print(aNumberOfThisCar);
             }
-            playMelodyAndShutdown();
-        }
+            playError();
+        } else {
+            AcceleratorConnected = true;
 #  if defined(INFO)
-        if (!sOnlyPlotterOutput) {
-            Serial.print(NumberOfThisCar);
-            Serial.print(' ');
-            AcceleratorInput.printAllOffsets(&Serial);
-        }
+            if (!sOnlyPlotterOutput) {
+                Serial.print(NumberOfThisCar);
+                Serial.print(' ');
+                AcceleratorInput.printAllOffsets(&Serial);
+            }
 #  endif
-#endif // defined(USE_ACCELERATOR_INPUT)
-
+        }
+#endif // defined(ENABLE_ACCELERATOR_INPUT)
     }
 
     void reset() {
@@ -365,7 +367,9 @@ public:
         Distance = 0;
         Laps = 0;
         lastButtonState = 1;
-//        CarIsActive = false;
+#if defined(ENABLE_ACCELERATOR_INPUT)
+        ButtonInputDetected = false;
+#endif
     }
 
     /*
@@ -373,67 +377,45 @@ public:
      * Overlapping of cars is handled by using addPixelColor for drawing
      */
     void draw() {
-        if (CarIsActive) {
+
 #if defined(TEST_MODE)
-            for (int i = 0; i <= 1; i++) {
+        for (int i = 0; i <= 1; i++) {
 #else
-            for (int i = 0; i <= Laps; i++) {
+        for (int i = 0; i <= Laps; i++) {
 #endif
-                // draw from back to front
-                int16_t tDrawPosition = PixelPosition - i;
-                if (tDrawPosition < 0) {
-                    // wrap around
-                    tDrawPosition += TrackPtr->numPixels();
-                }
-                TrackPtr->addPixelColor(tDrawPosition, getRedPart(Color), getGreenPart(Color), getBluePart(Color));
+            // draw from back to front
+            int16_t tDrawPosition = PixelPosition - i;
+            if (tDrawPosition < 0) {
+                // wrap around
+                tDrawPosition += TrackPtr->numPixels();
             }
+            TrackPtr->addPixelColor(tDrawPosition, getRedPart(Color), getGreenPart(Color), getBluePart(Color));
         }
     }
 
+    /*
+     * @return true if button was pressed or accelerator was moved
+     */
     bool checkInput() {
-        bool tButtonIsPressed = checkButton();
-#if defined(USE_ACCELERATOR_INPUT)
-        if (tButtonIsPressed) {
-            ButtonInputDetected = true;
-        }
-        if ((ButtonInputDetected && tButtonIsPressed) || (!ButtonInputDetected && (getAcceleratorValueShift8() >= 4))) {
+#if !defined(ENABLE_ACCELERATOR_INPUT)
+        return checkButton();
 #else
-        if (tButtonIsPressed) {
-#endif
-            if (!CarIsActive) {
-                CarIsActive = true;
-#if defined(INFO)
-                if (!sOnlyPlotterOutput) {
-                    Serial.print(NumberOfThisCar);
-#  if defined(USE_ACCELERATOR_INPUT)
-                    Serial.print(F(" Accel="));
-                    Serial.print(getAcceleratorValueShift8());
-#  endif
-                    Serial.println(F(" Car activated"));
-                }
-#endif
-            }
+        bool tButtonIsPressed = checkButton(); // checkButton() also sets ButtonInputDetected used below
+        if (tButtonIsPressed || (!ButtonInputDetected && AcceleratorConnected && (getAcceleratorValueShift8() >= 4))) {
             return true;
         }
+#endif
         return false;
     }
 
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
     /*
      * @return 4 g for 16 bit full range
      */
     uint8_t getAcceleratorValueShift8() {
         AcceleratorInput.readDataFromMPU6050();
 //        AcceleratorInput.readDataFromMPU6050Fifo();
-        uint16_t tAcceleration16Bit = AcceleratorInput.computeAccelerationWithFloatingOffset();
-        AcceleratorLowPassValue += (((int16_t) (tAcceleration16Bit - AcceleratorLowPassValue))) >> 3;
-#  if defined(USE_ACCELERATION_NEOPIXEL_BARS)
-        // scale it so that (256 * 100) -> 8
-        AccelerationCommonNeopixelBar.drawBar(AcceleratorLowPassValue / ((256 * 100) / 8), Color);
-        AccelerationCommonNeopixelBar.setPin(AccelerationBarPin);
-        AccelerationCommonNeopixelBar.show();
-#  endif
-        uint8_t tAcceleration = tAcceleration16Bit >> 8; // values from 0 to 255
+        uint8_t tAcceleration = AcceleratorInput.computeAccelerationWithFloatingOffset() >> 8;
 #  if defined(TRACE)
 //#if defined(INFO)
         Serial.print(NumberOfThisCar);
@@ -445,7 +427,7 @@ public:
 #  endif
         return tAcceleration;
     }
-#endif // defined(USE_ACCELERATOR_INPUT)
+#endif // defined(ENABLE_ACCELERATOR_INPUT)
 
     /*
      * Check if button was just pressed
@@ -457,8 +439,11 @@ public:
 
         if (tLastButtonState == true && lastButtonState == false) {
 #if defined(DEBUG)
-            Serial.print(NumberOfThisCar);
-            Serial.println(F(" Button pressed"));
+                Serial.print(NumberOfThisCar);
+                Serial.println(F(" Button pressed"));
+#endif
+#if defined(ENABLE_ACCELERATOR_INPUT)
+            ButtonInputDetected = true;
 #endif
             return true;
         }
@@ -469,7 +454,7 @@ public:
      * @return true if this car is the winner
      */
     bool checkForWinner(uint8_t aLapsNeededToWin) {
-        if (CarIsActive && Laps >= aLapsNeededToWin) {
+        if (Laps >= aLapsNeededToWin) {
             if (!sOnlyPlotterOutput) {
                 Serial.print(F("Winner is car "));
                 Serial.println(NumberOfThisCar);
@@ -496,11 +481,11 @@ public:
 
         while (updatePlayRtttl()) {
 #if defined(TIMING_TEST)
-            /*
-             *  20 microseconds for loop, 300 microseconds if melody updated
-             *  19 ms duration for resetTrack() - every 50 ms
-             */
-            digitalWrite(PIN_TIMING, HIGH);
+                /*
+                 *  20 microseconds for loop, 300 microseconds if melody updated
+                 *  19 ms duration for resetTrack() - every 50 ms
+                 */
+                digitalWrite(PIN_TIMING, HIGH);
 #endif
             if (TrackPtr->update()) {
                 timer0_millis += MILLIS_FOR_TRACK_TO_SHOW;
@@ -508,7 +493,7 @@ public:
                 resetTrack(false);
             }
 #if defined(TIMING_TEST)
-            digitalWrite(PIN_TIMING, LOW);
+                digitalWrite(PIN_TIMING, LOW);
 #endif
             uint32_t tStartMillis = millis();
             // wait at least 3 seconds
@@ -542,75 +527,70 @@ public:
 #if defined(TIMING_TEST)
         digitalWrite(PIN_TIMING, HIGH);
 #endif
-        if (!CarIsActive) {
-            checkInput(); // check if car is getting active
+        uint16_t tAcceleration;
+
+        if (checkButton()) {
+            // add fixed amount of energy ->  800 => tAdditionalEnergy is 0.2 per press
+            tAcceleration = 600;
+        }
+
+#if defined(ENABLE_ACCELERATOR_INPUT)
+        else if (!ButtonInputDetected && AcceleratorConnected) {
+            //Here, no button was pressed before and accelerator is connected
+            tAcceleration = getAcceleratorValueShift8();
         } else {
-#if defined(USE_ACCELERATOR_INPUT)
-            if (ButtonInputDetected) {
-                /*
-                 * Button input here
-                 */
-                if (checkButton()) {
-                    // add fixed amount of energy
-                    SpeedAsPixelPerLoop = sqrt((SpeedAsPixelPerLoop * SpeedAsPixelPerLoop) + ENERGY_PER_BUTTON_PRESS);
-                }
-            } else {
-                /*
-                 * Accelerator input here
-                 */
-                uint8_t tAcceleration = getAcceleratorValueShift8();
-                if (tAcceleration > 0) {
-                    float tAdditionalEnergy = ((float) tAcceleration) / 4096;
-                    SpeedAsPixelPerLoop = sqrt((SpeedAsPixelPerLoop * SpeedAsPixelPerLoop) + tAdditionalEnergy);
-                }
-
-                if (sOnlyPlotterOutput) {
-                    /*
-                     * Print data for Arduino plotter
-                     */
-                    Serial.print(tAcceleration);
-                    Serial.print(' ');
-                    Serial.print(AcceleratorLowPassValue >> 8);
-                    Serial.print(' ');
-                    Serial.print(int(SpeedAsPixelPerLoop * 100));
-                    Serial.print(' ');
-                }
-            }
-#else
-            /*
-             * Here we have only button input available
-             */
-            if (checkButton()) {
-                // add fixed amount of energy
-                SpeedAsPixelPerLoop = sqrt((SpeedAsPixelPerLoop * SpeedAsPixelPerLoop) + ENERGY_PER_BUTTON_PRESS);
-            }
+            tAcceleration = 0;
+        }
 #endif
-            bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
-            float tGravity;
-            float tFricion;
-            float tDrag;
+#  if defined(USE_ACCELERATION_NEOPIXEL_BARS)
+        AcceleratorLowPassValue += (((int16_t) (tAcceleration - AcceleratorLowPassValue))) >> 3;
+        // scale it so that 100 -> 8
+        AccelerationCommonNeopixelBar.drawBar(AcceleratorLowPassValue / (100 / 8), Color);
+        AccelerationCommonNeopixelBar.setPin(AccelerationBarPin);
+        AccelerationCommonNeopixelBar.show();
+#  endif
+        if (tAcceleration > 0) {
+            float tAdditionalEnergy = ((float) tAcceleration) / 4096;
+            SpeedAsPixelPerLoop = sqrt((SpeedAsPixelPerLoop * SpeedAsPixelPerLoop) + tAdditionalEnergy);
+        }
+        if (sOnlyPlotterOutput) {
+            /*
+             * Print data for Arduino plotter
+             */
+            Serial.print(tAcceleration);
+            Serial.print(' ');
+            Serial.print(AcceleratorLowPassValue);
+            Serial.print(' ');
+            Serial.print(int(SpeedAsPixelPerLoop * 100));
+            Serial.print(' ');
+        }
 
-            if (tIsAnalogParameterInputMode) {
-                /*
-                 * Read analog values for gravity etc. from potentiometers
-                 * 850 us for analogRead + DEBUG print
-                 */
-                uint16_t tGravityRaw = analogRead(PIN_GRAVITY);
-                uint16_t tFricionRaw = analogRead(PIN_FRICTION);
-                uint16_t tDragRaw = analogRead(PIN_DRAG);
-                if (tGravityRaw >= ANALOG_OFFSET) {
-                    // -ANALOG_OFFSET (20) to get real 0 value even if ground has bias because of high LED current on breadboard
-                    tGravityRaw -= ANALOG_OFFSET;
-                }
-                if (tFricionRaw >= ANALOG_OFFSET) {
-                    tFricionRaw -= ANALOG_OFFSET;
-                }
-                if (tDragRaw >= ANALOG_OFFSET) {
-                    tDragRaw -= ANALOG_OFFSET;
-                }
-                tGravity = tGravityRaw * (GRAVITY_FACTOR_FOR_MAP / 512);
-                tFricion = tFricionRaw * (FRICTION_PER_LOOP / 512);
-                tDrag = tDragRaw * (AERODYNAMIC_DRAG_PER_LOOP / 512);
+        bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
+        float tGravity;
+        float tFricion;
+        float tDrag;
+
+        if (tIsAnalogParameterInputMode) {
+            /*
+             * Read analog values for gravity etc. from potentiometers
+             * 850 us for analogRead + DEBUG print
+             */
+            uint16_t tGravityRaw = analogRead(PIN_GRAVITY);
+            uint16_t tFricionRaw = analogRead(PIN_FRICTION);
+            uint16_t tDragRaw = analogRead(PIN_DRAG);
+            if (tGravityRaw >= ANALOG_OFFSET) {
+                // -ANALOG_OFFSET (20) to get real 0 value even if ground has bias because of high LED current on breadboard
+                tGravityRaw -= ANALOG_OFFSET;
+            }
+            if (tFricionRaw >= ANALOG_OFFSET) {
+                tFricionRaw -= ANALOG_OFFSET;
+            }
+            if (tDragRaw >= ANALOG_OFFSET) {
+                tDragRaw -= ANALOG_OFFSET;
+            }
+            tGravity = tGravityRaw * (GRAVITY_FACTOR_FOR_MAP / 512);
+            tFricion = tFricionRaw * (FRICTION_PER_LOOP / 512);
+            tDrag = tDragRaw * (AERODYNAMIC_DRAG_PER_LOOP / 512);
 #if defined(DEBUG)
                 if ((((sLoopCountForDebugPrint & 0x3F) == 0) || checkInput()) && NumberOfThisCar == 1) {
 #if defined(TRACE)
@@ -626,71 +606,71 @@ public:
                 }
 #endif
 
-            } else {
-                // 100 microseconds
-                tGravity = GRAVITY_FACTOR_FOR_MAP;
-                tFricion = FRICTION_PER_LOOP;
-                tDrag = AERODYNAMIC_DRAG_PER_LOOP;
-            }
+        } else {
+            // 100 microseconds
+            tGravity = GRAVITY_FACTOR_FOR_MAP;
+            tFricion = FRICTION_PER_LOOP;
+            tDrag = AERODYNAMIC_DRAG_PER_LOOP;
+        }
 
-            /*
-             * Compute new position
-             */
-            Distance += SpeedAsPixelPerLoop; // Take speed to compute new position
-            PixelPosition = (uint16_t) Distance % TrackPtr->numPixels();
+        /*
+         * Compute new position
+         */
+        Distance += SpeedAsPixelPerLoop; // Take speed to compute new position
+        PixelPosition = (uint16_t) Distance % TrackPtr->numPixels();
 
-            /*
-             * Check for lap counter
-             */
-            if (Distance > TrackPtr->numPixels() * (Laps + 1)) {
-                Laps++;
+        /*
+         * Check for lap counter
+         */
+        if (Distance > TrackPtr->numPixels() * (Laps + 1)) {
+            Laps++;
 #if defined(INFO)
-                if (!sOnlyPlotterOutput) {
-                    Serial.print(F("Car "));
-                    Serial.print(NumberOfThisCar);
-                    Serial.print(F(" starts "));
-                    Serial.print(Laps + 1);
-                    Serial.println(F(". lap"));
-                }
-#endif
-                if (sSerialLCDAvailable) {
-                    printBigNumber4(Laps, ((NumberOfThisCar - 1) * 13) + 2);
-                }
-                tRetval = CAR_LAP_CONDITION;
+            if (!sOnlyPlotterOutput) {
+                Serial.print(F("Car "));
+                Serial.print(NumberOfThisCar);
+                Serial.print(F(" starts "));
+                Serial.print(Laps + 1);
+                Serial.println(F(". lap"));
             }
+#endif
+            if (sSerialLCDAvailable) {
+                printBigNumber4(Laps, ((NumberOfThisCar - 1) * 13) + 2);
+            }
+            tRetval = CAR_LAP_CONDITION;
+        }
 
+        /*
+         * Compute new speed:
+         * - Acceleration from map and friction are simply subtracted from speed
+         * - Aerodynamic drag is subtracted proportional from speed
+         */
+        if (PixelPosition >= ACCEL_MAP_OFFSET && AccelerationMap[PixelPosition - ACCEL_MAP_OFFSET] != 0) {
             /*
-             * Compute new speed:
-             * - Acceleration from map and friction are simply subtracted from speed
-             * - Aerodynamic drag is subtracted proportional from speed
+             * Here we are on a ramp or loop
              */
-            if (PixelPosition >= ACCEL_MAP_OFFSET && AccelerationMap[PixelPosition - ACCEL_MAP_OFFSET] != 0) {
-                /*
-                 * Here we are on a ramp or loop
-                 */
-                SpeedAsPixelPerLoop += tGravity * AccelerationMap[PixelPosition - ACCEL_MAP_OFFSET];
+            SpeedAsPixelPerLoop += tGravity * AccelerationMap[PixelPosition - ACCEL_MAP_OFFSET];
 #if defined(TRACE)
             Serial.print(F(" Gravity="));
             Serial.print(AccelerationMap[PixelPosition]);
 #endif
-            }
-            if (SpeedAsPixelPerLoop > 0) {
-                // forward direction
-                if (SpeedAsPixelPerLoop > tFricion) {
-                    SpeedAsPixelPerLoop -= tFricion;
-                } else {
-                    SpeedAsPixelPerLoop = 0.0;
-                }
+        }
+        if (SpeedAsPixelPerLoop > 0) {
+            // forward direction
+            if (SpeedAsPixelPerLoop > tFricion) {
+                SpeedAsPixelPerLoop -= tFricion;
             } else {
-                // backward direction
-                if (SpeedAsPixelPerLoop < -tFricion) {
-                    SpeedAsPixelPerLoop += tFricion;
-                } else {
-                    SpeedAsPixelPerLoop = 0.0;
-                }
+                SpeedAsPixelPerLoop = 0.0;
             }
+        } else {
+            // backward direction
+            if (SpeedAsPixelPerLoop < -tFricion) {
+                SpeedAsPixelPerLoop += tFricion;
+            } else {
+                SpeedAsPixelPerLoop = 0.0;
+            }
+        }
 
-            SpeedAsPixelPerLoop -= SpeedAsPixelPerLoop * tDrag;
+        SpeedAsPixelPerLoop -= SpeedAsPixelPerLoop * tDrag;
 
 #if defined(TRACE)
         Serial.print(F(" -> "));
@@ -699,13 +679,13 @@ public:
         Serial.println(Distance);
 #endif
 
-        }
 #if defined(TIMING_TEST)
         digitalWrite(PIN_TIMING, LOW);
 #endif
         return tRetval;
     }
-};
+}
+;
 
 /*******************************************************************************************
  * The RAMP class
@@ -1008,8 +988,9 @@ void setup() {
     __malloc_margin = 120; // 128 is the default value
     pinMode(LED_BUILTIN, OUTPUT);
 
+    //
     pinMode(PIN_MANUAL_PARAMETER_MODE, INPUT_PULLUP);
-    pinMode(PIN_SERIAL_MONITOR_OUTPUT, INPUT_PULLUP);
+    pinMode(PIN_ONLY_PLOTTER_OUTPUT, INPUT_PULLUP);
 
 #if defined(TIMING_TEST)
     pinMode(PIN_TIMING, OUTPUT);
@@ -1024,7 +1005,7 @@ void setup() {
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
 
-    sOnlyPlotterOutput = !digitalRead(PIN_SERIAL_MONITOR_OUTPUT);
+    sOnlyPlotterOutput = !digitalRead(PIN_ONLY_PLOTTER_OUTPUT);
     bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
 
     if (!sOnlyPlotterOutput) {
@@ -1033,16 +1014,21 @@ void setup() {
         Serial.println(F("START " __FILE__ " from " __DATE__));
         Serial.println(
                 F(
-                        "Connect pin " STR(PIN_SERIAL_MONITOR_OUTPUT) " to ground, to suppress such prints not suited for Arduino plotter"));
-        Serial.print(F("AnalogParameterInputMode is "));
+                        "Connect pin " STR(PIN_ONLY_PLOTTER_OUTPUT) " to ground, to suppress such prints not suited for Arduino plotter"));
+        Serial.print(F("Pin " STR(PIN_MANUAL_PARAMETER_MODE) " is "));
+        if (!tIsAnalogParameterInputMode) {
+            Serial.print(F("dis"));
+        }
+        Serial.print(F("connected from ground -> AnalogParameterInputMode is "));
+
         if (tIsAnalogParameterInputMode) {
-            Serial.println(F("enabled. Pin " STR(PIN_MANUAL_PARAMETER_MODE) " is connected to ground"));
+            Serial.println(F("enabled"));
         } else {
-            Serial.println(F("disabled. Pin " STR(PIN_MANUAL_PARAMETER_MODE) " is disconnected from ground"));
+            Serial.println(F("disabled"));
         }
     }
 
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
     if (!initWire()) { // Initialize everything and check for bus lockup
         Serial.println(F("I2C init failed"));
     }
@@ -1053,7 +1039,7 @@ void setup() {
     /*
      * LCD initialization
      */
-    checkForLCDConnected(); // this blocks if no LCD connected
+    checkForLCDConnected();
 
     if (sSerialLCDAvailable) {
         myLCD.init();
@@ -1114,7 +1100,7 @@ void setup() {
     if (!sOnlyPlotterOutput) {
         Serial.println(F(STR(NUMBER_OF_CARS) " cars initialized"));
     }
-#if defined(USE_ACCELERATOR_INPUT)
+#if defined(ENABLE_ACCELERATOR_INPUT)
     randomSeed(cars[0].AcceleratorInput.AcceleratorLowpassSubOneHertz[0].ULong);
 #endif
 
@@ -1139,23 +1125,23 @@ void setup() {
      */
     resetAndShowTrackWithoutCars();
 
-    if (!sOnlyPlotterOutput) {
-        Serial.print(F("Press any button"));
-#  if defined(USE_ACCELERATOR_INPUT)
-        Serial.print(F(" or move controller"));
-#endif
-        Serial.println(F(" to start countdown"));
-    } else {
+    if (sOnlyPlotterOutput) {
         // print Plotter caption after check for LCD
         Serial.println();
         Serial.println(F("Accel[1] AccelLP[1] Speed[1] Accel[2] AccelLP[2] Speed[2]"));
+    } else {
+        Serial.print(F("Press any button"));
+#  if defined(ENABLE_ACCELERATOR_INPUT)
+        Serial.print(F(" or move controller"));
+#endif
+        Serial.println(F(" to start countdown"));
     }
 
     if (sSerialLCDAvailable) {
         uint8_t tLineIndex = 1;
         myLCD.setCursor(0, tLineIndex++);
         myLCD.print(F("Press any button"));
-#  if defined(USE_ACCELERATOR_INPUT)
+#  if defined(ENABLE_ACCELERATOR_INPUT)
         myLCD.setCursor(0, tLineIndex++);
         myLCD.print(F("or move controller"));
 #  endif
@@ -1172,7 +1158,7 @@ void loop() {
     static uint32_t sLastAnimationMillis;
 
     sLoopCountForDebugPrint++;
-    sOnlyPlotterOutput = !digitalRead(PIN_SERIAL_MONITOR_OUTPUT);
+    sOnlyPlotterOutput = !digitalRead(PIN_ONLY_PLOTTER_OUTPUT);
 
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
@@ -1197,8 +1183,6 @@ void loop() {
          */
         for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
             if (cars[i].checkInput()) {
-                cars[i].draw();
-                track.show();
                 sMode = MODE_RACE;
                 startRace(); // blocking call, which checks also for other cars to start :-)
                 break;
@@ -1312,6 +1296,13 @@ void loop() {
     sNextLoopMillis += MILLISECONDS_PER_LOOP;
 }
 
+void playError() {
+    tone(PIN_BUZZER, 2200, 50);
+    delay(100);
+    tone(PIN_BUZZER, 2200, 50);
+    delay(500);
+}
+
 void playShutdownMelody() {
     tone(PIN_BUZZER, 2000, 200);
     delay(400);
@@ -1321,7 +1312,6 @@ void playShutdownMelody() {
     delay(800);
     tone(PIN_BUZZER, 700, 500);
     delay(800);
-
 }
 
 void playMelodyAndShutdown() {
@@ -1373,26 +1363,23 @@ void startRace() {
     if (!sOnlyPlotterOutput) {
         Serial.println(F("Start race countdown"));
     }
-//    resetAndShowTrackWithoutCars();
+
+    /*
+     * Draw all cars and track
+     */
+    for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
+        // First checkInput(), to have input feedback enabled while starting
+        cars[i].draw();
+    }
+    track.show();
+
     uint8_t tIndex = 4; // index of last light
     if (sSerialLCDAvailable) {
         myLCD.clear();
     }
     for (int tCountDown = 4; tCountDown >= 0; tCountDown--) {
-
-// delay at start of loop to enable fast start after last countdown
-        for (int tDelayCount = 0; tDelayCount < 100; ++tDelayCount) {
-            // check user input every 10 milliseconds
-            for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
-                // First checkInput(), to have input feedback enabled while starting
-                if (cars[i].checkInput() && !cars[i].CarIsActive) {
-                    cars[i].draw();
-                    track.show();
-                }
-            }
-            delay(10);
-        }
-
+        // delay at start of loop to enable fast start after last countdown
+        delay(1000);
         track.setPixelColor(tIndex + (2 * tCountDown), COLOR32_RED);
         track.setPixelColor(tIndex + (2 * tCountDown) + 1, COLOR32_RED);
         track.show();
@@ -1434,7 +1421,7 @@ void checkForLCDConnected() {
         if (!sOnlyPlotterOutput) {
             Serial.println(F("No I2C LCD connected at address " STR(LCD_I2C_ADDRESS)));
         }
-        playShutdownMelody();
+        playError();
         sSerialLCDAvailable = false;
     } else {
         sSerialLCDAvailable = true;
@@ -1443,7 +1430,7 @@ void checkForLCDConnected() {
 #endif
 }
 
-const char LCDCustomPatterns[][8] PROGMEM = { { 0x01, 0x07, 0x0F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F }, // char 1: bottom right triangle
+const uint8_t LCDCustomPatterns[][8] PROGMEM = { { 0x01, 0x07, 0x0F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F }, // char 1: bottom right triangle
         { 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F },      // char 2: bottom block
         { 0x10, 0x1C, 0x1E, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F },      // char 3: bottom left triangle
         { 0x1F, 0x0F, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00 },      // char 4: top right triangle
@@ -1455,7 +1442,7 @@ const char LCDCustomPatterns[][8] PROGMEM = { { 0x01, 0x07, 0x0F, 0x1F, 0x1F, 0x
 
 // !!! Must be without comment and closed by @formatter:on
 // @formatter:off
-const uint8_t bigNumbers4[][30] PROGMEM = {                         // 4-line numbers
+const char bigNumbers4[][30] PROGMEM = {                         // 4-line numbers
 //         0               1               2               3               4              5               6                7               8               9
     {0x01,0x06,0x03, 0x08,0xFF,0xFE, 0x08,0x06,0x03, 0x08,0x06,0x03, 0xFF,0xFE,0xFF, 0xFF,0x06,0x06, 0x01,0x06,0x03, 0x06,0x06,0xFF, 0x01,0x06,0x03, 0x01,0x06,0x03},
     {0xFF,0xFE,0xFF, 0xFE,0xFF,0xFE, 0x02,0x02,0xFF, 0xFE,0x02,0xFF, 0xFF,0x02,0xFF, 0xFF,0x02,0x02, 0xFF,0x02,0x02, 0xFE,0x01,0x07, 0xFF,0x02,0xFF, 0xFF,0x02,0xFF},

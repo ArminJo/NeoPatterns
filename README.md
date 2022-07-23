@@ -174,7 +174,8 @@ SnakeGame with 4 buttons on breadboard
 **With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
 
 ## AllPatternsOnMultiDevices
-Shows all patterns for strips rings and matrixes included in the NeoPattern MatrixNeoPattern and Snake library.
+Shows all patterns for strips rings and matrixes included in the NeoPattern MatrixNeoPattern and Snake library.<br/>
+Brightnes can be set by a voltage at pin A0.
 Uses the included `allPatternsRandomHandler()` to [show all available patterns](https://www.youtube.com/watch?v=CsB7FkywCRQ).
 
 AllPatternsOnMultiDevices on breadboard
@@ -186,6 +187,10 @@ See also the [dedicated repository for OpenLedRace](https://github.com/ArminJo/O
 
 OpenLedRace at the Cologne public library MINTköln-Festival
 ![OpenLedRace at the Cologne public library MINTköln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
+
+## TwoPatternsOnOneStrip
+This example renders a slow "background pattern" and a fast "foreground pattern" on the same strip.<br/>
+It also shows, how to dynamically **determine the length of the attached strip** und to resize the underlying pixel buffer.
 
 # Revision History
 ### Version 3.0.1 - work in progress
@@ -268,8 +273,8 @@ OpenLedRace at the Cologne public library MINTköln-Festival
 ### Version 1.0.0
 - Initial Arduino library version
 
-## Travis CI
-The NeoPatterns library examples are built on Travis CI for the following boards:
+## CI
+The library examples are tested with GitHub Actions for the following boards:
 
 - Arduino Uno
 - Arduino Leonardo

@@ -53,6 +53,7 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    NeoPixelMatrix.printConnectionInfo(&Serial);
 
 //    bar24.begin();
     // This initializes the NeoPixel library and checks if enough memory was available

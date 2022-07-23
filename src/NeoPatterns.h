@@ -141,6 +141,7 @@ public:
     void init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
             bool aShowOnlyAtUpdate = false);
+    void _insertIntoNeopatternsList();
 
     void setCallback(void (*callback)(NeoPatterns*));
 
@@ -150,12 +151,20 @@ public:
     bool update(uint8_t aBrightness);
     bool updateOrRedraw(bool aDoRedrawIfNoUpdate);
     bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness);
-    bool updateAllPartialPatterns();
-    bool updateAllPartialPatterns(uint8_t aBrightness);
-    void updateAndWaitForPatternToStop();
-    void updateAndWaitForPatternToStop(uint8_t aBrightness);
-    void updateAllPartialPatternsAndWaitForPatternsToStop();
-    void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness);
+
+    void updateShowAndWaitForPatternToStop();
+    void updateShowAndWaitForPatternToStop(uint8_t aBrightness);
+    bool updateAndShowAlsoAllPartialPatterns();
+    bool updateAndShowAlsoAllPartialPatterns(uint8_t aBrightness);
+    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop();
+    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness);
+
+    bool updateAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
+    bool updateAllPartialPatterns(uint8_t aBrightness) __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
+    void updateAndWaitForPatternToStop() __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
+    void updateAndWaitForPatternToStop(uint8_t aBrightness) __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
+    void updateAllPartialPatternsAndWaitForPatternsToStop() __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
+    void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness) __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
 
     void showPatternInitially();
     bool decrementTotalStepCounter();
@@ -251,6 +260,7 @@ public:
     void printInfo(Print *aSerial, bool aFullInfo = true);
 #if defined(INFO)
     void printPattern();
+    void printlnPattern();
 #endif
 
     /*
@@ -331,7 +341,7 @@ public:
     /*
      * List of all NeoPatterns
      */
-    NeoPatterns *NextNeoPatternsObject; // For underlying NeoPixels, the first partial NeoPixel, else the next partial NeoPixel for the same underlying NeoPixel
+    NeoPatterns *NextNeoPatternsObject;
     static NeoPatterns *FirstNeoPatternsObject;
 };
 
@@ -364,6 +374,12 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
+ * Version 3.1.0 - 8/2022
+ * - Added Function printConnectionInfo().
+ * - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
+ * - Renamed updateAll* and updateAndWait* functions.
+ * - Now all NeoPattern objects are contained in NeoPatterns list.
+ * - Now updateOrRedraw() does never call show().
  *
  * Version 3.0.0 - 5/2022
  * - Enabled individual selection of patterns to save program memory.

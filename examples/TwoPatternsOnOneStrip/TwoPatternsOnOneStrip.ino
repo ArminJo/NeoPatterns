@@ -1,19 +1,18 @@
 /*
  *  TwoPatternsOnOneStrip.cpp
  *
- *  STILL EXPERIMENTAL
  *  Runs 2 patterns simultaneously on a 144 NeoPixel strip. One is the main background pattern
  *  and the other is the fast moves pattern intended to be more random and quite seldom.
  *  First the background pattern is completely generated
  *  Then the fast moves pattern overwrites the background. Therefore we can only use small patterns here which do not draw black pixels
  *
  *  The delay between patterns is controlled by a potentiometer at pin A0.
- *  The pattern stops if the button at pin 2 is pressed.
+ *  The pattern stops / resumes if the button at pin 2 is pressed.
  *
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2022  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -39,11 +38,13 @@
 #define ENABLE_PATTERN_COLOR_WIPE
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_RAINBOW_CYCLE
+#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 #include <NeoPatterns.hpp>
 
 #define USE_BUTTON_1
 #include "EasyButtonAtInt01.hpp"
-
 EasyButton Button0AtPin3;
 
 #define PIN_TIMING_DEBUG_BUTTON   6
@@ -60,15 +61,149 @@ EasyButton Button0AtPin3;
 
 #define DELAY_MILLIS_BACKGROUND_MIN 500
 #define DELAY_MILLIS_FAST_MOVES_MIN 4000
-uint16_t sDelay; // goes from 1 to 10k in exponential scale
+uint8_t sDelay; // from 1 to 28 in exponential scale
 
 // onComplete callback functions
 void PatternsBackground(NeoPatterns *aLedsPtr);
 void PatternsFastMoves(NeoPatterns *aLedsPtr);
 
+#if __has_include("ADCUtils.h")
+#include "ADCUtils.hpp" // for getVCCVoltageMillivoltSimple()
+#define TEST_PATTERN_LENGTH 16  // 6 is required by my Li-Ion battery
+#endif
+uint16_t getActualNeopixelLenghtSimple(NeoPatterns *aLedsPtr);
+
 // construct the NeoPatterns instances
-NeoPatterns NeoPatternsBackground = NeoPatterns(NEOPIXEL_STRIP_LENGTH, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800, &PatternsBackground);
-NeoPatterns NeoPatternsFastMoves = NeoPatterns(&NeoPatternsBackground, 0, NEOPIXEL_STRIP_LENGTH, false, &PatternsFastMoves);
+NeoPatterns NeoPatternsBackground = NeoPatterns(NEOPIXEL_STRIP_LENGTH, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800,
+        &PatternsBackground);
+// Second pattern, which uses the same pixel memory
+NeoPatterns NeoPatternsFastMoves;
+
+bool sRunning = true;
+
+void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    Serial.begin(115200);
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+    delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
+#endif
+    // Just to know which program is running on my Arduino
+    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    NeoPatternsBackground.printConnectionInfo(&Serial);
+
+    // This initializes the NeoPixel library and checks if enough memory was available
+    if (!NeoPatternsBackground.begin(&Serial)) {
+        // Blink forever
+        while (true) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
+    }
+
+    /*
+     * Experimental
+     */
+    uint16_t tActualNeopixelLength = getActualNeopixelLenghtSimple(&NeoPatternsBackground);
+    Serial.print(F("Actual neopixel length="));
+    Serial.println(tActualNeopixelLength);
+    // update length to next even number
+    tActualNeopixelLength = (tActualNeopixelLength + 1) & ~0x01;
+    if (tActualNeopixelLength != 0) {
+        NeoPatternsBackground.updateLength(tActualNeopixelLength);
+    }
+    NeoPatternsFastMoves.init(&NeoPatternsBackground, 0, tActualNeopixelLength, true, &PatternsFastMoves);
+    NeoPatternsFastMoves.begin();
+    NeoPatternsFastMoves.printConnectionInfo(&Serial);
+
+    extern void *__brkval;
+    Serial.print(F("Free Ram/Stack[bytes]="));
+    Serial.println(SP - (uint16_t) __brkval);
+
+    pinMode(PIN_TIMING_DEBUG_BUTTON, OUTPUT);
+
+    NeoPatternsBackground.ColorWipe(COLOR32_GREEN_HALF, 8); // start the pattern
+//    NeoPatternsBackground.ColorSet(COLOR32_RED); // start the pattern
+    NeoPatternsFastMoves.ScannerExtended(COLOR32_BLUE_HALF, 16, 8, 0, FLAG_SCANNER_EXT_ROCKET, DIRECTION_DOWN); // start the pattern
+//    NeoPatternsFastMoves.Delay(2 * DELAY_MILLIS_FAST_MOVES_MIN); // start the pattern
+}
+
+void loop() {
+    if (sRunning) {
+
+        bool tMustUpdate = NeoPatternsBackground.checkForUpdate() || NeoPatternsFastMoves.checkForUpdate();
+        if (tMustUpdate) {
+#if defined(DEBUG)
+            uint32_t tStartMillis = millis();
+#endif
+            /*
+             * Here at least one update is pending.
+             * First the background pattern is completely generated
+             * Then the fast moves pattern overwrites the background. Therefore we can only use small patterns which do not draw black pixels
+             */
+            NeoPatternsBackground.updateOrRedraw(true);
+            NeoPatternsFastMoves.updateOrRedraw(true);
+#if defined(DEBUG)
+
+            uint32_t tEndMillis = millis();
+            if ((tEndMillis - tStartMillis) > 2) {
+                Serial.print("millis needed=");
+                Serial.println((tEndMillis - tStartMillis));
+            }
+#endif
+//            digitalWrite(PIN_TIMING_DEBUG_BUTTON, HIGH);
+            NeoPatternsBackground.show(); // 4.5 ms for 144 pixel
+        }
+    }
+
+    sRunning = !Button0AtPin3.ButtonToggleState;
+}
+
+/*
+ * @return  0 if length could not be determined
+ * Could be improved by:
+ * 1. Get first value by using step width of getNumberOfPixels() / 16.
+ * 2. Narrow first value by using step width of 1.
+ * 3. Check at position slight below first value how may pixels are required for a voltage drop.
+ * 4  Re-check first position slowly with these numbers of pixels.
+ */
+uint16_t getActualNeopixelLenghtSimple(NeoPatterns *aLedsPtr) {
+#if __has_include("ADCUtils.h")
+    /*
+     * First set ADC reference and channel and clear strip
+     */
+    getVCCVoltageMillivolt(); // to
+    aLedsPtr->clear();
+    aLedsPtr->show();
+    delay(100);
+    uint16_t tStartMillivolt = getVCCVoltageMillivolt();
+    Serial.print(F("Start VCC="));
+    Serial.print(tStartMillivolt);
+    Serial.println(" mV");
+    int i = aLedsPtr->getNumberOfPixels() - 1;
+    for (; i >= 0; i--) {
+        aLedsPtr->setPixelColor(i, COLOR32_WHITE);
+        aLedsPtr->show();
+        delay(1); // delay(2) is sometimes to fast
+        uint16_t tCurrentMillivolt = getVCCVoltageMillivolt(); // we have a resolution of 20 mV
+        if (tCurrentMillivolt < tStartMillivolt - 40) {
+            i++;
+            break;
+        }
+        uint_fast16_t tClearIndex = i + (TEST_PATTERN_LENGTH - 1);
+        if (tClearIndex < aLedsPtr->getNumberOfPixels()) {
+            aLedsPtr->setPixelColor(tClearIndex, COLOR32_BLACK);
+        }
+    }
+    aLedsPtr->clear();
+    aLedsPtr->show();
+    return i;
+#else
+    return 0;
+#endif
+}
 
 /*
  * converts value read at analog pin into exponential scale between 1 and 28
@@ -83,76 +218,6 @@ void getDelay() {
     sDelay = pow(10, tDelayValue); // gives value 1 to 28
     Serial.print(" -> ");
     Serial.println(sDelay);
-}
-
-void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
-
-    Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
-    delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
-#endif
-    // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
-
-    NeoPatternsBackground.begin(); // This initializes the NeoPixel library.
-    // This initializes the NeoPixel library and checks if enough memory was available
-    if (!NeoPatternsFastMoves.begin(&Serial)) {
-        // Blink forever
-        while (true) {
-            digitalWrite(LED_BUILTIN, HIGH);
-            delay(500);
-            digitalWrite(LED_BUILTIN, LOW);
-            delay(500);
-        }
-    }
-
-    extern void *__brkval;
-    Serial.print(F("Free Ram/Stack[bytes]="));
-    Serial.println(SP - (uint16_t) __brkval);
-
-    pinMode(PIN_TIMING_DEBUG_BUTTON, OUTPUT);
-    NeoPatternsBackground.ColorWipe(COLOR32_GREEN_HALF, 8); // start the pattern
-//    NeoPatternsBackground.ColorSet(COLOR32_RED); // start the pattern
-    NeoPatternsFastMoves.ScannerExtended(COLOR32_BLUE_HALF, 16, 8, 0, 0, DIRECTION_DOWN); // start the pattern
-//    NeoPatternsFastMoves.Delay(2 * DELAY_MILLIS_FAST_MOVES_MIN); // start the pattern
-}
-
-bool sRunning = true;
-
-void loop() {
-    if (sRunning) {
-        /*
-         * Cannot do this in one if statement, because evaluation will stop after the first true.
-         */
-        bool tMustUpdate = NeoPatternsBackground.checkForUpdate();
-        tMustUpdate |= NeoPatternsFastMoves.checkForUpdate();
-        if (tMustUpdate) {
-#if defined(DEBUG)
-            uint32_t tStartMillis = millis();
-#endif
-            /*
-             * First the background pattern is completely generated
-             * Then the fast moves pattern overwrites the background. Therefore we can only use small patterns which do not draw black pixels
-             */
-            NeoPatternsBackground.updateOrRedraw(true);
-            NeoPatternsFastMoves.updateOrRedraw(true);
-#if defined(DEBUG)
-
-            uint32_t tEndMillis = millis();
-            if ((tEndMillis - tStartMillis) > 2) {
-                Serial.print("millis needed=");
-                Serial.println((tEndMillis - tStartMillis));
-            }
-#endif
-//        digitalWrite(PIN_TIMING_DEBUG_BUTTON, HIGH);
-            NeoPatternsBackground.show(); // 4.5 ms for 144 pixel
-//        digitalWrite(PIN_TIMING_DEBUG_BUTTON, LOW);
-        }
-    }
-//    NeoPixelTest.Debug(false);
-
-    sRunning = !Button0AtPin3.ButtonToggleState;
 }
 
 /*
@@ -193,9 +258,6 @@ void PatternsBackground(NeoPatterns *aLedsPtr) {
         // clear pattern
         aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
         sNoDelay = false;
-#if defined(DEBUG)
-        aLedsPtr->Debug(true);
-#endif
         break;
     case 2:
         aLedsPtr->RainbowCycle(tInterval);
@@ -256,49 +318,43 @@ void PatternsFastMoves(NeoPatterns *aLedsPtr) {
     long tRandomDelay = random(DELAY_MILLIS_FAST_MOVES_MIN * sDelay, DELAY_MILLIS_FAST_MOVES_MIN * sDelay * 4);
     uint16_t tInterval = random(INTERVAL_FAST_MOVES_MIN, INTERVAL_FAST_MOVES_MIN * 2);
 
+    int8_t tState = sState / 2;
     if ((sState & 1) == 1) {
         /*
          * Insert a random delay if sState is odd
          */
         aLedsPtr->Delay(tRandomDelay); // to separate each pattern
         sState++;
-        return;
-    }
+    } else {
 
-    int8_t tState = sState / 2;
-    switch (tState) {
-    case 0:
-        // falling star
-        aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 10, tInterval, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, DIRECTION_DOWN);
-        break;
-    case 1:
-        // old scanner 2 times
-        aLedsPtr->ScannerExtended(COLOR32_BLUE, 10, tInterval, 1,
-        FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
-        break;
-    case 2:
-        aLedsPtr->ScannerExtended(COLOR32_CYAN, 10, INTERVAL_FAST_MOVES_MIN, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE);
-        break;
-    case 3:
-        aLedsPtr->ScannerExtended(COLOR32_GREEN, 8, tInterval, 0,
-        FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE);
-#if defined(DEBUG)
-        aLedsPtr->Debug(true);
-#endif
-        break;
-    case 4:
-        aLedsPtr->ScannerExtended(COLOR32_GREEN, 6, tInterval, 0,
-        FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
-        sState = -2; // Start from beginning
-        break;
-    default:
-        Serial.println("ERROR");
-        break;
+        switch (tState) {
+        case 0:
+            // falling star
+            aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 10, tInterval, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, DIRECTION_DOWN);
+            break;
+        case 1:
+            // old scanner 2 times
+            aLedsPtr->ScannerExtended(COLOR32_BLUE, 10, tInterval, 1,
+            FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
+            break;
+        case 2:
+            aLedsPtr->ScannerExtended(COLOR32_CYAN, 10, INTERVAL_FAST_MOVES_MIN, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE);
+            break;
+        case 3:
+            aLedsPtr->ScannerExtended(COLOR32_GREEN, 8, tInterval, 0,
+            FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE);
+            break;
+        case 4:
+            aLedsPtr->ScannerExtended(COLOR32_GREEN, 6, tInterval, 0,
+            FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
+            sState = -2; // Start from beginning
+            break;
+        default:
+            Serial.println("ERROR");
+            break;
+        }
     }
-
-    Serial.print("Pin=");
-    Serial.print(aLedsPtr->getPin());
-    Serial.print(" Length=");
+    Serial.print("Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);

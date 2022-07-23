@@ -32,7 +32,7 @@
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 #define ENABLE_MATRIX_PATTERN_FIRE
 #define ENABLE_MATRIX_PATTERN_SNOW
@@ -47,7 +47,7 @@
 #define BRIGHTNESS_INPUT_PIN       A0
 #define FIRE_COOLING_INPUT_PIN     A0
 
-#define USE_16_X_16_MATRIX
+#define USE_16_X_16_MATRIX // else 8x8 matrix
 
 #if defined(USE_16_X_16_MATRIX)
 #define PIN_NEOPIXEL_MATRIX         8
@@ -61,6 +61,9 @@
 MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_LEFT | NEO_MATRIX_ROWS | NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800, NULL);
 #else
+/*
+ * Use 8 x 8 matrix
+ */
 #define PIN_NEOPIXEL_MATRIX         8
 #define MATRIX_NUMBER_OF_COLUMNS    8
 #define MATRIX_NUMBER_OF_ROWS       8
@@ -116,6 +119,7 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    NeoPixelMatrix.printConnectionInfo(&Serial);
 
     printModePinInfo();
     sMode = readModePins();

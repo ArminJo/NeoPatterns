@@ -33,7 +33,7 @@
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
 #define USE_SERIAL_CONTROL // control the snake direction with sending characters a,s,d,f over serial
@@ -72,8 +72,7 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
-    Serial.print(F("Matrix is attached at pin "));
-    Serial.println(PIN_NEOPIXEL_MATRIX_SNAKE);
+    NeoPixelMatrixSnake.printConnectionInfo(&Serial);
 
 #if defined(SUPPORT_BRIGHTNESS)
     uint8_t tBrightness = NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);

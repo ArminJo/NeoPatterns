@@ -77,6 +77,15 @@ bool MatrixNeoPixel::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t
     return tRetval;
 }
 
+
+/*
+ * Requires around 140 bytes of program space
+ */
+void MatrixNeoPixel::printConnectionInfo(Print *aSerial) {
+    aSerial->print(F("Matrix "));
+    NeoPixel::printConnectionInfo(aSerial);
+}
+
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
 void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t)) {
     LayoutMappingFunction = aLayoutMappingFunction;

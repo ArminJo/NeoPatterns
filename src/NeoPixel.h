@@ -58,7 +58,7 @@
 #if !defined(DO_NOT_SUPPORT_BRIGHTNESS)
 #define SUPPORT_BRIGHTNESS // Introduced to avoid double negations
 
-//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // saves up to 144 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 #  if !defined(DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS)
 // // Pixel is set to zero, only if brightness or input color is zero, otherwise it is clipped at e.g. 0x000100
 #define SUPPORT_NO_ZERO_BRIGHTNESS // Introduced to avoid double negations
@@ -91,6 +91,7 @@ public:
 
     void printInfo(Print *aSerial);
     void printContent(Print *aSerial);
+    void printConnectionInfo(Print *aSerial);
     void printPin(Print *aSerial);
 
     // To enable more than one pattern on the same strip
@@ -113,6 +114,7 @@ public:
     uint8_t getBytesPerPixel();
     neoPixelType getType();
     uint16_t getPixelBufferSize();
+    uint16_t getNumberOfPixels();
     void storePixelBuffer(uint8_t *aPixelBufferPointerDestination);
     void restorePixelBuffer(uint8_t *aPixelBufferPointerSource);
 
@@ -157,7 +159,7 @@ public:
 #endif
     uint8_t PixelFlags;
     uint16_t PixelOffset;               // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
-    NeoPixel *UnderlyingNeoPixelObject; // The underlying NeoPixel for partial patterns overlays
+    NeoPixel *UnderlyingNeoPixelObject; // The underlying NeoPixel object for partial patterns overlays, otherwise the object itself
     uint8_t Brightness;                 // NeoPixel brightness instead of the Adafruit brightness, which is store as effective brightness + 1 :-(.
 };
 

@@ -57,6 +57,7 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    bar16.printConnectionInfo(&Serial);
 #endif
 
     bar16.begin(); // This initializes the NeoPixel library.

@@ -35,7 +35,7 @@
 //#define DEBUG
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN_NEOPIXEL  2
+#define PIN_NEOPIXEL  3
 
 // onComplete callback functions
 void MultiPatterns(NeoPatterns *aLedsPtr);
@@ -59,6 +59,7 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    NeoPixelBar24.printConnectionInfo(&Serial);
 
     NeoPixelBar24.begin(); // This sets the output pin.
 
