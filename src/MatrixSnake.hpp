@@ -359,7 +359,7 @@ void MatrixSnake::SnakeInputHandler() {
             }
         }
     }
-#if defined(USE_SERIAL_CONTROL)
+#if defined(SNAKE_ALLOW_SERIAL_CONTROL)
     /*
      * Serial input (e.g from python controller mapper)
      */

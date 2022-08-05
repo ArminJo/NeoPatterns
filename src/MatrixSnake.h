@@ -49,7 +49,7 @@
 
 #include "MatrixNeoPatterns.h"
 
-//#define USE_SERIAL_CONTROL // Accepts snake direction commands over the serial line
+//#define SNAKE_ALLOW_SERIAL_CONTROL // Accepts snake direction commands over the serial line
 
 #define SPECIAL_PATTERN_SNAKE   (LAST_MATRIX_NEO_PATTERN + 1)
 

@@ -336,13 +336,13 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
 /*
  * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
  */
-void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom) {
+void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint8_t aBarLength, color32_t aColor, bool aDrawFromBottom) {
 
     for (uint_fast8_t i = 0; i < Rows; i++) {
         bool tDrawPixel;
         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
         if (aDrawFromBottom) {
-            tDrawPixel = (i >= (Rows - aBarLength));
+            tDrawPixel = (i >= ((uint_fast8_t)(Rows - aBarLength)));
         } else {
             tDrawPixel = (i < aBarLength);
         }
@@ -359,7 +359,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aC
  * @param aColorArrayPtr - Address of a color array holding numLEDs color entries for the bar colors.
  * @param aDrawFromBottom -false: Bar is top down, i.e. it starts at the uppermost row (low pixel index!)
  */
-void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom) {
+void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom) {
 
     uint8_t j = Rows - 1;
     for (uint_fast8_t i = 0; i < Rows; i++) {
@@ -367,7 +367,7 @@ void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength
 
         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
         if (aDrawFromBottom) {
-            tDrawPixel = (i >= (Rows - aBarLength));
+            tDrawPixel = (i >= ((uint_fast8_t)(Rows - aBarLength)));
         } else {
             tDrawPixel = (i < aBarLength);
         }
@@ -776,7 +776,7 @@ void MatrixNeoPixel::drawAllColors() {
                 setMatrixPixelColor(x, y, red, green, blue);
 
                 // do not overwrite values at diagonal
-                if (x + y < (Columns - 1)) {
+                if (x + y < (uint_fast8_t)(Columns - 1)) {
                     // set gamma corrected values at lower right
                     // We must switch x and y here to fit the two patterns
                     setMatrixPixelColor((Rows - 1) - y, (Columns - 1) - x, redC, greenC, blueC);

@@ -105,7 +105,7 @@ otherwise the include may not work as expected!
 To customize the library to different requirements, there are some compile options / macros available.<br/>
 
 ## NeoPixel
-These macros must be defined in your program before the line `#include <NeoPixel.hpp>` or `#include MatrixNeoPixel.hpp` to take effect.
+These macros must be defined in your program **before** the line `#include <NeoPixel.hpp>` or `#include MatrixNeoPixel.hpp` to take effect.<br/>
 Modify them by enabling / disabling them, or change the values if applicable.
 
 | Name | Default value | Description |
@@ -116,7 +116,7 @@ Modify them by enabling / disabling them, or change the values if applicable.
 | `NEO_KHZ400` | 0x0100 | If you do not require the legacy 400 kHz functionality, you can disable the line 138 `#define NEO_KHZ400 0x0100 ///< 400 KHz data transmission` in Adafruit_NeoPixel.h. This saves up to 164 bytes program memory for the AllPatternsOnMultiDevices example. |
 
 ## NeoPatterns
-These macros must be defined in your program before the line `#include <NeoPatterns.hpp>` or `#include MatrixNeoPatterns.hpp` or `#include MatrixSnake.hpp` to take effect.
+These macros must be defined in your program **before** the line `#include <NeoPatterns.hpp>` or `#include MatrixNeoPatterns.hpp` or `#include MatrixSnake.hpp` to take effect.<br/>
 Modify them by enabling / disabling them, or change the values if applicable.
 
 | Name | Default value | Description |
@@ -126,11 +126,11 @@ Modify them by enabling / disabling them, or change the values if applicable.
 | `ENABLE_SPECIAL_PATTERN_<Pattern name>` | all | Selection of individual special pattern(s) (currently only snake pattern) to be enabled for your program. You can specify multiple pattern. See  [MatrixSnake.h](https://github.com/ArminJo/NeoPatterns/blob/master/src/MatrixSnake.h#L41-L48) |
 | `ENABLE_NO_NEO_PATTERN_BY_DEFAULT` | disabled | Disables the default selection of all non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> is specified. Enables the exclusively use compilation of matrix NeoPattern. |
 | `ENABLE_NO_MATRIX_AND_NEO_PATTERN_BY_DEFAULT` | disabled | Disables default selection of all matrix and non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> or ENABLE_MATRIX_PATTERN_<Pattern name> is specified. Thus it enables the exclusively use of special Snake pattern which saves program memory. |
-| `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise. |
-| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | Disables other than default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag). Saves up to 560 bytes program memory and 3 bytes RAM. |
+| `DO_NOT_USE_MATH_PATTERNS` | disabled | Disables the `BOUNCING_BALL` pattern. Saves from 0 bytes up to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise. |
+| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | Disables other than default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag). Saves up to 560 bytes program memory and 3 bytes RAM. |
 
 ## Snake
-These macros must be defined in your program before the line `#include MatrixSnake.hpp` to take effect.
+These macros must be defined in your program **before** the line `#include MatrixSnake.hpp` to take effect.<br/>
 Modify them by enabling / disabling them, or change the values if applicable.
 
 | Name | Default value | Description |
@@ -152,8 +152,8 @@ If you are using PlatformIO, you can define the macros in the *[platformio.ini](
 If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/Arduino-IRremote/Arduino-IRremote/blob/master/pictures/SloeberDefineSymbols.png)
 
-WOKWI online simulation of the AllPatternOnOneStrip example.<br/>
-[![WOKWI online simulation of the AllPatternOnOneStrip example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneStrip.png)](https://wokwi.com/arduino/projects/299556508969992714).
+WOKWI online simulation of the AllPatternOnOneBar example.<br/>
+[![WOKWI online simulation of the AllPatternOnOneBar example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneBar.png)](https://wokwi.com/arduino/projects/299556508969992714).
 
 WOKWI online simulation of the MatrixDemo example.<br/>
 [![WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)](https://wokwi.com/arduino/projects/299560666027524617).
@@ -197,7 +197,7 @@ It also shows, how to dynamically **determine the length of the attached strip**
 - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
 - Renamed `updateAll*` and `updateAndWait*` functions.
 - Now all NeoPattern objects are contained in NeoPatterns list.
-- Now `updateOrRedraw()` does never call show().
+- Now `updateOrRedraw()` does never call `show()`.
 - New pattern `FLASH`.
 - Renamed ColorSet() to setColor().
 

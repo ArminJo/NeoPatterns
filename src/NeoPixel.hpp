@@ -367,7 +367,7 @@ void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBott
         if (aDrawFromBottom) {
             tDrawPixel = (i < aBarLength);
         } else {
-            tDrawPixel = (i >= (numLEDs - aBarLength));
+            tDrawPixel = (i >= ((uint_fast16_t)numLEDs - aBarLength));
         }
         if (tDrawPixel) {
             setPixelColor(i, aColor);
@@ -388,7 +388,7 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
         if (aDrawFromBottom) {
             tDrawPixel = (i < aBarLength);
         } else {
-            tDrawPixel = (i >= (numLEDs - aBarLength));
+            tDrawPixel = (i >= ((uint_fast16_t)numLEDs - aBarLength));
         }
         if (tDrawPixel) {
             if (aDrawFromBottom) {

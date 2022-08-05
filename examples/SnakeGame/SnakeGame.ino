@@ -36,7 +36,7 @@
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
-#define USE_SERIAL_CONTROL // control the snake direction with sending characters a,s,d,f over serial
+//#define SNAKE_ALLOW_SERIAL_CONTROL // control the snake direction with sending characters a,s,d,f over serial
 #include <MatrixSnake.hpp>
 
 // Delay between two SNAKE moves / Speed of game
@@ -63,6 +63,12 @@
 MatrixSnake NeoPixelMatrixSnake = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX_SNAKE,
 NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800);
 
+/*
+ * Helper macro for getting a macro definition as string
+ */
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
@@ -72,7 +78,13 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    Serial.println();
     NeoPixelMatrixSnake.printConnectionInfo(&Serial);
+    Serial.println(F("Allows 2 button mode, using only right and left button ( pin " STR(RIGHT_BUTTON_PIN) " or " STR(LEFT_BUTTON_PIN) " )"));
+    Serial.println(
+            F(
+                    "If up or down button ( pin " STR(UP_BUTTON_PIN) " or " STR(DOWN_BUTTON_PIN) " ) is pressed, 4 button mode is entered automatically"));
+    Serial.println();
 
 #if defined(SUPPORT_BRIGHTNESS)
     uint8_t tBrightness = NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
@@ -105,7 +117,7 @@ void loop() {
 #endif
 
     if (NeoPixelMatrixSnake.Direction != DIRECTION_NONE) {
-        // Direction is DIRECTION_NONE at start => direction != NONE indicates a pressed button
+        // Direction is DIRECTION_NONE at start => Direction != NONE indicates a pressed button
         sButtonWasPressedOnce = true;
     }
 
@@ -121,7 +133,7 @@ void loop() {
     }
 #if defined(SUPPORT_BRIGHTNESS)
     uint8_t tBrightness = NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
-    if (sLastBrightness != tBrightness) {
+    if (abs(sLastBrightness - tBrightness) > (tBrightness / 16)) {
         sLastBrightness = tBrightness;
         Serial.print(F("Brightness="));
         Serial.println(tBrightness);

@@ -114,8 +114,8 @@ public:
     void drawAllColors();
     void drawAllColors2();
 
-    void drawBar(uint8_t aColumnX, uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
-    void drawBarFromColorArray(uint8_t aColumnX, uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
+    void drawBar(uint8_t aColumnX, uint8_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
+    void drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
 
     // Geometry of Matrix
     uint8_t Rows;       // Y Direction / size

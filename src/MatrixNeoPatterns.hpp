@@ -155,14 +155,14 @@ void MatrixNeoPatterns::setInitHeat() {
             tIndex++;
             // The initalHeatLine is of size Columns + 2
             if (tIndex >= (Columns + 2)) {
-//#if defined(TRACE)
+#if defined(TRACE)
                 Serial.print(F("initalHeatLine="));
                 for (uint_fast8_t i = 0; i < (Columns + 2); ++i) {
                     Serial.print(MatrixOld[i]);
                     Serial.print(' ');
                 }
                 Serial.println();
-//#endif
+#endif
                 // copy this to the initalHeatLine of the other matrix
                 memcpy(MatrixNew, MatrixOld, Columns + 2);
                 return;
