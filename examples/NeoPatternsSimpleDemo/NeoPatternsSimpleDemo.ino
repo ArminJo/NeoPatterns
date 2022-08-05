@@ -51,8 +51,8 @@ void setup() {
      * First pattern ColorWipe
      */
     Serial.println("ColorWipe");
-    bar16.ColorWipe(COLOR32(0, 0, 4), 50, REVERSE); // light Blue
-    bar16.updateAndWaitForPatternToStop();
+    bar16.ColorWipe(COLOR32(0, 0, 4), 50, DIRECTION_DOWN); // light Blue
+    bar16.updateShowAndWaitForPatternToStop();
     delay(500);
 
     /*
@@ -60,7 +60,7 @@ void setup() {
      */
     Serial.println("RainbowCycle");
     bar16.RainbowCycle(10);
-    bar16.updateAndWaitForPatternToStop();
+    bar16.updateShowAndWaitForPatternToStop();
     delay(500);
 
     /*
@@ -68,7 +68,7 @@ void setup() {
      */
     Serial.println("Rocket");
     bar16.ScannerExtended(COLOR32_WHITE_HALF, 7, 20, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE);
-    bar16.updateAndWaitForPatternToStop();
+    bar16.updateShowAndWaitForPatternToStop();
     delay(500);
 
     /*

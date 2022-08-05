@@ -56,7 +56,7 @@ void UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPixelColor, color32_t aB
     aNeoPatterns->LongValue1.BackgroundColor = aBackgroundColor;
     aNeoPatterns->Direction = aDirection;
     aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels() + 1;
-    aNeoPatterns->ColorSet(aBackgroundColor);
+    aNeoPatterns->setColor(aBackgroundColor);
     aNeoPatterns->show();
     aNeoPatterns->lastUpdate = millis();
 }
@@ -158,11 +158,11 @@ void userPatternsHandler(NeoPatterns *aLedsPtr) {
 
     switch (sState) {
     case 0:
-        UserPattern1(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, FORWARD);
+        UserPattern1(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::Wheel(tColor), tDuration, DIRECTION_UP);
         break;
 
     case 1:
-        UserPattern2(aLedsPtr, NeoPatterns::Wheel(tColor), tDuration, tRepetitions, FORWARD);
+        UserPattern2(aLedsPtr, NeoPatterns::Wheel(tColor), tDuration, tRepetitions, DIRECTION_UP);
         sState = -1; // Start from beginning
         break;
 

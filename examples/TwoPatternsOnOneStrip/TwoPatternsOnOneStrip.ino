@@ -83,6 +83,9 @@ bool sRunning = true;
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(10);
+    digitalWrite(LED_BUILTIN, LOW);
 
     Serial.begin(115200);
 #if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
@@ -104,7 +107,9 @@ void setup() {
     }
 
     /*
-     * Experimental
+     * Get the actual length of the strip (which only can be lower than the current one)
+     * and adjust pixel buffer to the new length.
+     * After this initialize the pattern with the underlying object to also get the new length here
      */
     uint16_t tActualNeopixelLength = getActualNeopixelLenghtSimple(&NeoPatternsBackground);
     Serial.print(F("Actual neopixel length="));
@@ -114,6 +119,7 @@ void setup() {
     if (tActualNeopixelLength != 0) {
         NeoPatternsBackground.updateLength(tActualNeopixelLength);
     }
+    // must init after length update, in order to copy the right length
     NeoPatternsFastMoves.init(&NeoPatternsBackground, 0, tActualNeopixelLength, true, &PatternsFastMoves);
     NeoPatternsFastMoves.begin();
     NeoPatternsFastMoves.printConnectionInfo(&Serial);
@@ -125,7 +131,7 @@ void setup() {
     pinMode(PIN_TIMING_DEBUG_BUTTON, OUTPUT);
 
     NeoPatternsBackground.ColorWipe(COLOR32_GREEN_HALF, 8); // start the pattern
-//    NeoPatternsBackground.ColorSet(COLOR32_RED); // start the pattern
+//    NeoPatternsBackground.setColor(COLOR32_RED); // start the pattern
     NeoPatternsFastMoves.ScannerExtended(COLOR32_BLUE_HALF, 16, 8, 0, FLAG_SCANNER_EXT_ROCKET, DIRECTION_DOWN); // start the pattern
 //    NeoPatternsFastMoves.Delay(2 * DELAY_MILLIS_FAST_MOVES_MIN); // start the pattern
 }
@@ -164,43 +170,55 @@ void loop() {
 /*
  * @return  0 if length could not be determined
  * Could be improved by:
- * 1. Get first value by using step width of getNumberOfPixels() / 16.
- * 2. Narrow first value by using step width of 1.
- * 3. Check at position slight below first value how may pixels are required for a voltage drop.
- * 4  Re-check first position slowly with these numbers of pixels.
+ * 1. Check at position slight below first value how may pixels are required for a voltage drop.
+ * 2  Re-check first position slowly with these numbers of pixels.
  */
 uint16_t getActualNeopixelLenghtSimple(NeoPatterns *aLedsPtr) {
 #if __has_include("ADCUtils.h")
     /*
      * First set ADC reference and channel and clear strip
      */
-    getVCCVoltageMillivolt(); // to
+    getVCCVoltageMillivoltSimple(); // to set ADC channel and reference
     aLedsPtr->clear();
     aLedsPtr->show();
-    delay(100);
-    uint16_t tStartMillivolt = getVCCVoltageMillivolt();
+    delay(50);
+    uint16_t tStartMillivolt = getVCCVoltageMillivoltSimple(); // it is faster to use this
     Serial.print(F("Start VCC="));
     Serial.print(tStartMillivolt);
     Serial.println(" mV");
-    int i = aLedsPtr->getNumberOfPixels() - 1;
-    for (; i >= 0; i--) {
-        aLedsPtr->setPixelColor(i, COLOR32_WHITE);
+
+    /*
+     * First run is fast run
+     */
+    int tLedIndex = aLedsPtr->getNumberOfPixels() - 1;
+    uint_fast8_t tStepWidth = 4;
+    for (unsigned int i = 0; i <= 4; i += 4) {
+        for (; tLedIndex >= 0; tLedIndex -= tStepWidth) {
+            aLedsPtr->setPixelColor(tLedIndex, COLOR32_WHITE);
+            aLedsPtr->show();
+            delay(i);
+            uint16_t tCurrentMillivolt = getVCCVoltageMillivoltSimple(); // we have a resolution of 20 mV
+            if (tCurrentMillivolt < tStartMillivolt - 40) {
+                tLedIndex++;
+                break;
+            }
+        }
+        /*
+         * 2. run is slow run from starting nearby
+         */
+        aLedsPtr->clear();
         aLedsPtr->show();
-        delay(1); // delay(2) is sometimes to fast
-        uint16_t tCurrentMillivolt = getVCCVoltageMillivolt(); // we have a resolution of 20 mV
-        if (tCurrentMillivolt < tStartMillivolt - 40) {
-            i++;
-            break;
+        if (i != 0) {
+            return tLedIndex;
         }
-        uint_fast16_t tClearIndex = i + (TEST_PATTERN_LENGTH - 1);
-        if (tClearIndex < aLedsPtr->getNumberOfPixels()) {
-            aLedsPtr->setPixelColor(tClearIndex, COLOR32_BLACK);
+        delay(20);
+
+        tLedIndex = tLedIndex + 36; // with 36 we get 8 steps back
+        if (tLedIndex > (int) aLedsPtr->getNumberOfPixels() - 1) {
+            tLedIndex = aLedsPtr->getNumberOfPixels() - 1;
         }
+        tStepWidth = 1;
     }
-    aLedsPtr->clear();
-    aLedsPtr->show();
-    return i;
-#else
     return 0;
 #endif
 }

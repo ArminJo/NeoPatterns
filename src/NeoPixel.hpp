@@ -199,7 +199,7 @@ bool NeoPixel::begin(Print *aSerial, uint8_t aBrightness, bool aEnableBrightness
  * Requires around 140 bytes of program space
  */
 void NeoPixel::printConnectionInfo(Print *aSerial) {
-    if(PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE){
+    if (PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) {
         aSerial->print(F("Circular "));
     }
     aSerial->print(F("Neopixel of length "));
@@ -374,14 +374,6 @@ void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBott
         } else {
             // Clear pixel
             setPixelColor(i, COLOR32_BLACK);
-        }
-    }
-}
-
-void NeoPixel::fillRegion(color32_t aColor, uint16_t aRegionFirst, uint16_t aRegionLength) {
-    if (aRegionFirst + aRegionLength <= numLEDs) {
-        for (uint_fast16_t i = aRegionFirst; i < aRegionFirst + aRegionLength; i++) {
-            setPixelColor(i, aColor);
         }
     }
 }
@@ -749,16 +741,29 @@ void NeoPixel::addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 }
 
 // Set all pixels to a color (synchronously)
-void NeoPixel::ColorSet(color32_t aColor) {
-// This is faster but costs 82 bytes program memory
-//    if (BytesPerPixel == 3) {
-//        setPixelColor(0, aColor);
-//        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
-//    } else {
-    for (uint_fast16_t i = 0; i < numLEDs; i++) {
-        setPixelColor(i, aColor);
+void NeoPixel::setColor(color32_t aColor) {
+// This is faster but costs 94 bytes, or 54 bytes program memory if DO_NOT_SUPPORT_RGBW is defined
+    if (BytesPerPixel == 3) {
+        setPixelColor(0, aColor);
+        memcpy(&pixels[(PixelOffset + 1) * 3], &pixels[PixelOffset * 3], (numLEDs - 1) * 3);
+    } else {
+        // if DO_NOT_SUPPORT_RGBW is defined, this code is removed by the compiler :-)
+        for (uint_fast16_t i = 0; i < numLEDs; i++) {
+            setPixelColor(i, aColor);
+        }
     }
-//    }
+}
+// deprecated
+void NeoPixel::ColorSet(color32_t aColor) {
+    setColor(aColor);
+}
+
+void NeoPixel::fillRegion(color32_t aColor, uint16_t aRegionFirst, uint16_t aRegionLength) {
+    if (aRegionFirst + aRegionLength <= numLEDs) {
+        for (uint_fast16_t i = aRegionFirst; i < aRegionFirst + aRegionLength; i++) {
+            setPixelColor(i, aColor);
+        }
+    }
 }
 
 color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {

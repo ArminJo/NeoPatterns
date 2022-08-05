@@ -2,7 +2,7 @@
 This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).
 New Patterns are added, a [snake game running on a matrix](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeGame/SnakeGame.ino) is included and you can run [multiple patterns simultaneously on the same strip](https://github.com/ArminJo/NeoPatterns/blob/master/examples/TwoPatternsOnOneStrip/TwoPatternsOnOneStrip.ino).
 
-### [Version 3.0.1](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
+### [Version 3.1.0](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
@@ -30,6 +30,7 @@ Available as Arduino library "NeoPatterns"
 - DELAY
 - SCANNER_EXTENDED
 - STRIPES
+- FLASH
 - PROCESS_SELECTIVE
 - HEARTBEAT
 - BOUNCING_BALL
@@ -55,7 +56,7 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 
 # NeoPixel library
 the included NeoPixel library is an extensions of the Adafruit NeoPixel library and supports multiple virtual NeoPixel (and NeoPattern) objects on one physical strip. It also contains a lot of useful functions like:
-- ColorSet()
+- setColor()
 - drawBar() 
 - drawBarFromColorArray() - uses a color array for the different colors of the bar pixel.
 - dimColor() - by 50%.
@@ -109,12 +110,10 @@ Modify them by enabling / disabling them, or change the values if applicable.
 
 | Name | Default value | Description |
 |-|-|-|
-| `DO_NOT_SUPPORT_RGBW` | disabled | Enable it if you only have RGB pixels and do not require RGBW pixels support. Disabling saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_SUPPORT_BRIGHTNESS` | disabled | Enable it if you do not require brightness functions. Disabling saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS` | disabled | Enable it if you do not require the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Disabling saves up to 144 bytes program memory for the AllPatternsOnMultiDevices example. |
-| `DO_NOT_SUPPORT_400KHZ` | disabled | Enable it if you do not require the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Disabling saves up to 144 bytes program memory for the AllPatternsOnMultiDevices example. |
-
-If you do not require the legacy 400 kHz functionality, you can disable the line 138 `#define NEO_KHZ400 0x0100 ///< 400 KHz data transmission` in Adafruit_NeoPixel.h. This saves 164 bytes program memory for the AllPatternsOnMultiDevices example.
+| `DO_NOT_SUPPORT_RGBW` | disabled | Disables RGBW pixels support. Activate it, if you only have RGB pixels. Saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_SUPPORT_BRIGHTNESS` | disabled | Disables the brightness functions. Saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
+| `DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS` | disabled | Disables the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Saves up to 144 bytes program memory for the AllPatternsOnMultiDevices example. |
+| `NEO_KHZ400` | 0x0100 | If you do not require the legacy 400 kHz functionality, you can disable the line 138 `#define NEO_KHZ400 0x0100 ///< 400 KHz data transmission` in Adafruit_NeoPixel.h. This saves up to 164 bytes program memory for the AllPatternsOnMultiDevices example. |
 
 ## NeoPatterns
 These macros must be defined in your program before the line `#include <NeoPatterns.hpp>` or `#include MatrixNeoPatterns.hpp` or `#include MatrixSnake.hpp` to take effect.
@@ -128,7 +127,7 @@ Modify them by enabling / disabling them, or change the values if applicable.
 | `ENABLE_NO_NEO_PATTERN_BY_DEFAULT` | disabled | Disables the default selection of all non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> is specified. Enables the exclusively use compilation of matrix NeoPattern. |
 | `ENABLE_NO_MATRIX_AND_NEO_PATTERN_BY_DEFAULT` | disabled | Disables default selection of all matrix and non matrix NeoPattern patterns if no ENABLE_PATTERN_<Pattern name> or ENABLE_MATRIX_PATTERN_<Pattern name> is specified. Thus it enables the exclusively use of special Snake pattern which saves program memory. |
 | `DO_NOT_USE_MATH_PATTERNS` | disabled | NeoPatterns.h | Disables the `BOUNCING_BALL` pattern. Saves up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise. |
-| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | If you have only default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag) you can save 560 bytes (and more) FLASH and 3 bytes RAM. |
+| `SUPPORT_ONLY_DEFAULT_GEOMETRY` | disabled | MatrixNeoPixel.h | Disables other than default geometry, i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag). Saves up to 560 bytes program memory and 3 bytes RAM. |
 
 ## Snake
 These macros must be defined in your program before the line `#include MatrixSnake.hpp` to take effect.
@@ -137,7 +136,7 @@ Modify them by enabling / disabling them, or change the values if applicable.
 | Name | Default value | Description |
 |-|-|-|
 | `ENABLE_PATTERNS_FOR_SNAKE_AUTORUN` | disabled | Selects all matrix and non matrix NeoPattern patterns used for the snake game. |
-| `ENABLE_USER_SNAKE_SOLVER` | disabled | This disables the built in solver function getNextSnakeDirection() and enables the [user provided solver function](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeSolver/SnakeSolver.ino#L56). |
+| `ENABLE_USER_SNAKE_SOLVER` | disabled | Disables the built in solver function getNextSnakeDirection() and enables the [user provided solver function](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeSolver/SnakeSolver.ino#L56). |
 
 ### Changing include (*.h) files with Arduino IDE
 First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
@@ -193,7 +192,14 @@ This example renders a slow "background pattern" and a fast "foreground pattern"
 It also shows, how to dynamically **determine the length of the attached strip** und to resize the underlying pixel buffer.
 
 # Revision History
-### Version 3.0.1 - work in progress
+### Version 3.1.0 - work in progress
+- Added functions `printConnectionInfo()`, `fillRegion()`, `stop()` and `stopAllPatterns()`.
+- Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
+- Renamed `updateAll*` and `updateAndWait*` functions.
+- Now all NeoPattern objects are contained in NeoPatterns list.
+- Now `updateOrRedraw()` does never call show().
+- New pattern `FLASH`.
+- Renamed ColorSet() to setColor().
 
 ### Version 3.0.0
 - Enabled individual selection of patterns to save program memory.

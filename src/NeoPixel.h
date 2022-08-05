@@ -109,7 +109,8 @@ public:
     bool begin(Print *aSerial);
     bool begin(Print *aSerial, uint8_t aBrightness, bool aEnableBrightnessNonZeroMode = false);
 
-    void ColorSet(color32_t aColor);
+    void ColorSet(color32_t aColor) __attribute__ ((deprecated ("Renamed to setColor()"))); // deprecated;
+    void setColor(color32_t aColor);
     color32_t getPixelColor(uint16_t aPixelIndex);
     uint8_t getBytesPerPixel();
     neoPixelType getType();

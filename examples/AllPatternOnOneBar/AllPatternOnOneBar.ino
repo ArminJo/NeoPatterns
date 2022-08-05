@@ -61,7 +61,7 @@ void setup() {
 #endif
 
     bar16.begin(); // This initializes the NeoPixel library.
-    bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, REVERSE); // light Blue
+    bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, DIRECTION_DOWN); // light Blue
 
 #if defined(INFO)
     Serial.println("started");

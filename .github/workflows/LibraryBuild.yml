@@ -56,6 +56,7 @@ jobs:
             build-properties:
               AllPatternsOnMultiDevices: -DALL_PATTERN_ON_ONE_STRIP -DDO_NOT_SUPPORT_RGBW
               OpenLedRace: -DUSE_SOFT_I2C_MASTER -DDO_NOT_SUPPORT_RGBW
+              SnowFlakes: -DTRACE
               All: -DDO_NOT_SUPPORT_RGBW
 
           - arduino-boards-fqbn: arduino:avr:leonardo

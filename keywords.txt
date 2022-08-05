@@ -35,7 +35,7 @@ showPatternInitially	KEYWORD2
 decrementTotalStepCounter	KEYWORD2
 setNextIndex	KEYWORD2
 decrementTotalStepCounterAndSetNextIndex	KEYWORD2
-updateAndWaitForPatternToStop	KEYWORD2
+updateShowAndWaitForPatternToStop	KEYWORD2
 
 initMultipleFallingStars	KEYWORD2
 allPatternsRandomHandler	KEYWORD2

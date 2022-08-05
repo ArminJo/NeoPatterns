@@ -48,9 +48,9 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.0.0"
+#define VERSION_NEOPATTERNS "3.1.0"
 #define VERSION_NEOPATTERNS_MAJOR 3
-#define VERSION_NEOPATTERNS_MINOR 0
+#define VERSION_NEOPATTERNS_MINOR 1
 #define VERSION_NEOPATTERNS_PATCH 0
 // The change log is at the bottom of the file
 
@@ -64,7 +64,7 @@
 extern const char *const PatternNamesArray[] PROGMEM;
 
 #if (!(defined(ENABLE_PATTERN_RAINBOW_CYCLE) || defined(ENABLE_PATTERN_COLOR_WIPE) || defined(ENABLE_PATTERN_FADE) \
-|| defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
+|| defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_FLASH) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
 || defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) \
 || defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
 || defined(ENABLE_NO_NEO_PATTERN_BY_DEFAULT) ))
@@ -73,6 +73,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define ENABLE_PATTERN_FADE
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_STRIPES
+#define ENABLE_PATTERN_FLASH
 #define ENABLE_PATTERN_PROCESS_SELECTIVE
 #define ENABLE_PATTERN_HEARTBEAT
 #define ENABLE_PATTERN_FIRE
@@ -83,7 +84,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #   endif
 #endif
 
-// Pattern types supported:
+// Pattern types supported: Can be used as index of PatternNamesArray
 #define PATTERN_NONE                0
 #define PATTERN_RAINBOW_CYCLE       1
 #define PATTERN_COLOR_WIPE          2
@@ -92,14 +93,15 @@ extern const char *const PatternNamesArray[] PROGMEM;
 
 #define PATTERN_SCANNER_EXTENDED    5
 #define PATTERN_STRIPES             6 // includes the old THEATER_CHASE
-#define PATTERN_PROCESS_SELECTIVE   7
-#define PATTERN_HEARTBEAT           8
-#define PATTERN_FIRE                9
+#define PATTERN_FLASH               7
+#define PATTERN_PROCESS_SELECTIVE   8
+#define PATTERN_HEARTBEAT           9
+#define PATTERN_FIRE               10
 
-#define PATTERN_USER_PATTERN1      10
-#define PATTERN_USER_PATTERN2      11
+#define PATTERN_USER_PATTERN1      11
+#define PATTERN_USER_PATTERN2      12
 
-#define PATTERN_BOUNCING_BALL      12
+#define PATTERN_BOUNCING_BALL      13
 #define LAST_NEO_PATTERN           PATTERN_BOUNCING_BALL
 
 /*
@@ -120,10 +122,6 @@ const char DirectionDown[] = "down";
 const char DirectionRight[] = "right";
 const char DirectionNo[] = "no";
 const char* DirectionToString(uint8_t aDirection);
-
-// only for Backwards compatibility
-#define FORWARD DIRECTION_UP
-#define REVERSE DIRECTION_DOWN
 
 // NeoPattern Class - derived from the NeoPixel and Adafruit_NeoPixel class
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
@@ -149,8 +147,13 @@ public:
     bool checkForUpdate();
     bool update();
     bool update(uint8_t aBrightness);
+
+#define DO_REDRAW_IF_NO_UPDATE  true
+#define DO_NO_REDRAW_IF_NO_UPDATE  false
     bool updateOrRedraw(bool aDoRedrawIfNoUpdate);
     bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness);
+
+    void stop();
 
     void updateShowAndWaitForPatternToStop();
     void updateShowAndWaitForPatternToStop(uint8_t aBrightness);
@@ -160,11 +163,15 @@ public:
     void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness);
 
     bool updateAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
-    bool updateAllPartialPatterns(uint8_t aBrightness) __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
+    bool updateAllPartialPatterns(uint8_t aBrightness)
+            __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
     void updateAndWaitForPatternToStop() __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
-    void updateAndWaitForPatternToStop(uint8_t aBrightness) __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
-    void updateAllPartialPatternsAndWaitForPatternsToStop() __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
-    void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness) __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
+    void updateAndWaitForPatternToStop(uint8_t aBrightness)
+            __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
+    void updateAllPartialPatternsAndWaitForPatternsToStop()
+            __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
+    void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness)
+            __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
 
     void showPatternInitially();
     bool decrementTotalStepCounter();
@@ -204,6 +211,11 @@ public:
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     bool StripesUpdate(bool aDoUpdate = true);
+#endif
+
+#if defined(ENABLE_PATTERN_FLASH)
+    void Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2, uint16_t aNumberOfSteps, bool doEndWithBlack = false);
+    bool FlashUpdate(bool aDoUpdate = true);
 #endif
 
 #if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
@@ -258,10 +270,8 @@ public:
 #endif
     void printPatternName(uint8_t aPatternNumber, Print *aSerial);
     void printInfo(Print *aSerial, bool aFullInfo = true);
-#if defined(INFO)
     void printPattern();
     void printlnPattern();
-#endif
 
     /*
      * Internal control variables
@@ -293,6 +303,7 @@ public:
 #define FLAG_DO_CLEAR                       0x00
     // Do not write black pixels / pixels not used by pattern. Can be used to overwrite existing patterns - for colorWipe() and ScannerExtended()
 #define FLAG_DO_NOT_CLEAR                   0x10
+#define FLAG_END_WITH_BLACK                 0x20    // Last color of FLASH pattern is black
 // see also: #define FLAG_TICKER_DATA_IN_FLASH 0x01 // Flag if DataPtr points to RAM or FLASH.
     uint8_t PatternFlags;  // special behavior of the pattern - BouncingBall: PercentageOfLossAtBounce
 
@@ -324,8 +335,11 @@ public:
     union {
         color32_t ColorTmp;             // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
         float TopPixelIndex;            // BouncingBall: float index of TopPixel
-
         uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for
+        union {
+            uint16_t Interval1;             // Flash: interval for color1
+            uint16_t Interval2;             // Flash: interval for color2
+        } Intervals;
     } LongValue2;
 
     union {
@@ -344,6 +358,8 @@ public:
     NeoPatterns *NextNeoPatternsObject;
     static NeoPatterns *FirstNeoPatternsObject;
 };
+
+void stopAllPatterns();
 
 #define ENDLESS_HANDLER_POINTER ((void (*)(NeoPatterns*)) 1) // currently for initMultipleFallingStars()
 
@@ -375,11 +391,13 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 
 /*
  * Version 3.1.0 - 8/2022
- * - Added Function printConnectionInfo().
+ * - Added functions printConnectionInfo(), fillRegion(), stop() and stopAllPatterns().
  * - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
  * - Renamed updateAll* and updateAndWait* functions.
  * - Now all NeoPattern objects are contained in NeoPatterns list.
  * - Now updateOrRedraw() does never call show().
+ * - New pattern FLASH.
+ * - Renamed ColorSet() to setColor().
  *
  * Version 3.0.0 - 5/2022
  * - Enabled individual selection of patterns to save program memory.

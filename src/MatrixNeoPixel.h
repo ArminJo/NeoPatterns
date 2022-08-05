@@ -41,7 +41,7 @@
 
 /*
  * If you have only default geometry (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE),
- * i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag)
+ * i.e. Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line (no zig-zag),
  * then you can save program memory by defining symbol `SUPPORT_ONLY_DEFAULT_GEOMETRY`.
  * This saves 560 bytes program memory and 3 bytes RAM.
  */

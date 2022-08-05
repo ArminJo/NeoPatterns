@@ -56,6 +56,7 @@ const char PatternFade[] PROGMEM ="Fade";
 const char PatternDelay[] PROGMEM ="Delay";
 const char PatternScannerExtended[] PROGMEM ="Scanner extended";
 const char PatternStripes[] PROGMEM ="Stripes";
+const char PatternFlash[] PROGMEM ="Flash";
 const char PatternProcessSelectiveColor[] PROGMEM ="Process selective color";
 const char PatternFire[] PROGMEM ="Fire";
 const char PatternHeartbeat[] PROGMEM ="Heartbeat";
@@ -73,10 +74,11 @@ const char MatrixPatternSnow[] PROGMEM ="Snow";
 const char MatrixExtraPatternSnake[] PROGMEM ="Snake";
 const char PatternUnknown[] PROGMEM ="Unknown";
 
+// ActivePattern can be used as index of PatternNamesArray
 const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
-        PatternScannerExtended, PatternStripes, PatternProcessSelectiveColor, PatternHeartbeat, PatternFire, PatternUserPattern1,
-        PatternUserPattern2, PatternBouncingBall, MatrixPatternTicker, MatrixPatternMove, MatrixPatternMovingPicture, PatternFire,
-        MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown };
+        PatternScannerExtended, PatternStripes, PatternFlash, PatternProcessSelectiveColor, PatternHeartbeat, PatternFire,
+        PatternUserPattern1, PatternUserPattern2, PatternBouncingBall, MatrixPatternTicker, MatrixPatternMove,
+        MatrixPatternMovingPicture, PatternFire, MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown };
 
 // array of update function pointer, not used since it needs 150 bytes more :-(
 //bool (NeoPatterns::*sUpdateFunctionPointerArray[])(
@@ -114,14 +116,14 @@ void NeoPatterns::_insertIntoNeopatternsList() {
      * Insert "this" in the NextNeoPatternsObject list
      */
     NextNeoPatternsObject = NULL;
-    NeoPatterns *NextObjectPointer = FirstNeoPatternsObject;
-    if (NextObjectPointer == NULL) {
+    NeoPatterns *tNextObjectPointer = FirstNeoPatternsObject;
+    if (tNextObjectPointer == NULL) {
         FirstNeoPatternsObject = this;
     } else {
-        while (NextObjectPointer->NextNeoPatternsObject != NULL) {
-            NextObjectPointer = NextObjectPointer->NextNeoPatternsObject;
+        while (tNextObjectPointer->NextNeoPatternsObject != NULL) {
+            tNextObjectPointer = tNextObjectPointer->NextNeoPatternsObject;
         }
-        NextObjectPointer->NextNeoPatternsObject = this;
+        tNextObjectPointer->NextNeoPatternsObject = this;
     }
 }
 
@@ -247,30 +249,29 @@ bool NeoPatterns::updateAndShowAlsoAllPartialPatterns() {
     /*
      * Traverse through complete NeoPattern list and process all UnderlyingNeoPixelObjects including the object itself!
      */
-    NeoPatterns *NeoPatternsPointer = FirstNeoPatternsObject;
-    while (NeoPatternsPointer != NULL) {
+    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != NULL; tNextObjectPointer =
+            tNextObjectPointer->NextNeoPatternsObject) {
         /*
          * Check for same underlying object (including the underlying object itself) and update if pattern is active
          */
-        if (NeoPatternsPointer->ActivePattern != PATTERN_NONE
-                && NeoPatternsPointer->UnderlyingNeoPixelObject == UnderlyingNeoPixelObject) {
+        if (tNextObjectPointer->ActivePattern != PATTERN_NONE
+                && tNextObjectPointer->UnderlyingNeoPixelObject == UnderlyingNeoPixelObject) {
             tAtLeastOnePatternIsActive = true;
-            tNeedShow |= NeoPatternsPointer->update();
+            tNeedShow |= tNextObjectPointer->updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE); // this avoids show of any patterns at this call
         }
 #if defined(TRACE)
         printPin(&Serial);
         Serial.print(F("&Pattern=0x"));
-        Serial.print((uintptr_t) NeoPatternsPointer, HEX);
+        Serial.print((uintptr_t) tNextObjectPointer, HEX);
         Serial.print(F(" &nextPattern=0x"));
-        Serial.print((uintptr_t) NeoPatternsPointer->NextNeoPatternsObject, HEX);
+        Serial.print((uintptr_t) tNextObjectPointer->NextNeoPatternsObject, HEX);
         Serial.print(F(" ActivePattern="));
-        Serial.print(NeoPatternsPointer->ActivePattern);
+        Serial.print(tNextObjectPointer->ActivePattern);
         Serial.print(F(" &UnderlyingNeoPixel=0x"));
-        Serial.print((uintptr_t) NeoPatternsPointer->UnderlyingNeoPixelObject, HEX);
+        Serial.print((uintptr_t) tNextObjectPointer->UnderlyingNeoPixelObject, HEX);
         Serial.print(F(" tNeedShow="));
         Serial.println(tNeedShow);
 #endif
-        NeoPatternsPointer = NeoPatternsPointer->NextNeoPatternsObject;
     }
     if (tNeedShow) {
         UnderlyingNeoPixelObject->show();
@@ -339,6 +340,18 @@ void NeoPatterns::showPatternInitially() {
 #endif
 }
 
+void NeoPatterns::stop() {
+    ActivePattern = PATTERN_NONE;
+}
+
+void stopAllPatterns() {
+    //Walk through the NextNeoPatternsObject list
+    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != NULL; tNextObjectPointer =
+            tNextObjectPointer->NextNeoPatternsObject) {
+        tNextObjectPointer->ActivePattern = PATTERN_NONE;
+    }
+}
+
 /*
  * @brief   Updates the pattern if update interval has expired.
  * @return  Returns true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
@@ -396,6 +409,11 @@ bool NeoPatterns::update() {
             tPatternEnded = StripesUpdate();
             break;
 #endif
+#if defined(ENABLE_PATTERN_FLASH)
+        case PATTERN_FLASH:
+            tPatternEnded = FlashUpdate();
+            break;
+#endif
 #if defined(ENABLE_PATTERN_HEARTBEAT)
         case PATTERN_HEARTBEAT:
             tPatternEnded = HeartbeatUpdate();
@@ -431,9 +449,9 @@ bool NeoPatterns::update() {
 
 /*
  * updateOrRedraw() serves to combine a background pattern with foreground patterns which are not synchronized.
+ * !!! Does NOT show the pattern, this must be done manually after all redraws. !!!
  *
  * Updates the pattern if update interval has expired. Otherwise redraws it if aDoRedrawIfNoUpdate is true.
- * Does NOT show the pattern, this must be done manually after all redraws.
  *
  * @param aDoRedrawIfNoUpdate Only if true, do an redraw, if no update was scheduled.
  * @return true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
@@ -491,6 +509,11 @@ bool NeoPatterns::updateOrRedraw(bool aDoRedrawIfNoUpdate) {
             StripesUpdate(tDoUpdate);
             break;
 #endif
+#if defined(ENABLE_PATTERN_FLASH)
+        case PATTERN_FLASH:
+            FlashUpdate(tDoUpdate);
+            break;
+#endif
 #if defined(ENABLE_PATTERN_HEARTBEAT)
         case PATTERN_HEARTBEAT:
             HeartbeatUpdate(tDoUpdate);
@@ -529,7 +552,6 @@ bool NeoPatterns::decrementTotalStepCounter() {
     TotalStepCounter--;
     if (TotalStepCounter < 0) {
         // Safety net. The pattern has ended, but the callback has not set a new pattern
-        TotalStepCounter = 0;
         ActivePattern = PATTERN_NONE;
 #if defined(INFO)
         printPin(&Serial);
@@ -760,9 +782,9 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
 #if defined(_SUPPORT_RGBW)
     uint8_t tWhite = ((getWhitePart(Color1) * (ByteValue1.NumberOfSteps - Index)) + (getWhitePart(LongValue1.Color2) * Index))
             / ByteValue1.NumberOfSteps;
-    ColorSet(Color(tRed, tGreen, tBlue, tWhite));
+    setColor(Color(tRed, tGreen, tBlue, tWhite));
 #else
-        ColorSet(Color(tRed, tGreen, tBlue));
+    setColor(Color(tRed, tGreen, tBlue));
 #endif
 
     return false;
@@ -845,7 +867,7 @@ bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
                 Serial.println(F("Skip black color index"));
 #endif
             } else {
-                ColorSet(tDimmedColor);
+                setColor(tDimmedColor);
             }
         }
     } while (tDimmedColor == 0);
@@ -1047,7 +1069,6 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
         tBrightnessHighResolution -= tBrightnessDelta;
     }
 
-
     if (aDoUpdate) {
 #if defined(TRACE)
         Serial.println(F("clear tail"));
@@ -1196,6 +1217,63 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
         if (tRunningIndex >= ByteValue1.PatternLength + ByteValue2.PatternLength) {
             tRunningIndex = 0;
         }
+    }
+    return false;
+}
+#endif
+
+#if defined(ENABLE_PATTERN_FLASH)
+/*
+ * Start with aColor1 for aIntervalMillisColor1.
+ * @param   doEndWithBlack if true aColor2 is replaced with black for last step of flash pattern
+ */
+void NeoPatterns::Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2,
+        uint16_t aNumberOfSteps, bool doEndWithBlack) {
+    Color1 = aColor1;
+    LongValue2.Intervals.Interval1 = aIntervalMillisColor1;
+    LongValue1.Color2 = aColor2;
+    LongValue2.Intervals.Interval2 = aIntervalMillisColor2;
+    TotalStepCounter = aNumberOfSteps * 2;
+    Index = TotalStepCounter;
+    if (doEndWithBlack) {
+        PatternFlags = FLAG_END_WITH_BLACK;
+    }
+
+    FlashUpdate(false);
+    showPatternInitially();
+// must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
+    ActivePattern = PATTERN_FLASH;
+#if defined(TRACE)
+    printInfo(&Serial, true);
+#endif
+}
+
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool NeoPatterns::FlashUpdate(bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (decrementTotalStepCounter()) {
+            return true;
+        }
+        Index--;
+    }
+
+    /*
+     * Refresh pattern
+     */
+    if (Index & 0x01) {
+        // second color
+        if (Index == 1 && (PatternFlags & FLAG_END_WITH_BLACK)) {
+            fillRegion(COLOR32_BLACK, 0, numLEDs);
+        } else {
+            fillRegion(LongValue1.Color2, 0, numLEDs);
+        }
+        Interval = LongValue2.Intervals.Interval2;
+    } else {
+        // first color
+        fillRegion(Color1, 0, numLEDs);
+        Interval = LongValue2.Intervals.Interval1;
     }
     return false;
 }
@@ -1361,7 +1439,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
 // Update the Fire Pattern
 bool NeoPatterns::FireUpdate(bool aDoUpdate) {
 
-    // map heap space to heat array
+// map heap space to heat array
     uint8_t *heat = LongValue1.heatOfPixelArrayPtr;
 
     if (aDoUpdate) {
@@ -1601,7 +1679,7 @@ color32_t DimColor(NeoPatterns *aNeoPatternsPtr) {
     uint8_t tWhite = getWhitePart(tColor) >> 1;
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
-    // call to function saves 6 byte program memory
+// call to function saves 6 byte program memory
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);
 #endif
 
@@ -1621,7 +1699,7 @@ color32_t BrightenColor(NeoPatterns *aNeoPatternsPtr) {
     return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue, tWhite);
 #else
 // call to function saves 22 byte program memory
-    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue);//    return COLOR32(red, green, blue);
+    return Adafruit_NeoPixel::Color(tRed, tGreen, tBlue); //    return COLOR32(red, green, blue);
 #endif
 }
 
@@ -1658,7 +1736,6 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 /*
  * For debugging purposes
  */
-#if defined(INFO)
 void NeoPatterns::printPattern() {
     Serial.print(F("Pattern="));
     printPatternName(ActivePattern, &Serial);
@@ -1670,7 +1747,6 @@ void NeoPatterns::printlnPattern() {
     printPatternName(ActivePattern, &Serial);
     Serial.println();
 }
-#endif
 
 void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
     static int16_t sLastSteps;
@@ -1747,7 +1823,7 @@ void __attribute__((weak)) UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPi
         aNeoPatterns->Index = aNeoPatterns->numPixels();
     }
 
-    aNeoPatterns->ColorSet(aBackgroundColor);
+    aNeoPatterns->setColor(aBackgroundColor);
     aNeoPatterns->showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
