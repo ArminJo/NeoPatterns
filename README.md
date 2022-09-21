@@ -1,16 +1,32 @@
+<div align = center>
+
 # [NeoPatterns](https://github.com/ArminJo/NeoPatterns) for NeoPixel strips and Snake game for NeoPixel matrix.
-This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).
+This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).<br/>
 New Patterns are added, a [snake game running on a matrix](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeGame/SnakeGame.ino) is included and you can run [multiple patterns simultaneously on the same strip](https://github.com/ArminJo/NeoPatterns/blob/master/examples/TwoPatternsOnOneStrip/TwoPatternsOnOneStrip.ino).
 
-### [Version 3.1.0](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
+### [Version 3.1.2](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Installation instructions](https://www.ardu-badge.com/badge/NeoPatterns.svg?)](https://www.ardu-badge.com/NeoPatterns)
-[![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/NeoPatterns/latest)](https://github.com/ArminJo/NeoPatterns/commits/master)
-[![Build Status](https://github.com/ArminJo/NeoPatterns/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/NeoPatterns/actions)
-![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_NeoPatterns)
+[![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+ &nbsp; &nbsp; 
+[![Badge Version](https://img.shields.io/github/v/release/ArminJo/NeoPatterns?include_prereleases&color=yellow&logo=DocuSign&logoColor=white)](https://github.com/ArminJo/NeoPatterns/releases/latest)
+ &nbsp; &nbsp; 
+[![Badge Commits since latest](https://img.shields.io/github/commits-since/ArminJo/NeoPatterns/latest?color=yellow)](https://github.com/ArminJo/NeoPatterns/commits/master)
+ &nbsp; &nbsp; 
+[![Badge Build Status](https://github.com/ArminJo/NeoPatterns/workflows/LibraryBuild/badge.svg)](https://github.com/ArminJo/NeoPatterns/actions)
+ &nbsp; &nbsp; 
+![Badge Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_NeoPatterns)
+<br/>
+<br/>
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Available as Arduino library "NeoPatterns"
+Available as [Arduino library "NeoPatterns"](https://www.arduinolibraries.info/libraries/neo-patterns).
+
+[![Button Install](https://img.shields.io/badge/Install-brightgreen?logoColor=white&logo=GitBook)](https://www.ardu-badge.com/NeoPatterns)
+ &nbsp; &nbsp; 
+[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/NeoPatterns#revision-history)
+
+</div>
+
 
 | YouTube Video of NeoPatternsDemo | YouTube Video of MatrixDemo on a 10x10 matrix |
 | :-: | :-: |
@@ -192,7 +208,13 @@ This example renders a slow "background pattern" and a fast "foreground pattern"
 It also shows, how to dynamically **determine the length of the attached strip** und to resize the underlying pixel buffer.
 
 # Revision History
-### Version 3.1.0 - work in progress
+### Version 3.1.2 - work in progress
+
+### Version 3.1.1
+- Added parameter `aRepetitions` to pattern `RainbowCycle`.
+- Improved layout of character c.
+ 
+### Version 3.1.0
 - Added functions `printConnectionInfo()`, `fillRegion()`, `stop()` and `stopAllPatterns()`.
 - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
 - Renamed `updateAll*` and `updateAndWait*` functions.

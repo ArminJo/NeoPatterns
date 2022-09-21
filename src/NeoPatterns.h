@@ -48,10 +48,10 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.1.0"
+#define VERSION_NEOPATTERNS "3.1.1"
 #define VERSION_NEOPATTERNS_MAJOR 3
 #define VERSION_NEOPATTERNS_MINOR 1
-#define VERSION_NEOPATTERNS_PATCH 0
+#define VERSION_NEOPATTERNS_PATCH 1
 // The change log is at the bottom of the file
 
 /*
@@ -390,6 +390,10 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
+ * Version 3.1.1 - 9/2022
+ * - Added parameter aRepetitions to pattern RainbowCycle.
+ * - Improved layout of character c.
+ *
  * Version 3.1.0 - 8/2022
  * - Added functions printConnectionInfo(), fillRegion(), stop() and stopAllPatterns().
  * - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
