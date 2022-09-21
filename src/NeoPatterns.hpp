@@ -631,14 +631,14 @@ bool NeoPatterns::decrementTotalStepCounterAndSetNextIndex() {
  * Initialize for a RainbowCycle
  * First of 256 steps is last pixel = Wheel(0) = RED going up over yellow and green to BLUE or backwards if DIRECTION_DOWN
  */
-void NeoPatterns::RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection) {
-    RainbowCycle(aDurationMillis, aDirection | PARAMETER_IS_DURATION);
+void NeoPatterns::RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection, uint8_t aRepetitions) {
+    RainbowCycle(aDurationMillis, aDirection | PARAMETER_IS_DURATION, aRepetitions);
 }
 
-void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection) {
+void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection, uint8_t aRepetitions) {
     // Must move index in opposite direction
     Direction = OppositeDirection(aDirection & DIRECTION_MASK);
-    TotalStepCounter = 256;
+    TotalStepCounter = 256 * aRepetitions;
     if (Direction == DIRECTION_UP) {
         Index = 0;
     } else {
@@ -679,12 +679,13 @@ bool NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
 
 #if defined(ENABLE_PATTERN_COLOR_WIPE)
 /**
+ * ColorWipeD 2. Parameter is complete duration and not step interval
  * @brief   Initialize for a ColorWipe. First step is one pixel set, last step is all pixel set.
  * @param  aMode can be 0 / FLAG_DO_CLEAR (default) or FLAG_DO_NOT_CLEAR(_BlackPixel)
  * @param  aDirection can be DIRECTION_UP (default) or DIRECTION_DOWN
  */
-void NeoPatterns::ColorWipeD(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode, uint8_t aDirection) {
-    ColorWipe(aColor, aIntervalMillis, aMode, aDirection | PARAMETER_IS_DURATION);
+void NeoPatterns::ColorWipeD(color32_t aColor, uint16_t aDurationMillis, uint8_t aMode, uint8_t aDirection) {
+    ColorWipe(aColor, aDurationMillis, aMode, aDirection | PARAMETER_IS_DURATION);
 }
 void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode, uint8_t aDirection) {
     Color1 = aColor;
@@ -1114,7 +1115,8 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
 #endif
 
 #if defined(ENABLE_PATTERN_STRIPES)
-/*
+/**
+ * StripesD Parameter is complete duration and not step interval
  * Start with aLength1 pixel of aLength1 followed by aLength2 pixel of aColor2 and then starting with aColor1 again until Strip ends.
  * If DIRECTION_DOWN the same pattern starts from the other end.
  * If aNumberOfSteps == (aLength1 + aLength2) the last pattern is equal first pattern

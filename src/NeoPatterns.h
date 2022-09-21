@@ -184,8 +184,8 @@ public:
      * If aDoUpdate is true, update pattern, otherwise only redraw the pattern
      */
 #if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
-    void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
-    void RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection = DIRECTION_UP);
+    void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
+    void RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
     bool RainbowCycleUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_COLOR_WIPE)

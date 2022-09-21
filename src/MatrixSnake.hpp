@@ -1091,6 +1091,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     switch (tState) {
     case 0:
 //        myLoadTest(tLedsPtr);
+        // Random ticker
         setMatrixAndSnakePatternsDemoHandlerRandomTickerText();
         tLedsPtr->TickerInit(sTickerTextPtr, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection, FLAG_TICKER_DATA_IN_FLASH);
         sTickerDirection--;
@@ -1103,7 +1104,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         if (sHeartDirection == DIRECTION_UP) {
             tYOffset = tLedsPtr->Rows + HEART_HEIGHT;
         }
-        // move in
+        // move heart in
         tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED_HALF, COLOR32_BLACK, tXOffset, tYOffset, tSteps, 100, sHeartDirection);
         break;
     case 2:
@@ -1124,7 +1125,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         break;
 
     case 6:
-        // move out - for move out, we can use Move instead of MovingPicturePGM
+        // move heart out - for move out, we can use Move instead of MovingPicturePGM
         tLedsPtr->Move(sHeartDirection, tLedsPtr->Rows, 100);
         // change direction for next time
         if (sHeartDirection == DIRECTION_DOWN) {
@@ -1137,6 +1138,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         aLedsPtr->Delay(1500);
         break;
     case 8:
+        // Snake or Fire or Snow pattern
         if (sSnakeFireSnowSelector == 0) {
             initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 1);
         } else if (sSnakeFireSnowSelector == 1) {
