@@ -1,11 +1,12 @@
 # [OpenledRace](https://github.com/ArminJo/OpenledRace) - An implementation of the OpenledRace Arduino game
-### Version 1.0.0
+### Version 1.2.0
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Commits since latest](https://img.shields.io/github/commits-since/ArminJo/OpenledRace/latest)](https://github.com/ArminJo/OpenledRace/commits/master)
 [![Build Status](https://github.com/ArminJo/OpenledRace/workflows/TestCompile/badge.svg)](https://github.com/ArminJo/OpenledRace/actions)
 ![Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_OpenledRace)
 
 Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Player, without Boxes Track"
+Available as [OpenLedRace example](https://github.com/ArminJo/NeoPatterns/tree/master/examples/OpenLedRace) in the [NeoPatterns library](https://github.com/ArminJo/NeoPatterns).
 
 #### OpenLedRace at the Cologne public library MINTköln-Festival
 ![OpenLedRace at the Cologne public library MINTköln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
@@ -23,14 +24,13 @@ Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Playe
  *  Compensation for blocked millis() timer during draw.
  *  Checks for RAM availability.
  *  Overlapping of cars is handled by using addPixelColor() for drawing.
- *  Dynamic activation of up to 4 cars.
+ *  Dynamic activation of up to 3 cars.
 
 Based on:
 - https://www.hackster.io/gbarbarov/open-led-race-a0331a
 - https://twitter.com/openledrace
 - https://gitlab.com/open-led-race
 - https://openledrace.net/open-software/
-
 
 
 # Compile with the Arduino IDE

@@ -41,16 +41,22 @@
 #include "AvrTracing.hpp"
 #include "AVRUtils.h"
 #  endif
-#include "ADCUtils.hpp"
 
 //#define ALL_PATTERN_ON_ONE_STRIP // shows all patterns on one consecutive device / multiple chained devices
 
-#define VCC_STOP_THRESHOLD_MILLIVOLT 3400   // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
-#define VCC_STOP_MIN_MILLIVOLT 3200         // We have voltage drop at the connectors, so the battery voltage is assumed higher, than the Arduino VCC.
-#define VCC_CHECK_PERIOD_MILLIS 10000       // Period of VCC checks
-#define VCC_STOP_PERIOD_REPETITIONS 9       // Shutdown after 9 times (18 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_STOP_MIN_MILLIVOLT
+/*
+ * Default values are suitable for Li-ion batteries.
+ * We normally have voltage drop at the connectors, so the battery voltage is assumed slightly higher, than the Arduino VCC.
+ * But keep in mind that the ultrasonic distance module HC-SR04 may not work reliable below 3.7 volt.
+ */
+#define VCC_STOP_THRESHOLD_MILLIVOLT    3300 // Do not stress your battery and we require some power for standby
+#define VCC_EMERGENCY_STOP_MILLIVOLT    3000 // Many Li-ions are specified down to 3.0 volt
+#define VCC_CHECK_PERIOD_MILLIS        10000 // Period of VCC checks
+#define VCC_CHECKS_TOO_LOW_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_STOP_MILLIVOLT
+#include "ADCUtils.hpp"
+
 #define FALLING_STAR_DURATION 12
-char sStringBufferForVCC[7] = "xxxxmV";
+char sStringBufferForVCC[8] = "xxxxmV ";
 #endif // (__AVR__)
 
 #define BRIGHTNESS_INPUT_PIN    A0
@@ -174,6 +180,7 @@ void setup() {
     uint16_t tVCC = getVCCVoltageMillivolt();
     if (tVCC < 4300) {
         itoa(tVCC, sStringBufferForVCC, 10);
+        sStringBufferForVCC[4] = 'm'; // overwrite the \0 of itoa()
         NeoPixelMatrix.Ticker(sStringBufferForVCC, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, DIRECTION_LEFT);
     } else {
         NeoPixelMatrix.Delay(7000); // start later
@@ -207,7 +214,7 @@ const char BrightnessPGM[] PROGMEM = "Brightness=";
 PrintIfChanged sBrightnessPrint(BrightnessPGM);
 
 void loop() {
-#if defined(__AVR__)
+#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
     checkAndHandleVCCTooLow();
 #endif // defined(__AVR__)
 
@@ -297,65 +304,36 @@ uint8_t readBrightness() {
     return NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
 }
 
-#if defined(__AVR__)
+#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
 /*
- * If voltage too low for VCC_STOP_PERIOD_REPETITIONS times clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
+ * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
 void checkAndHandleVCCTooLow() {
-    /*
-     * Check VCC every 10 seconds
-     */
-    static long sLastMillisOfVoltageCheck;
-    static bool sVoltageTooLowDetectedOnce = false; // one time flag
-    static uint8_t sVoltageTooLowCounter;
 
-    if (millis() - sLastMillisOfVoltageCheck >= VCC_CHECK_PERIOD_MILLIS) {
-        sLastMillisOfVoltageCheck = millis();
-        uint16_t tVCC = printVCCVoltageMillivolt(&Serial);
-
-        if (!sVoltageTooLowDetectedOnce) {
-
-            if (tVCC < VCC_STOP_THRESHOLD_MILLIVOLT) {
-                /*
-                 * Voltage too low, wait VCC_STOP_PERIOD_REPETITIONS (9) times and then shut down.
-                 */
-                if (tVCC < VCC_STOP_MIN_MILLIVOLT) {
-                    // emergency shutdown
-                    sVoltageTooLowCounter = VCC_STOP_PERIOD_REPETITIONS;
-                    Serial.println(F("Voltage < 3.2 volt detected -> emergency shutdown"));
-                } else {
-                    sVoltageTooLowCounter++;
-                    Serial.println(F("Voltage < 3.4 volt detected"));
-                }
-                if (sVoltageTooLowCounter == VCC_STOP_PERIOD_REPETITIONS) {
-                    Serial.println(F("Shut down"));
-                    sVoltageTooLowDetectedOnce = true;
-                }
-            } else {
-                sVoltageTooLowCounter = 0;
-            }
-
-            if (sVoltageTooLowDetectedOnce) {
-                initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, ENDLESS_HANDLER_POINTER);
-                initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, ENDLESS_HANDLER_POINTER);
-                ring12.clear();
-                ring12.show();
-                ring16.clear();
-                ring16.show();
-                ring24.clear();
-                ring24.show();
-                NeoPixelMatrix.clear();
-                NeoPixelMatrix.show();
-                return;
-            }
-        }
+    if (isVCCTooLowMultipleTimes()) {
+        /*
+         * clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
+         */
+        initMultipleFallingStars(&bar16, COLOR32_WHITE_HALF, 7, FALLING_STAR_DURATION, 1, ENDLESS_HANDLER_POINTER);
+        initMultipleFallingStars(&bar24, COLOR32_WHITE_HALF, 9, FALLING_STAR_DURATION, 1, ENDLESS_HANDLER_POINTER);
+        ring12.stop();
+        ring12.clear();
+        ring12.show();
+        ring16.stop();
+        ring16.clear();
+        ring16.show();
+        ring24.stop();
+        ring24.clear();
+        ring24.show();
+        NeoPixelMatrix.stop();
+        NeoPixelMatrix.clear();
+        NeoPixelMatrix.show();
+        Serial.println(F("Shut down"));
     }
-    if (sVoltageTooLowDetectedOnce) {
+    if (isVoltageTooLow()) {
         bar16.update();
         bar24.update();
         delay(FALLING_STAR_DURATION);
-        return;
     }
-
 }
-#endif // defined(__AVR__)
+#endif // defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))

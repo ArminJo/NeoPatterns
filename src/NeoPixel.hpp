@@ -367,7 +367,7 @@ void NeoPixel::drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBott
         if (aDrawFromBottom) {
             tDrawPixel = (i < aBarLength);
         } else {
-            tDrawPixel = (i >= ((uint_fast16_t)numLEDs - aBarLength));
+            tDrawPixel = (i >= ((uint_fast16_t) numLEDs - aBarLength));
         }
         if (tDrawPixel) {
             setPixelColor(i, aColor);
@@ -388,7 +388,7 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
         if (aDrawFromBottom) {
             tDrawPixel = (i < aBarLength);
         } else {
-            tDrawPixel = (i >= ((uint_fast16_t)numLEDs - aBarLength));
+            tDrawPixel = (i >= ((uint_fast16_t) numLEDs - aBarLength));
         }
         if (tDrawPixel) {
             if (aDrawFromBottom) {
@@ -922,9 +922,12 @@ color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t
 // deprecated, use dimColorWithGamma5()
 color32_t NeoPixel::dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero) {
     return dimColorWithGamma5(aLinearBrightnessColor, aBrightness, doSpecialZero);
-}
+} // end deprecated
 
-// Returns the White part of a 32-bit color
+/*
+ * Returns the White part of a 32-bit color
+ * Replaces the old White(color32_t color) function
+ */
 uint8_t getWhitePart(color32_t color) {
     return (color >> 24) & 0xFF;
 }
@@ -965,6 +968,101 @@ uint8_t Blue(color32_t color) {
     return color & 0xFF;
 }
 // end deprecated
+
+#include "ADCUtils.h"
+
+/*
+ * Get the actual (even) length of the strip (which only can be lower than the current length)
+ * and adjust pixel buffer to the new length.
+ *
+ * @return  The actual length of the strip
+ *          0 if length could not be determined
+ *
+ * Could be improved by:
+ * 1. Check at position slight below first loop value, how may pixels are required for a voltage drop.
+ *    Currently we assume a voltage drop at one pixel.
+ * 2  Use this number to compute start of strip found at second slow run.
+ *
+ * We use getVCCVoltageMillivoltSimple(), since it is faster and smaller,
+ * because we must not check for ADC reference and channel switching here.
+ */
+#if !defined(DELTA_MILLIVOLT_FOR_PIXEL_DETECTION)
+#define DELTA_MILLIVOLT_FOR_PIXEL_DETECTION         40 // We have a resolution of 20 mV at the 328P at 5 volt
+#endif
+#if !defined(TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION)
+#define TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION     1  // Adjust this value if test pattern length for successful detection is greater than 1
+#endif
+uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
+#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+    /*
+     * First set ADC reference and channel and clear strip
+     */
+    getVCCVoltageMillivoltSimple(); // to set ADC channel and reference
+    clear();
+    show();
+    delay(50);
+    uint16_t tStartMillivolt = getVCCVoltageMillivoltSimple(); // it is faster to use this simple version
+#  if defined INFO
+    Serial.print(F("Start VCC="));
+    Serial.print(tStartMillivolt);
+    Serial.println(" mV");
+#  endif
+
+    /*
+     * First run is fast run and uses
+     */
+    int tLedIndex = numLEDs - 1;
+    /*
+     * Use every 4. pixel for the first run.
+     * This gives 2 white pixel on a small 8 pixel bar, thus reliable supporting these small bars too.
+     */
+    uint_fast8_t tStepWidth = 4;
+    for (unsigned int i = 0; i <= 4; i += 4) {
+        /*
+         * This loop / check runs twice
+         * first from end of strip using every 4. pixel and no delay
+         * Second from above of last result using every pixel and a delay of 4 ms
+         */
+        for (; tLedIndex >= 0; tLedIndex -= tStepWidth) {
+            setPixelColor(tLedIndex, COLOR32_WHITE);
+            show();
+            delay(i);
+            uint16_t tCurrentMillivolt = getVCCVoltageMillivoltSimple(); // We have a resolution of 20 mV at the 328P at 5 volt
+            if (tCurrentMillivolt < tStartMillivolt - DELTA_MILLIVOLT_FOR_PIXEL_DETECTION) {
+                tLedIndex++;
+                break;
+            }
+        }
+        /*
+         * 2. run is slow run from starting nearby
+         */
+        clear();
+        show();
+        if (i != 0) {
+            // exit 2 loop run here
+            int tActualNeopixelLength = tLedIndex + TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION;
+           // update length to next even number
+            tActualNeopixelLength = (tActualNeopixelLength + 1) & ~0x01;
+            if (tActualNeopixelLength != 0) {
+                updateLength(tActualNeopixelLength);
+            }
+            return tActualNeopixelLength;
+        }
+        delay(20);
+
+        /*
+         * Prepare for 2. loop
+         * Go back 8 steps of the first loop, but clip at end of strip
+         */
+        tLedIndex = tLedIndex + 36; // 8 * 4 = 36
+        if (tLedIndex > (int) numLEDs - 1) {
+            tLedIndex = numLEDs - 1;
+        }
+        tStepWidth = 1;
+    }
+#endif
+    return 0;
+}
 
 /*
  * Test WS2812 resolution

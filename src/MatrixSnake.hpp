@@ -418,7 +418,7 @@ bool MatrixSnake::isPositionInArea(position aPositionToCheck) {
  * returns 0 if position is NOT in snake tail
  */
 uint16_t MatrixSnake::getIndexOfPositionInSnakeTail(position aPositionToCheck) {
-    for (uint_fast16_t i = 1; i < (SnakeLength - 1); ++i) {
+    for (uint_fast16_t i = 1; i < (uint8_t)(SnakeLength - 1); ++i) {
         if (aPositionToCheck.x == SnakePixelList[i].x && aPositionToCheck.y == SnakePixelList[i].y) {
             return i;
         }

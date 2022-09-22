@@ -34,6 +34,8 @@
 
 #include <Arduino.h>
 
+//#define INFO
+
 #define ENABLE_PATTERN_STRIPES
 #define ENABLE_PATTERN_COLOR_WIPE
 #define ENABLE_PATTERN_SCANNER_EXTENDED
@@ -41,6 +43,7 @@
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
+#define TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION     6  // Adjust this value if test pattern length for successful detection is greater than 1
 #include <NeoPatterns.hpp>
 
 #define USE_BUTTON_1
@@ -64,18 +67,24 @@ EasyButton Button0AtPin3;
 uint8_t sDelay; // from 1 to 28 in exponential scale
 
 // onComplete callback functions
-void PatternsBackground(NeoPatterns *aLedsPtr);
-void PatternsFastMoves(NeoPatterns *aLedsPtr);
+void BackgroundPatternsHandler(NeoPatterns *aLedsPtr);
+void FastMovePatternsHandler(NeoPatterns *aLedsPtr);
+void checkAndHandleVCCTooLow();
 
-#if __has_include("ADCUtils.h")
-#include "ADCUtils.hpp" // for getVCCVoltageMillivoltSimple()
-#define TEST_PATTERN_LENGTH 16  // 6 is required by my Li-Ion battery
-#endif
-uint16_t getActualNeopixelLenghtSimple(NeoPatterns *aLedsPtr);
+/*
+ * Default values are suitable for Li-ion batteries.
+ * We normally have voltage drop at the connectors, so the battery voltage is assumed slightly higher, than the Arduino VCC.
+ * But keep in mind that the ultrasonic distance module HC-SR04 may not work reliable below 3.7 volt.
+ */
+#define VCC_STOP_THRESHOLD_MILLIVOLT    3500 // Do not stress your battery and we require some power for standby
+#define VCC_EMERGENCY_STOP_MILLIVOLT    3000 // Many Li-ions are specified down to 3.0 volt
+#define VCC_CHECK_PERIOD_MILLIS        10000 // Period of VCC checks
+#define VCC_CHECKS_TOO_LOW_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_STOP_MILLIVOLT
+#include "ADCUtils.hpp"
 
 // construct the NeoPatterns instances
 NeoPatterns NeoPatternsBackground = NeoPatterns(NEOPIXEL_STRIP_LENGTH, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800,
-        &PatternsBackground);
+        &BackgroundPatternsHandler);
 // Second pattern, which uses the same pixel memory
 NeoPatterns NeoPatternsFastMoves;
 
@@ -107,20 +116,16 @@ void setup() {
     }
 
     /*
-     * Get the actual length of the strip (which only can be lower than the current one)
+     * Get the actual length of the strip (which only can be lower than the current length)
      * and adjust pixel buffer to the new length.
      * After this initialize the pattern with the underlying object to also get the new length here
      */
-    uint16_t tActualNeopixelLength = getActualNeopixelLenghtSimple(&NeoPatternsBackground);
+    uint16_t tActualNeopixelLength = NeoPatternsBackground.getAndAdjustActualNeopixelLenghtSimple();
     Serial.print(F("Actual neopixel length="));
     Serial.println(tActualNeopixelLength);
-    // update length to next even number
-    tActualNeopixelLength = (tActualNeopixelLength + 1) & ~0x01;
-    if (tActualNeopixelLength != 0) {
-        NeoPatternsBackground.updateLength(tActualNeopixelLength);
-    }
+
     // must init after length update, in order to copy the right length
-    NeoPatternsFastMoves.init(&NeoPatternsBackground, 0, tActualNeopixelLength, true, &PatternsFastMoves);
+    NeoPatternsFastMoves.init(&NeoPatternsBackground, 0, tActualNeopixelLength, true, &FastMovePatternsHandler);
     NeoPatternsFastMoves.begin();
     NeoPatternsFastMoves.printConnectionInfo(&Serial);
 
@@ -138,6 +143,9 @@ void setup() {
 
 void loop() {
     if (sRunning) {
+#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+        checkAndHandleVCCTooLow();
+#endif
 
         bool tMustUpdate = NeoPatternsBackground.checkForUpdate() || NeoPatternsFastMoves.checkForUpdate();
         if (tMustUpdate) {
@@ -168,62 +176,6 @@ void loop() {
 }
 
 /*
- * @return  0 if length could not be determined
- * Could be improved by:
- * 1. Check at position slight below first value how may pixels are required for a voltage drop.
- * 2  Re-check first position slowly with these numbers of pixels.
- */
-uint16_t getActualNeopixelLenghtSimple(NeoPatterns *aLedsPtr) {
-#if __has_include("ADCUtils.h")
-    /*
-     * First set ADC reference and channel and clear strip
-     */
-    getVCCVoltageMillivoltSimple(); // to set ADC channel and reference
-    aLedsPtr->clear();
-    aLedsPtr->show();
-    delay(50);
-    uint16_t tStartMillivolt = getVCCVoltageMillivoltSimple(); // it is faster to use this
-    Serial.print(F("Start VCC="));
-    Serial.print(tStartMillivolt);
-    Serial.println(" mV");
-
-    /*
-     * First run is fast run
-     */
-    int tLedIndex = aLedsPtr->getNumberOfPixels() - 1;
-    uint_fast8_t tStepWidth = 4;
-    for (unsigned int i = 0; i <= 4; i += 4) {
-        for (; tLedIndex >= 0; tLedIndex -= tStepWidth) {
-            aLedsPtr->setPixelColor(tLedIndex, COLOR32_WHITE);
-            aLedsPtr->show();
-            delay(i);
-            uint16_t tCurrentMillivolt = getVCCVoltageMillivoltSimple(); // we have a resolution of 20 mV
-            if (tCurrentMillivolt < tStartMillivolt - 40) {
-                tLedIndex++;
-                break;
-            }
-        }
-        /*
-         * 2. run is slow run from starting nearby
-         */
-        aLedsPtr->clear();
-        aLedsPtr->show();
-        if (i != 0) {
-            return tLedIndex;
-        }
-        delay(20);
-
-        tLedIndex = tLedIndex + 36; // with 36 we get 8 steps back
-        if (tLedIndex > (int) aLedsPtr->getNumberOfPixels() - 1) {
-            tLedIndex = aLedsPtr->getNumberOfPixels() - 1;
-        }
-        tStepWidth = 1;
-    }
-    return 0;
-#endif
-}
-
-/*
  * converts value read at analog pin into exponential scale between 1 and 28
  */
 void getDelay() {
@@ -242,7 +194,7 @@ void getDelay() {
  * Callback handler for background pattern
  * since sState starts with (0++) scanner is the first pattern you see
  */
-void PatternsBackground(NeoPatterns *aLedsPtr) {
+void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
     static bool sNoDelay = false;
 
@@ -326,7 +278,7 @@ void PatternsBackground(NeoPatterns *aLedsPtr) {
  * Callback handler for fast and seldom patterns
  * since sState starts with (0++) scanner is the first pattern you see
  */
-void PatternsFastMoves(NeoPatterns *aLedsPtr) {
+void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
     /*
@@ -342,7 +294,6 @@ void PatternsFastMoves(NeoPatterns *aLedsPtr) {
          * Insert a random delay if sState is odd
          */
         aLedsPtr->Delay(tRandomDelay); // to separate each pattern
-        sState++;
     } else {
 
         switch (tState) {
@@ -387,3 +338,20 @@ void PatternsFastMoves(NeoPatterns *aLedsPtr) {
 
     sState++;
 }
+
+#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+/*
+ * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
+ */
+void checkAndHandleVCCTooLow() {
+    if (isVCCTooLowMultipleTimes()) {
+        /*
+         * clear background pattern and let only fast pattern run
+         */
+        NeoPatternsBackground.stop();
+        NeoPatternsBackground.clear();
+        NeoPatternsBackground.show();
+        Serial.println(F("Shut down"));
+    }
+}
+#endif

@@ -419,7 +419,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
     memset(pixels + (BytesPerPixel * Columns), 0, numBytes - (BytesPerPixel * Columns));
 #else
     for (uint_fast8_t x = 0; x < Columns; x++) {
-        for (uint_fast8_t y = 0; y < Rows - 1; y++) {
+        for (uint_fast8_t y = 0; y < (uint8_t)(Rows - 1); y++) {
             setMatrixPixelColor(x, y, COLOR32_BLACK);
         }
     }
@@ -744,7 +744,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
         for (uint_fast8_t y = 0; y < Rows; ++y) {
             for (uint_fast8_t x = 0; x < Columns; ++x) {
                 if (aDirection == DIRECTION_UP) {
-                    if (y != (Rows - 1)) {
+                    if (y != (uint8_t)(Rows - 1)) {
                         /*
                          * Copy data from row+1 to row
                          */
@@ -754,7 +754,7 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
                         setMatrixPixelColor(x, y, aBackgroundColor);
                     }
                 } else if (aDirection == DIRECTION_DOWN) {
-                    if (y != (Rows - 1)) {
+                    if (y != (uint8_t)(Rows - 1)) {
                         /*
                          * Copy data from row to row+1 and start at Rows-1 in order to avoid overwriting data
                          */
@@ -764,14 +764,14 @@ void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection, color32_t aBackgrou
                         setMatrixPixelColor(x, 0, aBackgroundColor);
                     }
                 } else if (aDirection == DIRECTION_LEFT) {
-                    if (x != (Columns - 1)) {
+                    if (x != (uint8_t)(Columns - 1)) {
                         setMatrixPixelColor(x, y, getMatrixPixelColor(x + 1, y));
                     } else {
                         // set right column to background
                         setMatrixPixelColor(x, y, aBackgroundColor);
                     }
                 } else if (aDirection == DIRECTION_RIGHT) {
-                    if (x != (Columns - 1)) {
+                    if (x != (uint8_t)(Columns - 1)) {
                         setMatrixPixelColor(((Columns - 1) - x), y, getMatrixPixelColor(((Columns - 1) - x) - 1, y));
                     } else {
                         // set left column to background

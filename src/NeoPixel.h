@@ -94,6 +94,8 @@ public:
     void printConnectionInfo(Print *aSerial);
     void printPin(Print *aSerial);
 
+    uint16_t getAndAdjustActualNeopixelLenghtSimple();
+
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
 
