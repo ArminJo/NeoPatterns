@@ -154,6 +154,8 @@ float getTemperatureSimple(void);
 float getTemperature(void);
 
 bool isVCCTooLowMultipleTimes();
+void resetVCCTooLowMultipleTimes();
+bool isVoltageTooLow();
 
 #endif //  defined(__AVR__) ...
 #endif // _ADC_UTILS_H

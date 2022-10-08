@@ -60,10 +60,6 @@
  * https://openledrace.net/open-software/
  */
 
-/*
- * Ideas:
- * improve winner pattern
- */
 #include <Arduino.h>
 
 #include "PlayRtttl.hpp"
@@ -120,7 +116,7 @@
 #include "LongUnion.h"
 
 #define LCD_I2C_ADDRESS 0x27    // Default LCD address is 0x27 for a 20 chars and 4 line / 2004 display
-#include "LiquidCrystal_I2C.h"  // Use an up to date library version which has the init method
+#include "LiquidCrystal_I2C.hpp"  // Include source! Use only the modified version delivered with this program.
 LiquidCrystal_I2C myLCD(LCD_I2C_ADDRESS, 20, 4);
 void printBigNumber4(byte digit, byte leftAdjust);
 void initBigNumbers();
@@ -273,6 +269,7 @@ void playMelodyAndShutdown();
 void checkAndHandleWinner();
 void checkForOvertakingLeaderCar();
 bool checkForInputToStart();
+void printConfigPinInfo(uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription, Print *aSerial);
 
 extern volatile unsigned long timer0_millis; // Used for ATmega328P to adjust for missed millis interrupts
 
@@ -347,6 +344,11 @@ public:
 #endif // !defined(BRIDGE_NO_NEOPATTERNS)
     }
 
+    /*
+     * Compute Gravity acceleration on the fly
+     * @ return Values from -100 to +100 with 100 is gravity for a vertical slope, 0 for a horizontal and 70 (sqrt(0,5)*100) for 45 degree.
+     *          Positive values increases speed, negative values decreases speed.
+     */
     int8_t getGravityAcceleration(uint16_t aPositionOnTrack) {
 #if defined(DEBUG)
         if (aPositionOnTrack < StartPositionOnTrack || aPositionOnTrack > StartPositionOnTrack + RampLength) {
@@ -370,7 +372,7 @@ public:
         }
     }
 
-    void startIdleAnimation(bool doRandom) {
+    void startIdleAnimation(long aRandomValue) {
 #if !defined(BRIDGE_NO_NEOPATTERNS)
         if (isInitialized) {
             uint8_t tDirection;
@@ -380,20 +382,25 @@ public:
                 tDirection = DIRECTION_UP;
             }
             LongUnion tRandom;
-            tRandom.Long = random();
-            if (doRandom && (tRandom.UBytes[0] & 0x03)) {
+            tRandom.Long = aRandomValue;
+            if (tRandom.UBytes[0] & 0x03) {
                 if (tRandom.UBytes[0] & 0x01) {
                     //1 + 3
-                    RampPatterns->Stripes(NeoPatterns::Wheel(tRandom.UBytes[0]), (tRandom.UBytes[1] & 0x03) + 1, COLOR32_BLACK, 5,
+                    RampPatterns->Stripes(NeoPatterns::Wheel(tRandom.UBytes[0]), (tRandom.UBytes[1] & 0x03) + 1, COLOR32_BLACK, 4,
                             (tRandom.UBytes[2] & 0x7F) + 64, (tRandom.UBytes[3] & 0x1F) + 4, tDirection);
                 } else {
                     //2
                     initMultipleFallingStars(RampPatterns, COLOR32_WHITE_HALF, 7, (tRandom.UBytes[0] & 0x07) + 1,
-                            4 - (tRandom.UBytes[0] & 0x03), NULL, tDirection);
+                            (tRandom.UBytes[0] & 0x03) + 2, NULL, tDirection);
                 }
             } else {
-                // 0 or not random
-                RampPatterns->ColorWipeD(RAMP_COLOR, START_ANIMATION_MILLIS, 0, tDirection);
+                if (tRandom.UBytes[0] > 0x03) {
+                    // 0 - especially used for setup
+                    RampPatterns->ColorWipeD(NeoPatterns::Wheel(tRandom.UBytes[0]), START_ANIMATION_MILLIS, 0, tDirection);
+                } else {
+                    // 0 - especially used for setup
+                    RampPatterns->ColorWipeD(RAMP_COLOR, START_ANIMATION_MILLIS, 0, tDirection);
+                }
 
 //                RampPatterns->ScannerExtendedD(COLOR32_BLUE_HALF, 8, START_ANIMATION_MILLIS, 2,
 //                FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, tDirection);
@@ -402,6 +409,9 @@ public:
 #endif
     }
 
+    /*
+     * Draw ramp and dim brightness, if car is on ramp
+     */
     void draw() {
 #if !defined(BRIDGE_NO_NEOPATTERNS)
         bool tCarIsOnRamp = isAnyCarInRegion(StartPositionOnTrack, RampLength);
@@ -410,8 +420,6 @@ public:
             tColor = TrackPtr->dimColorWithGamma5(tColor, 160);
         }
         TrackPtr->fillRegion(tColor, StartPositionOnTrack, RampLength);
-#else
-        (void) aDoAnimation; // to avoid compiler warning
 #endif
     }
 };
@@ -443,20 +451,26 @@ public:
     void startIdleAnimation(bool doRandom) {
 #if !defined(BRIDGE_NO_NEOPATTERNS)
         if (isInitialized) {
-            RampUp.startIdleAnimation(doRandom);
-            RampDown.startIdleAnimation(doRandom);
+            // Show the same animation on both ramps
+            long tRandom = random();
+            if (!doRandom) {
+                tRandom &= 0xFFFFFF00; // this forces pattern 0
+            }
+            RampUp.startIdleAnimation(tRandom);
+            RampDown.startIdleAnimation(tRandom);
         }
 #endif
     }
 
+    /*
+     * Draw both ramps and dim brightness, if car is on ramp
+     */
     void draw() {
 #if !defined(BRIDGE_NO_NEOPATTERNS)
         if (isInitialized) {
             RampUp.draw();
             RampDown.draw();
         }
-#else
-        (void) aDoAnimation; // to avoid compiler warning
 #endif
     }
 };
@@ -518,6 +532,8 @@ public:
     /*
      * Compute Gravity acceleration on the fly
      * This saves the 200 bytes RAM of the old Acceleration map array
+     * @ return Values from -100 to +100 with 100 is gravity for a vertical slope, 0 for a horizontal and 70 (sqrt(0,5)*100) for 45 degree.
+     *          Positive values increases speed, negative values decreases speed.
      */
     int8_t getGravityAcceleration(uint16_t aPositionOnTrack) {
 #if defined(DEBUG)
@@ -646,11 +662,14 @@ public:
             AcceleratorInput.setI2CAddress(MPU6050_ADDRESS_AD0_HIGH);
         }
         // use maximum filtering. It prefers slow and huge movements :-)
-
         if (!AcceleratorInput.initMPU6050AndCalculateAllOffsetsAndWait(20, MPU6050_BAND_5_HZ)) {
             AcceleratorInputConnected = false;
             Serial.print(F("No MPU6050 IMU connected at address 0x"));
+#if defined(USE_SOFT_I2C_MASTER)
             Serial.print(AcceleratorInput.I2CAddress >> 1, HEX);
+#else
+            Serial.print(AcceleratorInput.I2CAddress, HEX);
+#endif
             Serial.print(F(" for car "));
             Serial.print(aNumberOfThisCar);
             Serial.println(F(". You may want to disable \"#define ENABLE_ACCELERATOR_INPUT\""));
@@ -1040,7 +1059,6 @@ void setup() {
 #endif
 
     sOnlyPlotterOutput = !digitalRead(PIN_ONLY_PLOTTER_OUTPUT);
-    bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
 
     if (!sOnlyPlotterOutput) {
 
@@ -1049,17 +1067,7 @@ void setup() {
         Serial.println(
                 F(
                         "Connect pin " STR(PIN_ONLY_PLOTTER_OUTPUT) " to ground, to suppress such prints not suited for Arduino plotter"));
-        Serial.print(F("Pin " STR(PIN_MANUAL_PARAMETER_MODE) " is "));
-        if (!tIsAnalogParameterInputMode) {
-            Serial.print(F("dis"));
-        }
-        Serial.print(F("connected from ground -> AnalogParameterInputMode is "));
-
-        if (tIsAnalogParameterInputMode) {
-            Serial.println(F("enabled"));
-        } else {
-            Serial.println(F("disabled"));
-        }
+        printConfigPinInfo(PIN_MANUAL_PARAMETER_MODE, F("AnalogParameterInputMode"),&Serial);
     }
 
 #if defined(ENABLE_ACCELERATOR_INPUT)
@@ -1536,6 +1544,20 @@ void checkForLCDConnected() {
         sSerialLCDAvailable = true;
     }
     i2c_stop();
+#elif defined(USE_SOFT_WIRE)
+#warning SoftWire does not support dynamically check of connection because it has no setWireTimeout() function. You should use "#define USE_SOFT_I2C_MASTER" instead.
+#else
+    Wire.setWireTimeout(); // Sets default timeout of 25 ms.
+    Wire.beginTransmission(LCD_I2C_ADDRESS);
+    if (Wire.endTransmission(true) != 0) {
+        if (!sOnlyPlotterOutput) {
+            Serial.println(F("No I2C LCD connected at address " STR(LCD_I2C_ADDRESS)));
+        }
+        playError();
+        sSerialLCDAvailable = false;
+    } else {
+        sSerialLCDAvailable = true;
+    }
 #endif
 }
 
@@ -1679,4 +1701,22 @@ void printBigNumber4(byte digit, byte leftAdjust) {
 //        Serial.print('|');
     }
 //    Serial.println();
+}
+
+void printConfigPinInfo(uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription, Print *aSerial) {
+    aSerial->print(F("Pin "));
+    aSerial->print(aConfigPinNumber);
+    aSerial->print(F(" is"));
+    bool tIsEnabled = digitalRead(aConfigPinNumber) == LOW;
+    if (!tIsEnabled) {
+        aSerial->print(F(" not"));
+    }
+    aSerial->print(F(" connected to ground, "));
+    aSerial->print(aConfigPinDescription);
+    aSerial->print(F(" is "));
+    if (tIsEnabled) {
+        aSerial->println(F("enabled"));
+    } else {
+        aSerial->println(F("disabled"));
+    }
 }

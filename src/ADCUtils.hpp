@@ -38,7 +38,7 @@
  * with INTERNAL you can calibrate your ADC readout. For my Nanos I measured e.g. 1060 mV and 1093 mV.
  */
 #if !defined(ADC_INTERNAL_REFERENCE_MILLIVOLT)
-#define ADC_INTERNAL_REFERENCE_MILLIVOLT    1100L    // Value measured at the AREF pin. If value > real AREF voltage, measured values are > real values
+#define ADC_INTERNAL_REFERENCE_MILLIVOLT    1100L // Change to value measured at the AREF pin. If value > real AREF voltage, measured values are > real values
 #endif
 
 // Union to speed up the combination of low and high bytes to a word
@@ -510,7 +510,7 @@ uint16_t getVoltageMillivoltWith_1_1VoltReference(uint8_t aADCChannelForVoltageM
 #endif
 
 /*
- * @ return true if VCC_CHECKS_TOO_LOW_BEFORE_STOP (6) times voltage too low -> shutdown
+ * @ return true only once, when VCC_CHECKS_TOO_LOW_BEFORE_STOP (6) times voltage too low -> shutdown
  */
 bool isVCCTooLowMultipleTimes() {
     /*
@@ -560,6 +560,14 @@ bool isVCCTooLowMultipleTimes() {
         }
     }
     return false;
+}
+
+void resetVCCTooLowMultipleTimes(){
+    sVoltageTooLowCounter = 0;
+}
+
+bool isVoltageTooLow(){
+    return (sVoltageTooLowCounter >= VCC_CHECKS_TOO_LOW_BEFORE_STOP);
 }
 
 /*
