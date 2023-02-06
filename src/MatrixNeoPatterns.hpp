@@ -40,8 +40,9 @@
 // include sources
 #include "MatrixNeoPixel.hpp"
 
-// used for Ticker - modify line 12 of fonts.h to change font sizes
-#include "fonts.h"
+// used for Ticker
+#define FONT_6X8 // Font size used here
+#include "fonts.hpp"
 
 MatrixNeoPatterns::MatrixNeoPatterns() :  // @suppress("Class members should be properly initialized")
         NeoPixel(), MatrixNeoPixel(), NeoPatterns() {
@@ -928,7 +929,11 @@ bool MatrixNeoPatterns::TickerUpdate() {
             /*
              * Print character (using information about next char)
              */
+#if defined(AVR)
             const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
+#else
+            const uint8_t *tGraphics8x8ArrayPtr = &font[(tCurrentChar - FONT_START) * FONT_HEIGHT];
+#endif
             loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, tGraphicsXOffset,
                     GraphicsYOffset, (tNextChar == '\0'));
 
@@ -938,15 +943,15 @@ bool MatrixNeoPatterns::TickerUpdate() {
              * Get next character
              */
             tCurrentChar = tNextChar;
-#if defined(__AVR__)
+#  if defined(__AVR__)
             if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
                 tNextChar = pgm_read_byte(tDataPtr++);
             } else {
                 tNextChar = *(tDataPtr++);
             }
-#else
+#  else
             tNextChar = *(tDataPtr++);
-#endif
+#  endif
         }
     } else if (Direction == DIRECTION_UP) {
         int8_t tGraphicsYOffset = GraphicsYOffset; // Y offset of current char to be processed
@@ -955,18 +960,22 @@ bool MatrixNeoPatterns::TickerUpdate() {
          * Check if current character is visible
          */
         while (tGraphicsYOffset < (Rows + FONT_HEIGHT - 1) && tCurrentChar != '\0') {
-#if defined(TRACE)
+#  if defined(TRACE)
             Serial.print(F("GraphicsYOffset="));
             Serial.print(tGraphicsYOffset);
             Serial.print(F(" CurrentChar="));
             Serial.print(tCurrentChar);
             Serial.print(F(" NextChar="));
             Serial.println(tNextChar);
-#endif
+#  endif
             /*
              * Print character (using information about next char)
              */
+#if defined(AVR)
             const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
+#else
+            const uint8_t *tGraphics8x8ArrayPtr = &font[(tCurrentChar - FONT_START) * FONT_HEIGHT];
+#endif
             loadPicturePGM(tGraphics8x8ArrayPtr, FONT_WIDTH, FONT_HEIGHT, Color1, LongValue1.Color2, GraphicsXOffset,
                     tGraphicsYOffset, (tNextChar == '\0'));
 
@@ -976,15 +985,15 @@ bool MatrixNeoPatterns::TickerUpdate() {
              * Get next character
              */
             tCurrentChar = tNextChar;
-#if defined(__AVR__)
+#  if defined(__AVR__)
             if (PatternFlags & FLAG_TICKER_DATA_IN_FLASH) {
                 tNextChar = pgm_read_byte(tDataPtr++);
             } else {
                 tNextChar = *(tDataPtr++);
             }
-#else
+#  else
             tNextChar = *(tDataPtr++);
-#endif
+#  endif
         }
     }
 
@@ -1007,13 +1016,13 @@ bool MatrixNeoPatterns::TickerUpdate() {
                 return true;
             }
             // switch to next character
-#if defined(DEBUG) && !defined(TRACE)
+#  if defined(DEBUG) && !defined(TRACE)
             printPin(&Serial);
             Serial.print(F("Char "));
             Serial.print(tFirstCurrentChar);
             Serial.print(F(" -> "));
             Serial.println(tFirstNextChar);
-#endif
+#  endif
             DataPtr++;
             if (Direction == DIRECTION_LEFT) {
                 GraphicsXOffset = 0;
@@ -1044,11 +1053,11 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
     static uint8_t sHeartDirection = DIRECTION_DOWN;
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
-#if defined(INFO)
+#  if defined(INFO)
     Serial.print(aLedsPtr->getPin());
     Serial.print(F(" State="));
     Serial.println(sState);
-#endif
+#  endif
     /*
      * implement a delay between each case
      */
@@ -1140,17 +1149,17 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
 
     default:
         aLedsPtr->Delay(1);
-#if defined(WARN)
+#  if defined(WARN)
         Serial.print(F("case "));
         Serial.print(tState);
         Serial.println(F(" not implemented"));
-#endif
+#  endif
         break;
     }
 
     sState++;
 }
-#endif
+#endif // defined(ENABLE_MATRIX_PATTERN_TICKER) && ...
 
 #define TEST_DELAY_MILLIS 2000
 void myMoveTest1(MatrixNeoPatterns *aLedsPtr) {

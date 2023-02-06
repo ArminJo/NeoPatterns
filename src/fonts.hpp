@@ -1,19 +1,14 @@
-#ifndef _FONTS_H
-#define _FONTS_H
-
-#if !defined(__AVR__) && ! defined(PROGMEM)
-#define PROGMEM
-#endif
+#ifndef _FONTS_HPP
+#define _FONTS_HPP
 
 // All font data from Benedikt K.
 // http://www.mikrocontroller.net/topic/54860
 
-// Fonts all have <blanks> at bottom line (except for descenders (like in p and q) and padded from leftmost column
 //Font selection (select only one font)
 //#define FONT_4X6
 //#define FONT_5X8
 //#define FONT_5X12
-#define FONT_6X8
+//#define FONT_6X8
 //#define FONT_6X10
 //#define FONT_7X12
 //#define FONT_8X8
@@ -25,53 +20,64 @@
 //#define FONT_16X26
 
 //if defined char range 0x20-0x7F otherwise 0x20-0xFF
-#define FONT_END7F
+//#define FONT_END7F
 
 #define FONT_START (0x20) //first character
 
 #if defined(FONT_4X6)
+#include "font_4x6.hpp"
 # define FONT_WIDTH   (4)
 # define FONT_HEIGHT  (6)
 #elif defined(FONT_5X8)
+#include "font_5x8.hpp"
 # define FONT_WIDTH   (5)
 # define FONT_HEIGHT  (8)
 #elif defined(FONT_5X12)
+#include "font_5x12.hpp"
 # define FONT_WIDTH   (5)
 # define FONT_HEIGHT (12)
 #elif defined(FONT_6X8)
+#include "font_6x8.hpp"
 # define FONT_WIDTH   (6)
 # define FONT_HEIGHT  (8)
 #elif defined(FONT_6X10)
+#include "font_6x10.hpp"
 # define FONT_WIDTH   (6)
 # define FONT_HEIGHT (10)
 #elif defined(FONT_7X12)
+#include "font_7x12.hpp"
 # define FONT_WIDTH   (7)
 # define FONT_HEIGHT (12)
 #elif defined(FONT_8X8)
+#include "font_8x8.hpp"
 # define FONT_WIDTH   (8)
 # define FONT_HEIGHT  (8)
 #elif defined(FONT_8X12)
+#include "font_8x12.hpp"
 # define FONT_WIDTH   (8)
 # define FONT_HEIGHT (12)
 #elif defined(FONT_8X14)
+#include "font_8x14.hpp"
 # define FONT_WIDTH   (8)
 # define FONT_HEIGHT (14)
 #elif defined(FONT_10X16)
+#include "font_10x16.hpp"
 # define FONT_WIDTH  (10)
 # define FONT_HEIGHT (16)
 #elif defined(FONT_12X16)
+#include "font_12x16.hpp"
 # define FONT_WIDTH  (12)
 # define FONT_HEIGHT (16)
 #elif defined(FONT_12X20)
+#include "font_12x20.hpp"
 # define FONT_WIDTH  (12)
 # define FONT_HEIGHT (20)
 #elif defined(FONT_16X26)
+#include "font_16x26.hpp"
 # define FONT_WIDTH  (16)
 # define FONT_HEIGHT (26)
 #else
 # warning No font defined
 #endif
 
-extern const uint8_t font_PGM[];
-
-#endif // _FONTS_H
+#endif // _FONTS_HPP
