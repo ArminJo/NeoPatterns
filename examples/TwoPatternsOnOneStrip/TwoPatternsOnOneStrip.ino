@@ -24,8 +24,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -143,7 +143,7 @@ void setup() {
 
 void loop() {
     if (sRunning) {
-#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+#if defined(ADC_UTILS_ARE_AVAILABLE)
         checkAndHandleVCCTooLow();
 #endif
 
@@ -339,7 +339,7 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
     sState++;
 }
 
-#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+#if defined(ADC_UTILS_ARE_AVAILABLE)
 /*
  * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */

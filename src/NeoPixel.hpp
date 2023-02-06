@@ -15,8 +15,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -993,7 +993,7 @@ uint8_t Blue(color32_t color) {
 #define TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION     1  // Adjust this value if test pattern length for successful detection is greater than 1
 #endif
 uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
-#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+#if defined(ADC_UTILS_ARE_AVAILABLE)
     /*
      * First set ADC reference and channel and clear strip
      */

@@ -17,8 +17,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -214,7 +214,7 @@ const char BrightnessPGM[] PROGMEM = "Brightness=";
 PrintIfChanged sBrightnessPrint(BrightnessPGM);
 
 void loop() {
-#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+#if defined(ADC_UTILS_ARE_AVAILABLE)
     checkAndHandleVCCTooLow();
 #endif // defined(__AVR__)
 
@@ -304,7 +304,7 @@ uint8_t readBrightness() {
     return NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
 }
 
-#if defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+#if defined(ADC_UTILS_ARE_AVAILABLE)
 /*
  * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
@@ -336,4 +336,4 @@ void checkAndHandleVCCTooLow() {
         delay(FALLING_STAR_DURATION);
     }
 }
-#endif // defined(__AVR__) && defined(ADCSRA) && defined(ADATE) && (!defined(__AVR_ATmega4809__))
+#endif // defined(ADC_UTILS_ARE_AVAILABLE)

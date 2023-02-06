@@ -2,9 +2,11 @@
  *
  * SoftI2CMasterConfig.h
  *
- * Copyright (C) 2022, Armin Joachimsmeyer
- *
  * This contains a sample configuration setting for SoftI2CMaster.h
+ * The existence of this file can trigger the use of SoftI2CMaster by usage of "#if __has_include("SoftI2CMasterConfig.h")",
+ * which saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire.
+ *
+ * Copyright (C) 2022, Armin Joachimsmeyer
  *
  * This file is part of SoftI2CMaster https://github.com/felias-fogg/SoftI2CMaster.
  *
@@ -15,7 +17,7 @@
  *
  * This Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License

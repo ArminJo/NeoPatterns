@@ -1,7 +1,10 @@
 <div align = center>
 
 # [OpenledRace](https://github.com/ArminJo/OpenledRace)
-An implementation of the [OpenledRace](https://twitter.com/openledrace) Arduino game
+
+**Extended version** of the [OpenledRace](https://twitter.com/openledrace) version ["Basic for PCB Rome Edition. 2 Player, without Boxes Track"](https://gitlab.com/open-led-race/olr-arduino).
+
+[![Open Led Race logo](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OLR-Logo_400x400.png)](https://twitter.com/openledrace)
 
 [![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
  &nbsp; &nbsp; 
@@ -14,8 +17,7 @@ An implementation of the [OpenledRace](https://twitter.com/openledrace) Arduino 
 ![Badge Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_OpenledRace)
 <br/>
 
-**Extended version** of the OpenLedRace ["version Basic for PCB Rome Edition. 2 Player, without Boxes Track"](https://gitlab.com/open-led-race/olr-arduino).<br/>
-Available as [OpenLedRace example](https://github.com/ArminJo/NeoPatterns/tree/master/examples/OpenLedRace) in the [NeoPatterns library](https://github.com/ArminJo/NeoPatterns).
+Also available as [OpenLedRace example](https://github.com/ArminJo/NeoPatterns/tree/master/examples/OpenLedRace) in the [NeoPatterns library](https://github.com/ArminJo/NeoPatterns).
 
 </div>
 <br/>
@@ -75,9 +77,10 @@ You also need to install *NeoPatterns* and *PlayRtttl* library under "Tools -> M
 - WS2812 strip 5m 60 IP30 - 60 pixel per meter
 - 10 kOhm resistor for WS2812 strip data input
 - 2 Arcade pushuttons + 2x2 meter 2-wire cable
+- 2 Handlebar ends with foam grips to mount the pushuttons
 - 2004 LCD with serial I2C interface adapter
-- Speaker > 32 ohm
-- 4.7 uF capacitor for speaker
+- Speaker > 32 &ohm;
+- 4.7 &micro;F capacitor for speaker
 - Power supply - e.g. a 18650 battery + holder
 
 ### Recommended 

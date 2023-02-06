@@ -4,13 +4,8 @@
 
 #include <inttypes.h>
 #include "Print.h"
-#if !defined(USE_SOFT_I2C_MASTER)
-#  if defined(USE_SOFT_WIRE)
-#define USE_SOFTWIRE_H_AS_PLAIN_INCLUDE
-#include "SoftWire.h"
-#  else
+#if !defined(USE_SOFT_I2C_MASTER) && !defined(USE_SOFT_WIRE)
 #include <Wire.h>
-#  endif
 #endif
 
 // commands
@@ -55,9 +50,9 @@
 #define LCD_BACKLIGHT 0x08
 #define LCD_NOBACKLIGHT 0x00
 
-#define En B00000100  // Enable bit
-#define Rw B00000010  // Read/Write bit
-#define Rs B00000001  // Register select bit
+#define En 0b00000100  // Enable bit
+#define Rw 0b00000010  // Read/Write bit
+#define Rs 0b00000001  // Register select bit
 
 class LiquidCrystal_I2C : public Print {
 public:

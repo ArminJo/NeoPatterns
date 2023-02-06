@@ -1,11 +1,13 @@
 #include <inttypes.h>
 #include "fonts.h"
-#if defined(__AVR__)
-#include <avr/pgmspace.h>
-#endif
 
 #if defined(FONT_5X8)
+#  if defined(AVR)
+#include <avr/pgmspace.h>
 const uint8_t font_PGM[] PROGMEM =
+#  else
+const uint8_t font[] =
+#  endif
 {
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 0x20
   0x04,0x04,0x04,0x04,0x00,0x04,0x00,0x00, // 0x21

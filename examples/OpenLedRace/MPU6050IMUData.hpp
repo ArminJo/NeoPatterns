@@ -17,8 +17,8 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
@@ -54,16 +54,17 @@
 
 //#define USE_SOFT_I2C_MASTER // Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
 //#define USE_SOFT_WIRE // Saves 1700 bytes program memory and 200 bytes RAM compared with with Arduino Wire
-#if defined(USE_SOFT_I2C_MASTER) || defined(USE_SOFT_WIRE)
-#  if !defined(_SOFTI2C_HPP)
-// we did not include SoftI2CMaster.h until here, so configure it now
-#include "SoftI2CMasterConfig.h"
+#if !defined(USE_SOFT_I2C_MASTER) && __has_include("SoftI2CMasterConfig.h")
+#define USE_SOFT_I2C_MASTER
+#endif
+#if defined(USE_SOFT_I2C_MASTER)
+#include "SoftI2CMasterConfig.h"    // Include configuration for sources
+#  if !defined(_SOFTI2C_H)
+#include "SoftI2CMaster.h"          // include sources
 #  endif
-#  if defined(USE_SOFT_WIRE)
+#elif defined(USE_SOFT_WIRE)
+#define USE_SOFTWIRE_H_AS_PLAIN_INCLUDE
 #include "SoftWire.h" // just for tests :-)
-#  else
-#include "SoftI2CMaster.h"
-#  endif
 #else
 #include "Wire.h"
 #endif // defined(USE_SOFT_I2C_MASTER) || defined(USE_SOFT_WIRE)
@@ -163,6 +164,14 @@ bool MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t
         return false;
     }
     i2c_stop();
+#elif defined(USE_SOFT_WIRE)
+#warning SoftWire does not support dynamically check of connection because it has no setWireTimeout() function. You should use "#define USE_SOFT_I2C_MASTER" instead.
+#else
+    Wire.setWireTimeout(); // Sets default timeout of 25 ms.
+    Wire.beginTransmission(I2CAddress);
+    if (Wire.endTransmission(true) != 0) {
+        return false;
+    }
 #endif
     MPU6050WriteByte(MPU6050_RA_PWR_MGMT_1, MPU6050_CLOCK_PLL_ZGYRO); // use recommended gyro reference: PLL with Z axis gyroscope reference
     MPU6050WriteByte(MPU6050_RA_SMPLRT_DIV, aSampleRateDivider - 1); // parameter 0 => divider 1, 19 -> divider 20
