@@ -3,13 +3,14 @@
  *
  *  Simply runs the Snake game. It can be controlled by 2 or 4 buttons or by serial input (WASD).
  *  The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.
+ *
  *  After 7 seconds of inactivity it runs the Snake demo with a simple AI.
  *  The game starts in 2 button mode, i.e. one button for turn left and one for turn right.
  *  If one of the up or down button is used, 4 button mode is entered automatically.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2023  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.

@@ -188,20 +188,20 @@ void MatrixSnake::resetAndClearAndShowSnakeAndNewApple() {
 }
 
 /*
- * IF PinOfUpButton is 0, then snake runs in 2 button mode.
- * if aPinOfRightButton is 0, then snake starts in autorun mode.
+ * If PinOfUpButton is 0, then snake runs in 2 button mode.
+ * If aPinOfRightButton is 0, then snake starts in autorun mode.
  * @return false if new position[Rows * Columns] failed
-
  */
 bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton, uint8_t aPinOfLeftButton,
         uint8_t aPinOfUpButton, uint8_t aPinOfDownButton) {
-    ActivePattern = SPECIAL_PATTERN_SNAKE;
     Interval = aIntervalMillis;
     Color1 = aColor;
     PinOfRightButton = aPinOfRightButton;
     PinOfLeftButton = aPinOfLeftButton;
     PinOfUpButton = aPinOfUpButton;
     PinOfDownButton = aPinOfDownButton;
+
+    ActivePattern = SPECIAL_PATTERN_SNAKE;
 
 // just to be sure
     if (SnakePixelList != NULL) {
@@ -237,7 +237,11 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
 
     resetAndClearAndShowSnakeAndNewApple();
 
-    if (PinOfRightButton != 0) {
+    if (PinOfRightButton == 0) {
+        // start in autorun mode
+        PatternFlags = FLAG_SNAKE_AUTORUN;
+    } else {
+        // normal mode with timeout for autorun
         pinMode(aPinOfRightButton, INPUT_PULLUP);
         pinMode(aPinOfLeftButton, INPUT_PULLUP);
         if (PinOfUpButton != 0) {
@@ -245,8 +249,6 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
             pinMode(aPinOfDownButton, INPUT_PULLUP);
         }
         PatternFlags = 0; // always start with 2 button mode. 4 button mode is detected if up or down button are pressed
-    } else {
-        PatternFlags = FLAG_SNAKE_AUTORUN; // start in autorun mode
     }
     return true;
 }
@@ -295,10 +297,10 @@ void MatrixSnake::SnakeInputHandler() {
          */
         if (digitalRead(PinOfUpButton) == LOW) {
             Direction = DIRECTION_UP;
-            PatternFlags = FLAG_USE_4_BUTTONS;
+            PatternFlags = FLAG_SNAKE_USE_4_BUTTONS;
         } else if (digitalRead(PinOfDownButton) == LOW) {
             Direction = DIRECTION_DOWN;
-            PatternFlags = FLAG_USE_4_BUTTONS;
+            PatternFlags = FLAG_SNAKE_USE_4_BUTTONS;
         }
     }
 
@@ -308,7 +310,7 @@ void MatrixSnake::SnakeInputHandler() {
     }
 #endif
 
-    if (PatternFlags & FLAG_USE_4_BUTTONS) {
+    if (PatternFlags & FLAG_SNAKE_USE_4_BUTTONS) {
         /*
          * 4 buttons direct direction input
          */
@@ -418,7 +420,7 @@ bool MatrixSnake::isPositionInArea(position aPositionToCheck) {
  * returns 0 if position is NOT in snake tail
  */
 uint16_t MatrixSnake::getIndexOfPositionInSnakeTail(position aPositionToCheck) {
-    for (uint_fast16_t i = 1; i < (uint8_t)(SnakeLength - 1); ++i) {
+    for (uint_fast16_t i = 1; i < (uint8_t) (SnakeLength - 1); ++i) {
         if (aPositionToCheck.x == SnakePixelList[i].x && aPositionToCheck.y == SnakePixelList[i].y) {
             return i;
         }

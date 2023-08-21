@@ -52,7 +52,7 @@
 #define FIFO_CHUNK_SIZE             ((NUMBER_OF_ACCEL_VALUES + NUMBER_OF_GYRO_VALUES) * 2) // size of one complete fifo dataset
 #endif
 
-//#define USE_SOFT_I2C_MASTER // Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
+//#define USE_SOFT_I2C_MASTER // Requires SoftI2CMaster.h + SoftI2CMasterConfig.h. Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
 //#define USE_SOFT_WIRE // Saves 1700 bytes program memory and 200 bytes RAM compared with with Arduino Wire
 #if !defined(USE_SOFT_I2C_MASTER) && __has_include("SoftI2CMasterConfig.h")
 #define USE_SOFT_I2C_MASTER

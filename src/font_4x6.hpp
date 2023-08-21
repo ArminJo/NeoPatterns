@@ -1,7 +1,7 @@
 #include <inttypes.h>
 
 #if defined(FONT_4X6)
-#  if defined(AVR)
+#  if defined(__AVR__)
 #include <avr/pgmspace.h>
 const uint8_t font_PGM[] PROGMEM =
 #  else

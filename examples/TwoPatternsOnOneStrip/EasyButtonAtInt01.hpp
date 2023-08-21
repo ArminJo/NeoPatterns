@@ -45,7 +45,7 @@
  * - BUTTON_IS_ACTIVE_HIGH          Enable this if you buttons are active high.
  * - USE_ATTACH_INTERRUPT           This forces use of the arduino function attachInterrupt(). It is required if you get the error "multiple definition of __vector_1".
  * - NO_BUTTON_RELEASE_CALLBACK     Disables the code for release callback. This saves 2 bytes RAM and 64 bytes program memory.
- * - BUTTON_DEBOUNCING_MILLIS       With this you can adapt to the characteristic of your button.
+ * - BUTTON_DEBOUNCING_MILLIS       With this you can adapt to the characteristic of your button. Default is 50.
  * - ANALYZE_MAX_BOUNCING_PERIOD    Analyze the buttons actual debounce value.
  * - BUTTON_LED_FEEDBACK            This activates LED_BUILTIN as long as button is pressed.
  * - BUTTON_LED_FEEDBACK_PIN        The pin to use for button LED feedback.
@@ -480,6 +480,7 @@ bool EasyButton::checkForDoublePress(uint16_t aDoublePressDelayMillis) {
     /*
      * Check if ButtonReleaseMillis is not in initialized state
      * otherwise a single press before aDoublePressDelayMillis after boot is mistakenly detected as double press
+     * Check costs 26 bytes program memory :-(
      */
     if (ButtonReleaseMillis != 0) {
         // because ButtonReleaseMillis is initialized with 0 milliseconds, which is interpreted as the first press happened at the beginning of boot.

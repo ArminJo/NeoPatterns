@@ -27,14 +27,18 @@ Available as [Arduino library "NeoPatterns"](https://www.arduinolibraries.info/l
 
 </div>
 
+#### If you find this library useful, please give it a star.
+
 
 | YouTube Video of NeoPatternsDemo | YouTube Video of MatrixDemo on a 10x10 matrix |
 | :-: | :-: |
 | [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
 | YouTube Video of NeoPatternsDemo on a long matrix | YouTube Video of Fire on on a long matrix |
 | [![Demonstration of NeoPatterns on a long matrix ](https://i.ytimg.com/vi/y_fmAEUqhFg/hqdefault.jpg)](https://www.youtube.com/watch?v=y_fmAEUqhFg) | [![Demonstration of Fire on a long matrix ](https://i.ytimg.com/vi/CgW5T-mRSvQ/hqdefault.jpg)](https://youtu.be/CgW5T-mRSvQ?t=43) |
-| YouTube Video of OpenLedRace at the Cologne public library MINTköln-Festival |  |
+| YouTube Video of OpenLedRace at the Cologne public library MINTkï¿½ln-Festival |  |
 | [![OpenLedRace in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g) |  |
+
+<br/>
 
 # PATTERNS
 ## Patterns from [Adafruit](https://www.adafruit.com/)
@@ -70,6 +74,8 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 
 **Put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in a file UserPattern.cpp to realize your own patterns.**
 
+<br/>
+
 # NeoPixel library
 the included NeoPixel library is an extensions of the Adafruit NeoPixel library and supports multiple virtual NeoPixel (and NeoPattern) objects on one physical strip. It also contains a lot of useful functions like:
 - setColor()
@@ -83,6 +89,8 @@ as well as functions for getting color parts
 - Red()
 - Green()
 - Blue()
+
+<br/>
 
 # Installation
 First, you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
@@ -107,6 +115,8 @@ Examples for LED index to position mappings:
 
 **All matrix pixel mappings except NEO_MATRIX_COLUMNS are supported**
 In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use `NEO_MATRIX_ROWS` or use your own custom mapping function.
+
+<br/>
 
 # Using the new *.hpp files / how to avoid `multiple definitions` linker errors
 In order to support [compile options](#compile-options--macros-for-this-library) more easily, the line `#include <NeoPatterns.h>`
@@ -174,7 +184,11 @@ WOKWI online simulation of the AllPatternOnOneBar example.<br/>
 WOKWI online simulation of the MatrixDemo example.<br/>
 [![WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)](https://wokwi.com/arduino/projects/299560666027524617).
 
-# Examples
+<br/>
+
+# Examples for this library
+The examples are available at File > Examples > Examples from Custom Libraries / NeoPatterns.<br/>
+
 ## SnakeGame Example
 The game can be controlled by 2 or 4 buttons or by serial input (WASD) on the keboard.<br/>
 For keyboard control, start the Python script in the extras folder of the library with *RunPythonKeybordForInput.cmd*.
@@ -200,12 +214,14 @@ AllPatternsOnMultiDevices on breadboard
 Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Player, without Boxes Track".<br/>
 See also the [dedicated repository for OpenLedRace](https://github.com/ArminJo/OpenledRace).
 
-OpenLedRace at the Cologne public library MINTköln-Festival
-![OpenLedRace at the Cologne public library MINTköln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
+OpenLedRace at the Cologne public library MINTkï¿½ln-Festival
+![OpenLedRace at the Cologne public library MINTkï¿½ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
 
 ## TwoPatternsOnOneStrip
 This example renders a slow "background pattern" and a fast "foreground pattern" on the same strip.<br/>
 It also shows, how to dynamically **determine the length of the attached strip** und to resize the underlying pixel buffer.
+
+<br/>
 
 # Revision History
 ### Version 3.1.2 - work in progress
@@ -312,5 +328,3 @@ The library examples are tested with GitHub Actions for the following boards:
 
 ## Requests for modifications / extensions
 Please write me a PM including your motivation/problem if you need a modification or an extension.
-
-#### If you find this library useful, please give it a star.

@@ -330,7 +330,7 @@ void checkAndHandleVCCTooLow() {
         NeoPixelMatrix.show();
         Serial.println(F("Shut down"));
     }
-    if (isVoltageTooLow()) {
+    if (isVCCTooLow()) {
         bar16.update();
         bar24.update();
         delay(FALLING_STAR_DURATION);

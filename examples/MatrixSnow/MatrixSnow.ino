@@ -35,7 +35,7 @@
 #include <MatrixNeoPatterns.hpp>
 
 #if defined(__AVR__)
-#include "AVRUtils.h" // for printFreeHeap()
+#include "AVRUtils.h" // for printRAMInfo()
 #endif
 
 #define USE_16_X_16_MATRIX
@@ -90,7 +90,7 @@ void setup() {
     NeoPixelMatrix.Snow();
 
 #if defined(__AVR__)
-    printFreeHeap(&Serial);
+    printRAMInfo(&Serial);
 #endif
 }
 

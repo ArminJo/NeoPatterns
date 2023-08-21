@@ -929,7 +929,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
             /*
              * Print character (using information about next char)
              */
-#if defined(AVR)
+#if defined(__AVR__)
             const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
 #else
             const uint8_t *tGraphics8x8ArrayPtr = &font[(tCurrentChar - FONT_START) * FONT_HEIGHT];
@@ -971,7 +971,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
             /*
              * Print character (using information about next char)
              */
-#if defined(AVR)
+#if defined(__AVR__)
             const uint8_t *tGraphics8x8ArrayPtr = &font_PGM[(tCurrentChar - FONT_START) * FONT_HEIGHT];
 #else
             const uint8_t *tGraphics8x8ArrayPtr = &font[(tCurrentChar - FONT_START) * FONT_HEIGHT];

@@ -40,7 +40,7 @@
 #include <MatrixSnake.hpp>
 
 #if defined(__AVR__)
-#include "AVRUtils.h" // for printFreeHeap()
+#include "AVRUtils.h" // for printRAMInfo()
 //#include "AvrTracing.hpp"
 #endif
 
@@ -163,8 +163,7 @@ void setup() {
 //    NeoPixelMatrix.clear();
 
 #if defined(__AVR__)
-    printFreeHeap(&Serial);
-    printStackUnusedAndUsedBytes(&Serial);
+    printRAMInfo(&Serial);
 #endif
 //    initTrace();
 }
@@ -174,7 +173,7 @@ void switchMode() {
      * Stop old pattern
      */
 #if defined(__AVR__)
-    printFreeHeap(&Serial);
+    printRAMInfo(&Serial);
     Serial.println(F("Stop old mode"));
 #endif
     if (sOldMode == MODE_FIRE) {
@@ -185,7 +184,7 @@ void switchMode() {
         NeoPixelMatrix.SnakeStop();
     }
 #if defined(__AVR__)
-    printFreeHeap(&Serial);
+    printRAMInfo(&Serial);
     Serial.println(F("Old mode stopped, start new mode"));
 #endif
     /*
@@ -220,7 +219,7 @@ void switchMode() {
 
     sOldMode = sMode;
 #if defined(__AVR__)
-    printFreeHeap(&Serial);
+    printRAMInfo(&Serial);
     Serial.println(F("New mode started"));
 
 #endif

@@ -51,18 +51,18 @@
 
 //#define SNAKE_ALLOW_SERIAL_CONTROL // Accepts snake direction commands over the serial line
 
-#define SPECIAL_PATTERN_SNAKE   (LAST_MATRIX_NEO_PATTERN + 1)
+#define SPECIAL_PATTERN_SNAKE           (LAST_MATRIX_NEO_PATTERN + 1)
 
-#define APPLE_COLOR COLOR32_RED
+#define APPLE_COLOR                     COLOR32_RED
 
-#define MILLIS_FOR_BUTTON_DEBOUNCING 100
+#define MILLIS_FOR_BUTTON_DEBOUNCING    100
 
-#define FLAG_USE_4_BUTTONS 0x01             // will be set if PinOfUpButton != 0 and up or down button was at least pressed once
-#define FLAG_SNAKE_AUTORUN 0x02             // autorun mode - will be set if no left buttons is defined
-#define FLAG_SNAKE_SHOW_LENGTH_SCORE 0x20   // signal number shown -> enables delay
-#define FLAG_SNAKE_SHOW_END 0x40            // signal end of snake shown -> enables delay
-#define SHOW_END_INTERVAL_MILLIS 3000
-#define SHOW_NUMBER_INTERVAL_MILLIS 2000
+#define FLAG_SNAKE_USE_4_BUTTONS        0x01 // will be set if PinOfUpButton != 0 and up or down button was at least pressed once
+#define FLAG_SNAKE_AUTORUN              0x02 // autorun mode - will be set if no left buttons is defined
+#define FLAG_SNAKE_SHOW_LENGTH_SCORE    0x20 // signal number shown -> enables delay
+#define FLAG_SNAKE_SHOW_END             0x40 // signal end of snake shown -> enables delay
+#define SHOW_END_INTERVAL_MILLIS        3000
+#define SHOW_NUMBER_INTERVAL_MILLIS     2000
 
 #define TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS 7000
 //#define TIME_TO_SWITCH_TO_AUTO_MODE_MILLIS 2000

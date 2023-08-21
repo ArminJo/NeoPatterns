@@ -3,7 +3,7 @@
  *
  *  Arduino library to write big numbers on a 1602 or 2004 LCD.
  *
- *  Copyright (C) 2022  Armin Joachimsmeyer
+ *  Copyright (C) 2022-2023  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of LCDBigNumbers https://github.com/ArminJo/LCDBigNumbers.
@@ -28,8 +28,11 @@
 
 #include <Arduino.h>
 
-#define ONE_COLUMN_SPACE_CHARACTER      '|' // This character is printed as a one column space. Normal spaces are printed as a space with the width of the number.
-#define ONE_COLUMN_SPACE_STRING         "|" // This string is printed as a one column space. Normal spaces are printed as a space with the width of the number.
+#define ONE_COLUMN_SPACE_CHARACTER      '|' // This input character is printed as a one column space. Normal spaces are printed as a space with the width of the number.
+#define ONE_COLUMN_SPACE_STRING         "|" // This input string is printed as a one column space. Normal spaces are printed as a space with the width of the number.
+
+#define ONE_COLUMN_HYPHEN_CHARACTER      '_' // This input character is printed as a one column hyphen. Normal hyphen / minus are printed as a hyphen with the width of the number - 1.
+#define ONE_COLUMN_HYPHEN_STRING         "_" // This input string is printed as a one column hyphen. Normal hyphen / minus are printed as a hyphen with the width of the number - 1.
 
 //#define USE_PARALLEL_2004_LCD // Is default
 //#define USE_PARALLEL_1602_LCD
@@ -64,6 +67,10 @@
 #define DEFAULT_TEST_DELAY  3000
 #define NUMBER_OF_SPECIAL_CHARACTERS_IN_FONT_ARRAY  3
 
+#define COLUMN_MASK     0x0C // Number of columns = shifted masked value + 1
+#define ROW_MASK        0x03 // Number of rows = masked value + 1
+#define VARIANT_MASK    0x30
+// Numbers are created by using the above masks
 #define BIG_NUMBERS_FONT_1_COLUMN_2_ROWS_VARIANT_1  0x01
 #define BIG_NUMBERS_FONT_2_COLUMN_2_ROWS_VARIANT_1  0x05
 #define BIG_NUMBERS_FONT_3_COLUMN_2_ROWS_VARIANT_1  0x09
@@ -74,11 +81,12 @@
 #define BIG_NUMBERS_FONT_3_COLUMN_3_ROWS_VARIANT_1  0x0A
 #define BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1  0x0B
 #define BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_2  0x1B
-#define COLUMN_MASK     0x0C // Number of columns = shifted masked value + 1
-#define ROW_MASK        0x03 // Number of rows = masked value + 1
-#define VARIANT_MASK    0x30
 
-//#define LOCAL_DEBUG // To debug/understand the writeBigNumber() function
+#if defined(DEBUG)
+#define LOCAL_DEBUG
+#else
+//#define LOCAL_DEBUG // To debug/understand the writeBigNumber() function - only for development
+#endif
 
 // !!! Must be without comment and closed by @formatter:on
 // @formatter:off
@@ -104,15 +112,16 @@ const uint8_t bigNumbers1x2_1[2][13] PROGMEM = {                   // 2-line num
 // https://www.alpenglowindustries.com/blog/the-big-numbers-go-marching-2x2#/
 // https://github.com/AlpenglowIndustries/Alpenglow_BigNums2x2
 // 8 custom characters for Trek font
+// Requires 1 0xFF Block for the special "0"
 const uint8_t bigNumbers2x2CustomPatterns_1[][8] PROGMEM = {
- { B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000 },
- { B11000, B11000, B11000, B11000, B11000, B11000, B11000, B11000 },
- { B00000, B00000, B00000, B00000, B00000, B00000, B11111, B11111 },
- { B11111, B11111, B00011, B00011, B00011, B00011, B11111, B11111 },
- { B11111, B11111, B11000, B11000, B11000, B11000, B11111, B11111 },
- { B11111, B11111, B11000, B11000, B11000, B11000, B11000, B11000 },
- { B00011, B00011, B00011, B00011, B00011, B00011, B11111, B11111 },
- { B11000, B11000, B11000, B11000, B11000, B11000, B11111, B11111 }
+ { B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000 }, // 0
+ { B11000, B11000, B11000, B11000, B11000, B11000, B11000, B11000 }, // 1
+ { B00000, B00000, B00000, B00000, B00000, B00000, B11111, B11111 }, // 2
+ { B11111, B11111, B00011, B00011, B00011, B00011, B11111, B11111 }, // 3
+ { B11111, B11111, B11000, B11000, B11000, B11000, B11111, B11111 }, // 4
+ { B11111, B11111, B11000, B11000, B11000, B11000, B11000, B11000 }, // 5
+ { B00011, B00011, B00011, B00011, B00011, B00011, B11111, B11111 }, // 6
+ { B11000, B11000, B11000, B11000, B11000, B11000, B11111, B11111 } // 7
 };
 const uint8_t bigNumbers2x2_1[2][23] PROGMEM = {                   // 2-line numbers
 //    "-"   "."   ":"       0          1          2          3          4          5          6          7          8          9
@@ -123,6 +132,7 @@ const uint8_t bigNumbers2x2_1[2][23] PROGMEM = {                   // 2-line num
 
 // 3x2 https://liudr.wordpress.com/2011/03/21/big-font/
 // 3x2 http://www.netzmafia.de/skripten/hardware/Arduino/LCD/index.html
+// Requires 0xFF Blocks, but character 6 could be used for it
 const uint8_t bigNumbers3x2CustomPatterns_1[6][8] PROGMEM = {
   { B11111,B11111,B00000,B00000,B00000,B00000,B00000,B00000 }, // 0 Upper bar
   { B00000,B00000,B00000,B00000,B00000,B00000,B11111,B11111 }, // 1 Lower bar
@@ -137,11 +147,12 @@ const uint8_t bigNumbers3x2_1[2][33] PROGMEM = {               // 2-line numbers
     { 0xFE, 0x04, 0x05, 0xFF,0x01,0xFF, 0x01,0xFF,0x01, 0xFF,0x01,0x01, 0x01,0x01,0xFF, 0xFE,0xFE,0xFF, 0x01,0x01,0xFF, 0xFF,0x01,0xFF, 0xFE,0xFE,0xFF, 0xFF,0x01,0xFF, 0x01,0x01,0xFF}
 };
 
-// 3x2 https://forum.arduino.cc/t/display-3-character-wide-big-digits-on-16x2-lcd/905360
+// 3x2 https://forum.arduino.cc/t/display-3-character-wide-big-digits-on-16x2-lcd/905360 bottom of page
+// Requires 0xFF Blocks
 const uint8_t bigNumbers3x2CustomPatterns_2[8][8] PROGMEM = {
   { B11111,B11111,B11111,B00000,B00000,B00000,B00000,B00000 }, // 0 Upper bar
   { B00000,B00000,B00000,B00000,B00000,B11111,B11111,B11111 }, // 1 Lower bar
-  { B11111,B11111,B11111,B00000,B00000,B00000,B11111,B11111 }, // 2 Upper and lower bar
+  { B11111,B11111,B11111,B00000,B00000,B00000,B11111,B11111 }, // 2 Upper and lower bar for 5,6
   { B11100,B11100,B11100,B11100,B11100,B11100,B11100,B11100 }, // 3 Left bar
   { B00000,B00000,B00000,B00000,B00000,B11100,B11100,B11100 }, // 4 Left lower bar for 2
   { B11100,B11100,B11100,B00000,B00000,B00000,B11100,B11100 }, // 5 Left upper and lower bar for 5,6
@@ -159,20 +170,20 @@ const uint8_t bigNumbers3x2CustomPatterns_3[8][8] PROGMEM = {
 { B11100, B11110, B11110, B11110, B11110, B11110, B11110, B11100}, // 0 left bar
 { B00111, B01111, B01111, B01111, B01111, B01111, B01111, B00111}, // 1 right bar
 { B11111, B11111, B00000, B00000, B00000, B00000, B11111, B11111}, // 2 upper and lower bar
-{ B11110, B11100, B00000, B00000, B00000, B00000, B11000, B11100}, // only in 5
-{ B01111, B00111, B00000, B00000, B00000, B00000, B00011, B00111}, // 4
-{ B00000, B00000, B00000, B00000, B00000, B00000, B11111, B11111},
-{ B00000, B00000, B00000, B00000, B00000, B00000, B00111, B01111}, // 6
-{ B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000}
+{ B11110, B11100, B00000, B00000, B00000, B00000, B11000, B11100}, // 3 left upper and lower rounded
+{ B01111, B00111, B00000, B00000, B00000, B00000, B00011, B00111}, // 4 right upper and lower rounded
+{ B00000, B00000, B00000, B00000, B00000, B00000, B11111, B11111}, // 5 right lower
+{ B00000, B00000, B00000, B00000, B00000, B00000, B00111, B01111}, // 6 right lower rounded
+{ B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000}  // 7 upper bar
 };
 const uint8_t bigNumbers3x2_3[2][33] PROGMEM = {                   // 2-line numbers
 //    "-"   "."   ":"         0               1               2               3               4               5               6               7               8               9
     { 0xFE, 0xFE, 0xA5, 0x01,0x07,0x00, 0xFE,0x00,0xFE, 0x04,0x02,0x00, 0x04,0x02,0x00, 0x01,0x05,0x00, 0x01,0x02,0x03, 0x01,0x02,0x03, 0x01,0x07,0x00, 0x01,0x02,0x00, 0x01,0x02,0x00},
-    { 0x07, 0x05, 0xA5, 0x01,0x05,0x00, 0xFE,0x00,0xFE, 0x01,0x05,0x05, 0x06,0x05,0x00, 0xFE,0xFE,0x00, 0x06,0x05,0x00, 0x01,0x05,0x00, 0xFE,0xFE,0x00, 0x01,0x05,0x00, 0x06,0x05,0x00}
+    { 0x07, 0x06, 0xA5, 0x01,0x05,0x00, 0xFE,0x00,0xFE, 0x01,0x05,0x05, 0x06,0x05,0x00, 0xFE,0xFE,0x00, 0x06,0x05,0x00, 0x01,0x05,0x00, 0xFE,0xFE,0x00, 0x01,0x05,0x00, 0x06,0x05,0x00}
 };
 
-// 2x3 http://woodsgood.ca/projects/2015/01/16/large-numbers-on-small-displays/
-// Version 1 with space above
+// http://woodsgood.ca/projects/2015/01/16/large-numbers-on-small-displays/
+// 2x3 - Version 1 with space above
 const uint8_t bigNumbers2x3CustomPatterns_1[8][8] PROGMEM = { { 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x07, 0x07 }, // char 0: bottom right
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x1C, 0x1C, 0x1C },     // char 1: bottom left
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F },     // char 2: bottom block
@@ -189,7 +200,7 @@ const uint8_t bigNumbers2x3_1[3][23] PROGMEM = {                   // 3-line num
     { 0xFE, 0x01, 0x07, 0x04,0x03, 0x00,0x04, 0x04,0x02, 0x02,0x03, 0xFE,0x06, 0x02,0x03, 0x04,0x03, 0xFE,0x06, 0x04,0x03, 0xFE,0x06}
 };
 
-// Version 2 with space below
+// 2x3 - Version 2 with space below
 const uint8_t bigNumbers2x3CustomPatterns_2[][8] PROGMEM = { { 0x07, 0x07, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00  }, // char 0: top right
         { 0x1C, 0x1C, 0x1C, 0x00, 0x00, 0x00, 0x00, 0x00 },     // char 1: top left
         { 0x1F, 0x1F, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00 },     // char 2: top block
@@ -204,10 +215,11 @@ const uint8_t bigNumbers2x3_2[][23] PROGMEM = {                   // 3-line numb
 //    "-"   "."   ":"       0          1          2          3          4          5          6          7          8          9
     { 0xFE, 0xFE, 0x07, 0x04,0x03, 0x00,0x05, 0x02,0x03, 0x02,0x03, 0x05,0x06, 0x04,0x02, 0x05,0xFE, 0x02,0x03, 0x04,0x03, 0x04,0x03},
     { 0x02, 0xFE, 0x07, 0x05,0x06, 0xFE,0x05, 0x04,0x02, 0x00,0x03, 0x02,0x03, 0x02,0x03, 0x04,0x03, 0xFE,0x06, 0x04,0x03, 0x02,0x03},
-    { 0xFE, 0x00, 0xFE, 0x02,0x02, 0x00,0x02, 0x02,0x02, 0x02,0x02, 0xFE,0x00, 0x02,0x02, 0x02,0x02, 0xFE,0x00, 0x02,0x02, 0xFE,0x00}
+    { 0xFE, 0x01, 0xFE, 0x02,0x02, 0x00,0x02, 0x02,0x02, 0x02,0x02, 0xFE,0x00, 0x02,0x02, 0x02,0x02, 0xFE,0x00, 0x02,0x02, 0xFE,0x00}
 };
 
 // 3x4 Font custom patterns http://woodsgood.ca/projects/2015/03/06/3-4-line-big-font-numerals/
+// Requires 0xFF Blocks
 const uint8_t bigNumbers3x3And3x4CustomPatterns_1[][8] PROGMEM = { { 0x01, 0x07, 0x0F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F }, // char 0: bottom right triangle
         { 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F },     // char 1: bottom block
         { 0x10, 0x1C, 0x1E, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F },     // char 2: bottom left triangle
@@ -219,7 +231,7 @@ const uint8_t bigNumbers3x3And3x4CustomPatterns_1[][8] PROGMEM = { { 0x01, 0x07,
         { 0x01, 0x07, 0x0F, 0x1F, 0x00, 0x00, 0x00, 0x00 }      // char 7: top right triangle
 };
 
-const char bigNumbers3x3_1[3][33] PROGMEM = {   // 3-line numbers
+const uint8_t bigNumbers3x3_1[3][33] PROGMEM = {   // 3-line numbers
 //    "-"   "."   ":"         0               1               2               3               4              5               6                7               8               9
     { 0xFE, 0xFE, 0x01, 0x00,0x05,0x02, 0x07,0xFF,0xFE, 0x07,0x05,0x02, 0x07,0x05,0x02, 0xFF,0xFE,0xFF, 0xFF,0x05,0x05, 0x00,0x05,0x06, 0x05,0x05,0xFF, 0x00,0x05,0x02, 0x00,0x05,0x02},
     { 0x05, 0xFE, 0x01, 0xFF,0xFE,0xFF, 0xFE,0xFF,0xFE, 0x00,0x05,0x05, 0xFE,0x05,0xFF, 0x05,0x05,0xFF, 0x05,0x05,0xFF, 0xFF,0x05,0x02, 0xFE,0x00,0x04, 0xFF,0x05,0xFF, 0x03,0x05,0xFF},
@@ -237,6 +249,7 @@ const uint8_t bigNumbers3x4_1[4][33] PROGMEM = {                   // 4-line num
 
 // 3x4 Font variant 2
 // https://forum.arduino.cc/t/wie-bekommt-man-solch-grosse-zahlen-hin/986148/12
+// Requires 0xFF Blocks
 const uint8_t bigNumbers3x4CustomPatterns_2[][8] PROGMEM = {
 { B00000, B00000, B00000, B00000, B00001, B00111, B01111, B11111 }, // char 0: bottom right triangle
 { B00000, B00000, B00000, B00000, B11111, B11111, B11111, B11111 }, // char 1: bottom block
@@ -248,7 +261,7 @@ const uint8_t bigNumbers3x4CustomPatterns_2[][8] PROGMEM = {
 { B11111, B11111, B11111, B11111, B11111, B11110, B11100, B10000 }  // char 7: full top left triangle
 };
 
-const char bigNumbers3x4_2[4][33] PROGMEM = {                         // 4-line numbers
+const uint8_t bigNumbers3x4_2[4][33] PROGMEM = {                         // 4-line numbers
 //    "-"   "."   ":"         0               1               2               3               4              5               6                7               8               9
     { 0xFE, 0xFE, 0xFE, 0x00,0x01,0x02, 0x00,0x01,0xFE, 0x00,0x01,0x02, 0x00,0x01,0x02, 0x00,0xFE,0x01, 0x01,0x01,0x01, 0x00,0x01,0x02, 0x01,0x01,0x01, 0x00,0x01,0x02, 0x00,0x01,0x02},
     { 0x01, 0xFE, 0x04, 0xFF,0x00,0xFF, 0x05,0xFF,0xFE, 0x04,0x00,0x07, 0x04,0x00,0x07, 0xFF,0xFE,0xFF, 0x06,0x01,0x02, 0xFF,0x01,0x02, 0xFE,0x00,0x07, 0x06,0x01,0x07, 0x06,0x01,0xFF},
@@ -268,12 +281,14 @@ public:
 #endif
     uint8_t NumberWidth;
     uint8_t NumberHeight;
+    uint8_t FontVariant;
     const uint8_t (*bigNumbersCustomPatterns)[8];
     uint8_t NumberOfCustomPatterns;
     const uint8_t *bigNumbersFont;
-    bool forceGapBetweenNumbers;
-    uint8_t upperLeftColumnIndex;
-    uint8_t upperLeftRowIndex;
+    bool forceGapBetweenNumbers;    // The default depends on the font used
+    uint8_t upperLeftColumnIndex;   // Start of the next character
+    uint8_t maximumColumnIndex; // Maximum of columns to be written. Used to not clear the gap after a number which ends at the last column. ( 44 bytes program space)
+    uint8_t upperLeftRowIndex;      // Start of the next character
 
     /*
      *
@@ -284,15 +299,15 @@ public:
     }
 
     size_t write(uint8_t aBigNumberValue) {
-        writeBigNumber(aBigNumberValue);
-        return 1; // assume success
+        return writeBigNumber(aBigNumberValue);
     }
 
     /*
      * Creates custom character used for generating big numbers
      */
     void begin() {
-        // create (8) custom characters
+        maximumColumnIndex = 0;
+        // create maximum 8 custom characters
         for (uint_fast8_t i = 0; i < NumberOfCustomPatterns; i++) {
             _createChar(i, bigNumbersCustomPatterns[i]);
         }
@@ -313,10 +328,11 @@ public:
      */
     void init(const uint8_t aBigNumberFontIdentifier) {
         setBigNumberCursor(0);
-        forceGapBetweenNumbers = true;
         NumberWidth = ((aBigNumberFontIdentifier & COLUMN_MASK) >> 2) + 1;
         NumberHeight = (aBigNumberFontIdentifier & ROW_MASK) + 1;
+        FontVariant = ((aBigNumberFontIdentifier & VARIANT_MASK) >> 4) + 1;
         NumberOfCustomPatterns = 8;
+        forceGapBetweenNumbers = true;
         switch (aBigNumberFontIdentifier) {
         case BIG_NUMBERS_FONT_1_COLUMN_2_ROWS_VARIANT_1:
             bigNumbersCustomPatterns = bigNumbers1x2CustomPatterns_1;
@@ -395,42 +411,43 @@ public:
     /**
      * Draws a big digit of size aNumberWidth x aNumberHeight at cursor position
      * Special characters always have the width of 1!
-     * After each number one column gap is inserted. The gap is not cleared!
-     * @param aNumber - Number or one of " ", "-", "." and ":" special characters to display
+     * After each number one column gap is inserted. The gap is cleared, if not at the (last + 1) column!
+     * @param aNumber - byte 0x00 to 0x09 or ASCII number or one of ' ', '|', '-', '_', '.' and ':' special characters to display
+     * @return  The number of columns written (1 to 4 currently)
      */
-    void writeBigNumber(uint8_t aNumber) {
-        uint_fast8_t tCharacterWidth;
+    size_t writeBigNumber(uint8_t aNumberOrSpecialCharacter) {
         uint_fast8_t tFontArrayOffset = 0;
+        uint_fast8_t tCharacterWidth = 1;
         /*
          * First 3 entries are the special characters
+         * All non characters not compared with here, are mapped to a space with the width of the number
          */
-        if (aNumber == '-') {
-            tCharacterWidth = 1;
-        } else if (aNumber == '.') {
+        if (aNumberOrSpecialCharacter == '-' || aNumberOrSpecialCharacter == ONE_COLUMN_HYPHEN_CHARACTER) {
+            // here we have the initial values: tFontArrayOffset = 0; and tCharacterWidth = 1;
+        } else if (aNumberOrSpecialCharacter == '.') {
             tFontArrayOffset = 1;
-            tCharacterWidth = 1;
-        } else if (aNumber == ':') {
+        } else if (aNumberOrSpecialCharacter == ':') {
             tFontArrayOffset = 2;
-            tCharacterWidth = 1;
-        } else if (aNumber == ' ') {
+        } else if (aNumberOrSpecialCharacter == ' ') {
             tCharacterWidth = NumberWidth;
-        } else if (aNumber == ONE_COLUMN_SPACE_CHARACTER) {
+        } else if (aNumberOrSpecialCharacter == ONE_COLUMN_SPACE_CHARACTER) {
             // print a one column space
-            tCharacterWidth = 1;
-            aNumber = ' ';
+            aNumberOrSpecialCharacter = ' ';
         } else {
-            if (aNumber > 9) {
-                aNumber -= '0'; // convert ASCII value to number
+            if (aNumberOrSpecialCharacter > 9) {
+                // if not byte 0x00 to 0x09, convert number character to ASCII
+                aNumberOrSpecialCharacter -= '0'; // convert ASCII value to number
             }
-            if (aNumber > 9) {
-                aNumber = ' '; // convert all non numbers to spaces with the width of the number
+            if (aNumberOrSpecialCharacter > 9) {
+                // If we have a non number character now, we convert it to a space with the width of the number
+                aNumberOrSpecialCharacter = ' ';
             }
             tCharacterWidth = NumberWidth;
-            tFontArrayOffset = NUMBER_OF_SPECIAL_CHARACTERS_IN_FONT_ARRAY + (aNumber * tCharacterWidth);
+            tFontArrayOffset = NUMBER_OF_SPECIAL_CHARACTERS_IN_FONT_ARRAY + (aNumberOrSpecialCharacter * tCharacterWidth);
         }
 #if defined(LOCAL_DEBUG)
         Serial.print(F("Number="));
-        Serial.print(aNumber);
+        Serial.print(aNumberOrSpecialCharacter);
         Serial.print(F(" CharacterWidth="));
         Serial.print(tCharacterWidth);
         Serial.print(F(" FontArrayOffset="));
@@ -443,8 +460,8 @@ public:
             LCD->setCursor(upperLeftColumnIndex, upperLeftRowIndex + tRow);
             for (uint_fast8_t i = 0; i < tCharacterWidth; i++) {
                 uint8_t tCharacterIndex;
-                if (aNumber == ' ') {
-                    tCharacterIndex = aNumber; // Blank
+                if (aNumberOrSpecialCharacter == ' ') {
+                    tCharacterIndex = ' '; // Blank
                 } else {
                     tCharacterIndex = pgm_read_byte(tArrayPtr);
                 }
@@ -464,23 +481,41 @@ public:
         }
         upperLeftColumnIndex += tCharacterWidth;
 
-        if (forceGapBetweenNumbers && tCharacterWidth > 1) {
-            upperLeftColumnIndex++; // This provides one column gap between big numbers, but not between special characters. The gap is not cleared!
+        if (maximumColumnIndex < upperLeftColumnIndex) {
+            // find maximum column at runtime
+            maximumColumnIndex = upperLeftColumnIndex;
+        }
+
+        /*
+         * Implement the gap after the character
+         */
+        if (forceGapBetweenNumbers && (tCharacterWidth > 1 || aNumberOrSpecialCharacter == '-')) {
+            if (maximumColumnIndex != upperLeftColumnIndex) {
+                // We are not at the last column, so clear the gap after the number
+                for (uint_fast8_t tRow = 0; tRow < NumberHeight; tRow++) {
+                    LCD->setCursor(upperLeftColumnIndex + 1, upperLeftRowIndex + tRow);
+                    LCD->write(' '); // Blank
+                }
+                tCharacterWidth++;
+            }
+            upperLeftColumnIndex++; // This provides one column gap between big numbers, but not between special characters.
         }
 
 #if defined(LOCAL_DEBUG)
         Serial.println();
 #endif
+        return tCharacterWidth;
     }
+
     /**
      * Draws a big digit of size aNumberWidth x aNumberHeight
      * @param aNumber - Number to display, if > 9 a blank character is drawn
      * @param aUpperLeftColumnIndex - Starts with 0, no check!
      * @param aStartRowIndex - Starts with 0, no check!
      */
-    void writeAt(uint8_t aNumber, uint8_t aUpperLeftColumnIndex, uint8_t aUpperLeftRowIndex = 0) {
+    size_t writeAt(uint8_t aNumber, uint8_t aUpperLeftColumnIndex, uint8_t aUpperLeftRowIndex = 0) {
         setBigNumberCursor(aUpperLeftColumnIndex, aUpperLeftRowIndex);
-        writeBigNumber(aNumber);
+        return writeBigNumber(aNumber);
     }
 
 };
@@ -575,6 +610,9 @@ void showCustomCharacters(LiquidCrystal_I2C *aLCD)
 }
 
 #if defined(USE_PARALLEL_LCD)
+/*
+ * Print all fonts, used in screenshots, using one object
+ */
 void testBigNumbers(LiquidCrystal *aLCD)
 #else
 void testBigNumbers(LiquidCrystal_I2C *aLCD)
@@ -588,6 +626,10 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     LCDBigNumbers bigNumberLCD(aLCD, BIG_NUMBERS_FONT_1_COLUMN_2_ROWS_VARIANT_1);
     bigNumberLCD.begin(); // Generate font symbols in LCD controller
     bigNumberLCD.print(F("0123456789 -.:")); // no special space required, we have an 1 column font
+
+    // Print "-42.38 :"
+    bigNumberLCD.setBigNumberCursor(0, 2);
+    bigNumberLCD.print(F("-42.38"));
     delay(DEFAULT_TEST_DELAY);
 
     /*
@@ -611,8 +653,14 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
 #endif
     delay(DEFAULT_TEST_DELAY);
 
+    aLCD->clear(); // Clear display
+    // Print "-42.38 :"
+    bigNumberLCD.setBigNumberCursor(0);
+    bigNumberLCD.print(F("-42.38"));
+    delay(DEFAULT_TEST_DELAY);
+
     /*
-     * 3 X 2
+     * 3 X 2 1. variant
      */
     aLCD->clear(); // Clear display
     bigNumberLCD.init(BIG_NUMBERS_FONT_3_COLUMN_2_ROWS_VARIANT_1);
@@ -633,10 +681,9 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     delay(DEFAULT_TEST_DELAY);
 
     aLCD->clear(); // Clear display
-    // Print "-47.11 :"
+    // Print "-42.38 :"
     bigNumberLCD.setBigNumberCursor(0);
-    bigNumberLCD.print(F("--" ONE_COLUMN_SPACE_STRING "47.11"));
-    bigNumberLCD.writeAt(':', 19); // Keep in mind that numbers always have a trailing but no leading gap.
+    bigNumberLCD.print(F("-42.38:"));
 #endif
 
     delay(DEFAULT_TEST_DELAY);
@@ -657,8 +704,14 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     bigNumberLCD.print(F("-.: "));
 #else
     bigNumberLCD.setBigNumberCursor(0, 2);
-    bigNumberLCD.print(F("56789" ONE_COLUMN_SPACE_STRING "-.:"));
+    bigNumberLCD.print(F("56789")); // we have a space between this characters, i.e. forceGapBetweenNumbers is true
 #endif
+    delay(DEFAULT_TEST_DELAY);
+
+    aLCD->clear(); // Clear display
+    // Print "-42.38 :"
+    bigNumberLCD.setBigNumberCursor(0);
+    bigNumberLCD.print(F("-42.38:"));
     delay(DEFAULT_TEST_DELAY);
 
     /*
@@ -681,6 +734,12 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
 #endif
     delay(DEFAULT_TEST_DELAY);
 
+    aLCD->clear(); // Clear display
+    // Print "-42.38 :"
+    bigNumberLCD.setBigNumberCursor(0);
+    bigNumberLCD.print(F("-42.38"));
+    delay(DEFAULT_TEST_DELAY);
+
 #if LCD_ROWS > 2
     /****************
      * 3 line numbers
@@ -698,6 +757,12 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     bigNumberLCD.print(F("56789" ONE_COLUMN_SPACE_STRING "-.:"));
     delay(DEFAULT_TEST_DELAY);
 
+    aLCD->clear(); // Clear display
+    // Print "-42.38 :"
+    bigNumberLCD.setBigNumberCursor(0, 1);
+    bigNumberLCD.print(F("-42.38"));
+    delay(DEFAULT_TEST_DELAY);
+
     /*
      * 2 X 3 Space below
      */
@@ -709,6 +774,12 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     delay(DEFAULT_TEST_DELAY);
     bigNumberLCD.setBigNumberCursor(0, 1);
     bigNumberLCD.print(F("56789" ONE_COLUMN_SPACE_STRING "-.:"));
+    delay(DEFAULT_TEST_DELAY);
+
+    aLCD->clear(); // Clear display
+    // Print "-42.38 :"
+    bigNumberLCD.setBigNumberCursor(0, 1);
+    bigNumberLCD.print(F("-42.38"));
     delay(DEFAULT_TEST_DELAY);
 
     /*
@@ -725,10 +796,9 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     delay(DEFAULT_TEST_DELAY);
 
     aLCD->clear(); // Clear display
-    // Print "-47.11 :"
+    // Print "-42.38 :"
     bigNumberLCD.setBigNumberCursor(0, 1);
-    bigNumberLCD.print(F("--" ONE_COLUMN_SPACE_STRING "47.11"));
-    bigNumberLCD.writeAt(':', 19, 1); // Keep in mind that numbers always have a trailing but no leading gap.
+    bigNumberLCD.print(F("-42.38:"));
     delay(DEFAULT_TEST_DELAY);
 
     /****************
@@ -747,10 +817,9 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     delay(DEFAULT_TEST_DELAY);
 
     aLCD->clear(); // Clear display
-    // Print "-47.11 :"
+    // Print "-42.38 :"
     bigNumberLCD.setBigNumberCursor(0);
-    bigNumberLCD.print(F("--" ONE_COLUMN_SPACE_STRING "47.11"));
-    bigNumberLCD.writeAt(':', 19); // Keep in mind that numbers always have a trailing but no leading gap.
+    bigNumberLCD.print(F("-42.38:"));
     delay(DEFAULT_TEST_DELAY);
 
     /*
@@ -766,10 +835,9 @@ void testBigNumbers(LiquidCrystal_I2C *aLCD)
     delay(DEFAULT_TEST_DELAY);
 
     aLCD->clear(); // Clear display
-    // Print "-47.11 :"
+    // Print "-42.38 :"
     bigNumberLCD.setBigNumberCursor(0);
-    bigNumberLCD.print(F("--" ONE_COLUMN_SPACE_STRING "47.11"));
-    bigNumberLCD.writeAt(':', 19); // Keep in mind that numbers always have a trailing but no leading gap.
+    bigNumberLCD.print(F("-42.38:"));
     delay(DEFAULT_TEST_DELAY);
 #endif // LCD_ROWS > 2
 }

@@ -78,7 +78,7 @@
 #include "DebugLevel.h" // to propagate debug level
 
 #if defined(INFO) && defined(__AVR__)
-#include "AVRUtils.h" // for initStackFreeMeasurement() and printFreeHeap()
+#include "AVRUtils.h" // for initStackFreeMeasurement() and printRAMInfo()
 #endif
 
 // for hunting errors
@@ -104,18 +104,19 @@
  */
 #define DO_NOT_USE_GYRO
 #define USE_ONLY_ACCEL_FLOATING_OFFSET
-#include "MPU6050IMUData.hpp" // this configures and includes SoftI2CMaster
+//#define USE_SOFT_I2C_MASTER // Requires SoftI2CMaster.h + SoftI2CMasterConfig.h. Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
+#include "MPU6050IMUData.hpp" // This defines USE_SOFT_I2C_MASTER, if SoftI2CMasterConfig.h is available
 #endif // #if defined(ENABLE_ACCELERATOR_INPUT)
 
 #include "LongUnion.h"
 
 #define LCD_I2C_ADDRESS 0x27    // Default LCD address is 0x27 for a 20 chars and 4 line / 2004 display
-#include "LiquidCrystal_I2C.hpp"  // Include source! Use only the modified version delivered with this program.
+#include "LiquidCrystal_I2C.hpp"  // This defines USE_SOFT_I2C_MASTER, if SoftI2CMasterConfig.h is available. Use only the modified version delivered with this program!
 LiquidCrystal_I2C myLCD(LCD_I2C_ADDRESS, 20, 4);
-#define USE_SERIAL_2004_LCD
+#define USE_SERIAL_2004_LCD // required by LCDBigNumbers.hpp
 #include "LCDBigNumbers.hpp" // Include sources for LCD big number generation
 
-LCDBigNumbers bigNumberLCD(&myLCD, BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1);
+LCDBigNumbers ThreeLineNumbersLCD(&myLCD, BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1);
 
 void checkForLCDConnected();
 bool sSerialLCDAvailable;
@@ -325,14 +326,14 @@ public:
             RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, false);
             isInitialized = true;
 #  if defined(__AVR__) && defined(DEBUG)
-            printFreeHeap(&Serial);
+            printRAMInfo(&Serial);
 #  endif
         } else {
             Serial.print(F("Not enough heap memory ("));
             Serial.print(sizeof(NeoPatterns) + 2);
             Serial.println(F(") for RampPatterns."));
 #  if defined(__AVR__)
-            printFreeHeap(&Serial);
+            printRAMInfo(&Serial);
 #  endif
         }
 
@@ -511,14 +512,14 @@ public:
             LoopPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, LoopLength, false);
             isInitialized = true;
 #  if defined(__AVR__) && defined(DEBUG)
-            printFreeHeap(&Serial);
+            printRAMInfo(&Serial);
 #  endif
         } else {
             Serial.print(F("Not enough heap memory ("));
             Serial.print(sizeof(NeoPatterns) + 2);
             Serial.println(F(") for LoopPatterns."));
 #  if defined(__AVR__)
-            printFreeHeap(&Serial);
+            printRAMInfo(&Serial);
 #  endif
         }
 #else
@@ -962,7 +963,7 @@ public:
             }
 #endif
             if (sSerialLCDAvailable) {
-                bigNumberLCD.writeAt(Laps, ((NumberOfThisCar - 1) * 13) + 2, 0); // red is left, green is right
+                ThreeLineNumbersLCD.writeAt(Laps, ((NumberOfThisCar - 1) * 13) + 2, 0); // red is left, green is right
             }
             tRetval = CAR_LAP_CONDITION;
         }
@@ -1087,7 +1088,7 @@ void setup() {
         myLCD.print(F("Open LED Race"));
         myLCD.setCursor(0, 1);
         myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
-        bigNumberLCD.begin(); // Creates custom character used for generating big numbers
+        ThreeLineNumbersLCD.begin(); // Creates custom character used for generating big numbers
     }
 #endif
 
@@ -1510,7 +1511,7 @@ void startRace() {
             Serial.println(tCountDown);
         }
         if (sSerialLCDAvailable) {
-            bigNumberLCD.writeAt(tCountDown, 9);
+            ThreeLineNumbersLCD.writeAt(tCountDown, 9);
         }
     }
 
@@ -1524,8 +1525,8 @@ void startRace() {
     if (sSerialLCDAvailable) {
         // print initial lap counters
         myLCD.clear();
-        bigNumberLCD.writeAt(0, 2);
-        bigNumberLCD.writeAt(0, 15);
+        ThreeLineNumbersLCD.writeAt(0, 2);
+        ThreeLineNumbersLCD.writeAt(0, 15);
     }
 }
 
