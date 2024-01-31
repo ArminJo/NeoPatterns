@@ -2,7 +2,8 @@
  * MatrixPatternsTest.cpp
  *
  *  For testing the MatrixNeoPatterns Fire, Snow, AllColors, and Snake
- *  the are selected by the two mode pins.
+ *  One analog input controls brightness, the other selects the fire cooling.
+ *  Patterns can be switched with right button connected at pin 2.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -45,36 +46,27 @@
 #endif
 
 #define BRIGHTNESS_INPUT_PIN       A0
-#define FIRE_COOLING_INPUT_PIN     A0
+#define FIRE_COOLING_INPUT_PIN     A1
 
-#define USE_16_X_16_MATRIX // else 8x8 matrix
+//#define USE_16_X_16_MATRIX          // else 8x8 matrix
 
-#if defined(USE_16_X_16_MATRIX)
 #define PIN_NEOPIXEL_MATRIX         8
+#if defined(USE_16_X_16_MATRIX)
 #define MATRIX_NUMBER_OF_COLUMNS   16
 #define MATRIX_NUMBER_OF_ROWS      16
-/*
- * Specify your matrix geometry as 4th parameter.
- * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
- * See MatrixNeoPatterns.h for further explanation.
- */
-MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_LEFT | NEO_MATRIX_ROWS | NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800, NULL);
+#define MATRIX_GEOMETRY             (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_ZIGZAG)
 #else
-/*
- * Use 8 x 8 matrix
- */
-#define PIN_NEOPIXEL_MATRIX         8
 #define MATRIX_NUMBER_OF_COLUMNS    8
 #define MATRIX_NUMBER_OF_ROWS       8
+#define MATRIX_GEOMETRY             (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)
+#endif
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
-MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, NULL);
-#endif
+MatrixSnake NeoPixelMatrix = MatrixSnake(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX, MATRIX_GEOMETRY,
+NEO_GRB + NEO_KHZ800, NULL);
 
 /*
  * Initial mode select. Fire, Snow, AllColors, and Snake
@@ -83,6 +75,7 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
 #define MODE_PIN_1     12
 uint8_t readModePins();
 void printModePinInfo();
+void switchMode();
 // The supported modes
 #define MODE_SNOW       0
 #define MODE_SNAKE      1
@@ -94,6 +87,7 @@ volatile uint8_t sMode;
 uint8_t sOldMode = MODE_NO_MODE;
 
 #define USE_BUTTON_0  // Enable code for button 0 at INT0.
+#define NO_BUTTON_RELEASE_CALLBACK
 #include "EasyButtonAtInt01.hpp"
 // The callback function for button 0
 void handleButtonPress(bool aButtonToggleState);
@@ -144,6 +138,7 @@ void setup() {
         }
     }
     NeoPixelMatrix.clear();
+    NeoPixelMatrix.testMapping(100);
 
 //    NeoPixelMatrix.setBrightnessValue(MAX_BRIGHTNESS);
 //    for (int i = 0; i < 256; ++i) {
@@ -166,64 +161,7 @@ void setup() {
     printRAMInfo(&Serial);
 #endif
 //    initTrace();
-}
-
-void switchMode() {
-    /*
-     * Stop old pattern
-     */
-#if defined(__AVR__)
-    printRAMInfo(&Serial);
-    Serial.println(F("Stop old mode"));
-#endif
-    if (sOldMode == MODE_FIRE) {
-        NeoPixelMatrix.FireMatrixStop();
-    } else if (sOldMode == MODE_SNOW) {
-        NeoPixelMatrix.SnowStop();
-    } else if (sOldMode == MODE_SNAKE) {
-        NeoPixelMatrix.SnakeStop();
-    }
-#if defined(__AVR__)
-    printRAMInfo(&Serial);
-    Serial.println(F("Old mode stopped, start new mode"));
-#endif
-    /*
-     * Start new pattern
-     */
-    Serial.print(F("Set mode from "));
-    Serial.print(sOldMode);
-    Serial.print(F(" to "));
-    if (sMode == MODE_FIRE) {
-        Serial.println(F("Fire"));
-        if (!NeoPixelMatrix.Fire(200, 30)) {
-            Serial.println(F("Not enough heap available"));
-            sMode = MODE_NO_MODE;
-        }
-    } else if (sMode == MODE_SNOW) {
-        Serial.println(F("Snow"));
-        if (!NeoPixelMatrix.Snow(500, 20)) {
-            Serial.println(F("Not enough heap available"));
-            sMode = MODE_NO_MODE;
-        }
-    } else if (sMode == MODE_ALL_COLORS) {
-        Serial.print(F("All colors"));
-    } else if (sMode == MODE_SNAKE) {
-        Serial.println(F("Snake"));
-        if (!initSnakeAutorun(&NeoPixelMatrix, 200, COLOR32_BLUE, 1)) {
-            Serial.println(F("Not enough heap available"));
-            sMode = MODE_NO_MODE;
-        }
-    } else {
-        Serial.println(sMode);
-    }
-
-    sOldMode = sMode;
-#if defined(__AVR__)
-    printRAMInfo(&Serial);
-    Serial.println(F("New mode started"));
-
-#endif
-    delay(100); // debounce
+    delay(1000);
 }
 
 void loop() {
@@ -260,7 +198,7 @@ void loop() {
     if (sMode == MODE_FIRE) {
         NeoPixelMatrix.TotalStepCounter = 42; // set to any value > 1
         /*
-         * Can set cooling and sparking parameters by potentiometers
+         * Can set cooling (and sparking- not yet) parameters by potentiometers
          */
         // set cooling. 10 to 25 are sensible with optimum around 14 to 20
         uint8_t tOldCooling = NeoPixelMatrix.ByteValue1.Cooling;
@@ -270,10 +208,10 @@ void loop() {
             Serial.println(NeoPixelMatrix.ByteValue1.Cooling);
         }
 
-        NeoPixelMatrix.update(tBrightness); // tBrightness is MAX_BRIGHTNESS here
+        NeoPixelMatrix.update(MAX_BRIGHTNESS);
 
         // Not yet implemented
-//          NeoPixelMatrix.PatternFlags = map(analogRead(A1), 0, 1023, 30, 200);
+//          NeoPixelMatrix.PatternFlags = map(analogRead(BRIGHTNESS_INPUT_PIN), 0, 1023, 30, 200);
 //          Serial.print(F(" Sparking="));
 //          Serial.println(NeoPixelMatrix.PatternFlags);
 
@@ -295,7 +233,7 @@ void loop() {
 
             // dim pattern
             Serial.println(F("Dim pattern"));
-            for (int i = 0; i < 256; ++i) {
+            for (int i = 0; i < (MATRIX_NUMBER_OF_COLUMNS * MATRIX_NUMBER_OF_ROWS); ++i) {
                 NeoPixelMatrix.setBrightnessValue(NeoPixelMatrix.gamma8(255 - i));
                 NeoPixelMatrix.drawAllColors();
                 NeoPixelMatrix.show();
@@ -307,7 +245,7 @@ void loop() {
 
             // brighten pattern
             Serial.println(F("Brighten pattern"));
-            for (int i = 0; i < 256; ++i) {
+            for (int i = 0; i < (MATRIX_NUMBER_OF_COLUMNS * MATRIX_NUMBER_OF_ROWS); ++i) {
                 // restore pixels
                 NeoPixelMatrix.setBrightnessValue(NeoPixelMatrix.gamma8(i));
                 NeoPixelMatrix.drawAllColors();
@@ -359,6 +297,70 @@ void loop() {
         }
     }
     delay(5);
+}
+
+void switchMode() {
+    /*
+     * Stop old pattern
+     */
+#if defined(__AVR__)
+    printRAMInfo(&Serial);
+    Serial.println(F("Stop old mode"));
+#endif
+    if (sOldMode == MODE_FIRE) {
+        NeoPixelMatrix.FireMatrixStop();
+    } else if (sOldMode == MODE_SNOW) {
+        NeoPixelMatrix.SnowStop();
+    } else if (sOldMode == MODE_SNAKE) {
+        NeoPixelMatrix.SnakeStop();
+    }
+#if defined(__AVR__)
+    printRAMInfo(&Serial);
+    Serial.println(F("Old mode stopped, start new mode"));
+#endif
+    /*
+     * Start new pattern
+     */
+    Serial.print(F("Set mode from "));
+    Serial.print(sOldMode);
+    Serial.print(F(" to "));
+
+    if (sMode == MODE_FIRE) {
+        Serial.println(F("Fire"));
+        if (!NeoPixelMatrix.Fire(200, 30)) {
+            Serial.println(F("Not enough heap available"));
+            sMode = MODE_NO_MODE;
+        }
+
+    } else if (sMode == MODE_SNOW) {
+        Serial.println(F("Snow"));
+        if (!NeoPixelMatrix.Snow(500, 20)) {
+            Serial.println(F("Not enough heap available"));
+            sMode = MODE_NO_MODE;
+        }
+
+    } else if (sMode == MODE_ALL_COLORS) {
+        // pattern is handled in loop
+        Serial.println(F("All colors"));
+
+    } else if (sMode == MODE_SNAKE) {
+        Serial.println(F("Snake"));
+        if (!initSnakeAutorun(&NeoPixelMatrix, 200, COLOR32_BLUE, 1)) {
+            Serial.println(F("Not enough heap available"));
+            sMode = MODE_NO_MODE;
+        }
+
+    } else {
+        Serial.println(sMode);
+    }
+
+    sOldMode = sMode;
+#if defined(__AVR__)
+    printRAMInfo(&Serial);
+    Serial.println(F("New mode started"));
+
+#endif
+    delay(100); // debounce
 }
 
 void printModePinInfo() {

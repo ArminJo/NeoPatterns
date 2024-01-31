@@ -29,7 +29,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  You also need to install "NeoPatterns" and "PlayRtttl" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I"
  *
- *  Copyright (C) 2020-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2023  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of OpenledRace https://github.com/ArminJo/OpenledRace.
@@ -84,7 +84,8 @@
 // for hunting errors
 //#include "AvrTracing.hpp"
 
-#define VERSION_EXAMPLE "1.2"
+#define VERSION_EXAMPLE "1.3"
+// 1.3 VU Bar animations - work in progress
 // 1.2 Improvements from Hannover Maker Faire
 // 1.1 Hannover Maker Faire version
 
@@ -116,38 +117,40 @@ LiquidCrystal_I2C myLCD(LCD_I2C_ADDRESS, 20, 4);
 #define USE_SERIAL_2004_LCD // required by LCDBigNumbers.hpp
 #include "LCDBigNumbers.hpp" // Include sources for LCD big number generation
 
-LCDBigNumbers ThreeLineNumbersLCD(&myLCD, BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1);
+LCDBigNumbers BigNumbers(&myLCD, BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1);
 
 void checkForLCDConnected();
 bool sSerialLCDAvailable;
 
 /*
- * Pin layout
+ * Pin layout - adapt it to your need
  */
-#define PIN_PLAYER_2_BUTTON 2
-#define PIN_PLAYER_2_VU_BAR 3
-#define PIN_PLAYER_1_BUTTON 4
-#define PIN_PLAYER_1_VU_BAR 5
+#define PIN_PLAYER_1_VU_BAR     2 // RED
+#define PIN_PLAYER_2_VU_BAR     3// GREEN
+#define PIN_PLAYER_1_BUTTON     4 // RED
+#define PIN_PLAYER_2_BUTTON     5 // GREEN
+
 #if !defined(ENABLE_ACCELERATOR_INPUT)
-#define PIN_PLAYER_3_BUTTON 6
+#define PIN_PLAYER_3_BUTTON     6
 #endif
-#define PIN_RESET_GAME_BUTTON 7
+#define PIN_RESET_GAME_BUTTON   7
 
-#define PIN_NEOPIXEL        8
+#define PIN_NEOPIXEL_TRACK      8
 #if defined(TIMING_TEST)
-#define PIN_TIMING  9
+#define PIN_TIMING              9
 #endif
-#define PIN_MANUAL_PARAMETER_MODE       9 // if connected to ground, analog inputs for parameters are used
+#define PIN_MANUAL_PARAMETER_MODE  9 // if connected to ground, analog inputs for parameters are used
 
-#define PIN_BUZZER          11   // must be pin 11, since we use the direct hardware tone output for ATmega328, which is not disturbed by Neopixel show()
+#define PIN_BUZZER              11   // must be pin 11, since we use the direct hardware tone output for ATmega328, which is not disturbed by Neopixel show()
 
-#define PIN_GRAVITY        A0
-#define PIN_FRICTION       A1
-#define PIN_DRAG           A2
-#define ANALOG_OFFSET      20   // Bias/offset to get real 0 analog value, because of high LED current on Breadboard, which cause a ground bias.
+#define PIN_GRAVITY             A0
+#define PIN_FRICTION            A1
+#define PIN_DRAG                A2
 
-#define PIN_ONLY_PLOTTER_OUTPUT 12 // Verbose output to Arduino Serial Monitor is disabled, if connected to ground. This is intended for Arduino Plotter mode.
+#define ONLY_PLOTTER_OUTPUT_PIN 12 // Verbose output to Arduino Serial Monitor is disabled, if connected to ground. This is intended for Arduino Plotter mode.
 bool sOnlyPlotterOutput;
+
+#define ANALOG_OFFSET   20   // Bias/offset to get real 0 analog value, because of high LED current on Breadboard, which cause a ground bias.
 
 /*
  * The track
@@ -177,7 +180,7 @@ const char Car3ColorString[] PROGMEM = "BLUE";
  * The bridge with a ramp up, a flat platform and a ramp down
  */
 #define NUMBER_OF_BRIDGES         1
-#define BRIDGE_1_START          100
+#define BRIDGE_1_START           87
 #define BRIDGE_1_RAMP_LENGTH     21 // in pixel
 #define BRIDGE_1_PLATFORM_LENGTH 20 // > 0 for bridges with a ramp up a flat bridge and a ramp down
 #define BRIDGE_1_HEIGHT          15 // in pixel -> 45 degree slope here
@@ -188,13 +191,13 @@ const char Car3ColorString[] PROGMEM = "BLUE";
  * The loop
  */
 #define NUMBER_OF_LOOPS           1
-#define LOOP_1_UP_START         221
+#define LOOP_1_UP_START         228
 #define LOOP_1_LENGTH            48 // in pixel
 #define LOOP_COLOR              COLOR32_PURPLE_QUARTER // COLOR32(64,0,64)
 #define LOOP_DIMMED_COLOR       COLOR32(8,0,8)
 #define GAMMA_FOR_DIMMED_VALUE  160
 
-NeoPatterns track = NeoPatterns(NUMBER_OF_TRACK_PIXELS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+NeoPatterns track = NeoPatterns(NUMBER_OF_TRACK_PIXELS, PIN_NEOPIXEL_TRACK, NEO_GRB + NEO_KHZ800);
 
 #if defined(USE_ACCELERATION_NEOPIXEL_BARS)
 //#define ACCELERATION_BAR_SCALE_VALUE    100
@@ -230,7 +233,8 @@ bool sSoundEnabled = true; // not really used yet - always true
 #define LAPS_PER_RACE                        255
 #else
 #define START_ANIMATION_MILLIS              1500 // The duration of the start animation
-#define WINNER_ANIMATION_DELAY_MILLIS       4000 // The time to show the end of race situation
+#define WINNER_ANIMATION_DELAY_MILLIS       2000 // The time to show the end of race situation
+#define WINNER_MINIMAL_ANIMATION_DURATION_MILLIS 2000 // The minimum time time to show the winner animation + sound
 #define LAPS_PER_RACE                          5
 #endif
 
@@ -267,7 +271,7 @@ void playMelodyAndShutdown();
 void checkAndHandleWinner();
 void checkForOvertakingLeaderCar();
 bool checkAllInputs();
-void printConfigPinInfo(uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription, Print *aSerial);
+void printConfigPinInfo(Print *aSerial, uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription);
 
 extern volatile unsigned long timer0_millis; // Used for ATmega328P to adjust for missed millis interrupts
 
@@ -325,16 +329,10 @@ public:
             free(tMallocTest);
             RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, false);
             isInitialized = true;
-#  if defined(__AVR__) && defined(DEBUG)
-            printRAMInfo(&Serial);
-#  endif
         } else {
             Serial.print(F("Not enough heap memory ("));
             Serial.print(sizeof(NeoPatterns) + 2);
             Serial.println(F(") for RampPatterns."));
-#  if defined(__AVR__)
-            printRAMInfo(&Serial);
-#  endif
         }
 
 #else
@@ -675,6 +673,7 @@ public:
                 myLCD.setCursor(0, aNumberOfThisCar + 1);
                 myLCD.print(F("No IMU for car "));
                 myLCD.print(aNumberOfThisCar);
+                myLCD.print(' '); // to overwrite button info
             }
             playError();
         } else {
@@ -796,7 +795,7 @@ public:
     }
 
     /*
-     * Then Play a winner melody and run animations with the car color on the track
+     * Play a winner melody and run animations with the car color on the track
      * Returns if melody ends
      * You can stop melody and animation by pressing the car button.
      * @return true if stopped by user input
@@ -805,6 +804,7 @@ public:
         startPlayRtttlPGM(PIN_BUZZER, WinnerMelody);
         TrackPtr->Stripes(Color, 2, COLOR32_BLACK, 8, 300, 50, DIRECTION_UP);
         bool tReturnValue = false;
+        auto tStartMillis = millis();
 
         while (updatePlayRtttl()) {
 #if defined(TIMING_TEST)
@@ -822,7 +822,8 @@ public:
 #if defined(TIMING_TEST)
                 digitalWrite(PIN_TIMING, LOW);
 #endif
-            if (checkAllInputs()) {
+            if ((millis() - tStartMillis > WINNER_MINIMAL_ANIMATION_DURATION_MILLIS) && checkAllInputs()) {
+                // minimal animation time was reached and input was activated
                 stopPlayRtttl(); // to stop in a deterministic fashion
                 tReturnValue = true;
             }
@@ -871,7 +872,8 @@ public:
 #if defined(USE_ACCELERATION_NEOPIXEL_BARS)
         AcceleratorLowPassValue += (((int16_t) (tAcceleration - AcceleratorLowPassValue))) >> 3;
         // scale it so that 100 -> 8
-        AccelerationCommonNeopixelBar.drawBar(AcceleratorLowPassValue / (100 / 8), Color);
+        // Parameter NumberOfThisCar == 1 has the effect, that bar for car 2 can be mounted upside down
+        AccelerationCommonNeopixelBar.drawBar(AcceleratorLowPassValue / (100 / 8), Color, NumberOfThisCar == 1);
         AccelerationCommonNeopixelBar.setPin(AccelerationBarPin);
         AccelerationCommonNeopixelBar.show();
 #endif
@@ -963,7 +965,7 @@ public:
             }
 #endif
             if (sSerialLCDAvailable) {
-                ThreeLineNumbersLCD.writeAt(Laps, ((NumberOfThisCar - 1) * 13) + 2, 0); // red is left, green is right
+                BigNumbers.writeAt(Laps, ((NumberOfThisCar - 1) * 13) + 2, 0); // red is left, green is right
             }
             tRetval = CAR_LAP_CONDITION;
         }
@@ -1041,7 +1043,7 @@ void setup() {
 
     pinMode(PIN_RESET_GAME_BUTTON, INPUT_PULLUP);
     pinMode(PIN_MANUAL_PARAMETER_MODE, INPUT_PULLUP);
-    pinMode(PIN_ONLY_PLOTTER_OUTPUT, INPUT_PULLUP);
+    pinMode(ONLY_PLOTTER_OUTPUT_PIN, INPUT_PULLUP);
 
 #if defined(TIMING_TEST)
     pinMode(PIN_TIMING, OUTPUT);
@@ -1056,7 +1058,7 @@ void setup() {
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
 
-    sOnlyPlotterOutput = !digitalRead(PIN_ONLY_PLOTTER_OUTPUT);
+    sOnlyPlotterOutput = !digitalRead(ONLY_PLOTTER_OUTPUT_PIN);
 
     if (!sOnlyPlotterOutput) {
 
@@ -1064,8 +1066,8 @@ void setup() {
         Serial.println(F("START " __FILE__ " from " __DATE__));
         Serial.println(
                 F(
-                        "Connect pin " STR(PIN_ONLY_PLOTTER_OUTPUT) " to ground, to suppress such prints not suited for Arduino plotter"));
-        printConfigPinInfo(PIN_MANUAL_PARAMETER_MODE, F("AnalogParameterInputMode"), &Serial);
+                        "Connect pin " STR(ONLY_PLOTTER_OUTPUT_PIN) " to ground, to suppress such prints not suited for Arduino plotter"));
+        printConfigPinInfo(&Serial, PIN_MANUAL_PARAMETER_MODE, F("AnalogParameterInputMode"));
     }
 
 #if defined(ENABLE_ACCELERATOR_INPUT)
@@ -1088,7 +1090,13 @@ void setup() {
         myLCD.print(F("Open LED Race"));
         myLCD.setCursor(0, 1);
         myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
-        ThreeLineNumbersLCD.begin(); // Creates custom character used for generating big numbers
+        myLCD.setCursor(0, 2);
+        myLCD.print(F("Manual mode pin=" STR(PIN_MANUAL_PARAMETER_MODE)));
+        myLCD.setCursor(0, 3);
+        myLCD.print(F("Reset  game pin=" STR(PIN_RESET_GAME_BUTTON)));
+
+        BigNumbers.begin(); // Creates custom character used for generating big numbers
+        delay(1000); // To show  the message on LCD
     }
 #endif
 
@@ -1111,8 +1119,13 @@ void setup() {
      */
     bridges[0].init(&track, BRIDGE_1_START, BRIDGE_1_HEIGHT, BRIDGE_1_RAMP_LENGTH, BRIDGE_1_PLATFORM_LENGTH); // Requires 2 x 69 = 138 bytes on heap
 //    myTone(64000);
+#if defined(INFO) && defined(__AVR__)
+    printRAMInfo(&Serial);
+#  endif
     loops[0].init(&track, LOOP_1_UP_START, LOOP_1_LENGTH); // Requires 69 bytes on heap
-
+#if defined(INFO) && defined(__AVR__)
+    printRAMInfo(&Serial);
+#  endif
     /*
      * Setup cars
      */
@@ -1172,10 +1185,14 @@ void setup() {
      * End of setup
      */
     resetAndShowTrackWithoutCars();
+#if defined(INFO) && defined(__AVR__)
+    printRAMInfo(&Serial);
+    initStackFreeMeasurement(); // initialize for getting stack usage in loop
+#endif
 }
 
 /*
- * 10 Milliseconds per loop without delay for
+ * 10 Milliseconds per loop without delay
  */
 void loop() {
     static uint32_t sNextLoopMillis;
@@ -1190,7 +1207,7 @@ void loop() {
     sNextLoopMillis += MILLISECONDS_PER_LOOP;
 
     sLoopCountForDebugPrint++;
-    sOnlyPlotterOutput = !digitalRead(PIN_ONLY_PLOTTER_OUTPUT);
+    sOnlyPlotterOutput = !digitalRead(ONLY_PLOTTER_OUTPUT_PIN);
 
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
@@ -1308,9 +1325,11 @@ void printStartMessage() {
         Serial.println(F(" to start countdown"));
     }
     if (sSerialLCDAvailable) {
-        uint8_t tLineIndex = 1;
-        myLCD.setCursor(0, tLineIndex++);
+        myLCD.setCursor(14, 0);
+        myLCD.print(F("5 Laps"));
+        myLCD.setCursor(0, 1);
         myLCD.print(F("Press any button"));
+        uint8_t tLineIndex = 2;
 #if defined(ENABLE_ACCELERATOR_INPUT)
         if (cars[0].AcceleratorInputConnected || cars[1].AcceleratorInputConnected) {
             myLCD.setCursor(0, tLineIndex++);
@@ -1493,7 +1512,22 @@ void startRace() {
     }
     for (int tCountDown = 4; tCountDown >= 0; tCountDown--) {
         // delay at start of loop to enable fast start after last countdown
-        delay(1000);
+
+        delay(900);
+        AccelerationCommonNeopixelBar.drawBar(8, CAR_1_COLOR);
+        AccelerationCommonNeopixelBar.setPin(PIN_PLAYER_1_VU_BAR);
+        AccelerationCommonNeopixelBar.show();
+        AccelerationCommonNeopixelBar.drawBar(8, CAR_2_COLOR);
+        AccelerationCommonNeopixelBar.setPin(PIN_PLAYER_2_VU_BAR);
+        AccelerationCommonNeopixelBar.show();
+
+        delay(100);
+        AccelerationCommonNeopixelBar.clear();
+        AccelerationCommonNeopixelBar.setPin(PIN_PLAYER_1_VU_BAR);
+        AccelerationCommonNeopixelBar.show();
+        AccelerationCommonNeopixelBar.setPin(PIN_PLAYER_2_VU_BAR);
+        AccelerationCommonNeopixelBar.show();
+
         track.setPixelColor(tIndex + (2 * tCountDown), COLOR32_RED);
         track.setPixelColor(tIndex + (2 * tCountDown) + 1, COLOR32_RED);
         track.show();
@@ -1511,7 +1545,7 @@ void startRace() {
             Serial.println(tCountDown);
         }
         if (sSerialLCDAvailable) {
-            ThreeLineNumbersLCD.writeAt(tCountDown, 9);
+            BigNumbers.writeAt(tCountDown, 9);
         }
     }
 
@@ -1525,8 +1559,8 @@ void startRace() {
     if (sSerialLCDAvailable) {
         // print initial lap counters
         myLCD.clear();
-        ThreeLineNumbersLCD.writeAt(0, 2);
-        ThreeLineNumbersLCD.writeAt(0, 15);
+        BigNumbers.writeAt(0, 2);
+        BigNumbers.writeAt(0, 15);
     }
 }
 
@@ -1563,7 +1597,7 @@ void checkForLCDConnected() {
 #endif
 }
 
-void printConfigPinInfo(uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription, Print *aSerial) {
+void printConfigPinInfo(Print *aSerial, uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription) {
     aSerial->print(F("Pin "));
     aSerial->print(aConfigPinNumber);
     aSerial->print(F(" is"));

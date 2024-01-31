@@ -20,7 +20,14 @@
 Also available as [OpenLedRace example](https://github.com/ArminJo/NeoPatterns/tree/master/examples/OpenLedRace) in the [NeoPatterns library](https://github.com/ArminJo/NeoPatterns).
 
 </div>
+
+#### If you find this library useful, please give it a star.
+
+&#x1F30E; [Google Translate](https://translate.google.com/translate?sl=en&u=https://github.com/ArminJo/OpenLedRace)
+
 <br/>
+
+#### If you find this program useful, please give it a star.
 
 # Extensions to standard version
  *  **Input from MPU6050 Accelerometer**.
@@ -51,14 +58,14 @@ Formula is: **NewSpeed = OldSpeed + Gravity + Friction + (OldSpeed * Drag)**
 <br/>
 
 # Pictures
-| At the Hannover MakerFaire 2022 | At the Cologne public library MINTköln-Festival 2021 |
+| At the Hannover MakerFaire 2022 | At the Cologne public library MINTkï¿½ln-Festival 2021 |
 | :-: | :-: |
-| ![Accelerometer version from MakerFaire 2022](https://github.com/ArminJo/OpenledRace/blob/master/pictures/Overview.jpg) | ![OpenLedRace at the Cologne public library MINTköln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg) |
+| ![Accelerometer version from MakerFaire 2022](https://github.com/ArminJo/OpenledRace/blob/master/pictures/Overview.jpg) | ![OpenLedRace at the Cologne public library MINTkï¿½ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg) |
 
 <br/>
 
 # YouTube Videos
-| At the Hannover MakerFaire 2022 | At the Cologne public library MINTköln-Festival 2021 |
+| At the Hannover MakerFaire 2022 | At the Cologne public library MINTkï¿½ln-Festival 2021 |
 | :-: | :-: |
 | [![OpenLedRace at the Hannover MakerFaire 2022](https://i.ytimg.com/vi/lYzYpFYJfWI/hqdefault.jpg)](https://www.youtube.com/watch?v=lYzYpFYJfWI) | [![OpenLedRace in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g) |
 
@@ -110,5 +117,3 @@ Pin layout is defined [here](https://github.com/ArminJo/NeoPatterns/blob/master/
 - https://twitter.com/openledrace
 - https://gitlab.com/open-led-race
 - https://openledrace.net/open-software/
-
-#### If you find this program useful, please give it a star.

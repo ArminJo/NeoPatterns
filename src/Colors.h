@@ -42,9 +42,9 @@ typedef uint16_t color16_t;
 #define COLOR16(r,g,b) ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
 
 #define COLOR16_WHITE     ((color16_t)0xFFFF)
-#define COLOR16_DARK_GREY ((color16_t)0x7DEF)
+#define COLOR16_LIGHT_GREY ((color16_t)0x7BEF)
 #define COLOR16_GREY      ((color16_t)0x39E7)
-#define COLOR16_LIGHT_GREY ((color16_t)0x18E3)
+#define COLOR16_DARK_GREY ((color16_t)0x18E3)
 // 01 because 0 is used as flag (e.g. in touch button for default color)
 #define COLOR16_BLACK     ((color16_t)0X0001)
 #define COLOR16_RED       ((color16_t)0xF800)

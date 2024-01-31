@@ -94,7 +94,9 @@ public:
 
     color32_t getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor);
+    void setMatrixPixelColorAndShow(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void setMatrixPixelColorAndShow(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     void addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
     void addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t aColor);
 
@@ -113,6 +115,7 @@ public:
 
     void drawAllColors();
     void drawAllColors2();
+    void testMapping(uint16_t aDelayMillis);
 
     void drawBar(uint8_t aColumnX, uint8_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
     void drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);

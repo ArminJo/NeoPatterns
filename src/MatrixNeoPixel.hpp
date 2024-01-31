@@ -6,7 +6,7 @@
  *  SUMMARY
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
  *
- *  Copyright (C) 2019-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2024  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -28,6 +28,11 @@
 
 #ifndef _MATRIX_NEOPIXEL_HPP
 #define _MATRIX_NEOPIXEL_HPP
+
+#if defined(DEBUG) && !defined(LOCAL_DEBUG)
+#define LOCAL_DEBUG
+#endif
+//#define LOCAL_DEBUG // This enables debug output only for this file
 
 #include "MatrixNeoPixel.h"
 // include sources
@@ -77,12 +82,14 @@ bool MatrixNeoPixel::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t
     return tRetval;
 }
 
-
 /*
  * Requires around 140 bytes of program space
  */
 void MatrixNeoPixel::printConnectionInfo(Print *aSerial) {
     aSerial->print(F("Matrix "));
+    aSerial->print(Columns);
+    aSerial->print(F(" x "));
+    aSerial->println(Rows);
     NeoPixel::printConnectionInfo(aSerial);
 }
 
@@ -92,6 +99,10 @@ void MatrixNeoPixel::setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)
 }
 #endif
 
+void MatrixNeoPixel::setMatrixPixelColorAndShow(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
+    setMatrixPixelColor(aColumnX, aRowY, aRed, aGreen, aBlue);
+    show();
+}
 void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
     if (aColumnX < Columns && aRowY < Rows) {
 #if defined(TRACE)
@@ -166,6 +177,10 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
     }
 }
 
+void MatrixNeoPixel::setMatrixPixelColorAndShow(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
+    setMatrixPixelColor(aColumnX, aRowY, a32BitColor);
+    show();
+}
 /*
  * If LayoutMappingFunction is not set, use ZTypeMapping.
  * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
@@ -293,10 +308,10 @@ uint16_t MatrixNeoPixel::LayoutMapping(uint8_t aColumnX, uint8_t aRowY) {
     uint8_t tCompareValue;
     uint8_t tRows; // Range is from 1 to Rows
     if (aRowY >= Rows) {
-        aRowY = Rows -1;
+        aRowY = Rows - 1;
     }
     if (aColumnX >= Columns) {
-        aColumnX = Columns -1;
+        aColumnX = Columns - 1;
     }
     if ((Geometry & NEO_MATRIX_COLUMNS) == NEO_MATRIX_COLUMNS) {
 #if defined(ERROR)
@@ -342,7 +357,7 @@ void MatrixNeoPixel::drawBar(uint8_t aColumnX, uint8_t aBarLength, color32_t aCo
         bool tDrawPixel;
         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
         if (aDrawFromBottom) {
-            tDrawPixel = (i >= ((uint_fast8_t)(Rows - aBarLength)));
+            tDrawPixel = (i >= ((uint_fast8_t) (Rows - aBarLength)));
         } else {
             tDrawPixel = (i < aBarLength);
         }
@@ -367,7 +382,7 @@ void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength,
 
         // Since top left is (0,0) draw from top is like draw from bottom for simple bars
         if (aDrawFromBottom) {
-            tDrawPixel = (i >= ((uint_fast8_t)(Rows - aBarLength)));
+            tDrawPixel = (i >= ((uint_fast8_t) (Rows - aBarLength)));
         } else {
             tDrawPixel = (i < aBarLength);
         }
@@ -407,7 +422,7 @@ void MatrixNeoPixel::loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t 
 void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
         color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding, bool IsPGMData) {
 
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     printPin(&Serial);
     Serial.print(F("loadPicture aGraphicsPtr="));
     Serial.print((uintptr_t) aGraphicsArrayPtr, HEX);
@@ -505,7 +520,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
 void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
         color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding, bool IsPGMData) {
 
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     printPin(&Serial);
     Serial.print(F("loadPicture aGraphicsPtr="));
     Serial.print((uintptr_t) aGraphicsArrayPtr, HEX);
@@ -738,8 +753,12 @@ void MatrixNeoPixel::drawQuarterPatternEven(uint16_t aPatternValue, color32_t aF
 void MatrixNeoPixel::drawAllColors() {
     for (uint_fast8_t y = 0; y < Rows; y++) {
         for (uint_fast8_t x = 0; x < Columns; x++) {
-            // check for upper half
+            // check for upper left diagonal half
             if (x + y < Columns) {
+                /*
+                 * Only compute colors for the upper half
+                 * the lower right diagonal half is set with the same colors, but gamma corrected
+                 */
                 // linear rising values from 0 to 255
                 uint8_t xAscending = (255 * x) / (Columns - 1);
                 uint8_t yAscending = (255 * y) / (Rows - 1);
@@ -754,12 +773,7 @@ void MatrixNeoPixel::drawAllColors() {
                 uint8_t green = xDescendingSpecial;
                 uint8_t red = yAscending;
 
-                // Gamma corrected values
-                uint8_t greenC = NeoPixel::gamma5(green);
-                uint8_t blueC = NeoPixel::gamma5(blue);
-                uint8_t redC = NeoPixel::gamma5(red);
-
-#if defined(TRACE)
+//#if defined(TRACE)
                 printPin(&Serial);
                 Serial.print(F("x="));
                 Serial.print(x);
@@ -771,12 +785,17 @@ void MatrixNeoPixel::drawAllColors() {
                 Serial.print(green);
                 Serial.print(F(" blue="));
                 Serial.println(blue);
-#endif
+//#endif
                 // set values
                 setMatrixPixelColor(x, y, red, green, blue);
 
+                // Gamma corrected values
+                uint8_t greenC = NeoPixel::gamma5(green);
+                uint8_t blueC = NeoPixel::gamma5(blue);
+                uint8_t redC = NeoPixel::gamma5(red);
+
                 // do not overwrite values at diagonal
-                if (x + y < (uint_fast8_t)(Columns - 1)) {
+                if (x + y < (uint_fast8_t) (Columns - 1)) {
                     // set gamma corrected values at lower right
                     // We must switch x and y here to fit the two patterns
                     setMatrixPixelColor((Rows - 1) - y, (Columns - 1) - x, redC, greenC, blueC);
@@ -820,6 +839,34 @@ void MatrixNeoPixel::drawAllColors2() {
 #endif
             setMatrixPixelColor(x, y, red, green, blue);
         }
+    }
+}
+
+/*
+ * Move from 0,0 to 0,Columns, i.e. upper left to upper right
+ */
+void MatrixNeoPixel::testMapping(uint16_t aDelayMillis) {
+
+    uint_fast8_t tColumn;
+    uint_fast8_t tRow = 0;
+    // Move from 0,0 to 0,Columns, i.e. upper left to upper right
+    for (tColumn = 0; tColumn < Columns; tColumn++) {
+        setMatrixPixelColorAndShow(tColumn, tRow, COLOR16_DARK_BLUE);
+        delay(aDelayMillis);
+    }
+    // Move diagonal to 0,Rows i.e. lower left corner
+    tRow++;
+    tColumn --;
+    for (; tRow < Rows; tRow++) {
+        tColumn--;
+        setMatrixPixelColorAndShow(tColumn, tRow, COLOR16_DARK_BLUE);
+        delay(aDelayMillis);
+    }
+    tRow -= 2;
+    // Move up to 0,0 i.e. upper left corner
+    for (; tRow > 0; tRow--) {
+        setMatrixPixelColorAndShow(tColumn, tRow, COLOR16_DARK_BLUE);
+        delay(aDelayMillis);
     }
 }
 
@@ -912,4 +959,8 @@ uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aC
         return (aColumnsTotal * ((aRowsTotal - aRowY) - 1)) + aColumnX;
     }
 }
+
+#if defined(LOCAL_DEBUG)
+#undef LOCAL_DEBUG
+#endif
 #endif // _MATRIX_NEOPIXEL_HPP

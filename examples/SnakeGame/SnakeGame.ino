@@ -10,7 +10,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2023  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2024  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -31,6 +31,9 @@
  */
 
 #include <Arduino.h>
+
+//#define DEBUG // implies also setting of INFO
+//#define INFO
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
@@ -81,16 +84,20 @@ void setup() {
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
     Serial.println();
     NeoPixelMatrixSnake.printConnectionInfo(&Serial);
-    Serial.println(F("Allows 2 button mode, using only right and left button ( pin " STR(RIGHT_BUTTON_PIN) " or " STR(LEFT_BUTTON_PIN) " )"));
     Serial.println(
             F(
-                    "If up or down button ( pin " STR(UP_BUTTON_PIN) " or " STR(DOWN_BUTTON_PIN) " ) is pressed, 4 button mode is entered automatically"));
+                    "Allows 2 button mode, using only right and left button ( pin " STR(RIGHT_BUTTON_PIN) " or " STR(LEFT_BUTTON_PIN) " )"));
+    Serial.println(
+            F(
+                    "If up or down button ( pin " STR(UP_BUTTON_PIN) " or " STR(DOWN_BUTTON_PIN) " ) is pressed (later), 4 button mode is entered automatically"));
     Serial.println();
 
 #if defined(SUPPORT_BRIGHTNESS)
     uint8_t tBrightness = NeoPixel::gamma8(analogRead(BRIGHTNESS_INPUT_PIN) >> 2);
-    randomSeed(tBrightness);
+    randomSeed(tBrightness); // Initialize random value :-)
+    Serial.println(F("Brightness voltage input is at pin " STR(BRIGHTNESS_INPUT_PIN)));
 #else
+    Serial.println(F("Brightness voltage input at pin " STR(BRIGHTNESS_INPUT_PIN) " is disabled"));
     uint8_t tBrightness = 0; // value is ignored :-)
 #endif
 

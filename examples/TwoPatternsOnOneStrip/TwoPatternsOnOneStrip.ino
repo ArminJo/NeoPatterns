@@ -69,17 +69,15 @@ uint8_t sDelay; // from 1 to 28 in exponential scale
 // onComplete callback functions
 void BackgroundPatternsHandler(NeoPatterns *aLedsPtr);
 void FastMovePatternsHandler(NeoPatterns *aLedsPtr);
-void checkAndHandleVCCTooLow();
+void checkAndHandleVCCUndervoltage();
 
 /*
  * Default values are suitable for Li-ion batteries.
  * We normally have voltage drop at the connectors, so the battery voltage is assumed slightly higher, than the Arduino VCC.
- * But keep in mind that the ultrasonic distance module HC-SR04 may not work reliable below 3.7 volt.
  */
-#define VCC_STOP_THRESHOLD_MILLIVOLT    3500 // Do not stress your battery and we require some power for standby
-#define VCC_EMERGENCY_STOP_MILLIVOLT    3000 // Many Li-ions are specified down to 3.0 volt
-#define VCC_CHECK_PERIOD_MILLIS        10000 // Period of VCC checks
-#define VCC_CHECKS_TOO_LOW_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_STOP_MILLIVOLT
+//#define LI_ION_VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT     3400 // Do not stress your battery and we require some power for standby
+//#define VCC_CHECK_PERIOD_MILLIS                         10000L // 10 seconds period of VCC checks
+//#define VCC_UNDERVOLTAGE_CHECKS_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_UNDERVOLTAGE_THRESHOLD_MILLIVOLT
 #include "ADCUtils.hpp"
 
 // construct the NeoPatterns instances
@@ -144,7 +142,7 @@ void setup() {
 void loop() {
     if (sRunning) {
 #if defined(ADC_UTILS_ARE_AVAILABLE)
-        checkAndHandleVCCTooLow();
+        checkAndHandleVCCUndervoltage();
 #endif
 
         bool tMustUpdate = NeoPatternsBackground.checkForUpdate() || NeoPatternsFastMoves.checkForUpdate();
@@ -343,8 +341,8 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
 /*
  * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
-void checkAndHandleVCCTooLow() {
-    if (isVCCTooLowMultipleTimes()) {
+void checkAndHandleVCCUndervoltage() {
+    if (isVCCUndervoltageMultipleTimes()) {
         /*
          * clear background pattern and let only fast pattern run
          */

@@ -19,7 +19,7 @@
  *  thus allowing to see the last pattern step for the specified period.
  *  Therefore a pattern with 4 different pattern steps needs 4 updates, the last updates only switches to next pattern or sets ActivePattern to PATTERN_NONE.
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2024  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -42,6 +42,17 @@
 #define _NEOPATTERNS_HPP
 
 #include <Arduino.h>
+
+#if defined(DEBUG) && !defined(LOCAL_DEBUG)
+#define LOCAL_DEBUG
+#define LOCAL_INFO // Propagate debug level
+#else
+//#define LOCAL_DEBUG // This enables debug output only for this file
+#  if defined(INFO) && !defined(LOCAL_INFO)
+#define LOCAL_INFO
+#  endif
+//#define LOCAL_INFO // This enables info output only for this file
+#endif
 
 #include "NeoPatterns.h"
 #include "LongUnion.h" // for faster random()
@@ -332,7 +343,7 @@ void NeoPatterns::showPatternInitially() {
         Serial.println(lastUpdate);
 #endif
     }
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     else {
         printPin(&Serial);
         Serial.println(F("Called asynchronously -> do not show"));
@@ -553,7 +564,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
     if (TotalStepCounter < 0) {
         // Safety net. The pattern has ended, but the callback has not set a new pattern
         ActivePattern = PATTERN_NONE;
-#if defined(INFO)
+#if defined(LOCAL_INFO)
         printPin(&Serial);
         Serial.println(F("Reset pattern to NONE"));
 #endif
@@ -564,21 +575,21 @@ bool NeoPatterns::decrementTotalStepCounter() {
             /*
              * Do not set activePattern to PATTERN_NONE, to enable the callback to see the finished one.
              */
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
             printPin(&Serial);
             printPattern();
             Serial.print(F(": Call completion callback 0x"));
             Serial.println((__SIZE_TYPE__) (OnPatternComplete) << 1, HEX);
 #endif
             OnPatternComplete(this); // call the completion callback
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
             printPin(&Serial);
             Serial.print(F("New "));
             printPattern();
             Serial.println();
 #endif
         } else {
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
             printPin(&Serial);
             printPattern();
             Serial.println(F(": No completion callback, ActivePattern = PATTERN_NONE"));
@@ -603,7 +614,7 @@ void NeoPatterns::setNextIndex() {
     } else {
         Index--;
     }
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     printPin(&Serial);
     printPattern();
     Serial.print(F("TotalSteps="));
@@ -1155,7 +1166,7 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
             Index = ((aLength1 + (aLength1 + aLength2)) - tNumPixels);
         }
     }
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     printPin(&Serial);
     Serial.print(F("Index="));
     Serial.print(Index);
@@ -1954,7 +1965,7 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
      * Start with one scanner
      */
     aLedsPtr->ScannerExtended(aColor, aLength, aScannerIntervalMillis, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, aDirection);
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     aLedsPtr->printPin(&Serial);
     aLedsPtr->printPattern();
     Serial.print(F("Repetitions="));
@@ -2117,13 +2128,13 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
         break;
     }
 
-#if defined(INFO)
+#if defined(LOCAL_INFO)
     Serial.print(F("Pin="));
     Serial.print(aLedsPtr->getPin());
     Serial.print(F(" Length="));
     Serial.print(aLedsPtr->numPixels());
     Serial.print(F(" ActivePattern="));
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
     Serial.print('|');
 #endif
@@ -2134,4 +2145,10 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 }
 #endif
 
+#if defined(LOCAL_DEBUG)
+#undef LOCAL_DEBUG
+#endif
+#if defined(LOCAL_TRACE)
+#undef LOCAL_TRACE
+#endif
 #endif // _NEOPATTERNS_HPP

@@ -2,6 +2,9 @@
  * MatrixDemo.cpp
  *
  *  Simply runs the MatrixAndSnakePatternsDemoHandler for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
+ *      1. Runs ticker "I love Neopixel" from right to left / from bottom to top
+ *      2. Moves heart in from top / bottom, show 2 heart beats, and move heart out
+ *      3. Show 2 snake runs / fire. Snake shows up on the odd loops, fire on the even ones
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *

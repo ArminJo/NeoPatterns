@@ -8,7 +8,7 @@
  *  Extension are made to include more patterns and combined patterns
  *  and patterns for nxn NeoPixel matrix (tested with 8x8 and 10x10).
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2024  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -31,6 +31,17 @@
 #define _MATRIX_NEOPATTERNS_HPP
 
 #include <Arduino.h>
+
+#if defined(DEBUG) && !defined(LOCAL_DEBUG)
+#define LOCAL_DEBUG
+#define LOCAL_INFO // Propagate debug level
+#else
+//#define LOCAL_DEBUG // This enables debug output only for this file
+#  if defined(INFO) && !defined(LOCAL_INFO)
+#define LOCAL_INFO
+#  endif
+//#define LOCAL_INFO // This enables info output only for this file
+#endif
 
 #include "MatrixNeoPatterns.h"
 #include "LongUnion.h"
@@ -191,7 +202,7 @@ bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     MatrixNew = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);   // 100 for 8x8, 324 for 16x16
     MatrixOld = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);   // 100 for 8x8, 324 for 16x16
     if (MatrixNew == NULL || MatrixOld == NULL) {
-#if defined(INFO)
+#if defined(LOCAL_INFO)
         printPin(&Serial);
         Serial.print(F("Fire: Requested heap of "));
         Serial.print((2 * (Rows + 2) * (Columns + 2)) + (Columns + 2));
@@ -203,12 +214,12 @@ bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
         return false;
     }
 
-#if defined(INFO)
+#if defined(LOCAL_INFO)
     printPin(&Serial);
     Serial.print(F("Starting Fire with refresh interval="));
     Serial.println(aIntervalMillis);
 #endif
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     Serial.print(F("MatrixNew=0x"));
     Serial.println((uintptr_t) MatrixNew, HEX);
     Serial.print(F("MatrixOld=0x"));
@@ -382,7 +393,7 @@ bool MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
         setRandomFlakeParameters(tSnowFlakeIndex);
     }
 
-#if defined(INFO)
+#if defined(LOCAL_INFO)
     printPin(&Serial);
     Serial.print(F("Starting Snow with refresh interval="));
     Serial.println(aIntervalMillis);
@@ -534,7 +545,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
     Interval = aIntervalMillis;
     TotalStepCounter = aNumberOfSteps + 1; // +1 for the last step to show
 
-#if defined(INFO)
+#if defined(LOCAL_INFO)
     printPin(&Serial);
     Serial.print(F("Starting Move with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -549,7 +560,7 @@ void MatrixNeoPatterns::Move(uint8_t aDirection, uint16_t aNumberOfSteps, uint16
 }
 
 bool MatrixNeoPatterns::MoveUpdate() {
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     printPin(&Serial);
     Serial.print(F("MoveUpdate TotalSteps="));
     Serial.println(TotalStepCounter);
@@ -582,7 +593,7 @@ void MatrixNeoPatterns::MovingPicturePGM(const uint8_t *aGraphics8x8ArrayPGM, co
     TotalStepCounter = aSteps + 1; // for the last pattern to show
     Direction = aDirection;
 
-#if defined(INFO)
+#if defined(LOCAL_INFO)
     printPin(&Serial);
     Serial.print(F("Starting MovingPicturePGM with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -821,7 +832,7 @@ void MatrixNeoPatterns::TickerInit(const char *aStringPtr, color32_t aForeground
     LongValue1.Color2 = aBackgroundColor;
     Direction = aDirection;
 
-#if defined(INFO)
+#if defined(LOCAL_INFO)
     printPin(&Serial);
     Serial.print(F("Starting Ticker with refresh interval="));
     Serial.print(aIntervalMillis);
@@ -900,7 +911,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
     tNextChar = *(tDataPtr++);
 #endif
 
-#if defined(DEBUG) && !defined(TRACE)
+#if defined(LOCAL_DEBUG) && !defined(TRACE)
     char tFirstCurrentChar = tCurrentChar;
     char tFirstNextChar = tNextChar;
 #endif
@@ -1016,7 +1027,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
                 return true;
             }
             // switch to next character
-#  if defined(DEBUG) && !defined(TRACE)
+#  if defined(LOCAL_DEBUG) && !defined(TRACE)
             printPin(&Serial);
             Serial.print(F("Char "));
             Serial.print(tFirstCurrentChar);
@@ -1053,7 +1064,7 @@ void MatrixPatternsDemo(NeoPatterns *aLedsPtr) {
     static uint8_t sHeartDirection = DIRECTION_DOWN;
     static int8_t sTickerDirection = DIRECTION_LEFT;
 
-#  if defined(INFO)
+#  if defined(LOCAL_INFO)
     Serial.print(aLedsPtr->getPin());
     Serial.print(F(" State="));
     Serial.println(sState);
@@ -1209,4 +1220,10 @@ const uint8_t fontNumbers4x6[] PROGMEM = { 0x03, 0x05, 0x05, 0x05, 0x06, 0x00, /
         0x02, 0x05, 0x03, 0x01, 0x02, 0x00 // 0x39 9
         };
 
+#if defined(LOCAL_DEBUG)
+#undef LOCAL_DEBUG
+#endif
+#if defined(LOCAL_TRACE)
+#undef LOCAL_TRACE
+#endif
 #endif // _MATRIX_NEOPATTERNS_HPP

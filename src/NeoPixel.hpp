@@ -26,6 +26,11 @@
 #ifndef _NEOPIXEL_HPP
 #define _NEOPIXEL_HPP
 
+#if defined(INFO)
+#define LOCAL_INFO
+#endif
+//#define LOCAL_INFO // This enables info output only for this file
+
 #include "NeoPixel.h"
 
 NeoPixel::NeoPixel() :  // @suppress("Class members should be properly initialized")
@@ -337,6 +342,11 @@ void NeoPixel::restorePixelBuffer(uint8_t *aPixelBufferPointerSource) {
  */
 void NeoPixel::clear(void) {
     memset(pixels + (BytesPerPixel * PixelOffset), 0, numBytes);
+}
+
+void NeoPixel::clearAndShow(void) {
+    clear();
+    show();
 }
 
 /*
@@ -1002,7 +1012,7 @@ uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
     show();
     delay(50);
     uint16_t tStartMillivolt = getVCCVoltageMillivoltSimple(); // it is faster to use this simple version
-#  if defined INFO
+#  if defined(LOCAL_INFO)
     Serial.print(F("Start VCC="));
     Serial.print(tStartMillivolt);
     Serial.println(" mV");
@@ -1041,7 +1051,7 @@ uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
         if (i != 0) {
             // exit 2 loop run here
             int tActualNeopixelLength = tLedIndex + TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION;
-           // update length to next even number
+            // update length to next even number
             tActualNeopixelLength = (tActualNeopixelLength + 1) & ~0x01;
             if (tActualNeopixelLength != 0) {
                 updateLength(tActualNeopixelLength);
@@ -1115,4 +1125,8 @@ void NeoPixel::TestWS2812Resolution() {
     setPixelColor(tPosition++, 0, 0, MAX_BRIGHTNESS);
     show();
 }
+
+#if defined(LOCAL_INFO)
+#undef LOCAL_INFO
+#endif
 #endif // _NEOPIXEL_HPP

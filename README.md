@@ -29,6 +29,9 @@ Available as [Arduino library "NeoPatterns"](https://www.arduinolibraries.info/l
 
 #### If you find this library useful, please give it a star.
 
+&#x1F30E; [Google Translate](https://translate.google.com/translate?sl=en&u=https://github.com/ArminJo/NeoPatterns)
+
+<br/>
 
 | YouTube Video of NeoPatternsDemo | YouTube Video of MatrixDemo on a 10x10 matrix |
 | :-: | :-: |
@@ -135,7 +138,7 @@ These macros must be defined in your program **before** the line `#include <NeoP
 Modify them by enabling / disabling them, or change the values if applicable.
 
 | Name | Default value | Description |
-|-|-|-|
+|-|-:|-|
 | `DO_NOT_SUPPORT_RGBW` | disabled | Disables RGBW pixels support. Activate it, if you only have RGB pixels. Saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
 | `DO_NOT_SUPPORT_BRIGHTNESS` | disabled | Disables the brightness functions. Saves up to 428 bytes program memory for the AllPatternsOnMultiDevices example. |
 | `DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS` | disabled | Disables the special brightness functions, which sets a dimmed pixel to 0 only if brightness or input color was zero, otherwise it is clipped at e.g. 0x000100. Saves up to 144 bytes program memory for the AllPatternsOnMultiDevices example. |
@@ -225,6 +228,8 @@ It also shows, how to dynamically **determine the length of the attached strip**
 
 # Revision History
 ### Version 3.1.2 - work in progress
+- Added function `getActualNeopixelLenghtSimple()`.
+- Added function `clearAndShow()`.
 
 ### Version 3.1.1
 - Added parameter `aRepetitions` to pattern `RainbowCycle`.
@@ -325,6 +330,3 @@ The library examples are tested with GitHub Actions for the following boards:
 - Arduino Mega 2560
 - ESP8266 boards (tested with LOLIN D1 R2 board)
 - ESP32   boards (tested with ESP32 DEVKITV1 board)
-
-## Requests for modifications / extensions
-Please write me a PM including your motivation/problem if you need a modification or an extension.

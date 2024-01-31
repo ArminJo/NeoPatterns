@@ -123,6 +123,7 @@ public:
 
     // Functions to support PixelOffset
     void clear(void);
+    void clearAndShow(void);
     void clearPixel(uint16_t aPixelIndex);
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
 #if defined(_SUPPORT_RGBW)

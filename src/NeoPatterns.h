@@ -390,8 +390,9 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
- * Version 3.1.2 - 9/2022
+ * Version 3.1.2 - 10/2023
  * - Added function getActualNeopixelLenghtSimple().
+ * - Added function clearAndShow().
  *
  * Version 3.1.1 - 9/2022
  * - Added parameter aRepetitions to pattern RainbowCycle.

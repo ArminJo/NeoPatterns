@@ -28,32 +28,30 @@
 #include <Arduino.h>
 
 #define INFO
+//#define DEBUG
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
+/*
+ * Default values are suitable for Li-ion batteries.
+ * We normally have voltage drop at the connectors, so the battery voltage is assumed slightly higher, than the Arduino VCC.
+ */
+//#define LI_ION_VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT     3400 // Do not stress your battery and we require some power for standby
+//#define VCC_CHECK_PERIOD_MILLIS                         10000L // 10 seconds period of VCC checks
+//#define VCC_UNDERVOLTAGE_CHECKS_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_UNDERVOLTAGE_THRESHOLD_MILLIVOLT
+#include "ADCUtils.hpp"
+
 #include <MatrixSnake.hpp>
 
 #if defined(__AVR__)
-//#define DEBUG
 #  if defined(DEBUG)
 #include "AvrTracing.hpp"
 #include "AVRUtils.h"
 #  endif
 
 //#define ALL_PATTERN_ON_ONE_STRIP // shows all patterns on one consecutive device / multiple chained devices
-
-/*
- * Default values are suitable for Li-ion batteries.
- * We normally have voltage drop at the connectors, so the battery voltage is assumed slightly higher, than the Arduino VCC.
- * But keep in mind that the ultrasonic distance module HC-SR04 may not work reliable below 3.7 volt.
- */
-#define VCC_STOP_THRESHOLD_MILLIVOLT    3300 // Do not stress your battery and we require some power for standby
-#define VCC_EMERGENCY_STOP_MILLIVOLT    3000 // Many Li-ions are specified down to 3.0 volt
-#define VCC_CHECK_PERIOD_MILLIS        10000 // Period of VCC checks
-#define VCC_CHECKS_TOO_LOW_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_STOP_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_STOP_MILLIVOLT
-#include "ADCUtils.hpp"
 
 #define FALLING_STAR_DURATION 12
 char sStringBufferForVCC[8] = "xxxxmV ";
@@ -103,7 +101,7 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
         &MatrixAndSnakePatternsDemoHandler);
 
 uint8_t readBrightness();
-void checkAndHandleVCCTooLow();
+void checkAndHandleVCCUndervoltage();
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -215,7 +213,7 @@ PrintIfChanged sBrightnessPrint(BrightnessPGM);
 
 void loop() {
 #if defined(ADC_UTILS_ARE_AVAILABLE)
-    checkAndHandleVCCTooLow();
+    checkAndHandleVCCUndervoltage();
 #endif // defined(__AVR__)
 
 #if defined(SUPPORT_BRIGHTNESS)
@@ -308,9 +306,9 @@ uint8_t readBrightness() {
 /*
  * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
-void checkAndHandleVCCTooLow() {
+void checkAndHandleVCCUndervoltage() {
 
-    if (isVCCTooLowMultipleTimes()) {
+    if (isVCCUndervoltageMultipleTimes()) {
         /*
          * clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
          */
@@ -329,11 +327,6 @@ void checkAndHandleVCCTooLow() {
         NeoPixelMatrix.clear();
         NeoPixelMatrix.show();
         Serial.println(F("Shut down"));
-    }
-    if (isVCCTooLow()) {
-        bar16.update();
-        bar24.update();
-        delay(FALLING_STAR_DURATION);
     }
 }
 #endif // defined(ADC_UTILS_ARE_AVAILABLE)
