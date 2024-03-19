@@ -85,7 +85,8 @@
 //#include "AvrTracing.hpp"
 
 #define VERSION_EXAMPLE "1.3"
-// 1.3 VU Bar animations - work in progress
+// 1.4 - work in progress
+// 1.3 Moved Bridge and loop, VU Bar animations
 // 1.2 Improvements from Hannover Maker Faire
 // 1.1 Hannover Maker Faire version
 

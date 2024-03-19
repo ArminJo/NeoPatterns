@@ -58,14 +58,14 @@ Formula is: **NewSpeed = OldSpeed + Gravity + Friction + (OldSpeed * Drag)**
 <br/>
 
 # Pictures
-| At the Hannover MakerFaire 2022 | At the Cologne public library MINTk�ln-Festival 2021 |
+| At the Hannover MakerFaire 2022 | At the Cologne public library MINTk&ouml;ln-Festival 2021 |
 | :-: | :-: |
-| ![Accelerometer version from MakerFaire 2022](https://github.com/ArminJo/OpenledRace/blob/master/pictures/Overview.jpg) | ![OpenLedRace at the Cologne public library MINTk�ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg) |
+| ![Accelerometer version from MakerFaire 2022](https://github.com/ArminJo/OpenledRace/blob/master/pictures/Overview.jpg) | ![OpenLedRace at the Cologne public library MINTk&ouml;ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg) |
 
 <br/>
 
 # YouTube Videos
-| At the Hannover MakerFaire 2022 | At the Cologne public library MINTk�ln-Festival 2021 |
+| At the Hannover MakerFaire 2022 | At the Cologne public library MINTk&ouml;ln-Festival 2021 |
 | :-: | :-: |
 | [![OpenLedRace at the Hannover MakerFaire 2022](https://i.ytimg.com/vi/lYzYpFYJfWI/hqdefault.jpg)](https://www.youtube.com/watch?v=lYzYpFYJfWI) | [![OpenLedRace in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g) |
 

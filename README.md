@@ -181,11 +181,11 @@ If you are using PlatformIO, you can define the macros in the *[platformio.ini](
 If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
 ![Sloeber settings](https://github.com/Arduino-IRremote/Arduino-IRremote/blob/master/pictures/SloeberDefineSymbols.png)
 
-WOKWI online simulation of the AllPatternOnOneBar example.<br/>
-[![WOKWI online simulation of the AllPatternOnOneBar example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneBar.png)](https://wokwi.com/arduino/projects/299556508969992714).
+[WOKWI online simulation of the AllPatternOnOneBar example](https://wokwi.com/arduino/projects/299556508969992714)
+![Screenshot of WOKWI online simulation of the AllPatternOnOneBar example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneBar.png)
 
-WOKWI online simulation of the MatrixDemo example.<br/>
-[![WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)](https://wokwi.com/arduino/projects/299560666027524617).
+[WOKWI online simulation of the MatrixDemo example](https://wokwi.com/arduino/projects/299560666027524617)
+![Screenshot of WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)
 
 <br/>
 
@@ -217,8 +217,8 @@ AllPatternsOnMultiDevices on breadboard
 Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Player, without Boxes Track".<br/>
 See also the [dedicated repository for OpenLedRace](https://github.com/ArminJo/OpenledRace).
 
-OpenLedRace at the Cologne public library MINTk�ln-Festival
-![OpenLedRace at the Cologne public library MINTk�ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
+OpenLedRace at the Cologne public library MINTk&ouml;ln-Festival
+![OpenLedRace at the Cologne public library MINTk&ouml;ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
 
 ## TwoPatternsOnOneStrip
 This example renders a slow "background pattern" and a fast "foreground pattern" on the same strip.<br/>
@@ -228,8 +228,7 @@ It also shows, how to dynamically **determine the length of the attached strip**
 
 # Revision History
 ### Version 3.1.2 - work in progress
-- Added function `getActualNeopixelLenghtSimple()`.
-- Added function `clearAndShow()`.
+- Added functions `getActualNeopixelLenghtSimple()`, `clearAndShow()`, `setMatrixPixelColorAndShow()` and `testMapping()`.
 
 ### Version 3.1.1
 - Added parameter `aRepetitions` to pattern `RainbowCycle`.

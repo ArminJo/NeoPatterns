@@ -166,7 +166,7 @@ void MatrixNeoPatterns::setInitHeat() {
             MatrixOld[tIndex] = (tRandomValue.UBytes[i] * (255 - 40) >> 8) + 40; // random(40,255) saves 4 bytes and is faster
             tIndex++;
             // The initalHeatLine is of size Columns + 2
-            if (tIndex >= (Columns + 2)) {
+            if (tIndex >= (uint8_t)(Columns + 2)) {
 #if defined(TRACE)
                 Serial.print(F("initalHeatLine="));
                 for (uint_fast8_t i = 0; i < (Columns + 2); ++i) {
@@ -278,8 +278,8 @@ bool MatrixNeoPatterns::FireMatrixUpdate() {
      * Process and Map center (without padding) from heat cells to LED colors.
      * Using pointer instead of indexing with x and y saves 1 ms!
      */
-    for (uint_fast8_t y = 1; y < Rows + 1; y++) { // from row index 1 to Rows
-        for (uint_fast8_t x = 1; x < Columns + 1; x++) {
+    for (uint_fast8_t y = 1; y < (uint8_t)(Rows + 1); y++) { // from row index 1 to Rows
+        for (uint_fast8_t x = 1; x < (uint8_t)(Columns + 1); x++) {
             // Convolution takes 11 milliseconds with float or 4 ms with integer
             long tConvolutionSumTimes256 = 0;
             // using pointers here saves 1 ms

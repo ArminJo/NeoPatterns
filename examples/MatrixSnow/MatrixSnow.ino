@@ -1,7 +1,7 @@
 /*
  * MatrixSnow.cpp
  *
- *  For testing the MatrixNeoPatterns Snow pattern
+ *  For testing the MatrixNeoPatterns Snow pattern on a 16 x 16 or on a 8 x 8 matrix
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -32,36 +32,33 @@
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
+//#define DEBUG
+#define INFO
 #include <MatrixNeoPatterns.hpp>
 
 #if defined(__AVR__)
 #include "AVRUtils.h" // for printRAMInfo()
 #endif
 
-#define USE_16_X_16_MATRIX
-#if defined(USE_16_X_16_MATRIX)
+//#define USE_16_X_16_MATRIX          // else 8x8 matrix
+
 #define PIN_NEOPIXEL_MATRIX         8
+#if defined(USE_16_X_16_MATRIX)
 #define MATRIX_NUMBER_OF_COLUMNS   16
 #define MATRIX_NUMBER_OF_ROWS      16
-/*
- * Specify your matrix geometry as 4th parameter.
- * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
- * See MatrixNeoPatterns.h for further explanation.
- */
-MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_ZIGZAG, NEO_GRB + NEO_KHZ800, NULL);
+#define MATRIX_GEOMETRY             (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_ZIGZAG)
 #else
-#define PIN_NEOPIXEL_MATRIX         8
 #define MATRIX_NUMBER_OF_COLUMNS    8
 #define MATRIX_NUMBER_OF_ROWS       8
+#define MATRIX_GEOMETRY             (NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE)
+#endif
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
  * See MatrixNeoPatterns.h for further explanation.
  */
 MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
-NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE, NEO_GRB + NEO_KHZ800, NULL);
-#endif
+MATRIX_GEOMETRY, NEO_GRB + NEO_KHZ800, NULL);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -95,7 +92,6 @@ void setup() {
 }
 
 void loop() {
-
     NeoPixelMatrix.SnowUpdate();
     NeoPixelMatrix.show();
     NeoPixelMatrix.TotalStepCounter = 42; // set to any value > 1
