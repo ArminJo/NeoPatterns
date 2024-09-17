@@ -1,8 +1,15 @@
 /*
  * DebugLevel.h
- * Include to propagate debug levels
+ * Include to propagate debug levels to each other
  *
- *  Copyright (C) 2016-2020  Armin Joachimsmeyer
+ * TRACE   // Information you need to understand details of a function or if you hunt a bug.
+ * DEBUG   // Information need to understand the operating of your program. E.g. function calls and values of control variables.
+ * INFO    // Information you want to see in regular operation to see what the program is doing. E.g. "Now playing Muppets melody".
+ * WARN    // Information that the program may encounter problems, like small Heap/Stack area.
+ * ERROR   // Informations to explain why the program will not run. E.g. not enough Ram for all created objects.
+ *
+ *
+ *  Copyright (C) 2016-2024  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -25,7 +32,7 @@
 #ifndef _DEBUGLEVEL_H
 #define _DEBUGLEVEL_H
 
-// Propagate debug level
+// Propagate different debug level
 #if defined(TRACE)    // Information you need to understand details of a function or if you hunt a bug.
 #  if !defined(DEBUG)
 #define DEBUG   // Information need to understand the operating of your program. E.g. function calls and values of control variables.

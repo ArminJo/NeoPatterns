@@ -29,14 +29,15 @@
 #ifndef _MATRIX_NEOPIXEL_HPP
 #define _MATRIX_NEOPIXEL_HPP
 
-#if defined(DEBUG) && !defined(LOCAL_DEBUG)
-#define LOCAL_DEBUG
-#endif
-//#define LOCAL_DEBUG // This enables debug output only for this file
-
 #include "MatrixNeoPixel.h"
 // include sources
 #include "NeoPixel.hpp"
+
+// This block must be located after the includes of other *.hpp files
+//#define LOCAL_INFO  // This enables info output only for this file
+//#define LOCAL_DEBUG // This enables debug output only for this file - only for development
+//#define LOCAL_TRACE // This enables trace output only for this file - only for development
+#include "LocalDebugLevelStart.h"
 
 // For demo 8x8 heart graphics
 const uint8_t heart8x8[] PROGMEM = { 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18, 0x00 };
@@ -105,7 +106,7 @@ void MatrixNeoPixel::setMatrixPixelColorAndShow(uint8_t aColumnX, uint8_t aRowY,
 }
 void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
     if (aColumnX < Columns && aRowY < Rows) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("set x="));
         Serial.print(aColumnX);
@@ -129,7 +130,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 #else
     setPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, aRed, aGreen, aBlue);
 #endif
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -142,7 +143,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 
 void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
     if (aColumnX < Columns && aRowY < Rows) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("set x="));
         Serial.print(aColumnX);
@@ -166,7 +167,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
 #else
     addPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, aRed, aGreen, aBlue);
 #endif
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -189,7 +190,7 @@ void MatrixNeoPixel::setMatrixPixelColorAndShow(uint8_t aColumnX, uint8_t aRowY,
  */
 void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
     if (aColumnX < Columns && aRowY < Rows) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         if (a32BitColor != 0) {
             printPin(&Serial);
             Serial.print(F("set x="));
@@ -211,7 +212,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 #else
         setPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, a32BitColor);
 #endif
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -224,7 +225,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 
 void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor) {
     if (aColumnX < Columns && aRowY < Rows) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         if (a32BitColor != 0) {
             printPin(&Serial);
             Serial.print(F("set x="));
@@ -246,7 +247,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 #else
         addPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1, a32BitColor);
 #endif
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     } else {
         printPin(&Serial);
         Serial.print(F("skip x="));
@@ -270,7 +271,7 @@ uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
 #else
     tColor = getPixelColor((Columns * (Rows - aRowY) - aColumnX) - 1);
 #endif
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printPin(&Serial);
     Serial.print(F("set x="));
     Serial.print(aColumnX);
@@ -470,7 +471,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
 
             uint8_t tCurrentBitmask = tBitmaskToStart; // shifting mask
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             Serial.print(F(" tGraphicsPointer="));
             Serial.print((uintptr_t) tGraphicsPointer, HEX);
             Serial.print(F(" tLineBitPattern="));
@@ -480,7 +481,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
              * Process one horizontal line
              */
             for (int8_t x = aXOffset; x < (aXOffset + aWidthOfGraphic); ++x) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
                 Serial.print(F(" tBitmask="));
                 Serial.print(tCurrentBitmask);
                 Serial.print(F(" x="));
@@ -568,7 +569,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
             }
             uint16_t tCurrentBitmask = tBitmaskToStart; // shifting mask
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             Serial.print(F("tGraphicsPointer="));
             Serial.print((uintptr_t) tGraphicsPointer, HEX);
             Serial.print(F(" tLineBitPattern="));
@@ -578,7 +579,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
              * Process one horizontal line
              */
             for (int8_t x = aXOffset; x < (aXOffset + aWidthOfGraphic); ++x) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
                 Serial.print(F(" tBitmask="));
                 Serial.print(tCurrentBitmask);
                 Serial.print(F(" x="));
@@ -625,7 +626,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
  */
 void MatrixNeoPixel::drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor) {
     uint16_t tBitMask = 0x0001;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printPin(&Serial);
     Serial.print(F("drawQuarterPatternOdd aPatternValue=0x"));
     Serial.println(aPatternValue, HEX);
@@ -695,7 +696,7 @@ void MatrixNeoPixel::drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aFo
  */
 void MatrixNeoPixel::drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor) {
     uint16_t tBitMask = 0x0001;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printPin(&Serial);
     Serial.print(F("drawQuarterPatternEven aPatternValue=0x"));
     Serial.println(aPatternValue, HEX);
@@ -773,7 +774,7 @@ void MatrixNeoPixel::drawAllColors() {
                 uint8_t green = xDescendingSpecial;
                 uint8_t red = yAscending;
 
-//#if defined(TRACE)
+#if defined(LOCAL_TRACE)
                 printPin(&Serial);
                 Serial.print(F("x="));
                 Serial.print(x);
@@ -785,7 +786,7 @@ void MatrixNeoPixel::drawAllColors() {
                 Serial.print(green);
                 Serial.print(F(" blue="));
                 Serial.println(blue);
-//#endif
+#endif
                 // set values
                 setMatrixPixelColor(x, y, red, green, blue);
 
@@ -824,7 +825,7 @@ void MatrixNeoPixel::drawAllColors2() {
             uint8_t green = yDescending - xAscending;
             uint8_t red = yAscending;
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             printPin(&Serial);
             Serial.print(F("x="));
             Serial.print(x);
@@ -843,7 +844,10 @@ void MatrixNeoPixel::drawAllColors2() {
 }
 
 /*
+ * Draw a triangle with its right angle at upper left
  * Move from 0,0 to 0,Columns, i.e. upper left to upper right
+ * Move diagonal to 0,Rows i.e. lower left corner
+ * Move up to 0,0 i.e. upper left corner
  */
 void MatrixNeoPixel::testMapping(uint16_t aDelayMillis) {
 
@@ -856,7 +860,7 @@ void MatrixNeoPixel::testMapping(uint16_t aDelayMillis) {
     }
     // Move diagonal to 0,Rows i.e. lower left corner
     tRow++;
-    tColumn --;
+    tColumn--;
     for (; tRow < Rows; tRow++) {
         tColumn--;
         setMatrixPixelColorAndShow(tColumn, tRow, COLOR16_DARK_BLUE);
@@ -868,6 +872,29 @@ void MatrixNeoPixel::testMapping(uint16_t aDelayMillis) {
         setMatrixPixelColorAndShow(tColumn, tRow, COLOR16_DARK_BLUE);
         delay(aDelayMillis);
     }
+#if defined(SUPPORT_BRIGHTNESS)
+    // Test brightness
+    uint8_t tOldBrightness = Brightness;
+    Brightness = MAX_BRIGHTNESS;
+    setMatrixPixelColor(1, 1, 1, 1, 1); // lowest brightness at all colors
+    setMatrixPixelColor(2, 1, 2, 2, 2);
+    setMatrixPixelColor(3, 1, 3, 3, 3);
+    setMatrixPixelColor(4, 1, 4, 4, 4);
+    setMatrixPixelColor(1, 2, 1, 0, 0); // lowest brightness at red
+    setMatrixPixelColor(2, 2, 2, 0, 0);
+    setMatrixPixelColor(3, 2, 3, 0, 0);
+    setMatrixPixelColor(4, 2, 4, 0, 0);
+    setMatrixPixelColor(1, 3, 0, 1, 0); // lowest brightness at green
+    setMatrixPixelColor(2, 3, 0, 2, 0);
+    setMatrixPixelColor(3, 3, 0, 3, 0);
+    setMatrixPixelColor(4, 3, 0, 4, 0);
+    setMatrixPixelColor(1, 4, 0, 0, 1); // lowest brightness at blue
+    setMatrixPixelColor(2, 4, 0, 0, 2);
+    setMatrixPixelColor(3, 4, 0, 0, 3);
+    setMatrixPixelColor(4, 4, 0, 0, 4);
+    Brightness = tOldBrightness;
+    show();
+#endif
 }
 
 /*
@@ -960,7 +987,5 @@ uint16_t ZigzagTypeBottomLeftMapping(uint8_t aColumnX, uint8_t aRowY, uint8_t aC
     }
 }
 
-#if defined(LOCAL_DEBUG)
-#undef LOCAL_DEBUG
-#endif
+#include "LocalDebugLevelEnd.h"
 #endif // _MATRIX_NEOPIXEL_HPP

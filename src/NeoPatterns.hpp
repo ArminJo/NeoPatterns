@@ -43,22 +43,17 @@
 
 #include <Arduino.h>
 
-#if defined(DEBUG) && !defined(LOCAL_DEBUG)
-#define LOCAL_DEBUG
-#define LOCAL_INFO // Propagate debug level
-#else
-//#define LOCAL_DEBUG // This enables debug output only for this file
-#  if defined(INFO) && !defined(LOCAL_INFO)
-#define LOCAL_INFO
-#  endif
-//#define LOCAL_INFO // This enables info output only for this file
-#endif
-
 #include "NeoPatterns.h"
 #include "LongUnion.h" // for faster random()
 
 // include sources
 #include "NeoPixel.hpp"
+
+// This block must be located after the includes of other *.hpp files
+//#define LOCAL_INFO  // This enables info output only for this file
+//#define LOCAL_DEBUG // This enables debug output only for this file - only for development
+//#define LOCAL_TRACE // This enables trace output only for this file - only for development
+#include "LocalDebugLevelStart.h"
 
 const char PatternNone[] PROGMEM ="None";
 const char PatternRainbowCycle[] PROGMEM ="Rainbow cycle";
@@ -69,11 +64,11 @@ const char PatternScannerExtended[] PROGMEM ="Scanner extended";
 const char PatternStripes[] PROGMEM ="Stripes";
 const char PatternFlash[] PROGMEM ="Flash";
 const char PatternProcessSelectiveColor[] PROGMEM ="Process selective color";
-const char PatternFire[] PROGMEM ="Fire";
 const char PatternHeartbeat[] PROGMEM ="Heartbeat";
+const char PatternFire[] PROGMEM ="Fire";
+const char PatternBouncingBall[] PROGMEM ="Bouncing ball";
 const char PatternUserPattern1[] PROGMEM ="User pattern 1";
 const char PatternUserPattern2[] PROGMEM ="User pattern 2";
-const char PatternBouncingBall[] PROGMEM ="Bouncing ball";
 
 /*
  * Include known matrix patterns
@@ -88,7 +83,7 @@ const char PatternUnknown[] PROGMEM ="Unknown";
 // ActivePattern can be used as index of PatternNamesArray
 const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
         PatternScannerExtended, PatternStripes, PatternFlash, PatternProcessSelectiveColor, PatternHeartbeat, PatternFire,
-        PatternUserPattern1, PatternUserPattern2, PatternBouncingBall, MatrixPatternTicker, MatrixPatternMove,
+        PatternBouncingBall, PatternUserPattern1, PatternUserPattern2, MatrixPatternTicker, MatrixPatternMove,
         MatrixPatternMovingPicture, PatternFire, MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown };
 
 // array of update function pointer, not used since it needs 150 bytes more :-(
@@ -270,7 +265,7 @@ bool NeoPatterns::updateAndShowAlsoAllPartialPatterns() {
             tAtLeastOnePatternIsActive = true;
             tNeedShow |= tNextObjectPointer->updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE); // this avoids show of any patterns at this call
         }
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("&Pattern=0x"));
         Serial.print((uintptr_t) tNextObjectPointer, HEX);
@@ -337,7 +332,7 @@ void NeoPatterns::showPatternInitially() {
     if ((ActivePattern == PATTERN_NONE) || (PixelFlags & PIXEL_FLAG_SHOW_ONLY_AT_UPDATE) == 0) {
         show();
         lastUpdate = millis(); // to schedule the next update
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("Init lastUpdate to "));
         Serial.println(lastUpdate);
@@ -580,6 +575,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
             printPattern();
             Serial.print(F(": Call completion callback 0x"));
             Serial.println((__SIZE_TYPE__) (OnPatternComplete) << 1, HEX);
+            Serial.flush();
 #endif
             OnPatternComplete(this); // call the completion callback
 #if defined(LOCAL_DEBUG)
@@ -587,6 +583,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
             Serial.print(F("New "));
             printPattern();
             Serial.println();
+            Serial.flush();
 #endif
         } else {
 #if defined(LOCAL_DEBUG)
@@ -598,7 +595,9 @@ bool NeoPatterns::decrementTotalStepCounter() {
         }
         return true;
     }
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
+    Serial.print(F(" TotalStepCounter="));
+    Serial.print(TotalStepCounter);
     Serial.print(F(" lastUpdate="));
     Serial.println(lastUpdate);
 #endif
@@ -665,7 +664,7 @@ void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection, uint
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_RAINBOW_CYCLE;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -720,7 +719,7 @@ void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t 
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_COLOR_WIPE;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -768,7 +767,7 @@ void NeoPatterns::Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNum
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FADE;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -826,7 +825,7 @@ void NeoPatterns::Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_HEARTBEAT;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -860,7 +859,7 @@ bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
                 }
             }
         }
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("Index="));
         Serial.println(Index);
@@ -875,7 +874,7 @@ bool NeoPatterns::HeartbeatUpdate(bool aDoUpdate) {
             if (tDimmedColor == 0) {
                 // now we have black, which should be skipped
                 aDoUpdate = true; // enable next index for next loop
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
                 Serial.println(F("Skip black color index"));
 #endif
             } else {
@@ -959,7 +958,7 @@ void NeoPatterns::ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aI
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_SCANNER_EXTENDED;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1019,7 +1018,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
     uint16_t tBrightnessHighResolution = 0xFFFF; // max. upper byte is the integer part used for setBrightness, lower byte is the fractional part
     uint16_t tBrightnessDelta = LongValue2.DeltaBrightnessShift8;
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("ScannerExtendedUpdate: Index="));
         Serial.print(Index);
@@ -1063,7 +1062,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
             }
         }
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("Loop="));
         Serial.print(tPatternIndex);
@@ -1082,7 +1081,7 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
     }
 
     if (aDoUpdate) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         Serial.println(F("clear tail"));
 #endif
         /*
@@ -1183,7 +1182,7 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_STRIPES;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1256,7 +1255,7 @@ void NeoPatterns::Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FLASH;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1394,7 +1393,7 @@ bool NeoPatterns::BouncingBallUpdate(bool aDoUpdate) {
      * Refresh pattern
      */
     setPixelColor(tIndexToDraw, Color1);
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printPin(&Serial);
     Serial.print(F("Ball: Index="));
     Serial.print(Index);
@@ -1444,7 +1443,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FIRE;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1587,7 +1586,6 @@ void NeoPatterns::printHeat(Print *aSerial) {
         tHeatGraphPtr++;
     }
     aSerial->println();
-    Serial.flush();
 }
 
 // Initialize for a delay -> just keep the old pattern displayed
@@ -1626,7 +1624,7 @@ void NeoPatterns::ProcessSelectiveColor(color32_t aColorForSelection, color32_t 
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_PROCESS_SELECTIVE;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printInfo(&Serial, true);
 #endif
 }
@@ -1740,6 +1738,10 @@ void NeoPatterns::getPatternName(uint8_t aPatternNumber, char *aBuffer, uint8_t 
 void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 #if defined(__AVR__)
     const char *aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
+#if defined(LOCAL_TRACE)
+    Serial.print(F("aNameArrayPointerPGM=0x"));
+    Serial.println((unsigned int) aNameArrayPointerPGM, HEX);
+#endif
     aSerial->print((const __FlashStringHelper*) aNameArrayPointerPGM);
 #else
     aSerial->print(PatternNamesArray[aPatternNumber]);
@@ -1814,132 +1816,19 @@ void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
     NeoPixel::printInfo(aSerial);
 }
 
-/***********************************
- * Code for user pattern extensions
- ***********************************/
+/********************************************
+ * Code for user provided pattern extensions
+ ********************************************/
 
 #if defined(ENABLE_PATTERN_USER_PATTERN1)
-/*
- * Set all pixel to aBackgroundColor and let a pixel of Color1 move through.
- * Starts with all pixel aColor1 and also ends with it.
- */
-void __attribute__((weak)) UserPattern1(NeoPatterns *aNeoPatterns, color32_t aPixelColor, color32_t aBackgroundColor,
-        uint16_t aIntervalMillis, uint8_t aDirection) {
-    aNeoPatterns->Interval = aIntervalMillis;
-    aNeoPatterns->Color1 = aPixelColor;
-    aNeoPatterns->LongValue1.BackgroundColor = aBackgroundColor;
-    aNeoPatterns->Direction = aDirection;
-    aNeoPatterns->TotalStepCounter = aNeoPatterns->numPixels() + 2; // + 2 for the first and last pattern
-    if (aDirection == DIRECTION_UP) {
-        aNeoPatterns->Index = -1;
-    } else {
-        aNeoPatterns->Index = aNeoPatterns->numPixels();
-    }
-
-    aNeoPatterns->setColor(aBackgroundColor);
-    aNeoPatterns->showPatternInitially();
-// must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
-    aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN1;
-#if defined(TRACE)
-    aNeoPatterns->printInfo(&Serial, true);
-#endif
-}
-
-/*
- * Sample implementation
- */
-bool __attribute__((weak)) UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
-    if (aDoUpdate) {
-        if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
-            return true;
-        }
-    }
-    /*
-     * Refresh pattern
-     */
-    for (uint_fast16_t i = 0; i < aNeoPatterns->numPixels(); i++) {
-        if (i == aNeoPatterns->Index) {
-            aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
-        } else {
-            aNeoPatterns->setPixelColor(i, aNeoPatterns->LongValue1.BackgroundColor);
-        }
-    }
-    return false;
-}
-
+extern bool UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate); // provided by main / user program
 bool NeoPatterns::Pattern1Update(bool aDoUpdate) {
     return UserPattern1Update(this, aDoUpdate);
 }
 #endif
 
 #if defined(ENABLE_PATTERN_USER_PATTERN2)
-/*
- * let a pixel of aColor move up and down
- * starts and ends with all pixel cleared
- */
-void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aColor, uint16_t aIntervalMillis,
-        uint16_t aRepetitions, uint8_t aDirection) {
-    /*
-     * Sample implementation
-     */
-    aNeoPatterns->Interval = aIntervalMillis;
-    aNeoPatterns->Color1 = aColor;
-    aNeoPatterns->Direction = aDirection;
-// *2 for up and down. (aNeoPatterns->numPixels() - 1) do not use end pixel twice.
-// +1 for the initial pattern with end pixel. + 2 for the first and last clear pattern.
-    aNeoPatterns->TotalStepCounter = ((aRepetitions + 1) * 2 * (aNeoPatterns->numPixels() - 1)) + 1 + 2;
-    if (aDirection == DIRECTION_UP) {
-        aNeoPatterns->Index = -1;
-    } else {
-        aNeoPatterns->Index = aNeoPatterns->numPixels();
-    }
-
-    aNeoPatterns->clear();
-    aNeoPatterns->showPatternInitially();
-// must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
-    aNeoPatterns->ActivePattern = PATTERN_USER_PATTERN2;
-#if defined(TRACE)
-    aNeoPatterns->printInfo(&Serial, true);
-#endif
-}
-
-/*
- * Sample implementation
- * The user may specify its own implementation
- */
-bool __attribute__((weak)) UserPattern2Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
-    if (aDoUpdate) {
-        // clear old pixel
-        aNeoPatterns->setPixelColor(aNeoPatterns->Index, COLOR32_BLACK);
-
-        if (aNeoPatterns->decrementTotalStepCounterAndSetNextIndex()) {
-            return true;
-        }
-        /*
-         * Next index
-         */
-        if (aNeoPatterns->Direction == DIRECTION_UP) {
-            // do not use top pixel twice
-            if (aNeoPatterns->Index == (aNeoPatterns->numPixels() - 1)) {
-                aNeoPatterns->Direction = DIRECTION_DOWN;
-            }
-        } else {
-            // do not use bottom pixel twice
-            if (aNeoPatterns->Index == 0) {
-                aNeoPatterns->Direction = DIRECTION_UP;
-            }
-        }
-    }
-    /*
-     * Refresh pattern
-     */
-    if (aNeoPatterns->TotalStepCounter != 1) {
-        // last pattern is clear
-        aNeoPatterns->setPixelColor(aNeoPatterns->Index, aNeoPatterns->Color1);
-    }
-    return false;
-}
-
+extern bool UserPattern2Update(NeoPatterns *aNeoPatterns, bool aDoUpdate); // provided by main / user program
 bool NeoPatterns::Pattern2Update(bool aDoUpdate) {
     return UserPattern2Update(this, aDoUpdate);
 }
@@ -1981,7 +1870,7 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
 void multipleFallingStarsCompleteHandler(NeoPatterns *aLedsPtr) {
     uint8_t tScannerIntervalMillis = aLedsPtr->ByteValue2.ScannerIntervalMillis;
     uint16_t tRepetitions = aLedsPtr->Repetitions;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     Serial.print(F("Repetitions="));
     Serial.println(tRepetitions);
 #endif
@@ -2113,12 +2002,13 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 #endif
         break;
     case 12:
-#if defined(ENABLE_PATTERN_BOUNCING_BALL) && defined(ENABLE_PATTERN_USER_PATTERN1)
+#if defined(ENABLE_PATTERN_BOUNCING_BALL)
         // BouncingBall only for bars
         if ((aLedsPtr->PixelFlags & PIXEL_FLAG_GEOMETRY_CIRCLE) == 0) {
             aLedsPtr->BouncingBall(NeoPatterns::Wheel(tColor), aLedsPtr->numPixels() - 1);
         } else {
-            UserPattern1(aLedsPtr, NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), tDuration / 2);
+            // Fade to complement
+            aLedsPtr->Fade(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), 64, tDuration);
         }
 #else
         aLedsPtr->Delay(100);
@@ -2145,10 +2035,5 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 }
 #endif
 
-#if defined(LOCAL_DEBUG)
-#undef LOCAL_DEBUG
-#endif
-#if defined(LOCAL_TRACE)
-#undef LOCAL_TRACE
-#endif
+#include "LocalDebugLevelEnd.h"
 #endif // _NEOPATTERNS_HPP

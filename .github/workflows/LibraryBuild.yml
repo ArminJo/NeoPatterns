@@ -62,8 +62,6 @@ jobs:
               All: -DDO_NOT_SUPPORT_RGBW
 
           - arduino-boards-fqbn: arduino:avr:leonardo
-            build-properties:
-              AllPatternOnOneBar: -DTEST_USER_PATTERNS
             sketches-exclude: AllPatternsOnMultiDevices,OpenLedRace # too big
 
           - arduino-boards-fqbn: esp8266:esp8266:huzzah:eesz=4M3M,xtal=80

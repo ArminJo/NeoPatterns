@@ -1055,7 +1055,8 @@ void setup() {
 #endif
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/ \
+    || defined(SERIALUSB_PID)  || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
 
@@ -1212,7 +1213,7 @@ void loop() {
 
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
-        printStackUnusedAndUsedBytesIfChanged(&Serial);
+        printStackMaxUsedAndUnusedSizesIfChanged(&Serial);
     }
 #endif
 

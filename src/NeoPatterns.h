@@ -63,10 +63,13 @@
 
 extern const char *const PatternNamesArray[] PROGMEM;
 
+/*
+ * If no pattern is explicitly activated, activate all patterns here
+ */
 #if (!(defined(ENABLE_PATTERN_RAINBOW_CYCLE) || defined(ENABLE_PATTERN_COLOR_WIPE) || defined(ENABLE_PATTERN_FADE) \
 || defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_FLASH) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
-|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) \
-|| defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
+|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
+|| defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2)  \
 || defined(ENABLE_NO_NEO_PATTERN_BY_DEFAULT) ))
 #define ENABLE_PATTERN_RAINBOW_CYCLE
 #define ENABLE_PATTERN_COLOR_WIPE
@@ -77,8 +80,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define ENABLE_PATTERN_PROCESS_SELECTIVE
 #define ENABLE_PATTERN_HEARTBEAT
 #define ENABLE_PATTERN_FIRE
-#define ENABLE_PATTERN_USER_PATTERN1
-#define ENABLE_PATTERN_USER_PATTERN2
+// User patterns must be enabled explicitly by main program, they are not included in this library
 #   if !defined(DO_NOT_USE_MATH_PATTERNS)
 #define ENABLE_PATTERN_BOUNCING_BALL // Requires up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise.
 #   endif
@@ -98,11 +100,12 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define PATTERN_HEARTBEAT           9
 #define PATTERN_FIRE               10
 
-#define PATTERN_USER_PATTERN1      11
-#define PATTERN_USER_PATTERN2      12
+#define PATTERN_BOUNCING_BALL      11
 
-#define PATTERN_BOUNCING_BALL      13
-#define LAST_NEO_PATTERN           PATTERN_BOUNCING_BALL
+#define PATTERN_USER_PATTERN1      12
+#define PATTERN_USER_PATTERN2      13
+
+#define LAST_NEO_PATTERN           PATTERN_USER_PATTERN2
 
 /*
  * Values for Direction
@@ -111,6 +114,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define DIRECTION_LEFT 1
 #define DIRECTION_DOWN 2
 #define DIRECTION_RIGHT 3
+#define DIRECTION_UP_DOWN_MASK  0x02
 #define DIRECTION_MASK  0x03
 #define PARAMETER_IS_DURATION  0x80 // if highest bit is set for direction parameter, the intervalMillis parameter is interpreted as durationMillis.
 #define OppositeDirection(aDirection) (((aDirection) + 2) & DIRECTION_MASK)
@@ -390,8 +394,11 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
- * Version 3.1.2 - 02/2024
+ * Version 3.1.2 - 09/2024
  * - Added functions `getActualNeopixelLenghtSimple()`, `clearAndShow()`, `setMatrixPixelColorAndShow()` and `testMapping()`.
+ * - Improved SNOW pattern.
+ * - New handling for USER_PATTERN1 and USER_PATTERN2 and new UserPattern example.
+ * - Improved MatrixPatternsTest example.
  *
  * Version 3.1.1 - 9/2022
  * - Added parameter aRepetitions to pattern RainbowCycle.

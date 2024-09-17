@@ -60,11 +60,12 @@
 
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 #  if !defined(DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS)
-// // Pixel is set to zero, only if brightness or input color is zero, otherwise it is clipped at e.g. 0x000100
+// // Each color is only set to zero, if brightness or input color is zero. Otherwise each color brightness is at least 1 e.g. 0x000100
 #define SUPPORT_NO_ZERO_BRIGHTNESS // Introduced to avoid double negations
 #  endif
 #endif
-#define MAX_BRIGHTNESS  0xFF // is internally stored as 0
+#define MAX_BRIGHTNESS  0xFF
+#define MAX_WHEEL_POSITION  0xFF
 
 #if defined(_SUPPORT_RGBW)
 uint8_t getWhitePart(color32_t color);
@@ -164,7 +165,7 @@ public:
     uint8_t PixelFlags;
     uint16_t PixelOffset;               // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
     NeoPixel *UnderlyingNeoPixelObject; // The underlying NeoPixel object for partial patterns overlays, otherwise the object itself
-    uint8_t Brightness;                 // NeoPixel brightness instead of the Adafruit brightness, which is store as effective brightness + 1 :-(.
+    uint8_t Brightness;                 // NeoPixel effective brightness instead of the Adafruit brightness, which is stored as effective brightness + 1 :-(.
 };
 
 #define PIXEL_FLAG_IS_PARTIAL_NEOPIXEL                       0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject

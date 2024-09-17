@@ -3,7 +3,7 @@
  *
  *  Arduino library to write big numbers on a 1602 or 2004 LCD.
  *
- *  Copyright (C) 2022-2023  Armin Joachimsmeyer
+ *  Copyright (C) 2022-2024  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of LCDBigNumbers https://github.com/ArminJo/LCDBigNumbers.
@@ -33,6 +33,19 @@
 
 #define ONE_COLUMN_HYPHEN_CHARACTER      '_' // This input character is printed as a one column hyphen. Normal hyphen / minus are printed as a hyphen with the width of the number - 1.
 #define ONE_COLUMN_HYPHEN_STRING         "_" // This input string is printed as a one column hyphen. Normal hyphen / minus are printed as a hyphen with the width of the number - 1.
+
+#define VERSION_LCD_BIG_NUMBERS "1.2.3"
+#define VERSION_LCD_BIG_NUMBERS_MAJOR 1
+#define VERSION_LCD_BIG_NUMBERS_MINOR 2
+#define VERSION_LCD_BIG_NUMBERS_PATCH 3
+// The change log is at the README.md
+
+/*
+ * Macro to convert 3 version parts into an integer
+ * To be used in preprocessor comparisons, such as #if VERSION_LCD_BIG_NUMBERS_HEX >= VERSION_HEX_VALUE(3, 0, 0)
+ */
+#define VERSION_HEX_VALUE(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+#define VERSION_LCD_BIG_NUMBERS_HEX  VERSION_HEX_VALUE(VERSION_LCD_BIG_NUMBERS_MAJOR, VERSION_LCD_BIG_NUMBERS_MINOR, VERSION_LCD_BIG_NUMBERS_PATCH)
 
 //#define USE_PARALLEL_2004_LCD // Is default
 //#define USE_PARALLEL_1602_LCD
@@ -274,12 +287,13 @@ const uint8_t bigNumbers3x4_2[4][33] PROGMEM = {                         // 4-li
 class LCDBigNumbers: public Print {
 
 public:
+    virtual ~LCDBigNumbers(){}
 #if defined(USE_PARALLEL_LCD)
     LiquidCrystal *LCD;
 #else
     LiquidCrystal_I2C *LCD;
 #endif
-    uint8_t NumberWidth;
+    uint8_t NumberWidth; // Width of the rendered number not including the optional blank gap
     uint8_t NumberHeight;
     uint8_t FontVariant;
     const uint8_t (*bigNumbersCustomPatterns)[8];
@@ -287,7 +301,7 @@ public:
     const uint8_t *bigNumbersFont;
     bool forceGapBetweenNumbers;    // The default depends on the font used
     uint8_t upperLeftColumnIndex;   // Start of the next character
-    uint8_t maximumColumnIndex; // Maximum of columns to be written. Used to not clear the gap after a number which ends at the last column. ( 44 bytes program space)
+    uint8_t maximumColumns; // Auto detected maximum of columns which can be written (e.g. 16 or 20). To avoid clearing the gap after a number which ends at the last column. (44 bytes program space)
     uint8_t upperLeftRowIndex;      // Start of the next character
 
     /*
@@ -304,9 +318,10 @@ public:
 
     /*
      * Creates custom character used for generating big numbers
+     * This also sets cursor to 0.0 by call to _createChar()
      */
     void begin() {
-        maximumColumnIndex = 0;
+        maximumColumns = 0;
         // create maximum 8 custom characters
         for (uint_fast8_t i = 0; i < NumberOfCustomPatterns; i++) {
             _createChar(i, bigNumbersCustomPatterns[i]);
@@ -399,20 +414,25 @@ public:
         init(aBigNumberFontIdentifier);
     }
 
-    //createChar with PROGMEM input
+    /*
+     * Like LiquidCrystal::createChar(uint8_t location, uint8_t charmap[])
+     * but with PROGMEM input
+     * This also sets cursor to 0.0
+     */
     void _createChar(uint8_t location, const uint8_t *charmap) {
         location &= 0x7; // we only have 8 locations 0-7
         LCD->command(LCD_SETCGRAMADDR | (location << 3));
         for (int i = 0; i < 8; i++) {
             LCD->write(pgm_read_byte(charmap++));
         }
+        LCD->command(LCD_SETDDRAMADDR); // set cursor to 0.0, this avoids overwriting CGRAM by next write() command.
     }
 
     /**
      * Draws a big digit of size aNumberWidth x aNumberHeight at cursor position
      * Special characters always have the width of 1!
      * After each number one column gap is inserted. The gap is cleared, if not at the (last + 1) column!
-     * @param aNumber - byte 0x00 to 0x09 or ASCII number or one of ' ', '|', '-', '_', '.' and ':' special characters to display
+     * @param aNumber - byte 0x00 to 0x09 or ASCII number or one of these special characters: ' ', '|', '-', '_', '.', ':'
      * @return  The number of columns written (1 to 4 currently)
      */
     size_t writeBigNumber(uint8_t aNumberOrSpecialCharacter) {
@@ -434,12 +454,15 @@ public:
             // print a one column space
             aNumberOrSpecialCharacter = ' ';
         } else {
+            /*
+             * Here we have numbers only
+             */
             if (aNumberOrSpecialCharacter > 9) {
-                // if not byte 0x00 to 0x09, convert number character to ASCII
-                aNumberOrSpecialCharacter -= '0'; // convert ASCII value to number
+                // if not byte 0x00 to 0x09, convert ASCII character to number
+                aNumberOrSpecialCharacter -= '0';
             }
             if (aNumberOrSpecialCharacter > 9) {
-                // If we have a non number character now, we convert it to a space with the width of the number
+                // If we do not have a number 0 to 9 now, we convert it to a space with the width of a number
                 aNumberOrSpecialCharacter = ' ';
             }
             tCharacterWidth = NumberWidth;
@@ -456,8 +479,10 @@ public:
         Serial.println(upperLeftColumnIndex);
 #endif
         const uint8_t *tArrayPtr = bigNumbersFont + tFontArrayOffset;
+        // Render character row by row
         for (uint_fast8_t tRow = 0; tRow < NumberHeight; tRow++) {
             LCD->setCursor(upperLeftColumnIndex, upperLeftRowIndex + tRow);
+            // Render all columns in a row
             for (uint_fast8_t i = 0; i < tCharacterWidth; i++) {
                 uint8_t tCharacterIndex;
                 if (aNumberOrSpecialCharacter == ' ') {
@@ -466,7 +491,7 @@ public:
                     tCharacterIndex = pgm_read_byte(tArrayPtr);
                 }
                 LCD->write(tCharacterIndex);
-                tArrayPtr++; // next number column
+                tArrayPtr++; // Prepare for next column, we do not use i
 #if defined(LOCAL_DEBUG)
                 Serial.print(F(" 0x"));
                 Serial.print(tCharacterIndex, HEX);
@@ -479,26 +504,31 @@ public:
             Serial.print('|');
 #endif
         }
-        upperLeftColumnIndex += tCharacterWidth;
+        upperLeftColumnIndex += tCharacterWidth; // now we are at the index for the next number or the optional blank gap
 
-        if (maximumColumnIndex < upperLeftColumnIndex) {
+        /*
+         * Auto detect maximum column count, which can be written.
+         * We assume that all characters, which were written, fit on the display.
+         * Thus the maximum of the upperLeftColumnIndex after write is the index of the first column after the display and maximum possible column count.
+         */
+        if (maximumColumns < upperLeftColumnIndex) {
             // find maximum column at runtime
-            maximumColumnIndex = upperLeftColumnIndex;
+            maximumColumns = upperLeftColumnIndex;
         }
 
         /*
-         * Implement the gap after the character
+         * Implement the gap after the number character
          */
         if (forceGapBetweenNumbers && (NumberWidth == 1 || tCharacterWidth > 1 || aNumberOrSpecialCharacter == '-')) {
-            if (maximumColumnIndex != upperLeftColumnIndex) {
+            if (maximumColumns >= upperLeftColumnIndex) {
                 // We are not at the last column, so clear the gap after the number
                 for (uint_fast8_t tRow = 0; tRow < NumberHeight; tRow++) {
-                    LCD->setCursor(upperLeftColumnIndex + 1, upperLeftRowIndex + tRow);
+                    LCD->setCursor(upperLeftColumnIndex, upperLeftRowIndex + tRow);
                     LCD->write(' '); // Blank
                 }
                 tCharacterWidth++;
             }
-            upperLeftColumnIndex++; // This provides one column gap between big numbers, but not between special characters.
+            upperLeftColumnIndex++; // This provides one column gap between numbers, but not between special characters.
         }
 
 #if defined(LOCAL_DEBUG)

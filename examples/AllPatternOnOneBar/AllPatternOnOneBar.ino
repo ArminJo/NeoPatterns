@@ -31,28 +31,22 @@
 
 #define INFO // if not defined, no Serial related code should be linked
 
-//#define TEST_USER_PATTERNS // Activate this to test your own pattern implementation on line 74 ff.
-
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_BAR_16          3
 
 // onComplete callback handler for all patterns
 void allPatterns(NeoPatterns *aLedsPtr);
 
-// construct the NeoPatterns instances
-#if defined(TEST_USER_PATTERNS)
-void userPatternsHandler(NeoPatterns *aLedsPtr);
-NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &userPatternsHandler);
-#else
+// Construct the NeoPatterns instances
 NeoPatterns bar16 = NeoPatterns(16, PIN_NEOPIXEL_BAR_16, NEO_GRB + NEO_KHZ800, &allPatterns);
-#endif
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
 #if defined(INFO)
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/|| defined(SERIALUSB_PID) || defined(ARDUINO_attiny3217)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/ \
+    || defined(SERIALUSB_PID)  || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_attiny3217)
     delay(4000); // To be able to connect Serial monitor after reset or power up and before first print out. Do not wait for an attached Serial Monitor!
 #endif
     // Just to know which program is running on my Arduino

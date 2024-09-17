@@ -89,11 +89,12 @@ struct SnowFlakeInfoStruct {
     uint8_t Row; // starting with 0 / top
     uint8_t Column; // starting with 0 / left
 #else
-    uint8_t Period :4; // values from 8 to F. Fast flakes (period = 8 or 9) are in the foreground an therefore brighter;
+    uint8_t Period :4; // Lowest nibble. Values from 8 to F. Fast flakes (period = 8 or 9) are in the foreground an therefore brighter;
     uint8_t Counter :4;
     uint8_t Row :4; // starting with 0 / top
-    uint8_t Column :4; // starting with 0 / left
+    uint8_t Column :4; // Highest Nibble. Starting with 0 / left
 #endif
+#define MASK_FOR_8X8_MATRIX 0x77FF // only columns / rows from 0 to 7
 };
 
 // extension of NeoPattern Class approximately 85 byte / object

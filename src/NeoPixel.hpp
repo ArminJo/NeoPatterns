@@ -26,10 +26,10 @@
 #ifndef _NEOPIXEL_HPP
 #define _NEOPIXEL_HPP
 
-#if defined(INFO)
-#define LOCAL_INFO
-#endif
-//#define LOCAL_INFO // This enables info output only for this file
+// This block must be located after the includes of other *.hpp files
+//#define LOCAL_INFO  // This enables info output only for this file
+//#define LOCAL_TRACE // This enables trace output only for this file - only for development
+#include "LocalDebugLevelStart.h"
 
 #include "NeoPixel.h"
 
@@ -260,7 +260,7 @@ void NeoPixel::printContent(Print *aSerial) {
 void NeoPixel::show() {
     if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
         if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             printPin(&Serial);
             Serial.print(F("Underlying->show, brightness="));
             Serial.println(Brightness);
@@ -268,7 +268,7 @@ void NeoPixel::show() {
             UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("Show, brightness="));
         Serial.println(Brightness);
@@ -442,7 +442,7 @@ void NeoPixel::setBrightnessNonZeroMode(bool aEnableBrightnessNonZeroMode) {
  * Checks for valid pixel index / skips invalid ones
  */
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
@@ -517,7 +517,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen,
 
 #if defined(_SUPPORT_RGBW)
 void NeoPixel::setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printPin(&Serial);
     Serial.print(F("Pixel="));
     Serial.print(aPixelIndex);
@@ -611,7 +611,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
         uint8_t tBlue = (uint8_t) aColor;
         uint8_t *tPixelPtr = &pixels[aPixelIndex * BytesPerPixel];
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("Pixel="));
         Serial.print(aPixelIndex);
@@ -651,6 +651,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
             tMaxOffset = bOffset;
             uint8_t tMax = tBlue;
             if (tGreen > tMax) {
+                // Here green is brighter than blue, set maximum to green
                 tMax = tGreen;
                 tMaxOffset = gOffset;
             }
@@ -666,6 +667,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
                 tMaxOffset = rOffset;
             }
 #  endif
+            // Compute brightness with rounding, here tBrightness is < 0xFF :-)
             tRed = ((tRed * tBrightness) + 0x80) >> 8;
             tGreen = ((tGreen * tBrightness) + 0x80) >> 8;
             tBlue = ((tBlue * tBrightness) + 0x80) >> 8;
@@ -682,12 +684,13 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 #  else
             if (tRed == 0 && tGreen == 0 && tBlue == 0) {
 #  endif
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
                 printPin(&Serial);
                 Serial.print(F("MaxOffset="));
                 Serial.println(tMaxOffset);
 #endif
-                // avoid that pixel is completely off
+                // avoid that pixel is completely off, but prefer blue if it has the same value as one of the other colors
+                // I.e. white (x,x,x) changes to blue (0,0,1) if brightness is too low.
                 tPixelPtr[tMaxOffset] = 1; // tMaxOffset is set here since if tBrightness = 255 and aColor != 0 then is one of red or green or blue != 0
 #pragma GCC diagnostic pop
 
@@ -811,15 +814,15 @@ uint32_t NeoPixel::dimColor(color32_t aColor) {
 // Input a value 0 to 255 to get a color value.
 // The colors are a transition red -> green -> blue -> back to red.
 color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
-    aWheelPos = MAX_BRIGHTNESS - aWheelPos;
+    aWheelPos = MAX_WHEEL_POSITION - aWheelPos;
     if (aWheelPos < 85) {
-        return Color(MAX_BRIGHTNESS - (aWheelPos * 3), 0, aWheelPos * 3);
+        return Color(MAX_WHEEL_POSITION - (aWheelPos * 3), 0, aWheelPos * 3);
     } else if (aWheelPos < 170) {
         aWheelPos -= 85;
-        return Color(0, aWheelPos * 3, MAX_BRIGHTNESS - (aWheelPos * 3));
+        return Color(0, aWheelPos * 3, MAX_WHEEL_POSITION - (aWheelPos * 3));
     } else {
         aWheelPos -= 170;
-        return Color(aWheelPos * 3, MAX_BRIGHTNESS - (aWheelPos * 3), 0);
+        return Color(aWheelPos * 3, MAX_WHEEL_POSITION - (aWheelPos * 3), 0);
     }
 }
 
@@ -908,7 +911,7 @@ color32_t NeoPixel::dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t
     tWhiteDimmed = ((tWhiteDimmed + 1) * tGamma5Brightness) >> 8;
 #endif
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             Serial.print(F("dimColorWithGamma5 aBrightness="));
             Serial.print(aBrightness);
             Serial.print(F(" Gamma="));
@@ -1126,7 +1129,5 @@ void NeoPixel::TestWS2812Resolution() {
     show();
 }
 
-#if defined(LOCAL_INFO)
-#undef LOCAL_INFO
-#endif
+#include "LocalDebugLevelEnd.h"
 #endif // _NEOPIXEL_HPP

@@ -34,21 +34,16 @@
 
 #include <Arduino.h>
 
-#if defined(DEBUG) && !defined(LOCAL_DEBUG)
-#define LOCAL_DEBUG
-#define LOCAL_INFO // Propagate debug level
-#else
-//#define LOCAL_DEBUG // This enables debug output only for this file
-#  if defined(INFO) && !defined(LOCAL_INFO)
-#define LOCAL_INFO
-#  endif
-//#define LOCAL_INFO // This enables info output only for this file
-#endif
-
 #include "MatrixSnake.h"
 
 // include sources
 #include "MatrixNeoPatterns.hpp"
+
+// This block must be located after the includes of other *.hpp files
+//#define LOCAL_INFO  // This enables info output only for this file
+//#define LOCAL_DEBUG // This enables debug output only for this file - only for development
+//#define LOCAL_TRACE // This enables trace output only for this file - only for development
+#include "LocalDebugLevelStart.h"
 
 #include <stdlib.h>         // for utoa() etc.
 
@@ -201,6 +196,7 @@ void MatrixSnake::resetAndClearAndShowSnakeAndNewApple() {
 /*
  * If PinOfUpButton is 0, then snake runs in 2 button mode.
  * If aPinOfRightButton is 0, then snake starts in autorun mode.
+ * Allocates 2* Rows * Columns bytes, 128 bytes for 8x8, 512 for 16 x 16
  * @return false if new position[Rows * Columns] failed
  */
 bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton, uint8_t aPinOfLeftButton,
@@ -218,7 +214,8 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     if (SnakePixelList != NULL) {
         free(SnakePixelList);
     }
-    SnakePixelList = new position[Rows * Columns]; // 128 bytes for 8x8
+    SnakePixelList = new position[Rows * Columns]; // 128 bytes for 8x8, 512 for 16 x 16
+//    SnakePixelList = new position[Rows * Columns / 2]; // 64 bytes for 8x8, 256 for 16 x 16
     if (SnakePixelList == NULL) {
         return false;
     }
@@ -269,7 +266,8 @@ void MatrixSnake::SnakeStop() {
         free(SnakePixelList);
     }
     SnakePixelList = NULL;
-    ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
+    TotalStepCounter = 1;
+    decrementTotalStepCounter();
 }
 
 void MatrixSnake::drawApple() {
@@ -369,7 +367,7 @@ void MatrixSnake::SnakeInputHandler() {
                 /*
                  * Button released
                  */
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
                 Serial.println(F("Button released"));
 #endif
                 DirectionOfLastButtonPressed = DIRECTION_NONE;
@@ -471,7 +469,7 @@ uint16_t MatrixSnake::getIndexOfPositionInSnake(position aPositionToCheck) {
     }
     return SnakeLength;
 }
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
 void MatrixSnake::printSnakePosition(position aSnakePosition) {
     Serial.print(F("X="));
     Serial.print(aSnakePosition.x);
@@ -485,7 +483,7 @@ void MatrixSnake::printSnakePosition(position aSnakePosition) {
  * does not change current head position, only writes new head position in variable pointed to by aSnakeNewHeadPosition
  */
 bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNewHeadPosition) {
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printSnakePosition(SnakePixelList[0]);
 #endif
     *aSnakeNewHeadPosition = SnakePixelList[0];
@@ -506,7 +504,7 @@ bool MatrixSnake::computeNewHeadPosition(uint8_t aDirection, position *aSnakeNew
         return false;
         break;
     }
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     printSnakePosition(*aSnakeNewHeadPosition);
 #endif
 // check if position is in area
@@ -619,7 +617,7 @@ void MatrixSnake::SnakeUpdate(bool aDoUpdate) {
                  * move snake body -except head- back in array and set new head
                  */
                 if (moveSnakeAndCheckApple(tSnakeNewHeadPosition)) {
-                    // eat the apple -> elongate snake
+                    // eat the apple -> elongate snake, no plausi check :-)
                     SnakeLength++;
                     newApple();
                     drawApple();
@@ -736,7 +734,7 @@ uint8_t MatrixSnake::findNextDir() {
 
 #if defined(LOCAL_DEBUG)
     Serial.print(F("Direction="));
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     Serial.print(DirectionToString(Direction)); // we get an extension of this line below
 #  else
     Serial.println(DirectionToString(Direction));
@@ -747,7 +745,7 @@ uint8_t MatrixSnake::findNextDir() {
     int8_t tDeltaX = Apple.x - SnakePixelList[0].x;
     int8_t tDeltaY = Apple.y - SnakePixelList[0].y;
 
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     Serial.print(F(" DeltaX="));
     Serial.print(tDeltaX);
     Serial.print(F(" DeltaY="));
@@ -811,7 +809,7 @@ uint8_t MatrixSnake::findNextDir() {
         invalidDirectionsArray[tNewDirection] = true;
         // mark opposite direction of current moving direction also as invalid
         invalidDirectionsArray[(Direction + 2) % NUMBER_OF_DIRECTIONS] = true;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
         Serial.print(F("Detected invalid direction="));
         Serial.println(DirectionToString(tNewDirection));
 #endif
@@ -832,7 +830,7 @@ uint8_t MatrixSnake::findNextDir() {
             if (checkDirection(tNewDirection) == 0) {
                 break;
             }
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             Serial.print(F("Detected invalid direction="));
             Serial.println(DirectionToString(tNewDirection));
 #endif
@@ -840,7 +838,7 @@ uint8_t MatrixSnake::findNextDir() {
 
         if (i == NUMBER_OF_DIRECTIONS) {
             tNewDirection = DIRECTION_NONE;
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
             Serial.println(F("Give up, no valid direction left"));
 #endif
         }
@@ -904,9 +902,8 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     SnakeLength = tStoredSnakeLength;
     Direction = tStoredDirection;
 
-    if (tStoredSnakePixelList != NULL) {
-        free(tStoredSnakePixelList);
-    }
+    delete[] tStoredSnakePixelList;
+
 #if defined(LOCAL_DEBUG)
     Serial.print(F("Check with settings=0x"));
     Serial.print(SnakeAutoSolverMode, HEX);
@@ -987,7 +984,9 @@ uint8_t MatrixSnake::builtinGetNextSnakeDirection() {
 bool initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
 
 #if defined(LOCAL_INFO)
-    Serial.print(F("Autorun: "));
+    Serial.print(F("Autorun "));
+    Serial.print(aRepetitions);
+    Serial.print(F(" repetitions: "));
 #endif
     aLedsPtr->ByteValue2.SnakeAutorunStep = AUTORUN_MODE_SHOW_END;
     aLedsPtr->Repetitions = aRepetitions;
@@ -1169,7 +1168,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         } else {
             // after 4 minutes show more snow :-)
             if (millis() < (4 * 60 * 1000L)) {
-                tLedsPtr->Snow();
+                tLedsPtr->Snow(); // default is 500 steps
             } else {
                 tLedsPtr->Snow(2000);
             }
@@ -1233,11 +1232,5 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
 }
 #endif
 
-#if defined(LOCAL_INFO)
-#undef LOCAL_INFO
-#endif
-#if defined(LOCAL_DEBUG)
-#undef LOCAL_DEBUG
-#endif
-
+#include "LocalDebugLevelEnd.h"
 #endif // _MATRIX_SNAKE_HPP

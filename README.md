@@ -23,7 +23,7 @@ Available as [Arduino library "NeoPatterns"](https://www.arduinolibraries.info/l
 
 [![Button Install](https://img.shields.io/badge/Install-brightgreen?logoColor=white&logo=GitBook)](https://www.ardu-badge.com/NeoPatterns)
  &nbsp; &nbsp; 
-[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/NeoPatterns#revision-history)
+[![Button Changelog](https://img.shields.io/badge/Changelog-blue?logoColor=white&logo=AzureArtifacts)](https://github.com/ArminJo/NeoPatterns?tab=readme-ov-file#revision-history)
 
 </div>
 
@@ -71,11 +71,11 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 - SNOW
 - SNAKE
 
-## Your own patterns
+## You can provide your own patterns
 - USER_PATTERN1
 - USER_PATTERN2
 
-**Put your pattern code to the functions UserPattern\[1,2]() and UserPattern\[1,2]Update() in a file UserPattern.cpp to realize your own patterns.**
+**See UserPattern example.**
 
 <br/>
 
@@ -229,11 +229,14 @@ It also shows, how to dynamically **determine the length of the attached strip**
 # Revision History
 ### Version 3.1.2 - work in progress
 - Added functions `getActualNeopixelLenghtSimple()`, `clearAndShow()`, `setMatrixPixelColorAndShow()` and `testMapping()`.
+- Improved `SNOW` pattern.
+- New handling for `USER_PATTERN1` and `USER_PATTERN2` and new UserPattern example.
+- Improved MatrixPatternsTest example.
 
 ### Version 3.1.1
 - Added parameter `aRepetitions` to pattern `RainbowCycle`.
 - Improved layout of character c.
- 
+
 ### Version 3.1.0
 - Added functions `printConnectionInfo()`, `fillRegion()`, `stop()` and `stopAllPatterns()`.
 - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.

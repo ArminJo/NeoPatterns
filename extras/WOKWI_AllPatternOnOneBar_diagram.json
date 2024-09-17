@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "author": "ArminJo",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-nano",
+      "id": "nano",
+      "top": 6.67,
+      "left": -537.99,
+      "rotate": 0,
+      "hide": false,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel-matrix",
+      "id": "neopixels",
+      "top": -24.67,
+      "left": -354.01,
+      "rotate": 180,
+      "hide": false,
+      "attrs": { "rows": "16", "cols": "1", "matrixBrightness": "5" }
+    }
+  ],
+  "connections": [
+    [ "nano:GND.1", "neopixels:GND", "black", [ "v0", "*", "v-10" ] ],
+    [ "nano:5V", "neopixels:VCC", "red", [ "v0", "*", "v-15" ] ],
+    [ "nano:3", "neopixels:DIN", "green", [ "v0", "*", "v-5" ] ]
+  ]
+}

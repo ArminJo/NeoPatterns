@@ -114,7 +114,7 @@ public:
     //
     bool computeNewHeadPosition(uint8_t aActualDirection, position *aSnakeNewHeadPosition);
     bool moveSnakeAndCheckApple(position tSnakeNewHeadPosition);
-#if defined(TRACE)
+#if defined(LOCAL_TRACE)
     void printSnakePosition(position aSnakePosition);
 #endif
     /*
@@ -127,7 +127,7 @@ public:
     // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
     // SnakePixelList[0] is head of snake
     position *SnakePixelList;
-    uint16_t SnakeLength;
+    uint16_t SnakeLength; // current length of snake
 
 #define AUTOSOLVER_CLOCKWISE_FLAG 0x01 // if set choose directions from 3 to 0
     uint8_t SnakeAutoSolverMode; // The mode for findNextDir()
