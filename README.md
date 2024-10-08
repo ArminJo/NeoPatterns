@@ -4,8 +4,6 @@
 This is an extended version version of the [NeoPattern example by Adafruit](https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all).<br/>
 New Patterns are added, a [snake game running on a matrix](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeGame/SnakeGame.ino) is included and you can run [multiple patterns simultaneously on the same strip](https://github.com/ArminJo/NeoPatterns/blob/master/examples/TwoPatternsOnOneStrip/TwoPatternsOnOneStrip.ino).
 
-### [Version 3.1.2](https://github.com/ArminJo/NeoPatterns/archive/master.zip) - work in progress
-
 [![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
  &nbsp; &nbsp; 
 [![Badge Version](https://img.shields.io/github/v/release/ArminJo/NeoPatterns?include_prereleases&color=yellow&logo=DocuSign&logoColor=white)](https://github.com/ArminJo/NeoPatterns/releases/latest)
@@ -38,7 +36,7 @@ Available as [Arduino library "NeoPatterns"](https://www.arduinolibraries.info/l
 | [![Demonstration of NeoPatterns](https://i.ytimg.com/vi/CsB7FkywCRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=CsB7FkywCRQ) | [![Demonstration of MatrixDemo on a 10x10 matrix](https://i.ytimg.com/vi/URsq28l2PEQ/hqdefault.jpg)](https://www.youtube.com/watch?v=URsq28l2PEQ) |
 | YouTube Video of NeoPatternsDemo on a long matrix | YouTube Video of Fire on on a long matrix |
 | [![Demonstration of NeoPatterns on a long matrix ](https://i.ytimg.com/vi/y_fmAEUqhFg/hqdefault.jpg)](https://www.youtube.com/watch?v=y_fmAEUqhFg) | [![Demonstration of Fire on a long matrix ](https://i.ytimg.com/vi/CgW5T-mRSvQ/hqdefault.jpg)](https://youtu.be/CgW5T-mRSvQ?t=43) |
-| YouTube Video of OpenLedRace at the Cologne public library MINTk�ln-Festival |  |
+| YouTube Video of OpenLedRace at the Cologne public library MINTk&ouml;ln-Festival |  |
 | [![OpenLedRace in action](https://i.ytimg.com/vi/y25rjRkDg0g/hqdefault.jpg)](https://www.youtube.com/watch?v=y25rjRkDg0g) |  |
 
 <br/>
@@ -64,7 +62,7 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 - FIRE adapted from [FastLed](https://github.com/FastLED/FastLED/tree/master/examples/Fire2012)
 
 ## Patterns only for n x n Matrix
-- MOVING_PICTURE*
+- MOVING_PICTURE
 - MOVE
 - TICKER
 - FIRE
@@ -227,7 +225,7 @@ It also shows, how to dynamically **determine the length of the attached strip**
 <br/>
 
 # Revision History
-### Version 3.1.2 - work in progress
+### Version 3.2.0
 - Added functions `getActualNeopixelLenghtSimple()`, `clearAndShow()`, `setMatrixPixelColorAndShow()` and `testMapping()`.
 - Improved `SNOW` pattern.
 - New handling for `USER_PATTERN1` and `USER_PATTERN2` and new UserPattern example.
