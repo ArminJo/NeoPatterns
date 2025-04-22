@@ -103,9 +103,9 @@ public:
     MatrixNeoPatterns();
     void init();
     MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
 
     void setGeometry(uint8_t aRows, uint8_t aColoums);
 

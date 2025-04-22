@@ -96,7 +96,7 @@ const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCyc
 /*
  * Start of static list of all NeoPatterns object
  */
-NeoPatterns *NeoPatterns::FirstNeoPatternsObject = NULL;
+NeoPatterns *NeoPatterns::FirstNeoPatternsObject = nullptr;
 /**********************************************************************************
  * Code inspired by https://learn.adafruit.com/multi-tasking-the-arduino-part-3?view=all
  * Changed and extended for added functionality
@@ -121,12 +121,12 @@ void NeoPatterns::_insertIntoNeopatternsList() {
     /*
      * Insert "this" in the NextNeoPatternsObject list
      */
-    NextNeoPatternsObject = NULL;
+    NextNeoPatternsObject = nullptr;
     NeoPatterns *tNextObjectPointer = FirstNeoPatternsObject;
-    if (tNextObjectPointer == NULL) {
+    if (tNextObjectPointer == nullptr) {
         FirstNeoPatternsObject = this;
     } else {
-        while (tNextObjectPointer->NextNeoPatternsObject != NULL) {
+        while (tNextObjectPointer->NextNeoPatternsObject != nullptr) {
             tNextObjectPointer = tNextObjectPointer->NextNeoPatternsObject;
         }
         tNextObjectPointer->NextNeoPatternsObject = this;
@@ -134,9 +134,9 @@ void NeoPatterns::_insertIntoNeopatternsList() {
 }
 
 void NeoPatterns::init() {
-    OnPatternComplete = NULL;
+    OnPatternComplete = nullptr;
     ActivePattern = PATTERN_NONE;
-    LongValue1.heatOfPixelArrayPtr = NULL;
+    LongValue1.PixelHeatArrayPtr = nullptr;
     _insertIntoNeopatternsList();
 }
 
@@ -228,7 +228,7 @@ void NeoPatterns::updateShowAndWaitForPatternToStop(uint8_t aBrightness) {
 
 void NeoPatterns::updateShowAndWaitForPatternToStop() {
     void (*tOnPatternCompleteBackup)(NeoPatterns*) = OnPatternComplete;
-    OnPatternComplete = NULL;
+    OnPatternComplete = nullptr;
     while (ActivePattern != PATTERN_NONE) {
         update();
         yield();
@@ -255,7 +255,7 @@ bool NeoPatterns::updateAndShowAlsoAllPartialPatterns() {
     /*
      * Traverse through complete NeoPattern list and process all UnderlyingNeoPixelObjects including the object itself!
      */
-    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != NULL; tNextObjectPointer =
+    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != nullptr; tNextObjectPointer =
             tNextObjectPointer->NextNeoPatternsObject) {
         /*
          * Check for same underlying object (including the underlying object itself) and update if pattern is active
@@ -295,7 +295,7 @@ void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(ui
 }
 void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop() {
     void (*tOnPatternCompleteBackup)(NeoPatterns*) = OnPatternComplete;
-    OnPatternComplete = NULL;
+    OnPatternComplete = nullptr;
     while (updateAndShowAlsoAllPartialPatterns()) {
         yield();
     }
@@ -352,7 +352,7 @@ void NeoPatterns::stop() {
 
 void stopAllPatterns() {
     //Walk through the NextNeoPatternsObject list
-    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != NULL; tNextObjectPointer =
+    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != nullptr; tNextObjectPointer =
             tNextObjectPointer->NextNeoPatternsObject) {
         tNextObjectPointer->ActivePattern = PATTERN_NONE;
     }
@@ -566,7 +566,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
         return true;
     }
     if (TotalStepCounter == 0) {
-        if (OnPatternComplete != NULL) {
+        if (OnPatternComplete != nullptr) {
             /*
              * Do not set activePattern to PATTERN_NONE, to enable the callback to see the finished one.
              */
@@ -1437,7 +1437,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
     TotalStepCounter = aNumberOfSteps + 1;  // + 1 step for the last pattern to show
     clear();
 
-    LongValue1.heatOfPixelArrayPtr = (uint8_t*) calloc(numLEDs, 1);
+    LongValue1.PixelHeatArrayPtr = (uint8_t*) calloc(numLEDs, 1);
 
     FireUpdate(false);
     showPatternInitially();
@@ -1452,13 +1452,13 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
 bool NeoPatterns::FireUpdate(bool aDoUpdate) {
 
 // map heap space to heat array
-    uint8_t *heat = LongValue1.heatOfPixelArrayPtr;
+    uint8_t *heat = LongValue1.PixelHeatArrayPtr;
 
     if (aDoUpdate) {
         if (TotalStepCounter == 1) {
             // we must free the memory before decrementTotalStepCounter(), because the pointer may be overwritten by the next pattern
-            if (LongValue1.heatOfPixelArrayPtr != NULL) {
-                free(LongValue1.heatOfPixelArrayPtr);
+            if (LongValue1.PixelHeatArrayPtr != nullptr) {
+                free(LongValue1.PixelHeatArrayPtr);
             }
         }
         if (decrementTotalStepCounter()) {
@@ -1513,6 +1513,19 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
 }
 #endif // #if defined(ENABLE_PATTERN_FIRE)
 
+uint32_t NeoPatterns::HeatColorSimple(uint8_t aTemperature) {
+    uint8_t tGreen = 0;
+    if (aTemperature >= 0x80) {
+        tGreen = gamma8((aTemperature & ~0x80) << 1); // Mask upper bit (or - 128 without overflow)
+    }
+    uint8_t tBlue = 0;
+    if (aTemperature >= 0xE0) {
+        tBlue = gamma8((aTemperature & ~0xE0) << 3); // Mask upper 2 bits (or - 192 without overflow)
+    }
+
+    return Color(gamma8(aTemperature), tGreen, tBlue);
+}
+
 uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
 
 // Scale 'heat' down from 0-255 to 0-191 (0xBF),
@@ -1529,16 +1542,22 @@ uint32_t NeoPatterns::HeatColor(uint8_t aTemperature) {
 // now figure out which third of the spectrum we're in:
     if (tTemperature0To191 & 0x80) {
 // we're in the hottest third, ramp from yellow to white
-        return Color(255, 255, heatramp);
+//        return Color(255, 255, heatramp);
+        return Color(255, 190, heatramp);
     } else if (tTemperature0To191 & 0x40) {
 // we're in the middle third, ramp from red to yellow
-        return Color(255, heatramp, 0);
+//        return Color(255, heatramp, 0);
+        return Color(255, heatramp - heatramp / 4, 0);
     } else {
 // we're in the coolest third, ramp from black to red
         return Color(heatramp, 0, 0);
     }
 }
 
+/*
+ * Same as HeatColor, but using a smaller / coarser gamma table of 32
+ * In the original HeatColor() function we use only 64 entries of the gamma table because of heatramp <<= 2
+ */
 uint32_t NeoPatterns::HeatColorGamma5(uint8_t aTemperature) {
 
 // Scale 'heat' down from 0-255 to 0-191 (0xBF),
@@ -1549,8 +1568,9 @@ uint32_t NeoPatterns::HeatColorGamma5(uint8_t aTemperature) {
 // calculate a value that ramps up from
 // zero to 255 in each 'third' of the scale.
     uint8_t heatramp = tTemperature0To191 & 0x3F;  // 0..63
-    heatramp <<= 2;  // scale up to 0..252 (0xFC)
-    heatramp = gamma5(heatramp);
+//    heatramp <<= 2;  // scale up to 0..252 (0xFC)
+//    heatramp = gamma5(heatramp);
+    heatramp = pgm_read_byte(&GammaTable32[(heatramp / 2)]); // replacement for << 2 and gamma5()
 
 // now figure out which third of the spectrum we're in:
     if (tTemperature0To191 & 0x80) {
@@ -1568,22 +1588,71 @@ uint32_t NeoPatterns::HeatColorGamma5(uint8_t aTemperature) {
 /********************************************************
  * End of code from: Fire2012 by Mark Kriegsman, July 2012
  ********************************************************/
+/*
+ * Convert an uint8_t array of numLEDs heat entries to color values and store them in the NeoPattern object
+ */
+void NeoPatterns::convertHeatToColorSimple() {
+    uint8_t *tHeatGraphPtr = LongValue1.PixelHeatArrayPtr;
+
+    for (uint_fast8_t i = 0; i < numLEDs; i++) {
+        // version with brightness
+        Adafruit_NeoPixel::setPixelColor(i, NeoPatterns::HeatColorSimple(*tHeatGraphPtr++));
+    }
+}
+
 void NeoPatterns::convertHeatToColor() {
-    uint8_t *tHeatGraphPtr = LongValue1.heatOfPixelArrayPtr;
+    uint8_t *tHeatGraphPtr = LongValue1.PixelHeatArrayPtr;
 
     for (uint_fast8_t i = 0; i < numLEDs; i++) {
         // version with brightness
         Adafruit_NeoPixel::setPixelColor(i, NeoPatterns::HeatColor(*tHeatGraphPtr++));
     }
 }
+/*
+ * Display all heat values from 1 to 0xFF on a strip
+ */
+void NeoPatterns::showAllHeatSimple() {
+    for (uint_fast8_t i = 0; i < numLEDs; i++) {
+        uint8_t tHeatValue = (i + 1) * (0x100 / numLEDs);
+//        Serial.println(tHeatValue);
+        setPixelColor(i, NeoPatterns::HeatColorSimple(tHeatValue));
+    }
+    show();
+}
 
+void NeoPatterns::showAllHeat() {
+    for (uint_fast8_t i = 0; i < numLEDs; i++) {
+        uint8_t tHeatValue = (i + 1) * (0x100 / numLEDs);
+//        Serial.println(tHeatValue);
+        setPixelColor(i, NeoPatterns::HeatColor(tHeatValue));
+    }
+    show();
+}
+
+/*
+ * Print all numLEDs heat values contained in the PixelHeatArrayPtr
+ * Used for debugging
+ */
 void NeoPatterns::printHeat(Print *aSerial) {
-    uint8_t *tHeatGraphPtr = LongValue1.heatOfPixelArrayPtr;
+    uint8_t *tHeatArrayPtr = LongValue1.PixelHeatArrayPtr;
 
     for (uint_fast8_t i = 0; i < numLEDs; i++) {
-        aSerial->print(*tHeatGraphPtr);
+        aSerial->print(*tHeatArrayPtr);
         aSerial->print(',');
-        tHeatGraphPtr++;
+        tHeatArrayPtr++;
+    }
+    aSerial->println();
+}
+
+/*
+ * Print all numLEDs heat values contained in a PixelHeatArrayPtr
+ * Used for debugging
+ */
+void NeoPatterns::printHeat(Print *aSerial, uint8_t *aHeatArrayPtr) {
+    for (uint_fast8_t i = 0; i < numLEDs; i++) {
+        aSerial->print(*aHeatArrayPtr);
+        aSerial->print(',');
+        aHeatArrayPtr++;
     }
     aSerial->println();
 }
@@ -1617,7 +1686,7 @@ void NeoPatterns::ProcessSelectiveColor(color32_t aColorForSelection, color32_t 
     Index = 0; // for FadeColor
 // initialize temporary color
     LongValue2.ColorTmp = aColorForSelection;
-    Value3.SingleLEDProcessingFunction = aSingleLEDProcessingFunction;
+    Pointer1.SingleLEDProcessingFunction = aSingleLEDProcessingFunction;
 
 // call this direct, since it is called only at update
     ProcessSelectiveColorForAllPixel();
@@ -1648,7 +1717,7 @@ bool NeoPatterns::ProcessSelectiveColorUpdate(bool aDoUpdate) {
  */
 void NeoPatterns::ProcessSelectiveColorForAllPixel() {
 
-    color32_t tNewColor = Value3.SingleLEDProcessingFunction(this);
+    color32_t tNewColor = Pointer1.SingleLEDProcessingFunction(this);
     for (uint_fast16_t i = 0; i < numLEDs; i++) {
         color32_t tOldColor = getPixelColor(i);
         if (tOldColor == LongValue2.ColorTmp) {
@@ -1764,18 +1833,15 @@ void NeoPatterns::printlnPattern() {
 }
 
 void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
-    static int16_t sLastSteps;
+    static int16_t sLastTotalStepCounter;
+
+    NeoPixel::printInfo(aSerial);
 
     /*
-     * only print if TotalSteps changed
+     * only print if TotalStepCounter changed, or full info
      */
-    if (TotalStepCounter != sLastSteps || aFullInfo) {
-        sLastSteps = TotalStepCounter;
-
-        aSerial->print(F("Pin="));
-        aSerial->print(pin);
-        aSerial->print(F(" Offset="));
-        aSerial->print(PixelOffset);
+    if (TotalStepCounter != sLastTotalStepCounter || aFullInfo) {
+        sLastTotalStepCounter = TotalStepCounter;
 
         aSerial->print(F(" TotalSteps="));
         aSerial->print(TotalStepCounter);
@@ -1791,7 +1857,6 @@ void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
         aSerial->println(uint8_t(Brightness));
     }
     if (aFullInfo) {
-        sLastSteps = 0x9000; // Force debug output below
         aSerial->print(F("ActivePattern="));
         printPatternName(ActivePattern, aSerial);
         aSerial->print('|');
@@ -1813,7 +1878,6 @@ void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
         aSerial->print(F(" &NeoPatterns=0x"));
         aSerial->println((uintptr_t) this, HEX);
     }
-    NeoPixel::printInfo(aSerial);
 }
 
 /********************************************

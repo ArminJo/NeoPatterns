@@ -10,7 +10,7 @@
  * LOCAL_WARN    // Information that the program may encounter problems, like small Heap/Stack area.
  * LOCAL_ERROR   // Informations to explain why the program will not run. E.g. not enough Ram for all created objects.
  *
- *  Copyright (C) 2024  Armin Joachimsmeyer
+ *  Copyright (C) 2024-2025  Armin Joachimsmeyer
  *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
@@ -31,16 +31,17 @@
  */
 
 /*
- * Propagate debug level to local ones but not to each other
- * I.e. Enabling TRACE does not enable DEBUG and INFO
+ * Propagate debug level to local ones but not to each other, i.e. Enabling TRACE does not enable DEBUG and INFO
  */
-#if defined(TRACE) && !defined(LOCAL_TRACE)
+#if defined(TRACE)
 #define LOCAL_TRACE
 #endif
-#if defined(DEBUG) && !defined(LOCAL_DEBUG)
+
+#if defined(DEBUG)
 #define LOCAL_DEBUG
 #endif
-#if defined(INFO) && !defined(LOCAL_INFO)
+
+#if defined(INFO)
 #define LOCAL_INFO
 #endif
 

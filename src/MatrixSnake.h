@@ -5,7 +5,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -75,15 +75,16 @@ struct position {
 
 // stores the initial shape of the snake. SnakeInitialPixels[0] is head of snake
 position const SnakeInitialPixels[] = { { 4, 4 }, { 5, 4 }, { 6, 4 }, { 6, 5 } };
+#define INITIAL_DIRECTION_SNAKE     DIRECTION_LEFT // The initial direction of the above SnakeInitialPixels
 
 // extension of NeoPattern Class approximately 85 byte / object
 class MatrixSnake: public MatrixNeoPatterns {
 public:
     MatrixSnake();
     MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
 
     bool Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
             uint8_t aPinOfUpButton = 0, uint8_t aPinOfDownButton = 0);

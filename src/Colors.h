@@ -34,19 +34,23 @@
 typedef uint16_t color16_t;
 
 // If used as background color for char or text, the background will not filled
-#define COLOR16_NO_BACKGROUND   ((color16_t)0XFFFE)
 #define COLOR16_BLUEMASK 0x1F
 #define COLOR16_GET_RED(rgb)    ((rgb & 0xF800) >> 8)
 #define COLOR16_GET_GREEN(rgb)  ((rgb & 0x07E0) >> 3)
 #define COLOR16_GET_BLUE(rgb)   ((rgb & 0x001F) << 3)
-#define COLOR16(r,g,b) ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) //5 red | 6 green | 5 blue
+#define COLOR16(r,g,b) ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) // 5 red | 6 green | 5 blue
 
 #define COLOR16_WHITE     ((color16_t)0xFFFF)
+#define COLOR16_ALMOST_WHITE ((color16_t)0xF7DE) // Every color is 1 bit less than maximum value, but we can distinguish it from white
+
+#define COLOR16_NO_BACKGROUND ((color16_t)COLOR16_WHITE - 1) // No background drawing for text and button (Only-text button)
+
 #define COLOR16_LIGHT_GREY ((color16_t)0x7BEF)
 #define COLOR16_GREY      ((color16_t)0x39E7)
 #define COLOR16_DARK_GREY ((color16_t)0x18E3)
-// 01 because 0 is used as flag (e.g. in touch button for default color)
-#define COLOR16_BLACK     ((color16_t)0X0001)
+
+#define COLOR16_NO_DELETE ((color16_t)0X0001) // 01 is used as flag (e.g. for not delete old chart)
+#define COLOR16_BLACK     ((color16_t)0X0000)
 #define COLOR16_RED       ((color16_t)0xF800)
 #define COLOR16_GREEN     ((color16_t)0X07E0)
 #define COLOR16_BLUE      ((color16_t)0x001F)

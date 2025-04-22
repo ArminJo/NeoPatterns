@@ -7,7 +7,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -68,7 +68,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
  */
 #if (!(defined(ENABLE_PATTERN_RAINBOW_CYCLE) || defined(ENABLE_PATTERN_COLOR_WIPE) || defined(ENABLE_PATTERN_FADE) \
 || defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_FLASH) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
-|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
+|| defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) || defined(ENABLE_PATTERN_EMBER) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
 || defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2)  \
 || defined(ENABLE_NO_NEO_PATTERN_BY_DEFAULT) ))
 #define ENABLE_PATTERN_RAINBOW_CYCLE
@@ -80,6 +80,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define ENABLE_PATTERN_PROCESS_SELECTIVE
 #define ENABLE_PATTERN_HEARTBEAT
 #define ENABLE_PATTERN_FIRE
+#define ENABLE_PATTERN_EMBER
 // User patterns must be enabled explicitly by main program, they are not included in this library
 #   if !defined(DO_NOT_USE_MATH_PATTERNS)
 #define ENABLE_PATTERN_BOUNCING_BALL // Requires up to 640 to 1140 bytes program memory, depending if floating point and sqrt() are already used otherwise.
@@ -99,33 +100,36 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define PATTERN_PROCESS_SELECTIVE   8
 #define PATTERN_HEARTBEAT           9
 #define PATTERN_FIRE               10
+#define PATTERN_EMBER              14 // Experimental
 
 #define PATTERN_BOUNCING_BALL      11
 
 #define PATTERN_USER_PATTERN1      12
 #define PATTERN_USER_PATTERN2      13
 
-#define LAST_NEO_PATTERN           PATTERN_USER_PATTERN2
+#define LAST_NEO_PATTERN           PATTERN_USER_PATTERN2 // Used for enumeration of matrix patterns
 
 /*
  * Values for Direction
  */
-#define DIRECTION_UP 0
-#define DIRECTION_LEFT 1
-#define DIRECTION_DOWN 2
-#define DIRECTION_RIGHT 3
+#define DIRECTION_UP            0
+#define DIRECTION_LEFT          1
+#define DIRECTION_DOWN          2
+#define DIRECTION_RIGHT         3
 #define DIRECTION_UP_DOWN_MASK  0x02
-#define DIRECTION_MASK  0x03
-#define PARAMETER_IS_DURATION  0x80 // if highest bit is set for direction parameter, the intervalMillis parameter is interpreted as durationMillis.
+#define DIRECTION_MASK          0x03
+#define PARAMETER_IS_DURATION   0x80 // if highest bit is set for direction parameter, the intervalMillis parameter is interpreted as durationMillis.
 #define OppositeDirection(aDirection) (((aDirection) + 2) & DIRECTION_MASK)
-#define NUMBER_OF_DIRECTIONS 4
-#define DIRECTION_NONE NUMBER_OF_DIRECTIONS   // No button pressed until now, no direction possible (for AI)
+#define NUMBER_OF_DIRECTIONS    4
+#define DIRECTION_NONE          NUMBER_OF_DIRECTIONS   // No button pressed until now, no direction possible (for AI)
 const char DirectionUp[] = "up";
 const char DirectionLeft[] = "left";
 const char DirectionDown[] = "down";
 const char DirectionRight[] = "right";
 const char DirectionNo[] = "no";
 const char* DirectionToString(uint8_t aDirection);
+
+#define MAXIMUM_HEAT_VALUE  0xFF // we have 8 bit for heat
 
 // NeoPattern Class - derived from the NeoPixel and Adafruit_NeoPixel class
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
@@ -134,14 +138,14 @@ public:
     NeoPatterns();
     void init();
     NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL, bool aShowOnlyAtUpdate = false);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = false);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=NULL, bool aShowOnlyAtUpdate = false);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = false);
     NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
+            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr,
             bool aShowOnlyAtUpdate = false);
     void init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = NULL,
+            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr,
             bool aShowOnlyAtUpdate = false);
     void _insertIntoNeopatternsList();
 
@@ -218,7 +222,8 @@ public:
 #endif
 
 #if defined(ENABLE_PATTERN_FLASH)
-    void Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2, uint16_t aNumberOfSteps, bool doEndWithBlack = false);
+    void Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2,
+            uint16_t aNumberOfSteps, bool doEndWithBlack = false);
     bool FlashUpdate(bool aDoUpdate = true);
 #endif
 
@@ -245,11 +250,22 @@ public:
     void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
     bool FireUpdate(bool aDoUpdate = true);
 #endif
+#if defined(ENABLE_PATTERN_EMBER)
+    void Ember(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode, uint8_t aIncreaseIntervalFactor,
+            uint16_t aNumberOfDecreasingSteps, uint16_t aIntervalMillis);
+    void initEmberHeat(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode);
+    bool EmberUpdate(bool aDoUpdate = true);
+#endif
 
     void convertHeatToColor();
+    void showAllHeat();
+    void convertHeatToColorSimple();
+    void showAllHeatSimple();
     void printHeat(Print *aSerial);
+    void printHeat(Print *aSerial, uint8_t *aHeatArrayPtr);
 
     static color32_t HeatColor(uint8_t aTemperature);
+    static color32_t HeatColorSimple(uint8_t aTemperature);
     static color32_t HeatColorGamma5(uint8_t aTemperature);
 
 #if defined(ENABLE_PATTERN_BOUNCING_BALL)
@@ -331,25 +347,31 @@ public:
     union {
         color32_t BackgroundColor;
         color32_t Color2;               // second pattern color
-        uint8_t *heatOfPixelArrayPtr;   // Allocated array for current heat values for Fire pattern
+        uint8_t *PixelHeatArrayPtr;   // Allocated array for current heat values for Fire + Ember pattern
         uint16_t StartIntervalMillis;   // BouncingBall: interval for first step
         uint16_t NumberOfBouncings;     // ScannerExtended: Number of bounces
+        uint32_t LongValue;
     } LongValue1;
 
     union {
-        color32_t ColorTmp;             // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
+        color32_t ColorTmp;         // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
         float TopPixelIndex;            // BouncingBall: float index of TopPixel
         uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for
         union {
             uint16_t Interval1;             // Flash: interval for color1
             uint16_t Interval2;             // Flash: interval for color2
         } Intervals;
+        uint32_t LongValue2;
+        uint8_t *PixelTargetHeatArrayPtr;   // Allocated array for target heat values for Ember pattern
+        void *Pointer2;
     } LongValue2;
 
     union {
         // for ProcessSelectiveColor could not be member of the first 2 values, since these are used by the processing functions like fadeColor()
         uint32_t (*SingleLEDProcessingFunction)(NeoPatterns*);
-    } Value3; // can be 16 bit for AVR and 32 bit for other platforms
+        void *Pointer1;
+        uint8_t *PixelStartHeatArrayPtr;   // Allocated array for start heat values for Ember pattern
+    } Pointer1; // can be 16 bit for AVR and 32 bit for other platforms
 
     /*
      * for multiple pattern extensions

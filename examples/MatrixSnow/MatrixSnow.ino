@@ -58,7 +58,7 @@
  * See MatrixNeoPatterns.h for further explanation.
  */
 MatrixNeoPatterns NeoPixelMatrix = MatrixNeoPatterns(MATRIX_NUMBER_OF_COLUMNS, MATRIX_NUMBER_OF_ROWS, PIN_NEOPIXEL_MATRIX,
-MATRIX_GEOMETRY, NEO_GRB + NEO_KHZ800, NULL);
+MATRIX_GEOMETRY, NEO_GRB + NEO_KHZ800, nullptr);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);

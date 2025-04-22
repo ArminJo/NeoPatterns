@@ -131,10 +131,12 @@ public:
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
 #endif
     void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
+
     void setBrightnessValue(uint8_t aBrightness);           // Sets the brightness used by Neopixel drawing functions
     void setAdafruitBrightnessValue(uint8_t aBrightness);   // Convenience function to set the brightness used by the (unused) Adafruit drawing functions
     void setBrightnessNonZeroMode(bool aEnableBrightnessNonZeroMode);
-    void fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop = false);
+
+    void fillWithRainbow(uint8_t aRainbowWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
     void fillRegion(color32_t aColor, uint16_t aRegionFirst, uint16_t aRegionLength);
     void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);

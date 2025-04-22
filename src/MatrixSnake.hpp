@@ -9,7 +9,7 @@
  *  SUMMARY
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018-2024  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -168,7 +168,7 @@ void MatrixSnake::rotateLeft() {
 void MatrixSnake::rotateRight() {
     Direction--;
     if (Direction < 0) {
-        Direction = 3;
+        Direction = NUMBER_OF_DIRECTIONS - 1;
     }
 }
 
@@ -211,12 +211,12 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     ActivePattern = SPECIAL_PATTERN_SNAKE;
 
 // just to be sure
-    if (SnakePixelList != NULL) {
+    if (SnakePixelList != nullptr) {
         free(SnakePixelList);
     }
     SnakePixelList = new position[Rows * Columns]; // 128 bytes for 8x8, 512 for 16 x 16
 //    SnakePixelList = new position[Rows * Columns / 2]; // 64 bytes for 8x8, 256 for 16 x 16
-    if (SnakePixelList == NULL) {
+    if (SnakePixelList == nullptr) {
         return false;
     }
 
@@ -262,10 +262,10 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
 }
 
 void MatrixSnake::SnakeStop() {
-    if (SnakePixelList != NULL) {
+    if (SnakePixelList != nullptr) {
         free(SnakePixelList);
     }
-    SnakePixelList = NULL;
+    SnakePixelList = nullptr;
     TotalStepCounter = 1;
     decrementTotalStepCounter();
 }
@@ -300,12 +300,13 @@ void MatrixSnake::SnakeInputHandler() {
 #if defined(LOCAL_DEBUG)
     uint8_t tOldDirection = Direction;
 #endif
+
+    /*
+     * First check up and down button input, in order to change to 4 button mode.
+     * No debouncing needed here.
+     * Do it only if up pin is set!
+     */
     if (PinOfUpButton != 0) {
-        /*
-         * First check up and down button input.
-         * No debouncing needed here.
-         * Do it only if up pin is set!
-         */
         if (digitalRead(PinOfUpButton) == LOW) {
             Direction = DIRECTION_UP;
             PatternFlags |= FLAG_SNAKE_USE_4_BUTTONS;
@@ -340,32 +341,31 @@ void MatrixSnake::SnakeInputHandler() {
         uint16_t tMillisSinceLastButtonChanged = millis() - MillisOfLastButtonChange;
         if (tMillisSinceLastButtonChanged > MILLIS_FOR_BUTTON_DEBOUNCING) {
 
+            /*
+             * Check, if no button was pressed before (== DIRECTION_NONE)
+             */
             if (DirectionOfLastButtonPressed == DIRECTION_NONE) {
-                /*
-                 * Check if button pressed
-                 */
                 if (digitalRead(PinOfRightButton) == LOW) {
+                    // Right button was just pressed here
                     if (Index == 0) {
                         //First button push in new game
-                        Direction = DIRECTION_RIGHT;
-                    } else {
-                        rotateRight();
+                        Direction = INITIAL_DIRECTION_SNAKE;
                     }
+                    rotateRight();
                     DirectionOfLastButtonPressed = DIRECTION_RIGHT;
                     MillisOfLastButtonChange = millis();
                 } else if (digitalRead(PinOfLeftButton) == LOW) {
                     if (Index == 0) {
                         //First button push in new game
-                        Direction = DIRECTION_LEFT;
-                    } else {
-                        rotateLeft();
+                        Direction = INITIAL_DIRECTION_SNAKE;
                     }
+                    rotateLeft();
                     DirectionOfLastButtonPressed = DIRECTION_LEFT;
                     MillisOfLastButtonChange = millis();
                 }
             } else if (digitalRead(PinOfRightButton) == HIGH && digitalRead(PinOfLeftButton) == HIGH) {
                 /*
-                 * Button released
+                 * Both buttons released
                  */
 #if defined(LOCAL_TRACE)
                 Serial.println(F("Button released"));
@@ -631,12 +631,12 @@ void MatrixSnake::SnakeUpdate(bool aDoUpdate) {
          * Not at start of game and current direction was not valid or no valid direction found for autorun
          */
         if (Index != 0 && Direction == DIRECTION_NONE) {
-            if (OnPatternComplete == NULL) {
+            if (OnPatternComplete == nullptr) {
                 // set flags to show end and score and reset snake
                 SnakeEndHandler();
             } else {
                 free(SnakePixelList);
-                SnakePixelList = NULL;
+                SnakePixelList = nullptr;
                 ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
                 OnPatternComplete(this); // call the completion callback, which is set e.g. to SnakeAutorunCompleteHandler for snake autorun
             }
@@ -868,7 +868,7 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     uint16_t tStoredSnakeLength = SnakeLength;
     uint8_t tStoredDirection = Direction;
     position *tStoredSnakePixelList = new position[SnakeLength];
-    if (tStoredSnakePixelList == NULL) {
+    if (tStoredSnakePixelList == nullptr) {
 #if defined(LOCAL_DEBUG)
         Serial.println(F("No memory for StoredSnakePixelList"));
 #endif
@@ -979,7 +979,7 @@ uint8_t MatrixSnake::builtinGetNextSnakeDirection() {
 /*
  * Initialize for snake autorun
  * aRepetitions - number of Snake games until original OnPatternCompleteHandler is called.
- * If OnPatternComplete is NULL, Snake game is played forever.
+ * If OnPatternComplete is nullptr, Snake game is played forever.
  */
 bool initSnakeAutorun(MatrixSnake *aLedsPtr, uint16_t aIntervalMillis, color32_t aColor, uint16_t aRepetitions) {
 
@@ -1031,7 +1031,7 @@ void SnakeAutorunCompleteHandler(NeoPatterns *aLedsPtr) {
     } else if (tStep == AUTORUN_MODE_START_NEW) {
         // score is moved out, start a new game or perform delay and switch to original OnPatternComplete handler.
         tLedsPtr->Repetitions--;
-        if (tLedsPtr->Repetitions != 0 || tLedsPtr->NextOnPatternCompleteHandler == NULL) {
+        if (tLedsPtr->Repetitions != 0 || tLedsPtr->NextOnPatternCompleteHandler == nullptr) {
             // set value to enable next turn
             tLedsPtr->ByteValue2.SnakeAutorunStep = AUTORUN_MODE_SHOW_END;
             tLedsPtr->Snake(sOriginalInterval, tLedsPtr->Color1);

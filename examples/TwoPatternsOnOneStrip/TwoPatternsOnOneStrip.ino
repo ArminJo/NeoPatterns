@@ -1,7 +1,7 @@
 /*
  *  TwoPatternsOnOneStrip.cpp
  *
- *  Runs 2 patterns simultaneously on a 144 NeoPixel strip. One is the main background pattern
+ *  Runs 2 patterns simultaneously on a NeoPixel strip. One is the main background pattern
  *  and the other is the fast moves pattern intended to be more random and quite seldom.
  *  First the background pattern is completely generated
  *  Then the fast moves pattern overwrites the background. Therefore we can only use small patterns here which do not draw black pixels
@@ -12,7 +12,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -55,9 +55,10 @@ EasyButton Button0AtPin3;
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN_NEOPIXEL_STRIP  5
 
-//#define NEOPIXEL_STRIP_LENGTH  144
-//#define NEOPIXEL_STRIP_LENGTH  256
-#define NEOPIXEL_STRIP_LENGTH  300
+//#define NEOPIXEL_STRIP_LENGTH  144 // 1m 144 Leds/m strips
+//#define NEOPIXEL_STRIP_LENGTH  288 // 2m 144 Leds/m strips
+#define NEOPIXEL_STRIP_LENGTH  432 // 3m 144 Leds/m strips
+//#define NEOPIXEL_STRIP_LENGTH  300 // 5m 60 Leds/m strips
 
 #define INTERVAL_BACKGROUND_MIN 10
 #define INTERVAL_FAST_MOVES_MIN 2 // measured 4.3 ms for 144 pixel, but the 1 ms clock interrupt is disabled while sending so 2-3 interrupts/ms-ticks are lost.
@@ -65,6 +66,7 @@ EasyButton Button0AtPin3;
 #define DELAY_MILLIS_BACKGROUND_MIN 500
 #define DELAY_MILLIS_FAST_MOVES_MIN 4000
 uint8_t sDelay; // from 1 to 28 in exponential scale
+uint8_t getDelay();
 
 // onComplete callback functions
 void BackgroundPatternsHandler(NeoPatterns *aLedsPtr);
@@ -101,6 +103,9 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+    Serial.print(F("Delay between pattern is controlled by potentiometer at pin " STR(PIN_DELAY_POTI) ". Delay="));
+    Serial.println(getDelay());
+
     NeoPatternsBackground.printConnectionInfo(&Serial);
 
     // This initializes the NeoPixel library and checks if enough memory was available
@@ -177,16 +182,17 @@ void loop() {
 /*
  * converts value read at analog pin into exponential scale between 1 and 28
  */
-void getDelay() {
+uint8_t getDelay() {
 
     // convert linear to logarithmic scale
     float tDelayValue = analogRead(PIN_DELAY_POTI);
     Serial.print("DelayRawValue=");
     Serial.print(tDelayValue);
     tDelayValue /= 700; // 700 gives value 0.0 to 1.46
-    sDelay = pow(10, tDelayValue); // gives value 1 to 28
+    uint8_t tDelay = pow(10, tDelayValue); // gives value 1 to 28
     Serial.print(" -> ");
-    Serial.println(sDelay);
+    Serial.println(tDelay);
+    return tDelay;
 }
 
 /*
@@ -200,7 +206,7 @@ void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
     /*
      * implement a random delay between each case
      */
-    getDelay();
+    sDelay = getDelay();
     long tRandomDelay = random(DELAY_MILLIS_BACKGROUND_MIN * sDelay, DELAY_MILLIS_BACKGROUND_MIN * sDelay * 4);
     uint16_t tInterval = random(INTERVAL_BACKGROUND_MIN, INTERVAL_BACKGROUND_MIN * 2);
 
@@ -283,7 +289,7 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
     /*
      * implement a random delay between each case
      */
-    getDelay();
+    sDelay = getDelay();
     long tRandomDelay = random(DELAY_MILLIS_FAST_MOVES_MIN * sDelay, DELAY_MILLIS_FAST_MOVES_MIN * sDelay * 4);
     uint16_t tInterval = random(INTERVAL_FAST_MOVES_MIN, INTERVAL_FAST_MOVES_MIN * 2);
 

@@ -173,13 +173,13 @@ void NeoPixel::begin() {
 }
 
 /*
- * begin function, which prints error message if aSerial is not NULL
+ * begin function, which prints error message if aSerial is not nullptr
  * Returns false if no memory available
  */
 bool NeoPixel::begin(Print *aSerial) {
     begin();
     if (numLEDs == 0) {
-        if (aSerial != NULL) {
+        if (aSerial != nullptr) {
             aSerial->print(F("ERROR Not enough free memory available for Pattern at pin "));
             aSerial->println(getPin());
         }
@@ -191,7 +191,7 @@ bool NeoPixel::begin(Print *aSerial) {
 bool NeoPixel::begin(Print *aSerial, uint8_t aBrightness, bool aEnableBrightnessNonZeroMode) {
     begin(aBrightness, aEnableBrightnessNonZeroMode);
     if (numLEDs == 0) {
-        if (aSerial != NULL) {
+        if (aSerial != nullptr) {
             aSerial->print(F("ERROR Not enough free memory available for Pattern at pin "));
             aSerial->println(getPin());
         }
@@ -238,7 +238,7 @@ void NeoPixel::printInfo(Print *aSerial) {
 
     aSerial->print(F(" PixelFlags=0x"));
     aSerial->print(PixelFlags, HEX);
-    aSerial->print(F(" &under.NeoPixel=0x"));
+    aSerial->print(F(" &underlying.NeoPixel=0x"));
     aSerial->print((uintptr_t) UnderlyingNeoPixelObject, HEX);
     aSerial->print(F(" &NeoPixel=0x"));
     aSerial->println((uintptr_t) this, HEX);
@@ -416,10 +416,13 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
 
 /*
  * Sets the brightness used by Neopixel drawing functions
+ * and thr brightness for the Adafruit functions
  * @param   aBrightness  Brightness setting, 0=minimum (off), 255=brightest.
  */
 void NeoPixel::setBrightnessValue(uint8_t aBrightness) {
     Brightness = aBrightness;
+    // set also Adafruit brightness value
+    brightness = aBrightness + 1; // Overflow is intended, see setBrightness()
 }
 
 /*
@@ -701,7 +704,7 @@ void NeoPixel::setPixelColor(uint16_t aPixelIndex, color32_t aColor) {
 }
 
 /*
- * adds color to existing one and clip to white (MAX_BRIGHTNESS)
+ * Adds color to existing one and clip to white (MAX_BRIGHTNESS)
  */
 void NeoPixel::addPixelColor(uint16_t aPixelIndex, color32_t aColor) {
     if (aPixelIndex < numLEDs) {
@@ -799,7 +802,7 @@ void NeoPixel::dimPixelColor(uint16_t aPixelIndex) {
     }
 }
 
-// Calculate 50% dimmed version of a color
+// Calculate 50% dimmed version of a color not using gamma
 uint32_t NeoPixel::dimColor(color32_t aColor) {
 // Shift R, G and B components one bit to the right
 #if defined(_SUPPORT_RGBW)
@@ -826,8 +829,8 @@ color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
     }
 }
 
-void NeoPixel::fillWithRainbow(uint8_t aWheelStartPos, bool aStartAtTop) {
-    uint16_t tWheelIndexHighResolution = aWheelStartPos << 8; // upper byte is the integer part used for Wheel(), lower byte is the fractional part
+void NeoPixel::fillWithRainbow(uint8_t aRainbowWheelStartPos, bool aStartAtTop) {
+    uint16_t tWheelIndexHighResolution = aRainbowWheelStartPos << 8; // upper byte is the integer part used for Wheel(), lower byte is the fractional part
     uint16_t tWheelIndexHighResolutionDelta = 0x10000 / numLEDs;
     for (uint_fast16_t i = 0; i < numLEDs; i++) {
         if (aStartAtTop) {
@@ -987,6 +990,9 @@ uint8_t Blue(color32_t color) {
 /*
  * Get the actual (even) length of the strip (which only can be lower than the current length)
  * and adjust pixel buffer to the new length.
+ * Uses ADC and the VCC voltage drop to determine the actual length of a strip.
+ *
+ * Based on the idea of Tim: https://cpldcpu.com/2014/11/16/ws2812_length/
  *
  * @return  The actual length of the strip
  *          0 if length could not be determined

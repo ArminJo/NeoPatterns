@@ -53,7 +53,7 @@ void MatrixNeoPixel::init() {
     Columns = 0;
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     Geometry = NEO_MATRIX_DEFAULT_GEOMETRY;
-    LayoutMappingFunction = NULL;
+    LayoutMappingFunction = nullptr;
 #endif
 }
 
@@ -64,7 +64,7 @@ MatrixNeoPixel::MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, ui
     Columns = aColumns;
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     Geometry = aMatrixGeometry;
-    LayoutMappingFunction = NULL;
+    LayoutMappingFunction = nullptr;
 #endif
 }
 
@@ -78,7 +78,7 @@ bool MatrixNeoPixel::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t
     Columns = aColumns;
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     Geometry = aMatrixGeometry;
-    LayoutMappingFunction = NULL;
+    LayoutMappingFunction = nullptr;
 #endif
     return tRetval;
 }
@@ -122,7 +122,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
         Serial.println(aBlue);
 #endif
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-        if (LayoutMappingFunction == NULL) {
+        if (LayoutMappingFunction == nullptr) {
             setPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
         } else {
             setPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), aRed, aGreen, aBlue);
@@ -159,7 +159,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, uint8_
         Serial.println(aBlue);
 #endif
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-        if (LayoutMappingFunction == NULL) {
+        if (LayoutMappingFunction == nullptr) {
             addPixelColor(LayoutMapping(aColumnX, aRowY), aRed, aGreen, aBlue);
         } else {
             addPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), aRed, aGreen, aBlue);
@@ -204,7 +204,7 @@ void MatrixNeoPixel::setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
         }
 #endif
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-        if (LayoutMappingFunction == NULL) {
+        if (LayoutMappingFunction == nullptr) {
             setPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
         } else {
             setPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), a32BitColor);
@@ -239,7 +239,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
         }
 #endif
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-        if (LayoutMappingFunction == NULL) {
+        if (LayoutMappingFunction == nullptr) {
             addPixelColor(LayoutMapping(aColumnX, aRowY), a32BitColor);
         } else {
             addPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows), a32BitColor);
@@ -263,7 +263,7 @@ void MatrixNeoPixel::addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color3
 uint32_t MatrixNeoPixel::getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY) {
     uint32_t tColor;
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-    if (LayoutMappingFunction == NULL) {
+    if (LayoutMappingFunction == nullptr) {
         tColor = getPixelColor(LayoutMapping(aColumnX, aRowY));
     } else {
         tColor = getPixelColor(LayoutMappingFunction(aColumnX, aRowY, Columns, Rows));

@@ -52,14 +52,14 @@
 
 MatrixNeoPatterns::MatrixNeoPatterns() :  // @suppress("Class members should be properly initialized")
         NeoPixel(), MatrixNeoPixel(), NeoPatterns() {
-    OnPatternComplete = NULL;
+    OnPatternComplete = nullptr;
 }
 
 // Constructor - calls base-class constructor to initialize strip
 MatrixNeoPatterns::MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, /* @suppress("Class members should be properly initialized") */
 neoPixelType aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) :
         NeoPixel((aColumns * aRows), aPin, aTypeOfPixel), MatrixNeoPixel(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel), NeoPatterns(
-                (aColumns * aRows), aPin, aTypeOfPixel, NULL) {
+                (aColumns * aRows), aPin, aTypeOfPixel, nullptr) {
 
     OnPatternComplete = aPatternCompletionCallback;
 }
@@ -67,7 +67,7 @@ neoPixelType aTypeOfPixel, void (*aPatternCompletionCallback)(NeoPatterns*)) :
 bool MatrixNeoPatterns::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
         void (*aPatternCompletionCallback)(NeoPatterns*)) {
     MatrixNeoPixel::init(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel);
-    bool tRetvalue = NeoPatterns::init((aColumns * aRows), aPin, aTypeOfPixel, NULL);
+    bool tRetvalue = NeoPatterns::init((aColumns * aRows), aPin, aTypeOfPixel, nullptr);
 
     OnPatternComplete = aPatternCompletionCallback;
     return tRetvalue;
@@ -197,7 +197,7 @@ bool MatrixNeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     // Invisible bottom line is initialized each 4 updates with random values
     MatrixNew = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);   // 100 for 8x8, 324 for 16x16 + 2 for malloc
     MatrixOld = (uint8_t*) calloc((Rows + 2) * (Columns + 2), 1);   // 100 for 8x8, 324 for 16x16 + 2 for malloc
-    if (MatrixNew == NULL || MatrixOld == NULL) {
+    if (MatrixNew == nullptr || MatrixOld == nullptr) {
 #if defined(LOCAL_INFO)
         printPin(&Serial);
         Serial.print(F("Fire: Requested heap of 2*"));
@@ -240,11 +240,11 @@ void MatrixNeoPatterns::FireMatrixDealloc() {
     if (MatrixNew) {
         free(MatrixNew);
     }
-    MatrixNew = NULL;
+    MatrixNew = nullptr;
     if (MatrixOld) {
         free(MatrixOld);
     }
-    MatrixOld = NULL;
+    MatrixOld = nullptr;
 }
 
 void MatrixNeoPatterns::FireMatrixStop() {
@@ -373,7 +373,7 @@ bool MatrixNeoPatterns::Snow(uint16_t aNumberOfSteps, uint16_t aIntervalMillis) 
     }
     ByteValue1.NumberOfFlakes = (Rows * Columns * 2) / 5; // Formula for number of snow flakes. 25 for 8x8 , 102 for 16x16 -> 204 + 2 bytes heap
     SnowFlakesArray = (struct SnowFlakeInfoStruct*) calloc(ByteValue1.NumberOfFlakes * sizeof(struct SnowFlakeInfoStruct), 1); // 2
-    if (SnowFlakesArray == NULL) {
+    if (SnowFlakesArray == nullptr) {
         return false;
     }
     for (int tSnowFlakeIndex = 0; tSnowFlakeIndex < ByteValue1.NumberOfFlakes; ++tSnowFlakeIndex) {
@@ -409,7 +409,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
          * End of snow pattern -> cleanup before calling callback
          */
         free(SnowFlakesArray);
-        SnowFlakesArray = NULL;
+        SnowFlakesArray = nullptr;
     }
     if (decrementTotalStepCounterAndSetNextIndex()) {   // sets lastUpdate
         return true;
@@ -437,7 +437,7 @@ bool MatrixNeoPatterns::SnowUpdate() {
 #if defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
             dimPixelColor(i);
 #else
-            if (LayoutMappingFunction == NULL) {
+            if (LayoutMappingFunction == nullptr) {
                 dimPixelColor(LayoutMapping(i, Rows - 1));
             } else {
                 dimPixelColor(LayoutMappingFunction(i, Rows - 1, Columns, Rows));
@@ -644,7 +644,7 @@ void MatrixNeoPatterns::showNumberOnMatrix(uint8_t aNumber, color32_t aColor) {
  */
 void MatrixNeoPatterns::moveArrayContent(uint8_t aDirection) {
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-    if (LayoutMappingFunction != NULL) {
+    if (LayoutMappingFunction != nullptr) {
 #  if defined(WARN)
         Serial.print(F("moveArrayContent with one parameter does not support other than Z type mappings."));
 #  endif
@@ -1010,7 +1010,7 @@ bool MatrixNeoPatterns::TickerUpdate() {
 
             if (isLastChar) {
                 show(); // show last vanished character and its padding
-                if (OnPatternComplete != NULL) {
+                if (OnPatternComplete != nullptr) {
                     OnPatternComplete(this); // call the completion callback
                 } else {
                     ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.

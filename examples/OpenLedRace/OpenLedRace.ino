@@ -323,10 +323,10 @@ public:
         /*
          * NeoPatterns segments to control light effects on both ramps
          * Call malloc() and free() before, since the compiler calls the constructor even
-         * when the result of malloc() is NULL, which leads to overwrite low memory.
+         * when the result of malloc() is nullptr, which leads to overwrite low memory.
          */
         void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67 + 2
-        if (tMallocTest != NULL) {
+        if (tMallocTest != nullptr) {
             free(tMallocTest);
             RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, false);
             isInitialized = true;
@@ -388,7 +388,7 @@ public:
                 } else {
                     //2
                     initMultipleFallingStars(RampPatterns, COLOR32_WHITE_HALF, 7, (tRandom.UBytes[0] & 0x07) + 1,
-                            (tRandom.UBytes[0] & 0x03) + 2, NULL, tDirection);
+                            (tRandom.UBytes[0] & 0x03) + 2, nullptr, tDirection);
                 }
             } else {
                 if (tRandom.UBytes[0] > 0x03) {
@@ -502,10 +502,10 @@ public:
 #if !defined(LOOP_NO_NEOPATTERNS)
         /*
          * NeoPatterns segments to control light effects on both ramps
-         * Call malloc() and free() before, since the compiler calls the constructor even when the result of malloc() is NULL, which leads to overwrite low memory.
+         * Call malloc() and free() before, since the compiler calls the constructor even when the result of malloc() is nullptr, which leads to overwrite low memory.
          */
         void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67 + 2
-        if (tMallocTest != NULL) {
+        if (tMallocTest != nullptr) {
             free(tMallocTest);
             // Create a NeoPattern, which runs on a segment of the existing NeoPattern object.
             LoopPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, LoopLength, false);
@@ -560,7 +560,7 @@ public:
                 } else {
                     //2
                     initMultipleFallingStars(LoopPatterns, COLOR32_WHITE_HALF, 7, (tRandom.UBytes[0] & 0x07) + 1,
-                            4 - (tRandom.UBytes[0] & 0x03), NULL, DIRECTION_UP);
+                            4 - (tRandom.UBytes[0] & 0x03), nullptr, DIRECTION_UP);
                 }
             } else {
                 // 0 or not random
@@ -638,7 +638,7 @@ public:
     const char *WinnerMelody;
 
     Car() {  // @suppress("Class members should be properly initialized")
-        TrackPtr = NULL;
+        TrackPtr = nullptr;
 //        CarIsActive = false;
     }
 

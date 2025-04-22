@@ -78,18 +78,26 @@ The original **SCANNER** pattern is extended and includes the **CYLON** as well 
 <br/>
 
 # NeoPixel library
-the included NeoPixel library is an extensions of the Adafruit NeoPixel library and supports multiple virtual NeoPixel (and NeoPattern) objects on one physical strip. It also contains a lot of useful functions like:
-- setColor()
-- drawBar() 
-- drawBarFromColorArray() - uses a color array for the different colors of the bar pixel.
-- dimColor() - by 50%.
-- gamma5() - returns gamma brightness value from a linear input.
-- gamma5FromColor() - returns the gamma corrected color.
-- Wheel() - returns colors from a color wheel starting ar red.
-as well as functions for getting color parts
-- Red()
-- Green()
-- Blue()
+the included **NeoPixel library is an extensions of the Adafruit NeoPixel library** and supports **multiple virtual NeoPixel (and NeoPattern) objects on one physical strip**. It also contains a lot of useful functions like:
+- setColor() - Sets all pixels to a color.
+- addPixelColor() - Adds color to existing one and clip to white.
+- drawBar(aBarLength) - Draws a bar of pixels starting at the upper or lower end.
+- fillRegion(aColor, aRegionFirst, aRegionLength).
+- drawBarFromColorArray(aBarLength, aColorArrayPtr) - Uses a color array for the different colors of the bar pixel. Useful for e.g. VU meters.
+- fillWithRainbow(aRainbowWheelStartPos).
+- dimColor(aColor) - Calculates 50% dimmed version of a color not using gamma.
+- gamma5(aLinearBrightnessValue) - Returns gamma brightness value from a linear input.
+- convertLinearToGamma5Color(aLinearBrightnessValue) - Returns the gamma corrected color.
+- dimColorWithGamma5(aLinearBrightnessValue, aBrightness) - like before but with additional brightness.
+- Wheel() - Returns colors from a color wheel starting ar red.
+- printConnectionInfo().<br/>
+as well as functions for getting pixel info:
+- getRedPart(color32_t color).
+- getGreenPart(color32_t color).
+- getBluePart(color32_t color).
+- getBytesPerPixel().<br/>
+and fancy functions like:
+- getAndAdjustActualNeopixelLenghtSimple() - Uses ADC and the VCC voltage drop to determine the actual length of a strip. Based on https://cpldcpu.com/2014/11/16/ws2812_length/
 
 <br/>
 
@@ -165,25 +173,13 @@ Modify them by enabling / disabling them, or change the values if applicable.
 | `ENABLE_PATTERNS_FOR_SNAKE_AUTORUN` | disabled | Selects all matrix and non matrix NeoPattern patterns used for the snake game. |
 | `ENABLE_USER_SNAKE_SOLVER` | disabled | Disables the built in solver function getNextSnakeDirection() and enables the [user provided solver function](https://github.com/ArminJo/NeoPatterns/blob/master/examples/SnakeSolver/SnakeSolver.ino#L56). |
 
-### Changing include (*.h) files with Arduino IDE
-First, use *Sketch > Show Sketch Folder (Ctrl+K)*.<br/>
-If you have not yet saved the example as your own sketch, then you are instantly in the right library folder.<br/>
-Otherwise you have to navigate to the parallel `libraries` folder and select the library you want to access.<br/>
-In both cases the library source and include files are located in the libraries `src` directory.<br/>
-The modification must be renewed for each new library version!
-
-### Modifying compile options / macros with PlatformIO
-If you are using PlatformIO, you can define the macros in the *[platformio.ini](https://docs.platformio.org/en/latest/projectconf/section_env_build.html)* file with `build_flags = -D MACRO_NAME` or `build_flags = -D MACRO_NAME=macroValue`.
-
-### Modifying compile options / macros with Sloeber IDE
-If you are using [Sloeber](https://eclipse.baeyens.it) as your IDE, you can easily define global symbols with *Properties > Arduino > CompileOptions*.<br/>
-![Sloeber settings](https://github.com/Arduino-IRremote/Arduino-IRremote/blob/master/pictures/SloeberDefineSymbols.png)
-
 [WOKWI online simulation of the AllPatternOnOneBar example](https://wokwi.com/arduino/projects/299556508969992714)
 ![Screenshot of WOKWI online simulation of the AllPatternOnOneBar example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_AllPatternOnOneBar.png)
 
 [WOKWI online simulation of the MatrixDemo example](https://wokwi.com/arduino/projects/299560666027524617)
 ![Screenshot of WOKWI online simulation of the MatrixDemo example](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Wokwi_MatrixDemo.png)
+
+[WOKWI online simulation of the SnakeGame example](https://wokwi.com/arduino/projects/422510026296881153)
 
 <br/>
 
