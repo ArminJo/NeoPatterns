@@ -406,6 +406,7 @@ void switchMode() {
  * Handler for automatically playing all patterns
  */
 void DemoModeHandler(NeoPatterns *aLedsPtr) {
+    (void) aLedsPtr;
 
     Serial.println();
     Serial.print(F("Old mode="));
@@ -459,5 +460,6 @@ uint8_t readModePins() {
 }
 
 void handleButtonPress(bool aButtonToggleState) {
+    (void) aButtonToggleState;
     sButtonJustPressed = true;
 }

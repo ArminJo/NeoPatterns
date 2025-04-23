@@ -116,6 +116,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define DIRECTION_LEFT          1
 #define DIRECTION_DOWN          2
 #define DIRECTION_RIGHT         3
+#define DIRECTION_LEFT_RIGHT_MASK 0x01
 #define DIRECTION_UP_DOWN_MASK  0x02
 #define DIRECTION_MASK          0x03
 #define PARAMETER_IS_DURATION   0x80 // if highest bit is set for direction parameter, the intervalMillis parameter is interpreted as durationMillis.
@@ -133,6 +134,7 @@ const char* DirectionToString(uint8_t aDirection);
 
 // NeoPattern Class - derived from the NeoPixel and Adafruit_NeoPixel class
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
+// SIZE = 39 bytes + 28 from NeoPixel = 67
 class NeoPatterns: public virtual NeoPixel {
 public:
     NeoPatterns();
@@ -183,6 +185,7 @@ public:
 
     void showPatternInitially();
     bool decrementTotalStepCounter();
+    void setCompensatedInterval(uint16_t aIntervalToCompensate);
     void setNextIndex();
     bool decrementTotalStepCounterAndSetNextIndex();
 
@@ -193,16 +196,21 @@ public:
      */
 #if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
-    void RainbowCycleD(uint8_t aDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
+    void RainbowCycleD(uint8_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1)
+            __attribute__ ((deprecated ("Renamed to RainbowCycleDuration()")));
+    void RainbowCycleDuration(uint8_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
     bool RainbowCycleUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_COLOR_WIPE)
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void ColorWipeD(color32_t aColor, uint16_t aDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP)
+            __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
+    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     bool ColorWipeUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_FADE)
     void Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
+    void FadeDuration(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aCompleteDurationMillis);
     bool FadeUpdate(bool aDoUpdate = true);
 #endif
 
@@ -215,7 +223,10 @@ public:
 
 #if defined(ENABLE_PATTERN_STRIPES)
     void StripesD(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
-            uint16_t aDurationMillis, uint8_t aDirection = DIRECTION_UP);
+            uint16_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP)
+                    __attribute__ ((deprecated ("Renamed to StripesDuration()")));
+    void StripesDuration(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
+            uint16_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP);
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
     bool StripesUpdate(bool aDoUpdate = true);
@@ -230,8 +241,11 @@ public:
 #if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
     void ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0,
             uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void ScannerExtendedD(color32_t aColor, uint8_t aLength, uint16_t aDurationMillis, uint16_t aNumberOfBouncings = 0,
-            uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void ScannerExtendedD(color32_t aColor, uint8_t aLength, uint16_t aCompleteDurationMillis, uint16_t aNumberOfBouncings = 0,
+            uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP)
+                    __attribute__ ((deprecated ("Renamed to ScannerExtendedDuration()")));
+    void ScannerExtendedDuration(color32_t aColor, uint8_t aLength, uint16_t aCompleteDurationMillis, uint16_t aNumberOfBouncings =
+            0, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     bool ScannerExtendedUpdate(bool aDoUpdate = true);
 #endif
 
@@ -306,7 +320,7 @@ public:
      * Variables for almost each pattern
      */
     int16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
-    uint16_t Index;             // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake.
+    int16_t Index;              // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake. int for Cylon.
     color32_t Color1;           // Main pattern color
     int8_t Direction;           // Direction to run the pattern  DIRECTION_UP, DIRECTION_LEFT, DIRECTION_DOWN or DIRECTION_RIGHT
 
@@ -357,7 +371,7 @@ public:
         color32_t ColorTmp;         // Temporary color for dim and lightenColor() and for FadeSelectiveColor, ProcessSelectiveColor.
         float TopPixelIndex;            // BouncingBall: float index of TopPixel
         uint16_t DeltaBrightnessShift8; // ScannerExtended: Delta for each step for
-        union {
+        struct {
             uint16_t Interval1;             // Flash: interval for color1
             uint16_t Interval2;             // Flash: interval for color2
         } Intervals;
@@ -382,6 +396,7 @@ public:
      * List of all NeoPatterns
      */
     NeoPatterns *NextNeoPatternsObject;
+
     static NeoPatterns *FirstNeoPatternsObject;
 };
 

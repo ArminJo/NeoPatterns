@@ -393,13 +393,13 @@ public:
             } else {
                 if (tRandom.UBytes[0] > 0x03) {
                     // 0 - especially used for setup
-                    RampPatterns->ColorWipeD(NeoPatterns::Wheel(tRandom.UBytes[0]), START_ANIMATION_MILLIS, 0, tDirection);
+                    RampPatterns->ColorWipeDuration(NeoPatterns::Wheel(tRandom.UBytes[0]), START_ANIMATION_MILLIS, 0, tDirection);
                 } else {
                     // 0 - especially used for setup
-                    RampPatterns->ColorWipeD(RAMP_COLOR, START_ANIMATION_MILLIS, 0, tDirection);
+                    RampPatterns->ColorWipeDuration(RAMP_COLOR, START_ANIMATION_MILLIS, 0, tDirection);
                 }
 
-//                RampPatterns->ScannerExtendedD(COLOR32_BLUE_HALF, 8, START_ANIMATION_MILLIS, 2,
+//                RampPatterns->ScannerExtendedCompleteDuration(COLOR32_BLUE_HALF, 8, START_ANIMATION_MILLIS, 2,
 //                FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, tDirection);
             }
         }
@@ -564,7 +564,7 @@ public:
                 }
             } else {
                 // 0 or not random
-                LoopPatterns->ScannerExtendedD(COLOR32_BLUE_HALF, 8, START_ANIMATION_MILLIS, 2,
+                LoopPatterns->ScannerExtendedDuration(COLOR32_BLUE_HALF, 8, START_ANIMATION_MILLIS, 2,
                 FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, DIRECTION_UP);
             }
         }

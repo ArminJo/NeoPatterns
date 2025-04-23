@@ -155,6 +155,9 @@ void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     setPixelBuffer(aUnderlyingNeoPixelObject->getPixels());
 }
 
+/*
+ * @param aEnableBrightnessNonZeroMode Pixel is set to zero, only if brightness or input color is zero, otherwise it is clipped at e.g. 0x000100
+ */
 void NeoPixel::begin(uint8_t aBrightness, bool aEnableBrightnessNonZeroMode) {
 #if defined(SUPPORT_BRIGHTNESS)
     Brightness = aBrightness;
@@ -829,12 +832,15 @@ color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
     }
 }
 
+/*
+ * @param aStartAtTop if true the first color is written at index numLEDs
+ */
 void NeoPixel::fillWithRainbow(uint8_t aRainbowWheelStartPos, bool aStartAtTop) {
     uint16_t tWheelIndexHighResolution = aRainbowWheelStartPos << 8; // upper byte is the integer part used for Wheel(), lower byte is the fractional part
     uint16_t tWheelIndexHighResolutionDelta = 0x10000 / numLEDs;
     for (uint_fast16_t i = 0; i < numLEDs; i++) {
         if (aStartAtTop) {
-            setPixelColor(numLEDs - i, Wheel(tWheelIndexHighResolution >> 8));
+            setPixelColor(numLEDs - 1 - i, Wheel(tWheelIndexHighResolution >> 8));
         } else {
             setPixelColor(i, Wheel(tWheelIndexHighResolution >> 8));
         }
@@ -862,7 +868,7 @@ uint8_t NeoPixel::gamma32(uint8_t aLinearBrightnessValue) {
 }
 
 /*
- * Returns only 0 if value is 0. Returns 1 for input 1 to 7 (and for 8 to 39).
+ * The same as gamma5() but returns 1 for input 1 to 7 and 0 only if value is 0.
  * Can be used in conjunction with PIXEL_FLAG_USE_NON_ZERO_BRIGHTNESS, not to blank out pixels which are heavily dimmed
  */
 uint8_t NeoPixel::gamma5WithSpecialZero(uint8_t aLinearBrightnessValue) {

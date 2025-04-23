@@ -61,10 +61,15 @@ EasyButton Button0AtPin3;
 //#define NEOPIXEL_STRIP_LENGTH  300 // 5m 60 Leds/m strips
 
 #define INTERVAL_BACKGROUND_MIN 10
+#define INTERVAL_BACKGROUND_MAX 20
 #define INTERVAL_FAST_MOVES_MIN 2 // measured 4.3 ms for 144 pixel, but the 1 ms clock interrupt is disabled while sending so 2-3 interrupts/ms-ticks are lost.
+#define INTERVAL_FAST_MOVES_MAX 4
 
+// All timings are multiplied with sDelay
 #define DELAY_MILLIS_BACKGROUND_MIN 500
+#define DELAY_MILLIS_BACKGROUND_MAX 2000
 #define DELAY_MILLIS_FAST_MOVES_MIN 4000
+#define DELAY_MILLIS_FAST_MOVES_MAX 16000
 uint8_t sDelay; // from 1 to 28 in exponential scale
 uint8_t getDelay();
 
@@ -103,8 +108,8 @@ void setup() {
 #endif
     // Just to know which program is running on my Arduino
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
-    Serial.print(F("Delay between pattern is controlled by potentiometer at pin " STR(PIN_DELAY_POTI) ". Delay="));
-    Serial.println(getDelay());
+    Serial.print(F("Delay between pattern is controlled by potentiometer at pin " STR(PIN_DELAY_POTI) ". "));
+    getDelay(); // prints delay info
 
     NeoPatternsBackground.printConnectionInfo(&Serial);
 
@@ -150,6 +155,7 @@ void loop() {
 #if defined(ADC_UTILS_ARE_AVAILABLE)
         checkAndHandleVCCUndervoltage();
 #endif
+        sDelay = getDelay();
 
         bool tMustUpdate = NeoPatternsBackground.checkForUpdate() || NeoPatternsFastMoves.checkForUpdate();
         if (tMustUpdate) {
@@ -183,15 +189,18 @@ void loop() {
  * converts value read at analog pin into exponential scale between 1 and 28
  */
 uint8_t getDelay() {
+    static uint8_t sLastDelay = 0; // from 1 to 28 in exponential scale
 
     // convert linear to logarithmic scale
-    float tDelayValue = analogRead(PIN_DELAY_POTI);
-    Serial.print("DelayRawValue=");
-    Serial.print(tDelayValue);
-    tDelayValue /= 700; // 700 gives value 0.0 to 1.46
-    uint8_t tDelay = pow(10, tDelayValue); // gives value 1 to 28
-    Serial.print(" -> ");
-    Serial.println(tDelay);
+    auto tDelayRawValue = analogRead(PIN_DELAY_POTI);
+    uint8_t tDelay = pow(10, tDelayRawValue / 700.0); // / 700 gives value 0.0 to 1.46 -> gives value 1 to 28
+    if (sLastDelay != tDelay) {
+        Serial.print("DelayRawValue=");
+        Serial.print(tDelayRawValue);
+        sLastDelay = tDelay;
+        Serial.print(" -> ");
+        Serial.println(tDelay);
+    }
     return tDelay;
 }
 
@@ -201,38 +210,37 @@ uint8_t getDelay() {
  */
 void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
-    static bool sNoDelay = false;
+    static bool sNoPatternRandomDelayBetweenPatterns = false;
 
     /*
      * implement a random delay between each case
      */
-    sDelay = getDelay();
-    long tRandomDelay = random(DELAY_MILLIS_BACKGROUND_MIN * sDelay, DELAY_MILLIS_BACKGROUND_MIN * sDelay * 4);
-    uint16_t tInterval = random(INTERVAL_BACKGROUND_MIN, INTERVAL_BACKGROUND_MIN * 2);
+    uint16_t tRandomDelay = random(DELAY_MILLIS_BACKGROUND_MIN * sDelay, DELAY_MILLIS_BACKGROUND_MAX * sDelay);
+    uint16_t tInterval = random(INTERVAL_BACKGROUND_MIN, INTERVAL_BACKGROUND_MAX + 1); // Upper value is excluded
 
     if ((sState & 1) == 1) {
+        sState++; // next pattern requires an even state
         /*
          * Insert a random delay if sState is odd
          * Can be disabled by patterns using "sNoDelay"
          */
-        sState++;
-        if (!sNoDelay) {
+        if (!sNoPatternRandomDelayBetweenPatterns) {
             aLedsPtr->Delay(tRandomDelay); // to separate each pattern
             return;
         }
     }
 
     int8_t tState = sState / 2;
+    sNoPatternRandomDelayBetweenPatterns = false;
     switch (tState) {
     case 0:
         // STRIPES
         aLedsPtr->Stripes(COLOR32_GREEN_HALF, 15, COLOR32_BLACK, 25, tInterval, 400);
-        sNoDelay = true;
+        sNoPatternRandomDelayBetweenPatterns = true;
         break;
     case 1:
         // clear pattern
         aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
-        sNoDelay = false;
         break;
     case 2:
         aLedsPtr->RainbowCycle(tInterval);
@@ -243,38 +251,28 @@ void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
         break;
     case 4:
         // old TheaterChase
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Woverflow" // of 2 * aLedsPtr->numPixels()
-        aLedsPtr->Stripes(COLOR32_RED_HALF, 2, COLOR32_GREEN_HALF, 4, tInterval * 3, aLedsPtr->numPixels() * 2);
-        sNoDelay = true;
+        aLedsPtr->Stripes(COLOR32_RED_HALF, 2, COLOR32_GREEN_HALF, 4, tInterval * 3, DIRECTION_DOWN);
+        sNoPatternRandomDelayBetweenPatterns = true;
         break;
-#pragma GCC diagnostic pop
     case 5:
         aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, FLAG_DO_NOT_CLEAR);
-        sNoDelay = false;
-        sState = -2; // Start from beginning
+        sState = -1; // Start from beginning
         break;
     default:
         Serial.println("ERROR");
         break;
     }
 
-    Serial.print("Pin=");
-    Serial.print(aLedsPtr->getPin());
-    Serial.print(" Length=");
-    Serial.print(aLedsPtr->numPixels());
-    Serial.print(" ActivePattern=");
+    Serial.print("Back: ActivePattern=");
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
-    Serial.print("|");
-    Serial.print(aLedsPtr->ActivePattern);
-    Serial.print(" Delay=");
-    Serial.print(sDelay);
     Serial.print(" Interval=");
     Serial.print(tInterval);
-    Serial.print(" sNoDelay=");
-    Serial.print(sNoDelay);
-    Serial.print(" StateBack=");
-    Serial.println(tState);
+    Serial.print(" Delay=");
+    Serial.print(sDelay);
+    Serial.print(" State=");
+    Serial.print(tState);
+    Serial.print(" NoDelayBetween=");
+    Serial.println(sNoPatternRandomDelayBetweenPatterns);
 
     sState++;
 }
@@ -289,16 +287,15 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
     /*
      * implement a random delay between each case
      */
-    sDelay = getDelay();
-    long tRandomDelay = random(DELAY_MILLIS_FAST_MOVES_MIN * sDelay, DELAY_MILLIS_FAST_MOVES_MIN * sDelay * 4);
-    uint16_t tInterval = random(INTERVAL_FAST_MOVES_MIN, INTERVAL_FAST_MOVES_MIN * 2);
+    long tRandomDelayBetweenPatterns = random(DELAY_MILLIS_FAST_MOVES_MIN * sDelay, DELAY_MILLIS_FAST_MOVES_MAX * sDelay);
+    uint16_t tInterval = random(INTERVAL_FAST_MOVES_MIN, INTERVAL_FAST_MOVES_MAX + 1); // Upper value is excluded
 
     int8_t tState = sState / 2;
     if ((sState & 1) == 1) {
         /*
          * Insert a random delay if sState is odd
          */
-        aLedsPtr->Delay(tRandomDelay); // to separate each pattern
+        aLedsPtr->Delay(tRandomDelayBetweenPatterns); // to separate each pattern
     } else {
 
         switch (tState) {
@@ -328,17 +325,13 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
             break;
         }
     }
-    Serial.print("Length=");
-    Serial.print(aLedsPtr->numPixels());
-    Serial.print(" ActivePattern=");
+    Serial.print("Fast: ActivePattern=");
     aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
-    Serial.print("|");
-    Serial.print(aLedsPtr->ActivePattern);
-    Serial.print(" Delay=");
-    Serial.print(sDelay);
     Serial.print(" Interval=");
     Serial.print(tInterval);
-    Serial.print(" StateFast=");
+    Serial.print(" Delay=");
+    Serial.print(sDelay);
+    Serial.print(" State=");
     Serial.println(tState);
 
     sState++;

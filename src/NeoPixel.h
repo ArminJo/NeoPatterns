@@ -79,6 +79,9 @@ uint8_t Red(color32_t color) __attribute__ ((deprecated ("Renamed to getRedPart(
 uint8_t Green(color32_t color) __attribute__ ((deprecated ("Renamed to getGreenPart()"))); // deprecated
 uint8_t Blue(color32_t color) __attribute__ ((deprecated ("Renamed to getBluePart()"))); // deprecated
 
+/*
+ * SIZE = 6 + 22 from Adafruit_NeoPixel = 28
+ */
 class NeoPixel: public Adafruit_NeoPixel {
 public:
     NeoPixel();

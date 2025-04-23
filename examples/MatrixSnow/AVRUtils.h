@@ -42,7 +42,9 @@
 extern void *__brkval; // The largest address just not allocated so far / start of available / free heap, initialized at first malloc()
 extern void *__flp; //
 extern char __heap_start; // = __bss_end, the linker address of heap start
-#define HEURISTIC_ADDITIONAL_MALLOC_MARGIN 14 // No malloc() possible if size is lower than (__malloc_margin + HEURISTIC_ADDITIONAL_MALLOC_MARGIN)
+#define DEFAULT_MALLOC_MARGIN   128
+
+//#define HEURISTIC_ADDITIONAL_MALLOC_MARGIN 14 // No malloc() possible if size is lower than (__malloc_margin + HEURISTIC_ADDITIONAL_MALLOC_MARGIN)
 
 /*
  * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
@@ -74,9 +76,10 @@ void printAvailableHeapStart(Print *aSerial);
 uint16_t getCurrentAvailableStackSize(void);
 void printCurrentAvailableStackSize(Print *aSerial);
 uint16_t getCurrentAvailableHeapSize(void);
+uint16_t getTheoreticalMaximumAvailableHeapSize(void);
 void printCurrentAvailableHeapSize(Print *aSerial);
 void printCurrentAvailableHeapSizeSimple(Print *aSerial);
-#define PRINT_AVAILABLE_HEAP    Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin + HEURISTIC_ADDITIONAL_MALLOC_MARGIN))
+#define PRINT_AVAILABLE_HEAP    Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin))
 
 #define HEAP_STACK_UNTOUCHED_VALUE 0x5A
 void initStackFreeMeasurement();
