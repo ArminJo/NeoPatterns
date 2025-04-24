@@ -92,28 +92,22 @@ void loop() {
 void TwoPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
-#if defined(__AVR__)
-    uint32_t tRandom = random();
-#else
-    uint32_t tRandom = random(__UINT32_MAX__);
-#endif
-    uint8_t tDuration = random(20, 120);
-    uint8_t tColor1 = tRandom;
-    uint8_t tColor2 = tRandom >> 8;
+    uint8_t tDuration = random8(20, 121);
+    uint8_t tColorWheelIndex1 = random8();
+    uint8_t tColorWheelIndex2 = random8();
 
     switch (sState) {
     case 0:
         // Scanner - use random mode and direction
-
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 2,
-                (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
-                        | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColorWheelIndex1), 4, tDuration, 2,
+                (tColorWheelIndex2 & FLAG_SCANNER_EXT_CYLON) | (tColorWheelIndex2 & FLAG_SCANNER_EXT_VANISH_COMPLETE)
+                        | (tColorWheelIndex2 & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), (tColorWheelIndex1 & DIRECTION_DOWN));
         break;
 
     case 1:
         // Stripes - use random direction
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor1), 5, NeoPatterns::Wheel(tColor2), 3, 2 * aLedsPtr->numPixels(), tDuration,
-                (tRandom & DIRECTION_DOWN));
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColorWheelIndex1), 5, NeoPatterns::Wheel(tColorWheelIndex2), 3,
+                2 * aLedsPtr->numPixels(), tDuration, (tColorWheelIndex2 & DIRECTION_DOWN));
         break;
 
     case 2:

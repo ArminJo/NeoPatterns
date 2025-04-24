@@ -52,6 +52,7 @@ Available as [Arduino library "NeoPatterns"](https://www.arduinolibraries.info/l
 - SCANNER_EXTENDED
 - STRIPES
 - FLASH
+- TWINKLE
 - PROCESS_SELECTIVE
 - HEARTBEAT
 - BOUNCING_BALL
@@ -90,6 +91,7 @@ the included **NeoPixel library is an extensions of the Adafruit NeoPixel librar
 - convertLinearToGamma5Color(aLinearBrightnessValue) - Returns the gamma corrected color.
 - dimColorWithGamma5(aLinearBrightnessValue, aBrightness) - like before but with additional brightness.
 - Wheel() - Returns colors from a color wheel starting ar red.
+- copyRegion() - Copy a mutiple pixels to another part of the strip. Optional do a reverse copy.
 - printConnectionInfo().<br/>
 as well as functions for getting pixel info:
 - getRedPart(color32_t color).
@@ -221,6 +223,12 @@ It also shows, how to dynamically **determine the length of the attached strip**
 <br/>
 
 # Revision History
+### Version 3.3.0
+- New pattern `TWINKLE`.
+- New functions `setCompensatedInterval()` and `copyRegion()`.
+- Member variable `Interval` is now signed.
+- Copied and used `random8()` from [FastLED](https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h).
+
 ### Version 3.2.0
 - Added functions `getActualNeopixelLenghtSimple()`, `clearAndShow()`, `setMatrixPixelColorAndShow()` and `testMapping()`.
 - Improved `SNOW` pattern.

@@ -45,6 +45,7 @@
 #define ENABLE_MATRIX_PATTERN_MOVE
 #define ENABLE_MATRIX_PATTERN_FIRE
 #define ENABLE_MATRIX_PATTERN_SNOW
+#define ENABLE_PATTERN_TWINKLE
 #endif
 
 #include "MatrixNeoPatterns.h"

@@ -37,7 +37,6 @@
 #endif
 //#include "HexDump.hpp"
 
-
 #define INFO
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
@@ -46,6 +45,7 @@
 
 #define ENABLE_MATRIX_PATTERN_FIRE
 #define ENABLE_MATRIX_PATTERN_SNOW
+#define ENABLE_PATTERN_TWINKLE
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
 #include <MatrixSnake.hpp>
 
@@ -97,8 +97,9 @@ bool delayAndCheckMode(uint16_t aMilliseconds);
 #define MODE_SNOW       0
 #define MODE_SNAKE      1
 #define MODE_FIRE       2
-#define MODE_ALL_COLORS 3
-#define MODE_MAX        3
+#define MODE_TWINKLE    3
+#define MODE_ALL_COLORS 4
+#define MODE_MAX        4
 #define MODE_NO_MODE  255 // in case of error
 uint8_t sCurrentMode;
 volatile bool sButtonJustPressed = false;
@@ -272,13 +273,20 @@ void loop() {
         if (sCurrentMode == MODE_SNOW) {
             NeoPixelMatrix.update(tBrightness);
             if (!sDemoModeEnabled) {
-                NeoPixelMatrix.TotalStepCounter = 3; // to enable fast ending, if demo mode is enabled again
+                // set to constant value to allow endless running
+                NeoPixelMatrix.TotalStepCounter = 3; // 3 to enable fast ending, if demo mode is enabled again
+            }
+
+        } else if (sCurrentMode == MODE_TWINKLE) {
+            NeoPixelMatrix.update(tBrightness);
+            if (!sDemoModeEnabled) {
+                NeoPixelMatrix.TotalStepCounter = 3; // 3 to enable fast ending, if demo mode is enabled again
             }
 
         } else if (sCurrentMode == MODE_SNAKE) {
             NeoPixelMatrix.update(tBrightness);
             if (!sDemoModeEnabled) {
-                NeoPixelMatrix.Repetitions = 1; // to enable fast ending, if demo mode is enabled again
+                NeoPixelMatrix.Repetitions = 1; // 1 to enable fast ending, if demo mode is enabled again
             }
 
         } else if (sCurrentMode == MODE_ALL_COLORS) {
@@ -359,13 +367,14 @@ bool startPattern(uint8_t aNewMode) {
     if (aNewMode == MODE_SNOW) {
         return NeoPixelMatrix.Snow(1000, 20);
 
+    } else if (aNewMode == MODE_TWINKLE) {
+        NeoPixelMatrix.Twinkle(COLOR32_SPECIAL, NeoPixelMatrix.getNumberOfPixels() / 4, 50, 60);
+        return true;
+
     } else if (aNewMode == MODE_SNAKE) {
         return initSnakeAutorun(&NeoPixelMatrix, 200, COLOR32_BLUE, 2);
 
     } else if (aNewMode == MODE_FIRE) {
-#if defined(USE_16_X_16_MATRIX)
-        set__malloc_margin(120); // 2 bytes stack are unused then :-)
-#endif
         return NeoPixelMatrix.Fire(800, 30);
     }
     return true;
@@ -406,7 +415,6 @@ void switchMode() {
  * Handler for automatically playing all patterns
  */
 void DemoModeHandler(NeoPatterns *aLedsPtr) {
-    (void) aLedsPtr;
 
     Serial.println();
     Serial.print(F("Old mode="));
@@ -421,8 +429,12 @@ void DemoModeHandler(NeoPatterns *aLedsPtr) {
      * Start new pattern
      */
     if (!startPattern(sCurrentMode)) {
-        Serial.println(F("Not enough heap available"));
-        sCurrentMode = MODE_NO_MODE;
+        Serial.print(F("Not enough heap available for new mode "));
+        printlnMode(sCurrentMode);
+#if defined(__AVR__)
+        printRAMInfo(&Serial);
+#endif
+        DemoModeHandler(aLedsPtr); // Try next pattern
     } else {
         Serial.print(F("New mode="));
         printlnMode(sCurrentMode);
@@ -438,6 +450,8 @@ void printlnMode(uint8_t aMode) {
         Serial.println(F("Snow"));
     } else if (aMode == MODE_SNAKE) {
         Serial.println(F("Snake"));
+    } else if (aMode == MODE_TWINKLE) {
+        Serial.println(F("Twinkle"));
     } else if (aMode == MODE_FIRE) {
         Serial.println(F("Fire"));
     } else if (aMode == MODE_ALL_COLORS) {

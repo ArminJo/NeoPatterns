@@ -67,7 +67,8 @@ extern const char *const PatternNamesArray[] PROGMEM;
  * If no pattern is explicitly activated, activate all patterns here
  */
 #if (!(defined(ENABLE_PATTERN_RAINBOW_CYCLE) || defined(ENABLE_PATTERN_COLOR_WIPE) || defined(ENABLE_PATTERN_FADE) \
-|| defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_FLASH) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
+|| defined(ENABLE_PATTERN_SCANNER_EXTENDED) || defined(ENABLE_PATTERN_STRIPES) || defined(ENABLE_PATTERN_FLASH) \
+|| defined(ENABLE_PATTERN_TWINKLE) || defined(ENABLE_PATTERN_PROCESS_SELECTIVE) \
 || defined(ENABLE_PATTERN_HEARTBEAT) || defined(ENABLE_PATTERN_FIRE) || defined(ENABLE_PATTERN_EMBER) || defined(ENABLE_PATTERN_BOUNCING_BALL) \
 || defined(ENABLE_PATTERN_USER_PATTERN1) || defined(ENABLE_PATTERN_USER_PATTERN2)  \
 || defined(ENABLE_NO_NEO_PATTERN_BY_DEFAULT) ))
@@ -77,6 +78,7 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_STRIPES
 #define ENABLE_PATTERN_FLASH
+#define ENABLE_PATTERN_TWINKLE
 #define ENABLE_PATTERN_PROCESS_SELECTIVE
 #define ENABLE_PATTERN_HEARTBEAT
 #define ENABLE_PATTERN_FIRE
@@ -100,12 +102,14 @@ extern const char *const PatternNamesArray[] PROGMEM;
 #define PATTERN_PROCESS_SELECTIVE   8
 #define PATTERN_HEARTBEAT           9
 #define PATTERN_FIRE               10
-#define PATTERN_EMBER              14 // Experimental
+#define PATTERN_TWINKLE            11
 
-#define PATTERN_BOUNCING_BALL      11
+#define PATTERN_BOUNCING_BALL      12
 
-#define PATTERN_USER_PATTERN1      12
-#define PATTERN_USER_PATTERN2      13
+#define PATTERN_EMBER              13 // Experimental
+
+#define PATTERN_USER_PATTERN1      14
+#define PATTERN_USER_PATTERN2      15
 
 #define LAST_NEO_PATTERN           PATTERN_USER_PATTERN2 // Used for enumeration of matrix patterns
 
@@ -156,7 +160,9 @@ public:
     bool isActive();
     bool checkForUpdate();
     bool update();
+    bool _update(bool aDoUpdate);
     bool update(uint8_t aBrightness);
+    void forceUpdate(uint8_t aBrightness);
 
 #define DO_REDRAW_IF_NO_UPDATE  true
 #define DO_NO_REDRAW_IF_NO_UPDATE  false
@@ -205,7 +211,8 @@ public:
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP)
             __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
-    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
+    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0,
+            uint8_t aDirection = DIRECTION_UP);
     bool ColorWipeUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_FADE)
@@ -234,7 +241,7 @@ public:
 
 #if defined(ENABLE_PATTERN_FLASH)
     void Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2,
-            uint16_t aNumberOfSteps, bool doEndWithBlack = false);
+            uint16_t aRepetitions, bool doEndWithBlack = false);
     bool FlashUpdate(bool aDoUpdate = true);
 #endif
 
@@ -252,6 +259,11 @@ public:
 #if defined(ENABLE_PATTERN_HEARTBEAT)
     void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode = 0);
     bool HeartbeatUpdate(bool aDoUpdate = true);
+#endif
+
+#if defined(ENABLE_PATTERN_TWINKLE)
+    void Twinkle(color32_t aColorSpecial, uint8_t aPercentageOfStripFilling, uint16_t aIntervalMillis, uint16_t aRepetitions);
+    bool TwinkleUpdate(bool aDoUpdate = true);
 #endif
 
 #if defined(ENABLE_PATTERN_PROCESS_SELECTIVE)
@@ -320,7 +332,7 @@ public:
      * Variables for almost each pattern
      */
     int16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
-    int16_t Index;              // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake. int for Cylon.
+    int16_t Index; // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake. int for Cylon.
     color32_t Color1;           // Main pattern color
     int8_t Direction;           // Direction to run the pattern  DIRECTION_UP, DIRECTION_LEFT, DIRECTION_DOWN or DIRECTION_RIGHT
 
@@ -431,6 +443,12 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
+ * Version 3.3.0 - 04/2025
+ * - New pattern TWINKLE.
+ * - New functions setCompensatedInterval() and copyRegion().
+ * - Member variable Interval is now signed.
+ * - Copied and used random8() from FastLED https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h
+ *
  * Version 3.2.0 - 09/2024
  * - Added functions `getActualNeopixelLenghtSimple()`, `clearAndShow()`, `setMatrixPixelColorAndShow()` and `testMapping()`.
  * - Improved SNOW pattern.

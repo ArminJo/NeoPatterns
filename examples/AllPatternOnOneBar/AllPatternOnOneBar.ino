@@ -75,8 +75,8 @@ void loop() {
 void allPatterns(NeoPatterns *aLedsPtr) {
     static int8_t sState = 0;
 
-    uint8_t tDuration = random(40, 81);
-    uint8_t tColor = random(255);
+    uint8_t tDuration = random8(40, 81);
+    uint8_t tColorWheelIndex = random8();
 
 #if defined(INFO)
     Serial.print("Pin=");
@@ -90,19 +90,19 @@ void allPatterns(NeoPatterns *aLedsPtr) {
     switch (sState) {
     case 0:
         // Cylon
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 2, FLAG_SCANNER_EXT_CYLON);
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColorWheelIndex), 5, tDuration, 2, FLAG_SCANNER_EXT_CYLON);
         break;
     case 1:
         // Heartbeat
-        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 2);
+        aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColorWheelIndex), tDuration / 2, 2);
         break;
     case 2:
         // rocket and falling star - 2 times bouncing
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColorWheelIndex), 7, tDuration, 2,
         FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS, (tDuration & DIRECTION_DOWN));
         break;
     case 3:
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 5, NeoPatterns::Wheel(tColor + 0x80), 3, 2 * aLedsPtr->numPixels(),
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColorWheelIndex), 5, NeoPatterns::Wheel(tColorWheelIndex + 0x80), 3, 2 * aLedsPtr->numPixels(),
                 tDuration * 2, (tDuration & DIRECTION_DOWN));
         break;
     case 4:
@@ -110,14 +110,14 @@ void allPatterns(NeoPatterns *aLedsPtr) {
         break;
     case 5:
         // old TheaterChase
-        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, 2 * aLedsPtr->numPixels(),
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColorWheelIndex), 1, NeoPatterns::Wheel(tColorWheelIndex + 0x80), 2, 2 * aLedsPtr->numPixels(),
                 tDuration * 2, (tDuration & DIRECTION_DOWN));
         break;
     case 6:
-        aLedsPtr->Fade(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), 64, tDuration);
+        aLedsPtr->Fade(NeoPatterns::Wheel(tColorWheelIndex), NeoPatterns::Wheel(tColorWheelIndex + 0x80), 64, tDuration);
         break;
     case 7:
-        aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration);
+        aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColorWheelIndex), tDuration);
         break;
     case 8:
         // clear existing color wipe
@@ -133,7 +133,7 @@ void allPatterns(NeoPatterns *aLedsPtr) {
             aLedsPtr->Fire(tDuration * 2, tDuration / 2);
         } else {
             // start at both end
-            aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 0,
+            aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColorWheelIndex), 5, tDuration, 0,
             FLAG_SCANNER_EXT_START_AT_BOTH_ENDS | FLAG_SCANNER_EXT_VANISH_COMPLETE);
         }
 

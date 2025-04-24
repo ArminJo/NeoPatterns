@@ -3,7 +3,7 @@
  *
  * Implements extensions to Adafruit_NeoPixel functions
  *
- *  Copyright (C) 2019-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -141,7 +141,8 @@ public:
 
     void fillWithRainbow(uint8_t aRainbowWheelStartPos, bool aStartAtTop = false);
     void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
-    void fillRegion(color32_t aColor, uint16_t aRegionFirst, uint16_t aRegionLength);
+    void fillRegion(color32_t aColor, uint16_t aRegionStartIndext, uint16_t aRegionLength);
+    void copyRegion(uint16_t aSourcePixelIndex, uint16_t aTargetPixelIndex, uint16_t aLength, bool aDoReverseCopy);
     void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
 
     void addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
@@ -186,5 +187,10 @@ public:
 #define PIXEL_FLAG_GEOMETRY_CIRCLE                           0x80 // in contrast to bar
 
 extern const uint8_t GammaTable32[32] PROGMEM;
+
+// From FastLED random8.h https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h
+uint8_t random8();
+uint8_t random8(uint8_t lim);
+uint8_t random8(uint8_t min, uint8_t lim);
 
 #endif /* _NEOPATTERNS_NEOPIXEL_H */

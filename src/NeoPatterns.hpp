@@ -66,6 +66,7 @@ const char PatternFlash[] PROGMEM ="Flash";
 const char PatternProcessSelectiveColor[] PROGMEM ="Process selective color";
 const char PatternHeartbeat[] PROGMEM ="Heartbeat";
 const char PatternFire[] PROGMEM ="Fire";
+const char PatternTwinkle[] PROGMEM ="Twinkle";
 const char PatternBouncingBall[] PROGMEM ="Bouncing ball";
 const char PatternUserPattern1[] PROGMEM ="User pattern 1";
 const char PatternUserPattern2[] PROGMEM ="User pattern 2";
@@ -83,7 +84,7 @@ const char PatternUnknown[] PROGMEM ="Unknown";
 // ActivePattern can be used as index of PatternNamesArray
 const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
         PatternScannerExtended, PatternStripes, PatternFlash, PatternProcessSelectiveColor, PatternHeartbeat, PatternFire,
-        PatternBouncingBall, PatternUserPattern1, PatternUserPattern2, MatrixPatternTicker, MatrixPatternMove,
+        PatternTwinkle, PatternBouncingBall, PatternUserPattern1, PatternUserPattern2, MatrixPatternTicker, MatrixPatternMove,
         MatrixPatternMovingPicture, PatternFire, MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown };
 
 // array of update function pointer, not used since it needs 150 bytes more :-(
@@ -370,81 +371,26 @@ bool NeoPatterns::update(uint8_t aBrightness) {
 #endif
     return update();
 }
+
+/*
+ * Does not call show()
+ */
+void NeoPatterns::forceUpdate(uint8_t aBrightness) {
+#if defined(SUPPORT_BRIGHTNESS)
+    Brightness = aBrightness;
+#else
+    (void) aBrightness;
+#endif
+    _update(true);
+    lastUpdate = millis(); // remember last time of update
+}
+
 bool NeoPatterns::update() {
     if (ActivePattern == PATTERN_NONE) {
         return false;
     }
     if ((millis() - lastUpdate) > Interval) {
-        bool tPatternEnded = true; // to suppress show for ended pattern
-        switch (ActivePattern) {
-        case PATTERN_DELAY:
-            tPatternEnded = DelayUpdate();
-            break;
-#if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
-        case PATTERN_RAINBOW_CYCLE:
-            tPatternEnded = RainbowCycleUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_COLOR_WIPE)
-        case PATTERN_COLOR_WIPE:
-            tPatternEnded = ColorWipeUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_FADE)
-        case PATTERN_FADE:
-            tPatternEnded = FadeUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_PROCESS_SELECTIVE)
-        case PATTERN_PROCESS_SELECTIVE:
-            tPatternEnded = ProcessSelectiveColorUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_FIRE)
-        case PATTERN_FIRE:
-            tPatternEnded = FireUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
-        case PATTERN_SCANNER_EXTENDED:
-            tPatternEnded = ScannerExtendedUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_STRIPES)
-        case PATTERN_STRIPES:
-            tPatternEnded = StripesUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_FLASH)
-        case PATTERN_FLASH:
-            tPatternEnded = FlashUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_HEARTBEAT)
-        case PATTERN_HEARTBEAT:
-            tPatternEnded = HeartbeatUpdate();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_USER_PATTERN1)
-        case PATTERN_USER_PATTERN1:
-            tPatternEnded = Pattern1Update();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_USER_PATTERN2)
-        case PATTERN_USER_PATTERN2:
-            tPatternEnded = Pattern2Update();
-            break;
-#endif
-#if defined(ENABLE_PATTERN_BOUNCING_BALL)
-        case PATTERN_BOUNCING_BALL:
-            tPatternEnded = BouncingBallUpdate();
-            break;
-#endif
-        default:
-            break;
-        }
-
-        if (!tPatternEnded) {
+        if (!_update(true)) {
             show();
         }
         lastUpdate = millis(); // remember last time of update
@@ -473,84 +419,100 @@ bool NeoPatterns::updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness) 
 #endif
     return updateOrRedraw(aDoRedrawIfNoUpdate);
 }
+
 bool NeoPatterns::updateOrRedraw(bool aDoRedrawIfNoUpdate) {
     bool tDoUpdate = (millis() - lastUpdate) > Interval;
     if (tDoUpdate || aDoRedrawIfNoUpdate) {
         /*
          * If tDoUpdate is true, update pattern, otherwise only redraw the pattern
          */
-        switch (ActivePattern) {
-#if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
-        case PATTERN_RAINBOW_CYCLE:
-            RainbowCycleUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_COLOR_WIPE)
-        case PATTERN_COLOR_WIPE:
-            ColorWipeUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_FADE)
-        case PATTERN_FADE:
-            FadeUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_PROCESS_SELECTIVE)
-        case PATTERN_PROCESS_SELECTIVE:
-            ProcessSelectiveColorUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_FIRE)
-        case PATTERN_FIRE:
-            FireUpdate(tDoUpdate);
-            break;
-#endif
-        case PATTERN_DELAY:
-            DelayUpdate(tDoUpdate);
-            break;
-#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
-        case PATTERN_SCANNER_EXTENDED:
-            ScannerExtendedUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_STRIPES)
-        case PATTERN_STRIPES:
-            StripesUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_FLASH)
-        case PATTERN_FLASH:
-            FlashUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_HEARTBEAT)
-        case PATTERN_HEARTBEAT:
-            HeartbeatUpdate(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_USER_PATTERN1)
-        case PATTERN_USER_PATTERN1:
-            Pattern1Update(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_USER_PATTERN2)
-        case PATTERN_USER_PATTERN2:
-            Pattern2Update(tDoUpdate);
-            break;
-#endif
-#if defined(ENABLE_PATTERN_BOUNCING_BALL)
-        case PATTERN_BOUNCING_BALL:
-            BouncingBallUpdate(tDoUpdate);
-            break;
-#endif
-        default:
-            break;
-        }
+        _update(tDoUpdate);
     }
     if (tDoUpdate) {
         lastUpdate = millis(); // remember last time of update
     }
     return tDoUpdate;
+}
+
+/*
+ * @return - true if pattern has ended, false if pattern has NOT ended
+ */
+bool NeoPatterns::_update(bool aDoUpdate) {
+
+    bool tPatternEnded = true; // to suppress show for ended pattern
+    switch (ActivePattern) {
+    case PATTERN_DELAY:
+        tPatternEnded = DelayUpdate(aDoUpdate);
+        break;
+#if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
+    case PATTERN_RAINBOW_CYCLE:
+        tPatternEnded = RainbowCycleUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_COLOR_WIPE)
+    case PATTERN_COLOR_WIPE:
+        tPatternEnded = ColorWipeUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_FADE)
+    case PATTERN_FADE:
+        tPatternEnded = FadeUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_PROCESS_SELECTIVE)
+    case PATTERN_PROCESS_SELECTIVE:
+        tPatternEnded = ProcessSelectiveColorUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_FIRE)
+    case PATTERN_FIRE:
+        tPatternEnded = FireUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
+    case PATTERN_SCANNER_EXTENDED:
+        tPatternEnded = ScannerExtendedUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_STRIPES)
+    case PATTERN_STRIPES:
+        tPatternEnded = StripesUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_FLASH)
+    case PATTERN_FLASH:
+        tPatternEnded = FlashUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_TWINKLE)
+    case PATTERN_TWINKLE:
+        tPatternEnded = TwinkleUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_HEARTBEAT)
+    case PATTERN_HEARTBEAT:
+        tPatternEnded = HeartbeatUpdate(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_USER_PATTERN1)
+    case PATTERN_USER_PATTERN1:
+        tPatternEnded = Pattern1Update(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_USER_PATTERN2)
+    case PATTERN_USER_PATTERN2:
+        tPatternEnded = Pattern2Update(aDoUpdate);
+        break;
+#endif
+#if defined(ENABLE_PATTERN_BOUNCING_BALL)
+    case PATTERN_BOUNCING_BALL:
+        tPatternEnded = BouncingBallUpdate(aDoUpdate);
+        break;
+#endif
+    default:
+        break;
+    }
+    return tPatternEnded;
 }
 
 /*
@@ -708,6 +670,8 @@ bool NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
  * @param  aMode can be 0 / FLAG_DO_CLEAR (default) or FLAG_DO_NOT_CLEAR(_BlackPixel)
  * @param  aDirection can be DIRECTION_UP (default) or DIRECTION_DOWN
  *           if PARAMETER_IS_DURATION bit is set, the interval is not between steps, but for the complete pattern.
+ *
+ * Idea: length of head and random fade of wipe tail gives meteor rain
  */
 void NeoPatterns::ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode, uint8_t aDirection) {
     ColorWipe(aColor, aCompleteDurationMillis, aMode, aDirection );
@@ -756,6 +720,59 @@ bool NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
             setPixelColor(i, COLOR32_BLACK);
         }
     }
+    return false;
+}
+#endif
+
+#if defined(ENABLE_PATTERN_TWINKLE)
+/*
+ * @param aColorSpecial - If aColorSpecial == COLOR32_SPECIAL use random color
+ */
+void NeoPatterns::Twinkle(color32_t aColorSpecial, uint8_t aAverageNumberOfActivePixel, uint16_t aIntervalMillis,
+        uint16_t aRepetitions) {
+    Color1 = aColorSpecial;
+    Interval = aIntervalMillis;
+    TotalStepCounter = 2 * aRepetitions;
+    Index = 0;
+
+    if (aAverageNumberOfActivePixel == 0) {
+        aAverageNumberOfActivePixel = 1;
+    }
+    PatternFlags = aAverageNumberOfActivePixel;
+    setCompensatedInterval(aIntervalMillis);
+
+    TwinkleUpdate(false);
+    showPatternInitially();
+// must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
+    ActivePattern = PATTERN_TWINKLE;
+#if defined(LOCAL_TRACE)
+    printInfo(&Serial, true);
+#endif
+}
+
+bool NeoPatterns::TwinkleUpdate(bool aDoUpdate) {
+    if (aDoUpdate) {
+        if (decrementTotalStepCounterAndSetNextIndex()) {
+            return true;
+        }
+    }
+
+    /*
+     * Refresh pattern
+     * Remove every nth pixel, so we have n loops to remove all old pixel
+     */
+    for (uint16_t i = random8(PatternFlags); i < numLEDs - 1; i += PatternFlags) {
+        clearPixel(i);
+    }
+    /*
+     * Set only one pixel
+     */
+    color32_t tColor = Color1;
+    if (tColor == COLOR32_SPECIAL) {
+        tColor = NeoPatterns::Wheel(random8(MAX_WHEEL_POSITION));
+    }
+    setPixelColor(random(numLEDs), tColor);
+
     return false;
 }
 #endif
@@ -1141,9 +1158,11 @@ bool NeoPatterns::ScannerExtendedUpdate(bool aDoUpdate) {
 #if defined(ENABLE_PATTERN_STRIPES)
 /**
  * StripesD Parameter is complete duration and not step interval
- * Start with aLength1 pixel of aLength1 followed by aLength2 pixel of aColor2 and then starting with aColor1 again until Strip ends.
+ * Start with aLength1 pixel of aLength1 followed by aLength2 pixel of aColor2 and then starting with aColor1 again until strip ends.
  * If DIRECTION_DOWN the same pattern starts from the other end.
  * If aNumberOfSteps == (aLength1 + aLength2) the last pattern is equal first pattern
+ *
+ * Idea. increment colors with color increment to have rainbow colors on the strip and optional change starting colors with another increment
  */
 void NeoPatterns::StripesDuration(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
         uint16_t aCompleteDurationMillis, uint8_t aDirection) {
@@ -1252,12 +1271,12 @@ bool NeoPatterns::StripesUpdate(bool aDoUpdate) {
  * @param   doEndWithBlack if true aColor2 is replaced with black for last step of flash pattern
  */
 void NeoPatterns::Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2,
-        uint16_t aNumberOfSteps, bool doEndWithBlack) {
+        uint16_t aRepetitions, bool doEndWithBlack) {
     Color1 = aColor1;
     LongValue2.Intervals.Interval1 = aIntervalMillisColor1;
     LongValue1.Color2 = aColor2;
     LongValue2.Intervals.Interval2 = aIntervalMillisColor2;
-    TotalStepCounter = aNumberOfSteps * 2;
+    TotalStepCounter = aRepetitions * 2;
     Index = TotalStepCounter; // index is even
     if (doEndWithBlack) {
         PatternFlags = FLAG_END_WITH_BLACK;
@@ -1482,7 +1501,7 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
          */
 // Step 1.  Cool down every cell a little
         for (uint_fast16_t i = 0; i < numLEDs; i++) {
-            uint8_t tChill = random(((COOLING * 20) / numLEDs) + 2);
+            uint8_t tChill = random8(((COOLING * 20) / numLEDs) + 2);
             if (tChill >= heat[i]) {
                 heat[i] = 0;
             } else {
@@ -1499,10 +1518,10 @@ bool NeoPatterns::FireUpdate(bool aDoUpdate) {
 
 // Step 3.  Randomly ignite one new 'spark' of heat near the bottom
         if (tRandom.UBytes[0] < SPARKING) {
-            unsigned int y = tRandom.UWords[1] % (numLEDs / 4);
-            uint8_t tNewHeat = ((tRandom.UBytes[1] * (255 - 160)) >> 8) + 160; // random(160, 255); fastest version
-//            uint8_t tNewHeat = (tRandom.UBytes[1] % ((uint8_t)(255-160))) + 160; // random(160, 255); uint8_t is required here :-(
-//            uint8_t tNewHeat = (tRandom.UBytes[1] % 95) + 160; // random(160, 255);
+            uint8_t y = tRandom.UBytes[1] % (numLEDs / 4);
+            uint8_t tNewHeat = ((tRandom.UBytes[2] * (256 - 160)) >> 8) + 160; // random(160, 256); fastest version
+//            uint8_t tNewHeat = (tRandom.UBytes[2] % ((uint8_t)(255-160))) + 160; // random(160, 255); uint8_t is required here :-(
+//            uint8_t tNewHeat = (tRandom.UBytes[2] % 95) + 160; // random(160, 255);
             if (heat[y] + tNewHeat < heat[y]) {
                 heat[y] = UINT8_MAX;
             } else {
@@ -2007,11 +2026,11 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
     LongUnion tRandom; // usage of Long union saves 4 bytes and is way faster
     tRandom.Long = random();
 
-    uint8_t tDuration = ((tRandom.UBytes[2] * (80 - 40)) >> 8) + 40; // = random(40, 80); fastest version
-//    uint8_t tDuration = (tRandom.UBytes[2] % 40) + 40;  // = random(40, 80);
+    uint8_t tDuration = ((tRandom.UBytes[2] * (81 - 40)) >> 8) + 40; // = random(40, 81); fastest version
+//    uint8_t tDuration = (tRandom.UBytes[2] % 41) + 40;  // = random(40, 81);
     uint8_t tColor = tRandom.UBytes[1];                 // = random(256)
 
-    switch ((tRandom.UBytes[0] * 14) >> 8) { // = random(14)
+    switch ((tRandom.UBytes[0] * 15) >> 8) { // = random(15)
     case 0:
         // Cylon 3 times bouncing
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 3,
@@ -2090,7 +2109,13 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 #endif
         break;
     case 13:
-        aLedsPtr->Flash(NeoPatterns::Wheel(tColor),tDuration, COLOR32_BLACK, tDuration * 2,10,true);
+        // 5 Flashes
+        aLedsPtr->Flash(NeoPatterns::Wheel(tColor),tDuration, COLOR32_BLACK, tDuration * 2, 5, true);
+        break;
+    case 14:
+        // Twinkle random colors
+        aLedsPtr->clear();
+        aLedsPtr->Twinkle(COLOR32_SPECIAL, aLedsPtr->getNumberOfPixels() / 4, tDuration, 60);
         break;
     default:
         break;

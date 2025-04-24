@@ -76,6 +76,7 @@ typedef uint32_t color32_t;
 #define COLOR32_BLACK          COLOR32(0,0,0)
 
 #define COLOR32_WHITE          COLOR32(255,255,255)
+#define COLOR32_SPECIAL        (COLOR32(255,255,255) - 1) // To signal special color treatment e.g. use random color
 #define COLOR32_WHITE_HALF     COLOR32(128,128,128) // to reduce power consumption
 #define COLOR32_WHITE_QUARTER  COLOR32(64,64,64)    // to reduce power consumption
 #define COLOR32_WHITE_EIGHTH   COLOR32(32,32,32)    // to reduce power consumption

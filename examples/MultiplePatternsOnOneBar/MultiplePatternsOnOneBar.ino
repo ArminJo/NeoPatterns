@@ -109,7 +109,7 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
 #endif
     } else {
 
-        uint16_t tInterval = random(40, 200);
+        uint8_t tInterval = random8(40, 201);
 
         if ((sState & 1) == 1) {
             /*
@@ -124,11 +124,8 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
         }
 
         int8_t tState = sState / 2;
-#if defined(__AVR__)
-        uint32_t tRandom = random();
-#else
-        uint32_t tRandom = random(__UINT32_MAX__);
-#endif
+        uint8_t tColorWheelIndex = random8();
+
         switch (tState) {
         case 0:
             // falling stars
@@ -149,12 +146,12 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
             UpperNeoPixelBar.ColorWipe(COLOR32_BLACK, tInterval, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
             break;
         case 3:
-            LowerNeoPixelBar.Stripes(COLOR32_BLACK, 12, NeoPatterns::Wheel(tRandom), 12, tInterval, 48, tRandom & DIRECTION_DOWN);
+            LowerNeoPixelBar.Stripes(COLOR32_BLACK, 12, NeoPatterns::Wheel(tColorWheelIndex), 12, tInterval, 48, tColorWheelIndex & DIRECTION_DOWN);
             MiddleNeoPixelBar.ScannerExtended(COLOR32_BLUE_HALF, 2, tInterval, 2,
             FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
 
-            UpperNeoPixelBar.Stripes(COLOR32_BLACK, 12, NeoPatterns::Wheel(tRandom), 12, tInterval, 48,
-                    OppositeDirection(tRandom & DIRECTION_DOWN));
+            UpperNeoPixelBar.Stripes(COLOR32_BLACK, 12, NeoPatterns::Wheel(tColorWheelIndex), 12, tInterval, 48,
+                    OppositeDirection(tColorWheelIndex & DIRECTION_DOWN));
             sState = -2; // Start from beginning
             break;
         default:

@@ -146,8 +146,8 @@ void MatrixSnake::newApple() {
     position tNewApplePosition;
 // get new random position until the position is not on the snake tail and different from the current apple position
     do {
-        tNewApplePosition.x = random(Columns - 1);
-        tNewApplePosition.y = random(Rows - 1);
+        tNewApplePosition.x = random8(Columns);
+        tNewApplePosition.y = random8(Rows);
     } while ((getIndexOfPositionInSnake(tNewApplePosition) != SnakeLength)
             || (tNewApplePosition.x == Apple.x && tNewApplePosition.y == Apple.y));
     Apple = tNewApplePosition;
@@ -1056,7 +1056,7 @@ const char *const TickerStrings[] PROGMEM = { ILoveNeopixelString, ILoveNeopatte
 const char *sTickerTextPtr;
 
 void setMatrixAndSnakePatternsDemoHandlerRandomTickerText() {
-    uint8_t tRandomIndex = random(0, sizeof(TickerStrings) / sizeof(char*));
+    uint8_t tRandomIndex = random8(sizeof(TickerStrings) / sizeof(char*));
 #if defined(__AVR__) // Let the function work for non AVR platforms
     sTickerTextPtr = (char*) pgm_read_word(&TickerStrings[tRandomIndex]);
 #else
@@ -1088,8 +1088,8 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
 //    static uint8_t sHeartDirection = DIRECTION_UP;
     static int8_t sTickerDirection = DIRECTION_LEFT;
     //    static int8_t sTickerDirection = DIRECTION_UP;
-    static int8_t sSnakeFireSnowSelector = 0;
-//    static int8_t sSnakeFireSnowSelector = 2; // start with snow
+    static int8_t sSnakeFireSnowTwinkleSelector = 0;
+//    static int8_t sSnakeFireSnowTwinkleSelector = 2; // start with snow
 
     /*
      * implement a delay between each case
@@ -1155,27 +1155,35 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         aLedsPtr->Delay(1500);
         break;
     case 8:
-        // Snake or Fire or Snow pattern
-        if (sSnakeFireSnowSelector == 0) {
+        // Snake or Fire or Snow or Twinkle pattern
+        if (sSnakeFireSnowTwinkleSelector == 0) {
             initSnakeAutorun(tLedsPtr, 200, COLOR32_BLUE, 1);
-        } else if (sSnakeFireSnowSelector == 1) {
-            // after 4 minutes show more fire :-)
+        } else if (sSnakeFireSnowTwinkleSelector == 1) {
             if (millis() < (4 * 60 * 1000L)) {
                 tLedsPtr->Fire();
             } else {
+                // after 4 minutes show more fire :-)
                 tLedsPtr->Fire(800, 30);
             }
-        } else {
-            // after 4 minutes show more snow :-)
+        } else if (sSnakeFireSnowTwinkleSelector == 2) {
             if (millis() < (4 * 60 * 1000L)) {
                 tLedsPtr->Snow(); // default is 500 steps
             } else {
+                // after 4 minutes show more snow :-)
                 tLedsPtr->Snow(2000);
             }
+        } else {
+            aLedsPtr->clear();
+            if (millis() < (4 * 60 * 1000L)) {
+                aLedsPtr->Twinkle(COLOR32_SPECIAL, aLedsPtr->getNumberOfPixels() / 8, 50, 100);
+            } else {
+                // after 4 minutes show more twinkle :-)
+                aLedsPtr->Twinkle(COLOR32_SPECIAL, aLedsPtr->getNumberOfPixels() / 8, 50, 500);
+            }
         }
-        sSnakeFireSnowSelector++;
-        if (sSnakeFireSnowSelector >= 3) {
-            sSnakeFireSnowSelector = 0;
+        sSnakeFireSnowTwinkleSelector++;
+        if (sSnakeFireSnowTwinkleSelector >= 4) {
+            sSnakeFireSnowTwinkleSelector = 0;
         }
         break;
     case 9:

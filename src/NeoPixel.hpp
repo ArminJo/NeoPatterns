@@ -3,7 +3,7 @@
  *
  * Implements extensions to Adafruit_NeoPixel functions
  *
- *  Copyright (C) 2019-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -777,14 +777,38 @@ void NeoPixel::ColorSet(color32_t aColor) {
     setColor(aColor);
 }
 
-void NeoPixel::fillRegion(color32_t aColor, uint16_t aRegionFirst, uint16_t aRegionLength) {
-    if (aRegionFirst + aRegionLength <= numLEDs) {
-        for (uint_fast16_t i = aRegionFirst; i < aRegionFirst + aRegionLength; i++) {
+void NeoPixel::fillRegion(color32_t aColor, uint16_t aRegionStartIndext, uint16_t aRegionLength) {
+    if (aRegionStartIndext + aRegionLength <= numLEDs) {
+        for (uint_fast16_t i = aRegionStartIndext; i < aRegionStartIndext + aRegionLength; i++) {
             setPixelColor(i, aColor);
         }
     }
 }
 
+/*
+ * Does no parameter checking!
+ */
+void NeoPixel::copyRegion(uint16_t aSourcePixelIndex, uint16_t aTargetPixelIndex, uint16_t aLength, bool aDoReverseCopy) {
+    uint8_t *tSourcePixelPtr = &pixels[aSourcePixelIndex * BytesPerPixel];
+    uint8_t *tTargetPixelPtr = &pixels[aTargetPixelIndex * BytesPerPixel];
+    for (uint_fast16_t i = 0; i < aLength; i++) {
+        // copy data for one pixel
+        if (BytesPerPixel == 3) {
+            *tTargetPixelPtr++ = *tSourcePixelPtr++;
+            *tTargetPixelPtr++ = *tSourcePixelPtr++;
+            *tTargetPixelPtr++ = *tSourcePixelPtr++;
+#if defined(_SUPPORT_RGBW)
+        } else {
+            for (uint_fast16_t j = 0; j < BytesPerPixel; j++) {
+                *tTargetPixelPtr++ = *tSourcePixelPtr++;
+            }
+#endif
+        }
+        if (aDoReverseCopy) {
+            tTargetPixelPtr -= 2 * BytesPerPixel;
+        }
+    }
+}
 color32_t NeoPixel::getPixelColor(uint16_t aPixelIndex) {
     uint8_t *tPixelPointer = &pixels[(aPixelIndex + PixelOffset) * BytesPerPixel];
     if (BytesPerPixel == 3) {
@@ -1141,5 +1165,47 @@ void NeoPixel::TestWS2812Resolution() {
     show();
 }
 
+/***********************************************************************************************
+ * From FastLED random8.h https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h
+ ***********************************************************************************************/
+uint16_t rand16seed;
+
+/// Multiplier value for pseudo-random number generation
+#define FASTLED_RAND16_2053 ((uint16_t)(2053))
+/// Increment value for pseudo-random number generation
+#define FASTLED_RAND16_13849 ((uint16_t)(13849))
+
+#if defined(LIB8_ATTINY)
+/// Multiplies a value by the pseudo-random multiplier
+#define APPLY_FASTLED_RAND16_2053(x) (x << 11) + (x << 2) + x
+#else
+/// Multiplies a value by the pseudo-random multiplier
+#define APPLY_FASTLED_RAND16_2053(x) (x * FASTLED_RAND16_2053)
+#endif
+
+uint8_t random8() {
+    rand16seed = APPLY_FASTLED_RAND16_2053(rand16seed) + FASTLED_RAND16_13849;
+// return the sum of the high and low bytes, for better
+//  mixing and non-sequential correlation
+    return (uint8_t) (((uint8_t) (rand16seed & 0xFF)) + ((uint8_t) (rand16seed >> 8)));
+}
+
+/*
+ * @return values from 0 to (excluded) lim
+ */
+uint8_t random8(uint8_t lim) {
+    uint8_t r = random8();
+    r = (r * lim) >> 8;
+    return r;
+}
+
+/*
+ * @return values from 0 to (excluded) lim
+ */
+uint8_t random8(uint8_t min, uint8_t lim) {
+    uint8_t delta = lim - min;
+    uint8_t r = random8(delta) + min;
+    return r;
+}
 #include "LocalDebugLevelEnd.h"
 #endif // _NEOPIXEL_HPP

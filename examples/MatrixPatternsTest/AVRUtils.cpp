@@ -37,9 +37,10 @@
  * Returns actual start of available / free heap
  * Usage for print:
  Serial.print(F("AvailableHeapStart=0x"));
- Serial.println((uint16_t) getAvailableHeapStart(), HEX);
+ Serial.println((uint16_t) getStartOfAvailableHeap(), HEX);
  */
-uint8_t* getAvailableHeapStart(void) {
+
+uint8_t* getStartOfAvailableHeap(void) {
     if (__brkval == 0) {
         // __brkval is 0 if no malloc() has happened before
 //        __brkval = __malloc_heap_start;
@@ -47,16 +48,17 @@ uint8_t* getAvailableHeapStart(void) {
     }
     return (uint8_t*) __brkval;
 }
-void printAvailableHeapStart(Print *aSerial) {
+
+void printStartOfAvailableHeap(Print *aSerial) {
     aSerial->print(F("Heap start="));
-    aSerial->println((uint16_t) getAvailableHeapStart());
+    aSerial->println((uint16_t) getStartOfAvailableHeap());
 }
 
 /*
  * Initialize RAM between current stack and actual heap start (__brkval) with pattern 0x5A
  */
 void initStackFreeMeasurement() {
-    uint8_t *tHeapPtr = getAvailableHeapStart(); // This sets __brkval
+    uint8_t *tHeapPtr = getStartOfAvailableHeap(); // This sets __brkval
 
 // Fill / paint stack
     do {
@@ -79,7 +81,7 @@ int16_t getStackMaxUsedAndUnusedSizes(uint16_t *aStackUnusedSizePointer) {
      * Search for first touched value from end of current heap.
      */
     uint16_t tStackUnused = 0;
-    uint8_t *tHeapPtr = getAvailableHeapStart(); // __brkval
+    uint8_t *tHeapPtr = getStartOfAvailableHeap(); // __brkval
     while (*tHeapPtr == HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr <= (uint8_t*) SP) {
         tHeapPtr++;
         tStackUnused++;
@@ -107,14 +109,14 @@ void printStackMaxUsedAndUnusedSizes(Print *aSerial) {
     aSerial->print(F(", unused="));
     aSerial->print(tStackUnusedBytes);
     aSerial->print(F(" of current total "));
-    aSerial->println((RAMEND + 1) - (uint16_t) getAvailableHeapStart());
+    aSerial->println((RAMEND + 1) - (uint16_t) getStartOfAvailableHeap());
 }
 
 /*
  * Search upwards the first two HEAP_STACK_UNTOUCHED_VALUE values after current begin of heap
  */
 uint16_t getHeapMaxUsedSize() {
-    uint8_t *tHeapPtr = getAvailableHeapStart();
+    uint8_t *tHeapPtr = getStartOfAvailableHeap();
     while (*tHeapPtr != HEAP_STACK_UNTOUCHED_VALUE && *(tHeapPtr + 1) != HEAP_STACK_UNTOUCHED_VALUE && tHeapPtr <= (uint8_t*) SP) {
         tHeapPtr++;
     }
@@ -150,7 +152,7 @@ bool printStackMaxUsedAndUnusedSizesIfChanged(Print *aSerial) {
  * Value computed depends on current stackpointer!
  */
 uint16_t getCurrentAvailableStackSize(void) {
-    uint16_t tAvailableHeapStart = (uint16_t) getAvailableHeapStart(); // __brkval
+    uint16_t tAvailableHeapStart = (uint16_t) getStartOfAvailableHeap(); // __brkval
     if (tAvailableHeapStart >= SP) {
         return 0;
     }
@@ -183,7 +185,7 @@ uint16_t getTheoreticalMaximumAvailableHeapSize(void) {
     if (RAMEND <= __malloc_margin) {
         return 0;
     }
-    return RAMEND - __malloc_margin; // (128)
+    return (RAMEND - RAMSTART) -__malloc_margin; // (128)
 }
 
 /*
@@ -193,7 +195,6 @@ void printCurrentAvailableHeapSize(Print *aSerial) {
     aSerial->print(F("Currently available Heap[bytes]="));
     aSerial->println(getCurrentAvailableHeapSize());
 }
-
 
 /*
  * Simple and short implementation, does not work before initStackFreeMeasurement() or first malloc()
@@ -205,7 +206,7 @@ void printCurrentAvailableHeapSizeSimple(Print *aSerial) {
 }
 
 // This define is in AVRUtils.h
-// #define PRINT_AVAILABLE_HEAP    Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin + HEURISTIC_ADDITIONAL_MALLOC_MARGIN))
+//#define PRINT_AVAILABLE_HEAP   Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - HEURISTIC_ADDITIONAL_MALLOC_MARGIN - ((uint16_t) __malloc_margin))
 
 void printBaseRAMData(Print *aSerial) {
     // __malloc_heap_end seems to be 0
@@ -245,7 +246,7 @@ void printBaseRAMData(Print *aSerial) {
 
 /*
  * RAM starts with Data, i.e. variables initialized with values != 0,
- * followed by BSS, i.e. uninitalized  variables (which are initialized with 0)
+ * followed by BSS, i.e. uninitialized variables (which are initialized with 0)
  * and variables not initialized by using attribute "__attribute__((section(".noinit")))".
  * It ends with the heap and the stack.
  *
@@ -264,14 +265,14 @@ void printRAMInfo(Print *aSerial) {
     aSerial->print((uint16_t) &__heap_start - RAMSTART);
 
     aSerial->print(F(". Heap: used="));
-    aSerial->print((uint16_t) getAvailableHeapStart() - (uint16_t) &__heap_start);
+    aSerial->print((uint16_t) getStartOfAvailableHeap() - (uint16_t) &__heap_start);
     aSerial->print(F(", max written=")); // if Stack uses total heap, we see the stack size here :-(
     aSerial->print(getHeapMaxUsedSize());
     aSerial->print(F(", max available="));
-    aSerial->print(RAMEND - (uint16_t) __malloc_margin);
+    aSerial->print(RAMEND - (uint16_t) getStartOfAvailableHeap() + 1 - (uint16_t) __malloc_margin);
 
     aSerial->print(F(". Stack: available="));
-    aSerial->print(SP - (uint16_t) getAvailableHeapStart() + 1);
+    aSerial->print(SP - (uint16_t) getStartOfAvailableHeap() + 1);
     aSerial->print(F(", used="));
     aSerial->print(RAMEND - SP);
     uint16_t tStackUnusedBytes;
@@ -280,7 +281,7 @@ void printRAMInfo(Print *aSerial) {
     aSerial->print(F(", unused="));
     aSerial->print(tStackUnusedBytes);
     aSerial->print(F(" of current total "));
-    aSerial->print((RAMEND + 1) - (uint16_t) getAvailableHeapStart()); // getAvailableHeapStart()
+    aSerial->print((RAMEND + 1) - (uint16_t) getStartOfAvailableHeap()); // getStartOfAvailableHeap()
 
     aSerial->println();
 }
@@ -302,7 +303,7 @@ bool isAddressInRAM(void *aAddressToCheck) {
 }
 
 bool isAddressBelowAvailableHeapStart(void *aAddressToCheck) {
-    return (aAddressToCheck < getAvailableHeapStart());
+    return (aAddressToCheck < getStartOfAvailableHeap());
 }
 
 /*
@@ -315,8 +316,10 @@ void testCallocSizesAndPrint(Print *aSerial) {
     while (true) {
         aSerial->print(F("SP=0x"));
         aSerial->print(SP, HEX);
+        aSerial->print(F(" available="));
+        aSerial->print(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin)- HEURISTIC_ADDITIONAL_MALLOC_MARGIN);
         aSerial->print(F(" max available="));
-        aSerial->print(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin));
+        aSerial->print(RAMEND - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin));
         uint8_t *tMallocPtr = (uint8_t*) calloc(tMallocSize, 1);
 
         aSerial->print(F(" -> calloc("));

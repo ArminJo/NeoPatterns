@@ -44,7 +44,11 @@ extern void *__flp; //
 extern char __heap_start; // = __bss_end, the linker address of heap start
 #define DEFAULT_MALLOC_MARGIN   128
 
-//#define HEURISTIC_ADDITIONAL_MALLOC_MARGIN 14 // No malloc() possible if size is lower than (__malloc_margin + HEURISTIC_ADDITIONAL_MALLOC_MARGIN)
+/*
+ * The stack amount used for call of malloc(), i.e. Stack is lowered by this value before applying __malloc_margin.
+ * No malloc() possible if size at caller (stack) position is lower than (__malloc_margin + HEURISTIC_ADDITIONAL_MALLOC_MARGIN).
+ */
+#define HEURISTIC_ADDITIONAL_MALLOC_MARGIN 14
 
 /*
  * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
@@ -71,15 +75,18 @@ void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis = false);
 
 #include <Print.h>
 
-uint8_t* getAvailableHeapStart();
-void printAvailableHeapStart(Print *aSerial);
+uint8_t* getAvailableHeapStart() __attribute__ ((deprecated ("Renamed to getStartOfAvailableHeap()")));
+void printAvailableHeapStart(Print *aSerial) __attribute__ ((deprecated ("Renamed to printStartOfAvailableHeap()")));
+uint8_t* getStartOfAvailableHeap(void);
+void printStartOfAvailableHeap(Print *aSerial);
 uint16_t getCurrentAvailableStackSize(void);
 void printCurrentAvailableStackSize(Print *aSerial);
 uint16_t getCurrentAvailableHeapSize(void);
 uint16_t getTheoreticalMaximumAvailableHeapSize(void);
 void printCurrentAvailableHeapSize(Print *aSerial);
 void printCurrentAvailableHeapSizeSimple(Print *aSerial);
-#define PRINT_AVAILABLE_HEAP    Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - ((uint16_t) __malloc_margin))
+// print available heap at current program (SP value matters) position
+#define PRINT_AVAILABLE_HEAP   Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - HEURISTIC_ADDITIONAL_MALLOC_MARGIN - ((uint16_t) __malloc_margin))
 
 #define HEAP_STACK_UNTOUCHED_VALUE 0x5A
 void initStackFreeMeasurement();
