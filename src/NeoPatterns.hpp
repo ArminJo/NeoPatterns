@@ -673,13 +673,12 @@ bool NeoPatterns::RainbowCycleUpdate(bool aDoUpdate) {
  *
  * Idea: length of head and random fade of wipe tail gives meteor rain
  */
-void NeoPatterns::ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode, uint8_t aDirection) {
-    ColorWipe(aColor, aCompleteDurationMillis, aMode, aDirection );
+void NeoPatterns::ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore, uint8_t aDirection) {
+    ColorWipe(aColor, aCompleteDurationMillis, aDoNotClearBefore, aDirection );
     setCompensatedInterval(aCompleteDurationMillis / TotalStepCounter);
 }
-void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode, uint8_t aDirection) {
+void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDoNotClearBefore, uint8_t aDirection) {
     Color1 = aColor;
-    PatternFlags = aMode;
     Direction = aDirection & DIRECTION_UP_DOWN_MASK;
     TotalStepCounter = numLEDs;
 
@@ -690,6 +689,10 @@ void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t 
     }
 
     setCompensatedInterval(aIntervalMillis);
+
+    if( !aDoNotClearBefore){
+        clear();
+    }
     ColorWipeUpdate(false);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
@@ -716,8 +719,6 @@ bool NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
     for (int_fast16_t i = 0; i < (int16_t)numLEDs; i++) {
         if ((Direction == DIRECTION_UP && i <= Index) || (Direction == DIRECTION_DOWN && i >= Index)) {
             setPixelColor(i, Color1);
-        } else if (!(PatternFlags & FLAG_DO_NOT_CLEAR)) {
-            setPixelColor(i, COLOR32_BLACK);
         }
     }
     return false;
@@ -729,7 +730,7 @@ bool NeoPatterns::ColorWipeUpdate(bool aDoUpdate) {
  * @param aColorSpecial - If aColorSpecial == COLOR32_SPECIAL use random color
  */
 void NeoPatterns::Twinkle(color32_t aColorSpecial, uint8_t aAverageNumberOfActivePixel, uint16_t aIntervalMillis,
-        uint16_t aRepetitions) {
+        uint16_t aRepetitions, bool aDoNotClearBefore) {
     Color1 = aColorSpecial;
     Interval = aIntervalMillis;
     TotalStepCounter = 2 * aRepetitions;
@@ -738,9 +739,11 @@ void NeoPatterns::Twinkle(color32_t aColorSpecial, uint8_t aAverageNumberOfActiv
     if (aAverageNumberOfActivePixel == 0) {
         aAverageNumberOfActivePixel = 1;
     }
-    PatternFlags = aAverageNumberOfActivePixel;
+    ByteValue1.AverageNumberOfActivePixel = aAverageNumberOfActivePixel;
     setCompensatedInterval(aIntervalMillis);
-
+    if( !aDoNotClearBefore){
+        clear();
+    }
     TwinkleUpdate(false);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
@@ -761,7 +764,7 @@ bool NeoPatterns::TwinkleUpdate(bool aDoUpdate) {
      * Refresh pattern
      * Remove every nth pixel, so we have n loops to remove all old pixel
      */
-    for (uint16_t i = random8(PatternFlags); i < numLEDs - 1; i += PatternFlags) {
+    for (uint16_t i = random8(ByteValue1.AverageNumberOfActivePixel); i < numLEDs - 1; i += ByteValue1.AverageNumberOfActivePixel) {
         clearPixel(i);
     }
     /*
@@ -839,16 +842,18 @@ bool NeoPatterns::FadeUpdate(bool aDoUpdate) {
  * Start with brightness low, then brighten and dim color, each in 16 steps.
  * Using 16 values from the gamma32 table starting with index 1 ending with index 31
  * First step is all at gamma[1], last step of pattern is all at gamma[1], last (extra) step after all repetitions is all black.
- * @param   aMode - If FLAG_DO_NOT_CLEAR, last extra step is skipped
+ * @param   aDoNotClearAfter - If true, last clear() step is skipped
  * @param   aRepetitions 1 => 2 times brighten and dim
  */
-void NeoPatterns::Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode) {
+void NeoPatterns::Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, bool aDoNotClearAfter) {
     Color1 = aColor;
     setCompensatedInterval(aIntervalMillis);
     TotalStepCounter = (2 * 16 * (aRepetitions + 1)) + 1; // 2 times 16 values plus the last clear step
-    PatternFlags = aMode;
-    if (aMode & FLAG_DO_NOT_CLEAR) {
+    if(aDoNotClearAfter) {
+        PatternFlags = FLAG_DO_NOT_CLEAR;
         TotalStepCounter--;
+    } else {
+        PatternFlags = FLAG_DO_CLEAR;
     }
     Direction = DIRECTION_UP;
     Index = 8;

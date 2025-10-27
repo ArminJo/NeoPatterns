@@ -98,7 +98,9 @@ public:
     void printConnectionInfo(Print *aSerial);
     void printPin(Print *aSerial);
 
+#if defined(ADC_UTILS_ARE_INCLUDED)
     uint16_t getAndAdjustActualNeopixelLenghtSimple();
+#endif
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
@@ -135,7 +137,8 @@ public:
 #endif
     void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
 
-    void setBrightnessValue(uint8_t aBrightness);           // Sets the brightness used by Neopixel drawing functions
+    void setBrightnessValue(uint8_t aBrightness)__attribute__ ((deprecated ("Renamed to setBrightness()")));
+    void setBrightness(uint8_t aBrightness);                // Sets the brightness used by Neopixel drawing functions
     void setAdafruitBrightnessValue(uint8_t aBrightness);   // Convenience function to set the brightness used by the (unused) Adafruit drawing functions
     void setBrightnessNonZeroMode(bool aEnableBrightnessNonZeroMode);
 
@@ -151,6 +154,8 @@ public:
     static uint32_t dimColor(color32_t aColor);
     void dimPixelColor(uint16_t aPixelIndex);
     static color32_t Wheel(uint8_t aWheelPos);
+    static color32_t SevenColors(uint8_t aColorBits);
+    static color32_t FourColors(uint8_t aColorBits);
     static uint8_t gamma5(uint8_t aLinearBrightnessValue);
     static uint8_t gamma5WithSpecialZero(uint8_t aLinearBrightnessValue);
     static color32_t convertLinearToGamma5Color(color32_t aLinearBrightnessColor);

@@ -188,18 +188,8 @@ Modify them by enabling / disabling them, or change the values if applicable.
 # Examples for this library
 The examples are available at File > Examples > Examples from Custom Libraries / NeoPatterns.<br/>
 
-## SnakeGame Example
-The game can be controlled by 2 or 4 buttons or by serial input (WASD) on the keboard.<br/>
-For keyboard control, start the Python script in the extras folder of the library with *RunPythonKeybordForInput.cmd*.
-This script **sends a wasd key press immediately** and does not wait for a return or a press of the send button, as the Arduino Serial Monitor does.<br/>
-The experimental script *Joystick2Serial.py* converts game controller input to appropriate serial output for the game.<br/>
-After 7 seconds of inactivity after boot, the Snake demo with a simple AI is started.
-
-SnakeGame with 4 buttons on breadboard
-![SnakeGame with 4 buttons on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/SnakeGame.jpg)
-
-## SnakeAutorun Example
-**With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
+## AllPatternOnOneBar
+Shows all NeoPatterns included in the NeoPatterns library randomly on one 16 pixel bar.
 
 ## AllPatternsOnMultiDevices
 Shows all patterns for strips rings and matrixes included in the NeoPattern MatrixNeoPattern and Snake library.<br/>
@@ -209,6 +199,18 @@ Uses the included `allPatternsRandomHandler()` to [show all available patterns](
 AllPatternsOnMultiDevices on breadboard
 ![AllPatternsOnMultiDevices on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/Breadboard_complete.jpg)
 
+## MatrixDemo
+
+## MatrixPatternsTest
+
+## MatrixShowAllColors
+
+## MatrixSnow
+
+## MultiplePatternsOnOneBar
+
+## NeoPatternsSimpleDemo
+
 ## OpenLedRace
 Extended version of the OpenLedRace "version Basic for PCB Rome Edition. 2 Player, without Boxes Track".<br/>
 See also the [dedicated repository for OpenLedRace](https://github.com/ArminJo/OpenledRace).
@@ -216,9 +218,30 @@ See also the [dedicated repository for OpenLedRace](https://github.com/ArminJo/O
 OpenLedRace at the Cologne public library MINTk&ouml;ln-Festival
 ![OpenLedRace at the Cologne public library MINTk&ouml;ln-Festival](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OpenLedRaceAtMintFestival.jpg)
 
+## SnakeGame
+The game can be controlled by 2 or 4 buttons or by serial input (WASD) on the keboard.<br/>
+For keyboard control, start the Python script in the extras folder of the library with *RunPythonKeybordForInput.cmd*.
+This script **sends a wasd key press immediately** and does not wait for a return or a press of the send button, as the Arduino Serial Monitor does.<br/>
+The experimental script *Joystick2Serial.py* converts game controller input to appropriate serial output for the game.<br/>
+After 7 seconds of inactivity after boot, the Snake demo with a simple AI is started.
+
+SnakeGame with 4 buttons on breadboard
+![SnakeGame with 4 buttons on breadboard](https://github.com/ArminJo/NeoPatterns/blob/master/pictures/SnakeGame.jpg)
+
+## SnakeSolver
+
+## SnowFlakes
+
+
 ## TwoPatternsOnOneStrip
 This example renders a slow "background pattern" and a fast "foreground pattern" on the same strip.<br/>
 It also shows, how to dynamically **determine the length of the attached strip** und to resize the underlying pixel buffer.
+
+## UserPatterns
+
+## SnakeAutorun
+**With the SnakeAutorun example you can prove your skill to write an AI to solve the Snake game. Just put your code into the getNextSnakeDirection() function.**
+
 
 <br/>
 
@@ -226,6 +249,8 @@ It also shows, how to dynamically **determine the length of the attached strip**
 ### Version 3.3.0
 - New pattern `TWINKLE`.
 - New functions `setCompensatedInterval()` and `copyRegion()`.
+- Renamed `ColorWipeD()` to `ColorWipeDuration()` etc. and new `FadeDuration()` etc.
+- Renamed `setBrightnessValue()` to `setBrightness()`.
 - Member variable `Interval` is now signed.
 - Copied and used `random8()` from [FastLED](https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h).
 

@@ -419,13 +419,17 @@ void NeoPixel::drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArray
 
 /*
  * Sets the brightness used by Neopixel drawing functions
- * and thr brightness for the Adafruit functions
+ * and the brightness for the Adafruit functions.
+ * Hides  Adafruit_NeoPixel::setBrightness().
  * @param   aBrightness  Brightness setting, 0=minimum (off), 255=brightest.
  */
-void NeoPixel::setBrightnessValue(uint8_t aBrightness) {
+void NeoPixel::setBrightnessValue(uint8_t aBrightness){
+    setBrightness(aBrightness);
+}
+void NeoPixel::setBrightness(uint8_t aBrightness) {
     Brightness = aBrightness;
     // set also Adafruit brightness value
-    brightness = aBrightness + 1; // Overflow is intended, see setBrightness()
+    brightness = aBrightness + 1; // Overflow is intended, see Adafruit_NeoPixel::setBrightness()
 }
 
 /*
@@ -857,6 +861,45 @@ color32_t NeoPixel::Wheel(uint8_t aWheelPos) {
 }
 
 /*
+ * Use the last 3 bits for RGB and map 0 to 7 (white)
+ */
+color32_t NeoPixel::SevenColors(uint8_t aColorBits) {
+    if (aColorBits == 0) {
+        aColorBits = 7;
+//         return COLOR32_WHITE; // costs 8 bytes
+    }
+    color32_t tReturnColor = COLOR32_BLACK;
+    if (aColorBits & 0x04) {
+        tReturnColor = COLOR32_RED;
+    }
+    if (aColorBits & 0x02) {
+        tReturnColor |= COLOR32_GREEN;
+    }
+    if (aColorBits & 0x01) {
+        tReturnColor |= COLOR32_BLUE;
+    }
+    return tReturnColor;
+}
+
+/*
+ * Use the last 2 bits for RGB and map 0 to white
+ */
+color32_t NeoPixel::FourColors(uint8_t aColorBits) {
+    aColorBits &= 0x03;
+
+    if (aColorBits == 0) {
+        return COLOR32_RED;
+    }
+    if (aColorBits == 1) {
+        return COLOR32_GREEN;
+    }
+    if (aColorBits == 2) {
+        return COLOR32_BLUE;
+    }
+    return COLOR32_WHITE;
+}
+
+/*
  * @param aStartAtTop if true the first color is written at index numLEDs
  */
 void NeoPixel::fillWithRainbow(uint8_t aRainbowWheelStartPos, bool aStartAtTop) {
@@ -1015,9 +1058,10 @@ uint8_t Blue(color32_t color) {
 }
 // end deprecated
 
-#include "ADCUtils.h"
-
+#if defined(ADC_UTILS_ARE_INCLUDED)
 /*
+ * !!! #include "ADCUtils.hpp" must be before #include "NeoPatterns.hpp" !!!
+ *
  * Get the actual (even) length of the strip (which only can be lower than the current length)
  * and adjust pixel buffer to the new length.
  * Uses ADC and the VCC voltage drop to determine the actual length of a strip.
@@ -1035,14 +1079,14 @@ uint8_t Blue(color32_t color) {
  * We use getVCCVoltageMillivoltSimple(), since it is faster and smaller,
  * because we must not check for ADC reference and channel switching here.
  */
-#if !defined(DELTA_MILLIVOLT_FOR_PIXEL_DETECTION)
+#  if !defined(DELTA_MILLIVOLT_FOR_PIXEL_DETECTION)
 #define DELTA_MILLIVOLT_FOR_PIXEL_DETECTION         40 // We have a resolution of 20 mV at the 328P at 5 volt
-#endif
-#if !defined(TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION)
+#  endif
+#  if !defined(TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION)
 #define TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION     1  // Adjust this value if test pattern length for successful detection is greater than 1
-#endif
+#  endif
 uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
-#if defined(ADC_UTILS_ARE_AVAILABLE)
+
     /*
      * First set ADC reference and channel and clear strip
      */
@@ -1109,9 +1153,9 @@ uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
         }
         tStepWidth = 1;
     }
-#endif
     return 0;
 }
+#endif
 
 /*
  * Test WS2812 resolution

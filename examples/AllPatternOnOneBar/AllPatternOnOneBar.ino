@@ -56,7 +56,7 @@ void setup() {
 #endif
 
     bar16.begin(); // This initializes the NeoPixel library.
-    bar16.ColorWipe(COLOR32(0, 0, 02), 50, 0, DIRECTION_DOWN); // light Blue
+    bar16.ColorWipe(COLOR32(0, 0, 02), 50, false, DIRECTION_DOWN); // light Blue
 
 #if defined(INFO)
     Serial.println("started");
@@ -120,8 +120,8 @@ void allPatterns(NeoPatterns *aLedsPtr) {
         aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColorWheelIndex), tDuration);
         break;
     case 8:
-        // clear existing color wipe
-        aLedsPtr->ColorWipe(COLOR32_BLACK, tDuration, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
+        // clear existing color wipe with black
+        aLedsPtr->ColorWipe(COLOR32_BLACK, tDuration, true, DIRECTION_DOWN);
         break;
     case 9:
         // Multiple falling star

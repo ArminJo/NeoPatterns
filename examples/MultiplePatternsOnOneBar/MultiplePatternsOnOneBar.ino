@@ -69,7 +69,7 @@ void setup() {
      */
     LowerNeoPixelBar.ColorWipe(COLOR32_GREEN_QUARTER, 80);
     MiddleNeoPixelBar.ScannerExtended(COLOR32_BLUE_HALF, 2, 60, 2, FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
-    UpperNeoPixelBar.ColorWipe(COLOR32_RED_QUARTER, 80, 0, DIRECTION_DOWN);
+    UpperNeoPixelBar.ColorWipe(COLOR32_RED_QUARTER, 80, false, DIRECTION_DOWN);
     Serial.println(F("Started"));
 }
 
@@ -136,14 +136,14 @@ void MultiPatterns(NeoPatterns *aLedsPtr) {
             initMultipleFallingStars(&UpperNeoPixelBar, COLOR32_WHITE_HALF, 4, tInterval / 4, 2, &MultiPatterns);
             break;
         case 1:
-            LowerNeoPixelBar.ColorWipe(COLOR32_GREEN_QUARTER, tInterval, 0, DIRECTION_DOWN);
+            LowerNeoPixelBar.ColorWipe(COLOR32_GREEN_QUARTER, tInterval, false, DIRECTION_DOWN);
             MiddleNeoPixelBar.ScannerExtended(COLOR32_BLUE_HALF, 2, tInterval, 5,
             FLAG_SCANNER_EXT_CYLON | FLAG_SCANNER_EXT_VANISH_COMPLETE);
             UpperNeoPixelBar.ColorWipe(COLOR32_RED_QUARTER, tInterval);
             break;
         case 2:
-            LowerNeoPixelBar.ColorWipe(COLOR32_BLACK, tInterval, FLAG_DO_NOT_CLEAR);
-            UpperNeoPixelBar.ColorWipe(COLOR32_BLACK, tInterval, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
+            LowerNeoPixelBar.ColorWipe(COLOR32_BLACK, tInterval, true);
+            UpperNeoPixelBar.ColorWipe(COLOR32_BLACK, tInterval, true, DIRECTION_DOWN);
             break;
         case 3:
             LowerNeoPixelBar.Stripes(COLOR32_BLACK, 12, NeoPatterns::Wheel(tColorWheelIndex), 12, tInterval, 48, tColorWheelIndex & DIRECTION_DOWN);

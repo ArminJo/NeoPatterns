@@ -41,7 +41,8 @@
 //#define LI_ION_VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT     3400 // Do not stress your battery and we require some power for standby
 //#define VCC_CHECK_PERIOD_MILLIS                         10000L // 10 seconds period of VCC checks
 //#define VCC_UNDERVOLTAGE_CHECKS_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_UNDERVOLTAGE_THRESHOLD_MILLIVOLT
-#include "ADCUtils.hpp"
+#define LOCAL_INFO // For Serial output at isVCCUndervoltageMultipleTimes(). This is undefined after the include!
+#include "ADCUtils.hpp" // !!! Must be included before NeoPatterns.hpp !!!
 
 #include <MatrixSnake.hpp>
 
@@ -163,9 +164,9 @@ void setup() {
     delay(300); // to avoid partial patterns at power up
 
     ring12.ColorWipe(COLOR32_PURPLE, 50);
-    ring16.ColorWipe(COLOR32_RED, 50, 0, DIRECTION_DOWN);
+    ring16.ColorWipe(COLOR32_RED, 50, false, DIRECTION_DOWN);
     ring24.ColorWipe(COLOR32_GREEN, 50);
-    bar16.ColorWipe(COLOR32_BLUE, 50, 0, DIRECTION_DOWN);
+    bar16.ColorWipe(COLOR32_BLUE, 50, false, DIRECTION_DOWN);
     bar24.Stripes(COLOR32_BLUE, 5, COLOR32_RED, 3, 48, 50);
 //    bar24.ScannerExtended(COLOR32_BLUE, 5, 50, 1,
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);

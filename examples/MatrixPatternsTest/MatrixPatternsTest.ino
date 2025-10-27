@@ -176,7 +176,7 @@ void setup() {
     NeoPixelMatrix.clear();
     NeoPixelMatrix.testMapping(100); // Draw a triangle with its right angle at upper left
 
-//    NeoPixelMatrix.setBrightnessValue(MAX_BRIGHTNESS);
+//    NeoPixelMatrix.setBrightness(MAX_BRIGHTNESS);
 //    for (int i = 0; i < 256; ++i) {
 //        NeoPixelMatrix.setPixelColor(i, COLOR32(i,i,i));
 //        NeoPixelMatrix.show();
@@ -344,9 +344,9 @@ bool dimOrBrightenPattern(bool aDoBrighten, uint16_t aMillisecondsDelay, MatrixN
     Serial.println(F(" pattern"));
     for (int i = 0; i < 256; ++i) {
         if (aDoBrighten) {
-            NeoPixelMatrix.setBrightnessValue(NeoPixelMatrix.gamma8(i));
+            NeoPixelMatrix.setBrightness(NeoPixelMatrix.gamma8(i));
         } else {
-            NeoPixelMatrix.setBrightnessValue(NeoPixelMatrix.gamma8(255 - i));
+            NeoPixelMatrix.setBrightness(NeoPixelMatrix.gamma8(255 - i));
         }
         (NeoPixelMatrix.*aPatternFunction)(); // Call member function, first parenthesis is required
         NeoPixelMatrix.show();

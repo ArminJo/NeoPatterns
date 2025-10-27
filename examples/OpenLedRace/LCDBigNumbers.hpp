@@ -75,7 +75,7 @@
 #define LCD_COLUMNS     16
 #define LCD_ROWS        2
 #  endif
-#include "LiquidCrystal_I2C.h"  // Use an up to date library version which has the init method
+#include "LiquidCrystal_I2C.hpp" // Here we use an enhanced version, which supports SoftI2CMaster
 #endif
 
 #define DEFAULT_TEST_DELAY  3000
@@ -102,7 +102,7 @@
 //#define LOCAL_DEBUG // To debug/understand the writeBigNumber() function - only for development
 #endif
 
-// !!! Must be without comment and closed by @formatter:on
+// !!! Must be without trailing comment and closed by @formatter:on
 // @formatter:off
 
 // http://www.picbasic.co.uk/forum/showthread.php?t=13376
@@ -285,11 +285,12 @@ const uint8_t bigNumbers3x4_2[4][33] PROGMEM = {                         // 4-li
 
 // 4x4: https://github.com/wa1hco/BigFont
 // @formatter:on
-class LCDBigNumbers: public Print {
+class LCDBigNumbers: public Print { // @suppress("Class has a virtual method and non-virtual destructor")
 
 public:
-    virtual ~LCDBigNumbers() {
-    }
+// If activated gives linker error: undefined reference to `operator delete(void*, unsigned int)'
+// If disabled I get a Eclipse warning: Class 'LCDBigNumbers' has virtual method 'flush' but non-virtual destructor
+//    virtual ~LCDBigNumbers() {}
 #if defined(USE_PARALLEL_LCD)
     LiquidCrystal *LCD;
 #else

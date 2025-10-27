@@ -208,11 +208,11 @@ public:
     bool RainbowCycleUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_COLOR_WIPE)
-    void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP)
-            __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
-    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, uint8_t aMode = 0,
-            uint8_t aDirection = DIRECTION_UP);
+    void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDoNotClearBefore = false, uint8_t aDirection = DIRECTION_UP);
+    void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = false, uint8_t aDirection =
+            DIRECTION_UP) __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
+    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = false, uint8_t aDirection =
+            DIRECTION_UP);
     bool ColorWipeUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_FADE)
@@ -257,12 +257,13 @@ public:
 #endif
 
 #if defined(ENABLE_PATTERN_HEARTBEAT)
-    void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, uint8_t aMode = 0);
+    void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, bool aDoNotClearAfter = false);
     bool HeartbeatUpdate(bool aDoUpdate = true);
 #endif
 
 #if defined(ENABLE_PATTERN_TWINKLE)
-    void Twinkle(color32_t aColorSpecial, uint8_t aPercentageOfStripFilling, uint16_t aIntervalMillis, uint16_t aRepetitions);
+    void Twinkle(color32_t aColorSpecial, uint8_t aPercentageOfStripFilling, uint16_t aIntervalMillis, uint16_t aRepetitions,
+            bool aDoNotClearBefore = false);
     bool TwinkleUpdate(bool aDoUpdate = true);
 #endif
 
@@ -359,6 +360,7 @@ public:
         uint8_t IndexOfTopPixel;    // BouncingBall: Current integer IndexOfTopPixel
         uint8_t Cooling;            // Fire: Cooling
         uint8_t NumberOfFlakes;     // Snow: Number of flakes
+        uint8_t AverageNumberOfActivePixel;     // Twinkle: AverageNumberOfActivePixel
     } ByteValue1;
 
     /*
@@ -446,6 +448,8 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  * Version 3.3.0 - 04/2025
  * - New pattern TWINKLE.
  * - New functions setCompensatedInterval() and copyRegion().
+ * - Renamed ColorWipeD() to ColorWipeDuration() etc. and new FadeDuration() etc.
+ * - Renamed setBrightnessValue() to setBrightness().
  * - Member variable Interval is now signed.
  * - Copied and used random8() from FastLED https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h
  *

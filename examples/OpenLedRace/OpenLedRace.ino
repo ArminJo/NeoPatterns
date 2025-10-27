@@ -16,20 +16,22 @@
  *  Extensions are:
  *  Accelerator MPU6050 input.
  *  Classes for Car, Bridge, Ramp and Loop.
- *  Dynamic activation of up to 4 cars.
  *  Light effects by NeoPattern library.
  *  Tone generation without dropouts by use of hardware timer output.
  *  Winner melody by PlayRTTTL library.
  *  Compensation for blocked millis() timer during draw.
  *  Checks for RAM availability.
  *  Overlapping of cars is handled by using addPixelColor() for drawing.
+ *  Start of game by dedicated game start button or by input from car button or accelerator.
+ *
+ *  A button press disables the corresponding accelerator input for one game.
  *
  *  One 1200 mA Li-ion Battery lasts for around 6 hours
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  You also need to install "NeoPatterns" and "PlayRtttl" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I"
  *
- *  Copyright (C) 2020-2023  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of OpenledRace https://github.com/ArminJo/OpenledRace.
@@ -65,7 +67,7 @@
 #include "PlayRtttl.hpp"
 
 /*
- * Enable only these 3 patterns to save program space
+ * We enable only these 3 patterns to save program space
  */
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_COLOR_WIPE
@@ -84,7 +86,7 @@
 // for hunting errors
 //#include "AvrTracing.hpp"
 
-#define VERSION_EXAMPLE "1.3"
+#define VERSION_EXAMPLE "1.4"
 // 1.4 - work in progress
 // 1.3 Moved Bridge and loop, VU Bar animations
 // 1.2 Improvements from Hannover Maker Faire
@@ -127,28 +129,31 @@ bool sSerialLCDAvailable;
  * Pin layout - adapt it to your need
  */
 #define PIN_PLAYER_1_VU_BAR     2 // RED
-#define PIN_PLAYER_2_VU_BAR     3// GREEN
+#define PIN_PLAYER_2_VU_BAR     3 // GREEN
 #define PIN_PLAYER_1_BUTTON     4 // RED
 #define PIN_PLAYER_2_BUTTON     5 // GREEN
 
 #if !defined(ENABLE_ACCELERATOR_INPUT)
 #define PIN_PLAYER_3_BUTTON     6
 #endif
-#define PIN_RESET_GAME_BUTTON   7
-
+#define PIN_START_END_GAME_BUTTON   7
 #define PIN_NEOPIXEL_TRACK      8
+#define PIN_START_BY_INPUT_DISABLE 9 // If high, game starts if car button is pressed or accelerator input is above ACCELERATOR_TRIGGER_VALUE, otherwise only by start button
 #if defined(TIMING_TEST)
-#define PIN_TIMING              9
+#define PIN_TIMING              10
 #endif
-#define PIN_MANUAL_PARAMETER_MODE  9 // if connected to ground, analog inputs for parameters are used
 
 #define PIN_BUZZER              11   // must be pin 11, since we use the direct hardware tone output for ATmega328, which is not disturbed by Neopixel show()
+#define PIN_MANUAL_PARAMETER_MODE  12 // if connected to ground, analog inputs for parameters are used
 
-#define PIN_GRAVITY             A0
-#define PIN_FRICTION            A1
-#define PIN_DRAG                A2
+#define PIN_GRAVITY_INPUT       A0
+#define PIN_FRICTION_INPUT      A1
+#define PIN_DRAG_INPUT          A2
+#define ONLY_PLOTTER_OUTPUT_PIN A3 // Verbose output to Arduino Serial Monitor is disabled, if connected to ground. This is intended for Arduino Plotter mode, where you can see accelerator input.
+/*
+ * A4 and A5 are used by I2C
+ */
 
-#define ONLY_PLOTTER_OUTPUT_PIN 12 // Verbose output to Arduino Serial Monitor is disabled, if connected to ground. This is intended for Arduino Plotter mode.
 bool sOnlyPlotterOutput;
 
 #define ANALOG_OFFSET   20   // Bias/offset to get real 0 analog value, because of high LED current on Breadboard, which cause a ground bias.
@@ -168,7 +173,7 @@ bool sOnlyPlotterOutput;
 #define NUMBER_OF_CARS            2 // Currently we can handle only 2 distinct accelerometers.
 #define ACCELERATOR_TRIGGER_VALUE 32 // The value of getAcceleratorValueShift8() to trigger a new race
 #else
-#define NUMBER_OF_CARS            4
+#define NUMBER_OF_CARS            3
 #endif
 #define CAR_1_COLOR     (color32_t)COLOR32_RED
 #define CAR_2_COLOR     (color32_t)COLOR32_GREEN
@@ -201,7 +206,6 @@ const char Car3ColorString[] PROGMEM = "BLUE";
 NeoPatterns track = NeoPatterns(NUMBER_OF_TRACK_PIXELS, PIN_NEOPIXEL_TRACK, NEO_GRB + NEO_KHZ800);
 
 #if defined(USE_ACCELERATION_NEOPIXEL_BARS)
-//#define ACCELERATION_BAR_SCALE_VALUE    100
 /*
  * The central NeoPixel object used for every bar, since there is no persistence needed for the bar pixel content
  */
@@ -240,9 +244,9 @@ bool sSoundEnabled = true; // not really used yet - always true
 #endif
 
 // Main loop modes
-#define MODE_IDLE 0
-#define MODE_START 1
-#define MODE_RACE 2
+#define MODE_IDLE   0 // Do animations
+#define MODE_START  1 // Do countdown
+#define MODE_RACE   2 // Reset track with loop animation. Move cars. Check for overtaking the leader and winner. Manage sound. Check race reset button.
 uint8_t sLoopMode = MODE_IDLE;
 uint16_t sLoopCountForDebugPrint;
 uint8_t sIndexOfLeadingCar = 0; // To check for playing overtaking sound.
@@ -271,7 +275,8 @@ void playShutdownMelody();
 void playMelodyAndShutdown();
 void checkAndHandleWinner();
 void checkForOvertakingLeaderCar();
-bool checkAllInputs();
+bool isStartStopButtonPressed();
+bool checkAllCarInputs();
 void printConfigPinInfo(Print *aSerial, uint8_t aConfigPinNumber, const __FlashStringHelper *aConfigPinDescription);
 
 extern volatile unsigned long timer0_millis; // Used for ATmega328P to adjust for missed millis interrupts
@@ -393,10 +398,11 @@ public:
             } else {
                 if (tRandom.UBytes[0] > 0x03) {
                     // 0 - especially used for setup
-                    RampPatterns->ColorWipeDuration(NeoPatterns::Wheel(tRandom.UBytes[0]), START_ANIMATION_MILLIS, 0, tDirection);
+                    RampPatterns->ColorWipeDuration(NeoPatterns::Wheel(tRandom.UBytes[0]), START_ANIMATION_MILLIS, false,
+                            tDirection);
                 } else {
                     // 0 - especially used for setup
-                    RampPatterns->ColorWipeDuration(RAMP_COLOR, START_ANIMATION_MILLIS, 0, tDirection);
+                    RampPatterns->ColorWipeDuration(RAMP_COLOR, START_ANIMATION_MILLIS, false, tDirection);
                 }
 
 //                RampPatterns->ScannerExtendedCompleteDuration(COLOR32_BLUE_HALF, 8, START_ANIMATION_MILLIS, 2,
@@ -672,9 +678,10 @@ public:
             Serial.println(F(". You may want to disable \"#define ENABLE_ACCELERATOR_INPUT\""));
             if (sSerialLCDAvailable) {
                 myLCD.setCursor(0, aNumberOfThisCar + 1);
-                myLCD.print(F("No IMU for car "));
-                myLCD.print(aNumberOfThisCar);
-                myLCD.print(' '); // to overwrite button info
+                myLCD.print(F("No IMU for          ")); // clear up to end of line, because color string has variable length
+                myLCD.setCursor(11, aNumberOfThisCar + 1);
+                myLCD.print((__FlashStringHelper*) (CarColorString));
+                myLCD.print(F(" car"));
             }
             playError();
         } else {
@@ -801,7 +808,7 @@ public:
      * You can stop melody and animation by pressing the car button.
      * @return true if stopped by user input
      */
-    bool doWinnerAnimationAndSound() {
+    bool doBlockingWinnerAnimationAndSound() {
         startPlayRtttlPGM(PIN_BUZZER, WinnerMelody);
         TrackPtr->Stripes(Color, 2, COLOR32_BLACK, 8, 300, 50, DIRECTION_UP);
         bool tReturnValue = false;
@@ -823,8 +830,13 @@ public:
 #if defined(TIMING_TEST)
                 digitalWrite(PIN_TIMING, LOW);
 #endif
-            if ((millis() - tStartMillis > WINNER_MINIMAL_ANIMATION_DURATION_MILLIS) && checkAllInputs()) {
-                // minimal animation time was reached and input was activated
+            /*
+             * Check for interrupt request
+             */
+            if (isStartStopButtonPressed()
+                    || (digitalRead(PIN_START_BY_INPUT_DISABLE)
+                            && ((millis() - tStartMillis > WINNER_MINIMAL_ANIMATION_DURATION_MILLIS) && checkAllCarInputs()))) {
+                // Start stop button was pressed or minimal animation time was reached and car input was activated
                 stopPlayRtttl(); // to stop in a deterministic fashion
                 tReturnValue = true;
             }
@@ -855,26 +867,28 @@ public:
 #if defined(TIMING_TEST)
         digitalWrite(PIN_TIMING, HIGH);
 #endif
-        uint16_t tAcceleration;
+        uint16_t tAcceleration = 0;
 
         if (checkButton()) {
             // add fixed amount of energy ->  800 => tAdditionalEnergy is 0.2 per press
-            tAcceleration = 600;
+            tAcceleration = 600; // with 600 we can get AcceleratorLowPassValue up to 8 / full scale
         }
 
 #if defined(ENABLE_ACCELERATOR_INPUT)
         else if (!ButtonInputDetected && AcceleratorInputConnected) {
-            //Here, no button was pressed before and accelerator is connected
+            // Here, no button was pressed before and accelerator is connected
             tAcceleration = getAcceleratorValueShift8();
-        } else {
-            tAcceleration = 0;
         }
 #endif
 #if defined(USE_ACCELERATION_NEOPIXEL_BARS)
         AcceleratorLowPassValue += (((int16_t) (tAcceleration - AcceleratorLowPassValue))) >> 3;
+        auto tAcceleratorLowPassValue = AcceleratorLowPassValue;
+        if (!ButtonInputDetected) {
+            tAcceleratorLowPassValue *= 2; // Quick hack, we cannot get full scale without it.
+        }
         // scale it so that 100 -> 8
         // Parameter NumberOfThisCar == 1 has the effect, that bar for car 2 can be mounted upside down
-        AccelerationCommonNeopixelBar.drawBar(AcceleratorLowPassValue / (100 / 8), Color, NumberOfThisCar == 1);
+        AccelerationCommonNeopixelBar.drawBar(tAcceleratorLowPassValue / (100 / 8), Color, NumberOfThisCar == 1);
         AccelerationCommonNeopixelBar.setPin(AccelerationBarPin);
         AccelerationCommonNeopixelBar.show();
 #endif
@@ -893,6 +907,17 @@ public:
             Serial.print(int(SpeedAsPixelPerLoop * 100));
             Serial.print(' ');
         }
+#if defined(DEBUG)
+        if (tAcceleration > 0 || AcceleratorLowPassValue > 1) {
+            Serial.print(NumberOfThisCar);
+            Serial.print(' ');
+            Serial.print(tAcceleration);
+            Serial.print(' ');
+            Serial.print(AcceleratorLowPassValue);
+            Serial.print(' ');
+            Serial.println(int(SpeedAsPixelPerLoop * 100));
+        }
+#endif
 
         bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
         float tGravity;
@@ -904,9 +929,9 @@ public:
              * Read analog values for gravity etc. from potentiometers
              * 850 us for analogRead + DEBUG print
              */
-            uint16_t tGravityRaw = analogRead(PIN_GRAVITY);
-            uint16_t tFricionRaw = analogRead(PIN_FRICTION);
-            uint16_t tDragRaw = analogRead(PIN_DRAG);
+            uint16_t tGravityRaw = analogRead(PIN_GRAVITY_INPUT);
+            uint16_t tFricionRaw = analogRead(PIN_FRICTION_INPUT);
+            uint16_t tDragRaw = analogRead(PIN_DRAG_INPUT);
             if (tGravityRaw >= ANALOG_OFFSET) {
                 // -ANALOG_OFFSET (20) to get real 0 value even if ground has bias because of high LED current on breadboard
                 tGravityRaw -= ANALOG_OFFSET;
@@ -1042,9 +1067,10 @@ void setup() {
     __malloc_margin = 120; // 128 is the default value
     pinMode(LED_BUILTIN, OUTPUT);
 
-    pinMode(PIN_RESET_GAME_BUTTON, INPUT_PULLUP);
+    pinMode(PIN_START_END_GAME_BUTTON, INPUT_PULLUP);
     pinMode(PIN_MANUAL_PARAMETER_MODE, INPUT_PULLUP);
     pinMode(ONLY_PLOTTER_OUTPUT_PIN, INPUT_PULLUP);
+    pinMode(PIN_START_BY_INPUT_DISABLE, INPUT_PULLUP);
 
 #if defined(TIMING_TEST)
     pinMode(PIN_TIMING, OUTPUT);
@@ -1089,16 +1115,21 @@ void setup() {
         myLCD.init();
         myLCD.clear();
         myLCD.backlight();
-        myLCD.print(F("Open LED Race"));
+        myLCD.print(F("Open LED Race " STR(LAPS_PER_RACE) " Laps"));
         myLCD.setCursor(0, 1);
         myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
         myLCD.setCursor(0, 2);
-        myLCD.print(F("Manual mode pin=" STR(PIN_MANUAL_PARAMETER_MODE)));
+        myLCD.print(F("Man. mode pin="));
+        if (digitalRead(PIN_MANUAL_PARAMETER_MODE)) {
+            myLCD.print(F(STR(PIN_MANUAL_PARAMETER_MODE) " off"));
+        } else {
+            myLCD.print(F("=" STR(PIN_MANUAL_PARAMETER_MODE) " on"));
+        }
         myLCD.setCursor(0, 3);
-        myLCD.print(F("Reset  game pin=" STR(PIN_RESET_GAME_BUTTON)));
+        myLCD.print(F("Start/End game pin=" STR(PIN_START_END_GAME_BUTTON)));
 
         BigNumbers.begin(); // Creates custom character used for generating big numbers
-        delay(1000); // To show  the message on LCD
+        delay(2000); // To show  the message on LCD
     }
 #endif
 
@@ -1178,7 +1209,7 @@ void setup() {
 // wait for animation to end
     while (track.updateAndShowAlsoAllPartialPatterns()) {
         yield();
-        if (checkAllInputs()) {
+        if (checkAllCarInputs() || isStartStopButtonPressed()) {
             break;
         }
     }
@@ -1234,7 +1265,20 @@ void loop() {
             }
         }
 
-        checkAllInputs();
+        /*
+         * Check for start
+         */
+        if (digitalRead(PIN_START_BY_INPUT_DISABLE)) {
+            // Start button not enabled here
+            if (checkAllCarInputs()) {
+                sLoopMode = MODE_START;
+            }
+        }
+        // Check start button anyway
+        if (isStartStopButtonPressed()) {
+            sLoopMode = MODE_START;
+        }
+
         track.updateAndShowAlsoAllPartialPatterns(); // Show animation
 
     } else if (sLoopMode == MODE_START) {
@@ -1246,7 +1290,9 @@ void loop() {
          * Race mode
          * 1. Reset track with loop animation
          * 2. Move cars
-         * 3. Check for winner and overtaking the leader
+         * 3. Check for overtaking the leader and winner
+         * 4. Manage sound
+         * 5. Check race reset button
          */
         resetAndDrawTrack(true);
 
@@ -1298,15 +1344,15 @@ void loop() {
         }
 
         /*
-         * check for reset button
+         * check for game reset button
          */
-        if (!digitalRead(PIN_RESET_GAME_BUTTON)) {
+        if (isStartStopButtonPressed()) {
             noTone(PIN_BUZZER);
             resetAllCars();
             myLCD.clear();
+            Serial.println(F("Reset game button pressed -> start a new race"));
             printStartMessage();
             resetAndShowTrackWithoutCars();
-            Serial.println(F("Reset game button pressed -> start a new race"));
             sLoopMode = MODE_IDLE;
         }
     }
@@ -1327,40 +1373,54 @@ void printStartMessage() {
         Serial.println(F(" to start countdown"));
     }
     if (sSerialLCDAvailable) {
-        myLCD.setCursor(14, 0);
-        myLCD.print(F("5 Laps"));
         myLCD.setCursor(0, 1);
-        myLCD.print(F("Press any button"));
+        myLCD.print(F("Press "));
+        if (digitalRead(PIN_START_BY_INPUT_DISABLE)) {
+            myLCD.print(F("any"));
+        } else {
+            myLCD.print(F("start"));
+        }
+        myLCD.print(F(" button"));
         uint8_t tLineIndex = 2;
 #if defined(ENABLE_ACCELERATOR_INPUT)
-        if (cars[0].AcceleratorInputConnected || cars[1].AcceleratorInputConnected) {
+        if (digitalRead(PIN_START_BY_INPUT_DISABLE) && (cars[0].AcceleratorInputConnected || cars[1].AcceleratorInputConnected)) {
             myLCD.setCursor(0, tLineIndex++);
-            myLCD.print(F("or move controller"));
+            myLCD.print(F("or move controller  ")); // spaces to overwrite the rest of the line
         }
 #endif
         myLCD.setCursor(0, tLineIndex);
-        myLCD.print(F("to start countdown"));
+        myLCD.print(F("to start countdown  ")); // spaces to overwrite the rest of the line
     }
 }
 
 /*
- * @return true if any button pressed or IMU moved
+ * @return true if start/stop button pressed
  */
-bool checkAllInputs() {
-    for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
-        if (cars[i].checkInput()) {
-            sLoopMode = MODE_START;
-            return true;
-        }
-    }
-    if (!digitalRead(PIN_RESET_GAME_BUTTON)) {
+bool isStartStopButtonPressed() {
+    if (!digitalRead(PIN_START_END_GAME_BUTTON)) {
+        // Wait for button to be released
+        while (!digitalRead(PIN_START_END_GAME_BUTTON))
+            ;
+        delay(80); // avoid ringing
         return true;
     }
     return false;
 }
 
 /*
- * Check for winner. If one car is the winner it takes a few seconds here
+ * @return true if any car button pressed or IMU moved or start / reset game button pressed
+ */
+bool checkAllCarInputs() {
+    for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
+        if (cars[i].checkInput()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+ * Check for winner. If one car is the winner it takes a few seconds in doBlockingWinnerAnimationAndSound()
  */
 void checkAndHandleWinner() {
     for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
@@ -1389,10 +1449,10 @@ void checkAndHandleWinner() {
                 myLCD.print(F(" car"));
             }
             printStartMessage();
-            if (cars[i].doWinnerAnimationAndSound()) { // blocking call until input is received or melody ends
-                sLoopMode = MODE_START;
+            if (cars[i].doBlockingWinnerAnimationAndSound()) { // blocking call until interrupt is requested or melody ends
+                sLoopMode = MODE_START; // Interrupt was requested
             } else {
-                sLoopMode = MODE_IDLE;
+                sLoopMode = MODE_IDLE; // melody ends
             }
             resetAndShowTrackWithoutCars();
             break;

@@ -36,6 +36,16 @@
 
 //#define INFO
 
+/*
+ * Default values are suitable for Li-ion batteries.
+ * We normally have voltage drop at the connectors, so the battery voltage is assumed slightly higher, than the Arduino VCC.
+ */
+//#define LI_ION_VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT     3400 // Do not stress your battery and we require some power for standby
+//#define VCC_CHECK_PERIOD_MILLIS                         10000L // 10 seconds period of VCC checks
+//#define VCC_UNDERVOLTAGE_CHECKS_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_UNDERVOLTAGE_THRESHOLD_MILLIVOLT
+#define LOCAL_INFO // For Serial output at isVCCUndervoltageMultipleTimes(). This is undefined after the include!
+#include "ADCUtils.hpp" // !!! Must be included before NeoPatterns.hpp !!!
+
 #define ENABLE_PATTERN_STRIPES
 #define ENABLE_PATTERN_COLOR_WIPE
 #define ENABLE_PATTERN_SCANNER_EXTENDED
@@ -240,7 +250,7 @@ void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
         break;
     case 1:
         // clear pattern
-        aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, FLAG_DO_NOT_CLEAR, DIRECTION_DOWN);
+        aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, true, DIRECTION_DOWN);
         break;
     case 2:
         aLedsPtr->RainbowCycle(tInterval);
@@ -255,7 +265,7 @@ void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
         sNoPatternRandomDelayBetweenPatterns = true;
         break;
     case 5:
-        aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, FLAG_DO_NOT_CLEAR);
+        aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, true);
         sState = -1; // Start from beginning
         break;
     default:

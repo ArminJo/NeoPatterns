@@ -5,7 +5,7 @@
  *  Accelerator data are always fetched, gyro data only if DO_NOT_USE_GYRO is NOT activated
  *
  *  Created on: 19.11.2020
- *  Copyright (C) 2020-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2020-2025  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of PWMMotorControl https://github.com/ArminJo/PWMMotorControl.
@@ -54,12 +54,12 @@
 
 //#define USE_SOFT_I2C_MASTER // Requires SoftI2CMaster.h + SoftI2CMasterConfig.h. Saves 2110 bytes program memory and 200 bytes RAM compared with Arduino Wire
 //#define USE_SOFT_WIRE // Saves 1700 bytes program memory and 200 bytes RAM compared with with Arduino Wire
-#if !defined(USE_SOFT_I2C_MASTER) && __has_include("SoftI2CMasterConfig.h")
+#if defined(__AVR__) && !defined(USE_SOFT_I2C_MASTER) && __has_include("SoftI2CMasterConfig.h")
 #define USE_SOFT_I2C_MASTER
 #endif
 #if defined(USE_SOFT_I2C_MASTER)
 #include "SoftI2CMasterConfig.h"    // Include configuration for sources
-#  if !defined(_SOFTI2C_H)
+#  if !defined(_SOFTI2C_H)          // is set in SoftI2CMaster.h, if !defined(USE_SOFT_I2C_MASTER_H_AS_PLAIN_INCLUDE)
 #include "SoftI2CMaster.h"          // include sources
 #  endif
 #elif defined(USE_SOFT_WIRE)

@@ -185,7 +185,7 @@ void printMemoryHexDump(uint8_t *aMemory, uint16_t aNumberOfBytesToPrint, uint8_
 }
 
 /*
- * Print with leading space and padded with 0
+ * Print with leading space and "0x" and padded with 0
  */
 void printBytePaddedHex(uint8_t aHexValueToPrint) {
     Serial.print(F(" 0x"));
@@ -207,6 +207,5 @@ void printWordPaddedHex(uint16_t aHexValueToPrint) {
         Serial.print('0');
     }
     Serial.print(aHexValueToPrint, HEX);
-
 }
 #endif // _HEX_DUMP_HPP
