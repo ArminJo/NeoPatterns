@@ -7,13 +7,13 @@
 [![Open Led Race logo](https://github.com/ArminJo/OpenledRace/blob/master/pictures/OLR-Logo_400x400.png)](https://twitter.com/openledrace)
 
 [![Badge License: GPLv3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
- &nbsp; &nbsp; 
+ &nbsp; &nbsp;
 [![Badge Version](https://img.shields.io/github/v/release/ArminJo/OpenledRace?include_prereleases&color=yellow&logo=DocuSign&logoColor=white)](https://github.com/ArminJo/OpenledRace/releases/latest)
- &nbsp; &nbsp; 
+ &nbsp; &nbsp;
 [![Badge Commits since latest](https://img.shields.io/github/commits-since/ArminJo/OpenledRace/latest?color=yellow)](https://github.com/ArminJo/OpenledRace/commits/master)
- &nbsp; &nbsp; 
+ &nbsp; &nbsp;
 [![Badge Build Status](https://github.com/ArminJo/OpenledRace/workflows/TestCompile/badge.svg)](https://github.com/ArminJo/OpenledRace/actions)
- &nbsp; &nbsp; 
+ &nbsp; &nbsp;
 ![Badge Hit Counter](https://visitor-badge.laobi.icu/badge?page_id=ArminJo_OpenledRace)
 <br/>
 
@@ -40,7 +40,7 @@ Also available as [OpenLedRace example](https://github.com/ArminJo/NeoPatterns/t
  *  Compensation for blocked millis() timer during draw.
  *  Checks for RAM availability.
  *  Overlapping of cars is handled by using addPixelColor() for drawing.
- *  **Development mode**, where Gravity, Friction and Drag can be set by potentiomenters.
+ *  **Development mode**, where Gravity, Friction and Drag can be set by potentiometers.
 
  <br/>
 
@@ -69,8 +69,10 @@ Formula is: **NewSpeed = Speed + Gravity + Friction + (Speed * Drag)**
 
 <br/>
 
-# Required area
-The version using a 5 m IP30 - 60 pixel per meter strip with ramp and loop reqires a space of 145 cm x 80 cm plus 20 cm space for breadboard etc.
+# Size
+The version using a 5 m IP30 - 60 pixel per meter strip with ramp and loop reqires an area of 145 cm x 80 cm plus 20 cm space for breadboard etc.<br/>
+The base of the ramp is 83 cm, the height is 23.5 cm. The slope is 45 degree and therefore the top of the ramp is 83 cm - (2 * 23.5 cm) = 36 cm.<br/>
+The diameter of the loop is 26 cm.
 
 <br/>
 
@@ -82,7 +84,16 @@ The version using a 5 m IP30 - 60 pixel per meter strip with ramp and loop reqir
 | At the Cologne public library MINTk&ouml;ln-Festival 2025 |  |
 | [![OpenLedRace in action 2025](https://i.ytimg.com/vi/mGpJGzWwncQ/hqdefault.jpg)](https://www.youtube.com/watch?v=mGpJGzWwncQ) | |
 
+<br/>
 
+# Arduino plotter output
+![Arduino plotter output](https://github.com/ArminJo/OpenledRace/blob/master/pictures/ArduinoPlotterOutput.png)
+
+In this output, both accelerators were initially moving, then only the first, and finally the second alone. `AccelLP` is the low-pass value of `Accel`.<br/>
+In the middle, there is a steep decrease in speed at the same input level. This is because the car has reached the ramp and must now overcome gravity.<br/>
+At the end, you can see negative speed. This is because the car was on the ramp when the input stopped and gravity moved it backwards down the ramp.
+
+<br/>
 
 # Compile with the Arduino IDE
 Download and extract the repository. In the Arduino IDE open the sketch with File -> Open... and select the OpenledRace folder.<br/>
@@ -103,10 +114,8 @@ You also need to install *NeoPatterns* and *PlayRtttl* library under "Tools -> M
 - Speaker > 32 &ohm;
 - 4.7 &micro;F capacitor for speaker
 - Power supply - e.g. a 18650 battery + holder
-
-### Recommended 
-- 1 k&ohm; potentiometer for speaker volume control
 - "Reset / Start Game" Pushbutton
+- 1 k&ohm; potentiometer for speaker volume control
 
 ### Optional
 - 2 8xWS2812 bars + 2 10kOhm resistors for optical feedback of input strength

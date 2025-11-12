@@ -47,36 +47,34 @@
 #define VERSION_HEX_VALUE(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
 #define VERSION_LCD_BIG_NUMBERS_HEX  VERSION_HEX_VALUE(VERSION_LCD_BIG_NUMBERS_MAJOR, VERSION_LCD_BIG_NUMBERS_MINOR, VERSION_LCD_BIG_NUMBERS_PATCH)
 
+// START Copy from https://github.com/ArminJo/Arduino-Utils/blob/master/src/LCDPrintUtils.hpp
 //#define USE_PARALLEL_2004_LCD // Is default
 //#define USE_PARALLEL_1602_LCD
 //#define USE_SERIAL_2004_LCD
 //#define USE_SERIAL_1602_LCD
 
 #if !defined(USE_PARALLEL_2004_LCD) && !defined(USE_PARALLEL_1602_LCD) && !defined(USE_SERIAL_2004_LCD) && !defined(USE_SERIAL_1602_LCD)
-#warning "No LCD type like USE_SERIAL_2004_LCD specified, therefore using the default USE_PARALLEL_2004_LCD"
+#warning "No LCD type like USE_SERIAL_2004_LCD specified, therefore using USE_PARALLEL_2004_LCD as default"
 #define USE_PARALLEL_2004_LCD    // Use parallel 2004 LCD as default
 #endif
 
 #if defined(USE_PARALLEL_2004_LCD) || defined(USE_PARALLEL_1602_LCD)
 #  if defined(USE_PARALLEL_2004_LCD)
-#define LCD_COLUMNS     20
 #define LCD_ROWS        4
 #  else
-#define LCD_COLUMNS     16
 #define LCD_ROWS        2
 #  endif
 #define USE_PARALLEL_LCD
 #include <LiquidCrystal.h>
 #else
 #  if defined(USE_SERIAL_2004_LCD)
-#define LCD_COLUMNS     20
 #define LCD_ROWS        4
 #  else
-#define LCD_COLUMNS     16
 #define LCD_ROWS        2
 #  endif
 #include "LiquidCrystal_I2C.hpp" // Here we use an enhanced version, which supports SoftI2CMaster
 #endif
+// END Copy from https://github.com/ArminJo/Arduino-Utils/blob/master/src/LCDPrintUtils.hpp
 
 #define DEFAULT_TEST_DELAY  3000
 #define NUMBER_OF_SPECIAL_CHARACTERS_IN_FONT_ARRAY  3
@@ -553,99 +551,10 @@ public:
 
 };
 
-#if defined(USE_PARALLEL_LCD)
-void printSpaces(LiquidCrystal *aLCD, uint_fast8_t aNumberOfSpacesToPrint)
-#else
-void printSpaces(LiquidCrystal_I2C *aLCD, uint_fast8_t aNumberOfSpacesToPrint)
-#endif
-        {
-    for (uint_fast8_t i = 0; i < aNumberOfSpacesToPrint; ++i) {
-        aLCD->print(' ');
-    }
-}
-
-#if defined(USE_PARALLEL_LCD)
-void clearLine(LiquidCrystal *aLCD, uint_fast8_t aLineNumber)
-#else
-void clearLine(LiquidCrystal_I2C *aLCD, uint_fast8_t aLineNumber)
-#endif
-        {
-    aLCD->setCursor(0, aLineNumber);
-    printSpaces(aLCD, LCD_COLUMNS);
-    aLCD->setCursor(0, aLineNumber);
-}
-
-#if defined(USE_PARALLEL_LCD)
-size_t printHex(LiquidCrystal *aLCD, uint16_t aHexByteValue)
-#else
-size_t printHex(LiquidCrystal_I2C *aLCD, uint16_t aHexByteValue)
-#endif
-        {
-    aLCD->print(F("0x"));
-    size_t tPrintSize = 2;
-    if (aHexByteValue < 0x10 || (aHexByteValue > 0x100 && aHexByteValue < 0x1000)) {
-        aLCD->print('0'); // leading 0
-        tPrintSize++;
-    }
-    return aLCD->print(aHexByteValue, HEX) + tPrintSize;
-}
-
-/*
- * On my 2004 LCD the custom characters are available under 0 to 7 and mirrored to 8 to 15
- * The characters 0x80 to 0x8F are blanks
- */
-#if defined(USE_PARALLEL_LCD)
-void showSpecialCharacters(LiquidCrystal *aLCD)
-#else
-void showSpecialCharacters(LiquidCrystal_I2C *aLCD)
-#endif
-        {
-    aLCD->setCursor(0, 0);
-    // 0 to 7 are mirrored to 8 to 15 as described in datasheet
-    for (uint_fast8_t i = 0; i < 0x8; ++i) {
-        aLCD->write(i);
-    }
-    // Print some interesting characters
-    aLCD->write(0xA1);
-    aLCD->write(0xA5);
-    aLCD->write(0xB0);
-    aLCD->write(0xDB);
-    aLCD->write(0xDF);
-
-    aLCD->setCursor(0, 1);
-    // The characters 0x10 to 0x1F seem to be all blanks => ROM Code: A00
-    for (uint_fast8_t i = 0x10; i < 0x20; ++i) {
-        aLCD->write(i);
-    }
-    aLCD->setCursor(0, 2);
-    // The characters 0x80 to 0x8F seem to be all blanks => ROM Code: A00
-    for (uint_fast8_t i = 0x80; i < 0x90; ++i) {
-        aLCD->write(i);
-    }
-    aLCD->setCursor(0, 3);
-    // The characters 0x90 to 0x9F seem to be all blanks => ROM Code: A00
-    for (uint_fast8_t i = 0x90; i < 0xA0; ++i) {
-        aLCD->write(i);
-    }
-    delay(2000);
-}
-
-#if defined(USE_PARALLEL_LCD)
-void showCustomCharacters(LiquidCrystal *aLCD)
-#else
-void showCustomCharacters(LiquidCrystal_I2C *aLCD)
-#endif
-        {
-    aLCD->setCursor(0, 0);
-    for (uint_fast8_t i = 0; i < 0x08; ++i) {
-        aLCD->write(i);
-    }
-}
-
-#if defined(USE_PARALLEL_LCD)
 /*
  * Print all fonts, used in screenshots, using one object
  */
+#if defined(USE_PARALLEL_LCD)
 void testBigNumbers(LiquidCrystal *aLCD)
 #else
 void testBigNumbers(LiquidCrystal_I2C *aLCD)

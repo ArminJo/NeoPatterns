@@ -48,10 +48,10 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.2.0"
+#define VERSION_NEOPATTERNS "3.3.1"
 #define VERSION_NEOPATTERNS_MAJOR 3
-#define VERSION_NEOPATTERNS_MINOR 2
-#define VERSION_NEOPATTERNS_PATCH 0
+#define VERSION_NEOPATTERNS_MINOR 3
+#define VERSION_NEOPATTERNS_PATCH 1
 // The change log is at the bottom of the file
 
 /*
@@ -445,6 +445,9 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
+ * Version 3.3.1 - 11/2025
+ * - Fixed bug in allPatternsRandomHandler().
+ *
  * Version 3.3.0 - 04/2025
  * - New pattern TWINKLE.
  * - New functions setCompensatedInterval() and copyRegion().

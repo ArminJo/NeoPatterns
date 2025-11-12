@@ -135,7 +135,10 @@ bool sSerialLCDAvailable;
 
 #if !defined(ENABLE_ACCELERATOR_INPUT)
 #define PIN_PLAYER_3_BUTTON     6
+#else
+#define PIN_START_END_GAME_BUTTON_LED  6
 #endif
+
 #define PIN_START_END_GAME_BUTTON   7
 #define PIN_NEOPIXEL_TRACK      8
 #define PIN_START_BY_INPUT_DISABLE 9 // If high, game starts if car button is pressed or accelerator input is above ACCELERATOR_TRIGGER_VALUE, otherwise only by start button
@@ -154,7 +157,8 @@ bool sSerialLCDAvailable;
  * A4 and A5 are used by I2C
  */
 
-bool sOnlyPlotterOutput;
+bool sOnlyPlotterOutput;                    // Print data for Arduino plotter is enabled
+bool sPrintCurrentDatasetToPlotterOutput;   // Print data for Arduino plotter, if at least one car is moving
 
 #define ANALOG_OFFSET   20   // Bias/offset to get real 0 analog value, because of high LED current on Breadboard, which cause a ground bias.
 
@@ -524,7 +528,9 @@ public:
             Serial.print(sizeof(NeoPatterns) + 2);
             Serial.println(F(") for LoopPatterns."));
 #  if defined(__AVR__)
-            printRAMInfo(&Serial);
+            if (!sOnlyPlotterOutput) {
+                printRAMInfo(&Serial);
+            }
 #  endif
         }
 #else
@@ -832,6 +838,7 @@ public:
 #endif
             /*
              * Check for interrupt request
+             * Start button is always checked / enabled, car inputs only if PIN_START_BY_INPUT_DISABLE high
              */
             if (isStartStopButtonPressed()
                     || (digitalRead(PIN_START_BY_INPUT_DISABLE)
@@ -839,6 +846,7 @@ public:
                 // Start stop button was pressed or minimal animation time was reached and car input was activated
                 stopPlayRtttl(); // to stop in a deterministic fashion
                 tReturnValue = true;
+                Serial.println(F("Reset game button pressed -> abort melody and start a new race"));
             }
             yield();
         }
@@ -896,9 +904,9 @@ public:
             float tAdditionalEnergy = ((float) tAcceleration) / 4096;
             SpeedAsPixelPerLoop = sqrt((SpeedAsPixelPerLoop * SpeedAsPixelPerLoop) + tAdditionalEnergy);
         }
-        if (sOnlyPlotterOutput) {
+        if (sPrintCurrentDatasetToPlotterOutput) {
             /*
-             * Print data for Arduino plotter
+             * Print data for Arduino plotter, if at least one car is moving
              */
             Serial.print(tAcceleration);
             Serial.print(' ');
@@ -1066,6 +1074,7 @@ extern size_t __malloc_margin;
 void setup() {
     __malloc_margin = 120; // 128 is the default value
     pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(PIN_START_END_GAME_BUTTON_LED, OUTPUT);
 
     pinMode(PIN_START_END_GAME_BUTTON, INPUT_PULLUP);
     pinMode(PIN_MANUAL_PARAMETER_MODE, INPUT_PULLUP);
@@ -1089,7 +1098,6 @@ void setup() {
     sOnlyPlotterOutput = !digitalRead(ONLY_PLOTTER_OUTPUT_PIN);
 
     if (!sOnlyPlotterOutput) {
-
         // Just to know which program is running on my Arduino
         Serial.println(F("START " __FILE__ " from " __DATE__));
         Serial.println(
@@ -1153,11 +1161,15 @@ void setup() {
     bridges[0].init(&track, BRIDGE_1_START, BRIDGE_1_HEIGHT, BRIDGE_1_RAMP_LENGTH, BRIDGE_1_PLATFORM_LENGTH); // Requires 2 x 69 = 138 bytes on heap
 //    myTone(64000);
 #if defined(INFO) && defined(__AVR__)
-    printRAMInfo(&Serial);
+    if (!sOnlyPlotterOutput) {
+        printRAMInfo(&Serial);
+    }
 #  endif
     loops[0].init(&track, LOOP_1_UP_START, LOOP_1_LENGTH); // Requires 69 bytes on heap
 #if defined(INFO) && defined(__AVR__)
-    printRAMInfo(&Serial);
+    if (!sOnlyPlotterOutput) {
+        printRAMInfo(&Serial);
+    }
 #  endif
     /*
      * Setup cars
@@ -1190,9 +1202,6 @@ void setup() {
     randomSeed(cars[0].AcceleratorInput.AcceleratorLowpassSubOneHertz[0].ULong);
 #endif
 
-// signal boot
-    tone(PIN_BUZZER, 1200, 200);
-
     /*
      * Boot animation
      */
@@ -1204,7 +1213,12 @@ void setup() {
         loops[i].startIdleAnimation(false);
     }
     delay(1000);
+
+    /*
+     * signal boot end and game ready
+     */
     printStartMessage();
+    tone(PIN_BUZZER, 1200, 200);
 
 // wait for animation to end
     while (track.updateAndShowAlsoAllPartialPatterns()) {
@@ -1219,8 +1233,10 @@ void setup() {
      */
     resetAndShowTrackWithoutCars();
 #if defined(INFO) && defined(__AVR__)
-    printRAMInfo(&Serial);
-    initStackFreeMeasurement(); // initialize for getting stack usage in loop
+    if (!sOnlyPlotterOutput) {
+        printRAMInfo(&Serial);
+        initStackFreeMeasurement(); // initialize for getting stack usage in loop
+    }
 #endif
 }
 
@@ -1249,6 +1265,8 @@ void loop() {
 #endif
 
     if (sLoopMode == MODE_IDLE) {
+        digitalWrite(PIN_START_END_GAME_BUTTON_LED, HIGH); // signal "start by button press"
+
         /*
          * Do periodic animation
          */
@@ -1281,79 +1299,94 @@ void loop() {
 
         track.updateAndShowAlsoAllPartialPatterns(); // Show animation
 
-    } else if (sLoopMode == MODE_START) {
-        startRace(); // blocking call
-        sLoopMode = MODE_RACE;
+    } else {
+        digitalWrite(PIN_START_END_GAME_BUTTON_LED, LOW);
+        if (sLoopMode == MODE_START) {
+            startRace(); // blocking call
+            sLoopMode = MODE_RACE;
 
-    } else if (sLoopMode == MODE_RACE) {
-        /*
-         * Race mode
-         * 1. Reset track with loop animation
-         * 2. Move cars
-         * 3. Check for overtaking the leader and winner
-         * 4. Manage sound
-         * 5. Check race reset button
-         */
-        resetAndDrawTrack(true);
+        } else if (sLoopMode == MODE_RACE) {
+            /*
+             * Race mode
+             * 1. Reset track with loop animation
+             * 2. Move cars
+             * 3. Check for overtaking the leader and winner
+             * 4. Manage sound
+             * 5. Check race reset button
+             */
+            resetAndDrawTrack(true);
 
-        /*
-         * Move each car and start lap sound if one car starts a new lap
-         */
-        for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
-            if (cars[i].computeNewSpeedAndDistance() == CAR_LAP_CONDITION) {
-                sBeepEndMillis = millis() + 100;
-                sBeepFrequency = 2000;
-            }
-        }
-        if (sOnlyPlotterOutput) {
-            Serial.println(); // end of plotter dataset
-        }
-
-        /*
-         * Draw all cars
-         */
-        for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
-            cars[i].draw();
-        }
-
-        checkForOvertakingLeaderCar();
-        checkAndHandleWinner();
-
-        /*
-         * Show track
-         */
-        track.show(); // 9 Milliseconds for 300 Pixel
-        timer0_millis += MILLIS_FOR_TRACK_TO_SHOW; // compensate Arduino millis() for the time interrupt was disabled for track.show().
-
-        /*
-         * Manage sound. Must check for situation after winner
-         */
-        if (sSoundEnabled && sLoopMode == MODE_RACE) {
-            if (millis() < sBeepEndMillis) {
-                // Play a single beep, like for overtaking
-                myTone(sBeepFrequency);
-            } else {
-                // tFrequency must be integer since SpeedAsPixelPerLoop can be negative
-                int tFrequency = cars[0].SpeedAsPixelPerLoop * 440 + cars[1].SpeedAsPixelPerLoop * 440;
-                if (tFrequency > 100) {
-                    myTone(tFrequency);
-                } else {
-                    noTone(PIN_BUZZER);
+            /*
+             * If one car is moving, print complete dataset
+             */
+            if (sOnlyPlotterOutput) {
+                sPrintCurrentDatasetToPlotterOutput = false;
+                for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
+                    if (cars[i].SpeedAsPixelPerLoop > 0.01 || cars[i].SpeedAsPixelPerLoop < -0.01) {
+                        sPrintCurrentDatasetToPlotterOutput = true;
+                    }
                 }
             }
-        }
 
-        /*
-         * check for game reset button
-         */
-        if (isStartStopButtonPressed()) {
-            noTone(PIN_BUZZER);
-            resetAllCars();
-            myLCD.clear();
-            Serial.println(F("Reset game button pressed -> start a new race"));
-            printStartMessage();
-            resetAndShowTrackWithoutCars();
-            sLoopMode = MODE_IDLE;
+            /*
+             * Move each car and start lap sound if one car starts a new lap
+             */
+            for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
+                if (cars[i].computeNewSpeedAndDistance() == CAR_LAP_CONDITION) {
+                    sBeepEndMillis = millis() + 100;
+                    sBeepFrequency = 2000;
+                }
+            }
+            if (sPrintCurrentDatasetToPlotterOutput) {
+                Serial.println(); // end of plotter dataset
+            }
+
+            /*
+             * Draw all cars
+             */
+            for (uint_fast8_t i = 0; i < NUMBER_OF_CARS; ++i) {
+                cars[i].draw();
+            }
+
+            checkForOvertakingLeaderCar();
+            checkAndHandleWinner();
+
+            /*
+             * Show track
+             */
+            track.show(); // 9 Milliseconds for 300 Pixel
+            timer0_millis += MILLIS_FOR_TRACK_TO_SHOW; // compensate Arduino millis() for the time interrupt was disabled for track.show().
+
+            /*
+             * Manage sound. Must check for situation after winner
+             */
+            if (sSoundEnabled && sLoopMode == MODE_RACE) {
+                if (millis() < sBeepEndMillis) {
+                    // Play a single beep, like for overtaking
+                    myTone(sBeepFrequency);
+                } else {
+                    // tFrequency must be integer since SpeedAsPixelPerLoop can be negative
+                    int tFrequency = cars[0].SpeedAsPixelPerLoop * 440 + cars[1].SpeedAsPixelPerLoop * 440;
+                    if (tFrequency > 100) {
+                        myTone(tFrequency);
+                    } else {
+                        noTone(PIN_BUZZER);
+                    }
+                }
+            }
+
+            /*
+             * check for game reset button
+             */
+            if (isStartStopButtonPressed()) {
+                noTone(PIN_BUZZER);
+                resetAllCars();
+                myLCD.clear();
+                Serial.println(F("Reset game button pressed -> start a new race"));
+                printStartMessage();
+                resetAndShowTrackWithoutCars();
+                sLoopMode = MODE_IDLE;
+            }
         }
     }
 }
@@ -1398,10 +1431,11 @@ void printStartMessage() {
  */
 bool isStartStopButtonPressed() {
     if (!digitalRead(PIN_START_END_GAME_BUTTON)) {
+        delay(100); // avoid ringing
         // Wait for button to be released
         while (!digitalRead(PIN_START_END_GAME_BUTTON))
             ;
-        delay(80); // avoid ringing
+        delay(100); // avoid ringing
         return true;
     }
     return false;
@@ -1450,10 +1484,14 @@ void checkAndHandleWinner() {
             }
             printStartMessage();
             if (cars[i].doBlockingWinnerAnimationAndSound()) { // blocking call until interrupt is requested or melody ends
-                sLoopMode = MODE_START; // Interrupt was requested
+                sLoopMode = MODE_START; // Interrupt was requested, immediately start a new race
             } else {
-                sLoopMode = MODE_IDLE; // melody ends
+                sLoopMode = MODE_IDLE; // melody ended completely
             }
+//            if (!sOnlyPlotterOutput) {
+//                Serial.print(F("New loop mode="));
+//                Serial.println(sLoopMode);
+//            }
             resetAndShowTrackWithoutCars();
             break;
         }

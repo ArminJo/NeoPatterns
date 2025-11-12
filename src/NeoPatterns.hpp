@@ -2038,53 +2038,97 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
     switch ((tRandom.UBytes[0] * 15) >> 8) { // = random(15)
     case 0:
         // Cylon 3 times bouncing
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 5, tDuration, 3,
         FLAG_SCANNER_EXT_CYLON | (tDuration & FLAG_SCANNER_EXT_VANISH_COMPLETE), (tColor & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 1:
         // rocket 2 times bouncing
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration, 2,
         FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_DO_NOT_CLEAR, (tColor & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 2:
         // 1 times rocket or falling star
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
         aLedsPtr->ScannerExtended(COLOR32_WHITE_HALF, 7, tDuration / 2, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE,
                 (tColor & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 3:
         // Rainbow cycle
+#if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
         aLedsPtr->RainbowCycle(tDuration / 4, (tDuration & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 4:
         // new Stripes
+#if defined(ENABLE_PATTERN_STRIPES)
         aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 5, NeoPatterns::Wheel(tColor + 0x80), 3, 2 * aLedsPtr->numPixels(),
                 tDuration * 2, (tColor & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 5:
         // old TheaterChase
+#if defined(ENABLE_PATTERN_STRIPES)
         aLedsPtr->Stripes(NeoPatterns::Wheel(tColor), 1, NeoPatterns::Wheel(tColor + 0x80), 2, 2 * aLedsPtr->numPixels(),
                 tDuration * 2, (tColor & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 6:
         // Fade to complement
+#if defined(ENABLE_PATTERN_FADE)
         aLedsPtr->Fade(NeoPatterns::Wheel(tColor), NeoPatterns::Wheel(tColor + 0x80), 64, tDuration);
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 7:
         // Color wipe DO_NOT_CLEAR
+#if defined(ENABLE_PATTERN_COLOR_WIPE)
         aLedsPtr->ColorWipe(NeoPatterns::Wheel(tColor), tDuration, FLAG_DO_NOT_CLEAR, (tColor & DIRECTION_DOWN));
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 8:
         // rocket start at both end
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
         aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor), 7, tDuration / 2, 3,
         FLAG_SCANNER_EXT_ROCKET | (tDuration & FLAG_SCANNER_EXT_VANISH_COMPLETE) | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 9:
         // 3 Heartbeats
+#if defined(ENABLE_PATTERN_HEARTBEAT)
         aLedsPtr->Heartbeat(NeoPatterns::Wheel(tColor), tDuration / 2, 2);
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 10:
+#if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
         // Multiple falling star
         initMultipleFallingStars(aLedsPtr, COLOR32_WHITE_HALF, 7, tDuration, 3, &allPatternsRandomHandler);
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     case 11:
 #if defined(ENABLE_PATTERN_FIRE)
@@ -2114,13 +2158,22 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
 #endif
         break;
     case 13:
+#if defined(ENABLE_PATTERN_FLASH)
         // 5 Flashes
         aLedsPtr->Flash(NeoPatterns::Wheel(tColor),tDuration, COLOR32_BLACK, tDuration * 2, 5, true);
         break;
+#else
+        aLedsPtr->Delay(100);
+#endif
+        break;
     case 14:
+#if defined(ENABLE_PATTERN_TWINKLE)
         // Twinkle random colors
         aLedsPtr->clear();
         aLedsPtr->Twinkle(COLOR32_SPECIAL, aLedsPtr->getNumberOfPixels() / 4, tDuration, 60);
+#else
+        aLedsPtr->Delay(100);
+#endif
         break;
     default:
         break;

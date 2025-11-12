@@ -1,6 +1,6 @@
 {
   "name": "NeoPatterns",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "Patterns for NeoPixel strips and matrixes including the patterns of the NeoPattern example by Adafruit.",
   "keywords": "NeoPixel, adafruit",
   "homepage": "https://github.com/ArminJo/NeoPatterns",
