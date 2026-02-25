@@ -164,9 +164,9 @@ void setup() {
     delay(300); // to avoid partial patterns at power up
 
     ring12.ColorWipe(COLOR32_PURPLE, 50);
-    ring16.ColorWipe(COLOR32_RED, 50, false, DIRECTION_DOWN);
+    ring16.ColorWipe(COLOR32_RED, 50, CLEAR_PATTERN_BEFORE, DIRECTION_DOWN);
     ring24.ColorWipe(COLOR32_GREEN, 50);
-    bar16.ColorWipe(COLOR32_BLUE, 50, false, DIRECTION_DOWN);
+    bar16.ColorWipe(COLOR32_BLUE, 50, CLEAR_PATTERN_BEFORE, DIRECTION_DOWN);
     bar24.Stripes(COLOR32_BLUE, 5, COLOR32_RED, 3, 48, 50);
 //    bar24.ScannerExtended(COLOR32_BLUE, 5, 50, 1,
 //            FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_VANISH_COMPLETE | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);

@@ -144,7 +144,7 @@ void setup() {
     Serial.println(tActualNeopixelLength);
 
     // must init after length update, in order to copy the right length
-    NeoPatternsFastMoves.init(&NeoPatternsBackground, 0, tActualNeopixelLength, true, &FastMovePatternsHandler);
+    NeoPatternsFastMoves.init(&NeoPatternsBackground, 0, tActualNeopixelLength, ENABLE_CHILD_OVERLAY, &FastMovePatternsHandler);
     NeoPatternsFastMoves.begin();
     NeoPatternsFastMoves.printConnectionInfo(&Serial);
 
@@ -250,7 +250,7 @@ void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
         break;
     case 1:
         // clear pattern
-        aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, true, DIRECTION_DOWN);
+        aLedsPtr->ColorWipe(COLOR32_BLACK, INTERVAL_FAST_MOVES_MIN, DO_NOT_CLEAR_PATTERN_BEFORE, DIRECTION_DOWN);
         break;
     case 2:
         aLedsPtr->RainbowCycle(tInterval);

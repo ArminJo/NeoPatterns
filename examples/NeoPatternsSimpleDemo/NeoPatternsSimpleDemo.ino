@@ -52,7 +52,7 @@ void setup() {
      * First pattern ColorWipe
      */
     Serial.println("ColorWipe");
-    bar16.ColorWipe(COLOR32(0, 0, 4), 50, false, DIRECTION_DOWN); // light Blue
+    bar16.ColorWipe(COLOR32(0, 0, 4), 50, CLEAR_PATTERN_BEFORE, DIRECTION_DOWN); // light Blue
     bar16.updateShowAndWaitForPatternToStop();
     delay(500);
 

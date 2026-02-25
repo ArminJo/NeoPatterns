@@ -48,9 +48,9 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.3.1"
+#define VERSION_NEOPATTERNS "3.4.1"
 #define VERSION_NEOPATTERNS_MAJOR 3
-#define VERSION_NEOPATTERNS_MINOR 3
+#define VERSION_NEOPATTERNS_MINOR 4
 #define VERSION_NEOPATTERNS_PATCH 1
 // The change log is at the bottom of the file
 
@@ -476,6 +476,9 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
+ * Version 3.4.1 - 02/2026
+ * . Minor improvements.
+ *
  * Version 3.4.0 - 02/2026
  * - Renamed UnderlyingNeoPixelObject to ParentNeoPixelObject.
  * - Fixed bug in TWINKLE, which did not clear the last pixel.

@@ -146,9 +146,9 @@ void loop() {
         sLastBrightness = tBrightness;
         Serial.print(F("Brightness="));
         Serial.println(tBrightness);
-        NeoPixelMatrixSnake.updateOrRedraw(true, tBrightness);
+        NeoPixelMatrixSnake.updateOrRedraw(DO_REDRAW_IF_NO_UPDATE, tBrightness);
     } else {
-        NeoPixelMatrixSnake.updateOrRedraw(false, tBrightness);
+        NeoPixelMatrixSnake.updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE, tBrightness);
     }
 #else
     NeoPixelMatrixSnake.update(); // calls SnakeInputHandler()

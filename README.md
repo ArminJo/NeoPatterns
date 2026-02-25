@@ -251,6 +251,9 @@ It also shows, how to dynamically **determine the length of the attached strip**
 <br/>
 
 # Revision History
+### Version 3.4.1
+- Minor improvements.
+
 ### Version 3.4.0
 - Renamed `UnderlyingNeoPixelObject` to `ParentNeoPixelObject`.
 - Fixed bug in `TWINKLE`, which did not clear the last pixel.
