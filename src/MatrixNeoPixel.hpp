@@ -34,7 +34,6 @@
 #include "NeoPixel.hpp"
 
 // This block must be located after the includes of other *.hpp files
-//#define LOCAL_INFO  // This enables info output only for this file
 //#define LOCAL_DEBUG // This enables debug output only for this file - only for development
 //#define LOCAL_TRACE // This enables trace output only for this file - only for development
 #include "LocalDebugLevelStart.h"

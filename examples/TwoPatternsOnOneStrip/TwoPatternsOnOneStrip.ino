@@ -137,7 +137,7 @@ void setup() {
     /*
      * Get the actual length of the strip (which only can be lower than the current length)
      * and adjust pixel buffer to the new length.
-     * After this initialize the pattern with the underlying object to also get the new length here
+     * After this initialize the pixel regions with the parent object to also get the new length here
      */
     uint16_t tActualNeopixelLength = NeoPatternsBackground.getAndAdjustActualNeopixelLenghtSimple();
     Serial.print(F("Actual neopixel length="));

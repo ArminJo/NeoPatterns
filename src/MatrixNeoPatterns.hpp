@@ -50,6 +50,10 @@
 //#define LOCAL_TRACE // This enables trace output only for this file - only for development
 #include "LocalDebugLevelStart.h"
 
+#if defined(__STM32F1__)
+#include <itoa.h>         // for utoa() etc.
+#endif
+
 MatrixNeoPatterns::MatrixNeoPatterns() :  // @suppress("Class members should be properly initialized")
         NeoPixel(), MatrixNeoPixel(), NeoPatterns() {
     OnPatternComplete = nullptr;
@@ -142,7 +146,7 @@ bool MatrixNeoPatterns::update() {
  */
 void MatrixNeoPatterns::setInitHeat() {
     // The initalHeatLine is of size Columns + 2
-    for (uint_fast8_t i = 0; i < (Columns + 2); ++i) {
+    for (uint_fast8_t i = 0; i < (uint_fast8_t)(Columns + 2); ++i) {
         MatrixOld[i] = random8(40, 255); // Values from 40 to 254
     }
 #if defined(LOCAL_TRACE)
@@ -1192,4 +1196,5 @@ const uint8_t fontNumbers4x6[] PROGMEM = { 0x03, 0x05, 0x05, 0x05, 0x06, 0x00, /
     };
 
 #include "LocalDebugLevelEnd.h"
+
 #endif // _MATRIX_NEOPATTERNS_HPP

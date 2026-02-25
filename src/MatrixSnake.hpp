@@ -45,8 +45,6 @@
 //#define LOCAL_TRACE // This enables trace output only for this file - only for development
 #include "LocalDebugLevelStart.h"
 
-#include <stdlib.h>         // for utoa() etc.
-
 #if defined(__AVR__)
 EEMEM uint16_t HighScoreEEPROM; // is reset if both right and left button are pressed at startup.
 #endif

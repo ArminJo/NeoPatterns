@@ -36,9 +36,6 @@
 #ifndef _NEOPATTERNS_NEOPIXEL_H
 #define _NEOPATTERNS_NEOPIXEL_H
 
-// To support various debug levels set in different sources
-#include "DebugLevel.h"
-
 // This does not work in Arduino IDE for "Generating function prototypes..."
 //#if ! __has_include("Adafruit_NeoPixel.h")
 //#error This NeoPixel library requires the "Adafruit NeoPixel" library. Please install it via the Arduino library manager.
@@ -80,6 +77,12 @@ uint8_t Green(color32_t color) __attribute__ ((deprecated ("Renamed to getGreenP
 uint8_t Blue(color32_t color) __attribute__ ((deprecated ("Renamed to getBluePart()"))); // deprecated
 
 /*
+ * Values for bool parameter of init()
+ */
+#define ENABLE_CALLING_SHOW_OF_PARENT   true
+#define DISABLE_CALLING_SHOW_OF_PARENT  false
+
+/*
  * SIZE = 6 + 22 from Adafruit_NeoPixel = 28
  */
 class NeoPixel: public Adafruit_NeoPixel {
@@ -88,19 +91,17 @@ public:
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel);
     void AdafruitNeoPixelIinit(uint16_t aNumberOfPixels, uint16_t aPin, neoPixelType aTypeOfPixel);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel);
-    NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            bool aEnableShowOfUnderlyingPixel = true);
-    void init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            bool aEnableShowOfUnderlyingPixel = true);
+    NeoPixel(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+            bool aEnableShowOfParentPixel = DISABLE_CALLING_SHOW_OF_PARENT);
+    void init(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+            bool aEnableShowOfParentPixel = DISABLE_CALLING_SHOW_OF_PARENT);
 
     void printInfo(Print *aSerial);
     void printContent(Print *aSerial);
     void printConnectionInfo(Print *aSerial);
     void printPin(Print *aSerial);
 
-#if defined(ADC_UTILS_ARE_INCLUDED)
     uint16_t getAndAdjustActualNeopixelLenghtSimple();
-#endif
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
@@ -174,22 +175,22 @@ public:
 #define BytesPerPixel 3
 #endif
     uint8_t PixelFlags;
-    uint16_t PixelOffset;               // The offset of the pattern on the underlying pixel buffer to enable partial patterns overlays
-    NeoPixel *UnderlyingNeoPixelObject; // The underlying NeoPixel object for partial patterns overlays, otherwise the object itself
-    uint8_t Brightness;                 // NeoPixel effective brightness instead of the Adafruit brightness, which is stored as effective brightness + 1 :-(.
+    uint16_t PixelOffset;           // The offset of the pattern on the parent pixel buffer to enable partial patterns overlays
+    NeoPixel *ParentNeoPixelObject; // The parent (bigger) NeoPixel object which contains all pixels of this object or the object itself or "this" if no parent specified. Used for partial patterns overlays.
+    uint8_t Brightness;             // NeoPixel effective brightness instead of the Adafruit brightness, which is stored as effective brightness + 1 :-(.
 };
 
-#define PIXEL_FLAG_IS_PARTIAL_NEOPIXEL                       0x01 // enables partial patterns overlays and uses show() of UnderlyingNeoPixelObject
-#define PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT   0x02 // use negative logic because evaluation is simpler then
+#define PIXEL_FLAG_IS_PARTIAL_NEOPIXEL                  0x01 // enables partial patterns overlays and uses show() of ParentNeoPixelObject
+#define PIXEL_FLAG_DISABLE_SHOW_OF_PARENT_PIXEL_OBJECT  0x02 // use negative logic because evaluation is simpler then
 /*
  * Flag for NeoPattern. This disables the initial asynchronous show() for a new pattern, but enables show() if called by synchronous callback.
  * This behavior is required to avoid disturbing other libraries, which cannot handle the time when interrupt is disabled for show() e.g. the Servo library.
  * The asynchronous call is detected by checking if the current pattern is not PATTERN_NONE.
  */
-#define PIXEL_FLAG_SHOW_ONLY_AT_UPDATE                       0x04
-#define PIXEL_FLAG_USE_NON_ZERO_BRIGHTNESS                   0x08 // Pixel is set to zero, only if brightness or input color is zero, otherwise it is clipped at e.g. 0x000100
+#define PIXEL_FLAG_SHOW_ONLY_AT_UPDATE                  0x04
+#define PIXEL_FLAG_USE_NON_ZERO_BRIGHTNESS              0x08 // Pixel is set to zero, only if brightness or input color is zero, otherwise it is clipped at e.g. 0x000100
 // Used for some demo handler
-#define PIXEL_FLAG_GEOMETRY_CIRCLE                           0x80 // in contrast to bar
+#define PIXEL_FLAG_GEOMETRY_CIRCLE                      0x80 // in contrast to bar
 
 extern const uint8_t GammaTable32[32] PROGMEM;
 

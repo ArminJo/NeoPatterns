@@ -52,7 +52,7 @@ NeoPixel::NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfP
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
 #endif
     PixelOffset = 0;  // 8 byte Flash
-    UnderlyingNeoPixelObject = this;
+    ParentNeoPixelObject = this;
     PixelFlags = 0;
     Brightness = MAX_BRIGHTNESS;
 }
@@ -77,39 +77,40 @@ bool NeoPixel::init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOf
     BytesPerPixel = ((wOffset == rOffset) ? 3 : 4);
 #endif
     PixelOffset = 0;  // 8 byte Flash
-    UnderlyingNeoPixelObject = this;
+    ParentNeoPixelObject = this;
     PixelFlags = 0;
     return (numLEDs != 0);
 }
 
 /*
- * Used to create a NeoPixel, which operates on a segment of the underlying NeoPixel object.
- * This creates a new Adafruit_NeoPixel object and replaces the new pixel buffer with the underlying existing one.
+ * Used to create a NeoPixel, which operates on a segment of the parent NeoPixel object.
+ * This creates a new Adafruit_NeoPixel object and replaces the new pixel buffer with the parent one.
  * ATTENTION!
- * @param aEnableShowOfUnderlyingPixel - true = calls show function of the underlying NeoPixel object if show() is called
- *                                         false = suppress calling the underlying show() function
- * It makes no sense to call show for segment because show() would set only the FIRST aNumberOfPixels of the underlying NeoPixelObject
+ * @param aEnableShowOfParentPixel - true = calls show function of the parent NeoPixel object if show() is called
+ *                                   false = suppress calling the parent show() function
+ * It does not make sense to call show() on partial segments, because show() would update only the first aNumberOfPixels of the parent NeoPixelObject.
+ * Therefore, all show() calls are redirected to the parent object.
  *
- * To save a lot of CPU time of unnecessary double updates set aEnableShowOfUnderlyingPixel to false and use only UnderlyingNeoPixelObject->show().
+ * To save a lot of CPU time of unnecessary double updates set aEnableShowOfParentPixel to false and use only ParentNeoPixelObject->show().
  * if(PartialNeoPixelBar.update()){
- *   UnderlyingNeoPixelObject->show();
+ *   ParentNeoPixelObject->show();
  * }
  */
-NeoPixel::NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-        bool aEnableShowOfUnderlyingPixel) :
+NeoPixel::NeoPixel(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+        bool aEnableShowOfParentPixel) :
         Adafruit_NeoPixel(
-                (aNumberOfPixels > aUnderlyingNeoPixelObject->numLEDs) ? aUnderlyingNeoPixelObject->numLEDs : aNumberOfPixels,
-                aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType()) {
+                (aNumberOfPixels > aParentNeoPixelObject->numLEDs) ? aParentNeoPixelObject->numLEDs : aNumberOfPixels,
+                aParentNeoPixelObject->getPin(), aParentNeoPixelObject->getType()) {
 
-    UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
+    ParentNeoPixelObject = aParentNeoPixelObject;
 #if defined(_SUPPORT_RGBW)
-    BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
+    BytesPerPixel = aParentNeoPixelObject->BytesPerPixel;
 #endif
     PixelOffset = aPixelOffset;
     Brightness = MAX_BRIGHTNESS;
-    PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
-    if (!aEnableShowOfUnderlyingPixel) {
-        PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+    PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_PARENT_PIXEL_OBJECT;
+    if (aEnableShowOfParentPixel) {
+        PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
     }
 
     if (numLEDs == 0) {
@@ -121,26 +122,26 @@ NeoPixel::NeoPixel(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, u
     /*
      * Replace buffer with existing one
      */
-    setPixelBuffer(aUnderlyingNeoPixelObject->getPixels());
+    setPixelBuffer(aParentNeoPixelObject->getPixels());
 }
 
-void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-        bool aEnableShowOfUnderlyingPixel) {
-    if (aNumberOfPixels > aUnderlyingNeoPixelObject->numLEDs) {
-        aNumberOfPixels = aUnderlyingNeoPixelObject->numLEDs;
+void NeoPixel::init(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+        bool aEnableShowOfParentPixel) {
+    if (aNumberOfPixels > aParentNeoPixelObject->numLEDs) {
+        aNumberOfPixels = aParentNeoPixelObject->numLEDs;
     }
-    AdafruitNeoPixelIinit(aNumberOfPixels, aUnderlyingNeoPixelObject->getPin(), aUnderlyingNeoPixelObject->getType());
+    AdafruitNeoPixelIinit(aNumberOfPixels, aParentNeoPixelObject->getPin(), aParentNeoPixelObject->getType());
     Adafruit_NeoPixel::begin(); // sets pin to output
 
-    UnderlyingNeoPixelObject = aUnderlyingNeoPixelObject;
+    ParentNeoPixelObject = aParentNeoPixelObject;
 #if defined(_SUPPORT_RGBW)
-    BytesPerPixel = aUnderlyingNeoPixelObject->BytesPerPixel;
+    BytesPerPixel = aParentNeoPixelObject->BytesPerPixel;
 #endif
     PixelOffset = aPixelOffset;
     Brightness = MAX_BRIGHTNESS;
     PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL;
-    if (!aEnableShowOfUnderlyingPixel) {
-        PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT;
+    if (!aEnableShowOfParentPixel) {
+        PixelFlags = PIXEL_FLAG_IS_PARTIAL_NEOPIXEL | PIXEL_FLAG_DISABLE_SHOW_OF_PARENT_PIXEL_OBJECT;
     }
 
     if (numLEDs == 0) {
@@ -152,7 +153,7 @@ void NeoPixel::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, 
     /*
      * Replace buffer with existing one
      */
-    setPixelBuffer(aUnderlyingNeoPixelObject->getPixels());
+    setPixelBuffer(aParentNeoPixelObject->getPixels());
 }
 
 /*
@@ -241,8 +242,8 @@ void NeoPixel::printInfo(Print *aSerial) {
 
     aSerial->print(F(" PixelFlags=0x"));
     aSerial->print(PixelFlags, HEX);
-    aSerial->print(F(" &underlying.NeoPixel=0x"));
-    aSerial->print((uintptr_t) UnderlyingNeoPixelObject, HEX);
+    aSerial->print(F(" &ParentNeoPixelObject=0x"));
+    aSerial->print((uintptr_t) ParentNeoPixelObject, HEX);
     aSerial->print(F(" &NeoPixel=0x"));
     aSerial->println((uintptr_t) this, HEX);
 }
@@ -258,17 +259,17 @@ void NeoPixel::printContent(Print *aSerial) {
 }
 
 /*
- * Handles the DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT flag
+ * Handles the PIXEL_FLAG_DISABLE_SHOW_OF_PARENT_PIXEL_OBJECT flag
  */
 void NeoPixel::show() {
     if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
-        if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_UNDERLYING_PIXEL_OBJECT) == 0) {
+        if ((PixelFlags & PIXEL_FLAG_DISABLE_SHOW_OF_PARENT_PIXEL_OBJECT) == 0) {
 #if defined(LOCAL_TRACE)
             printPin(&Serial);
-            Serial.print(F("Underlying->show, brightness="));
+            Serial.print(F("Parent.show, brightness="));
             Serial.println(Brightness);
 #endif
-            UnderlyingNeoPixelObject->Adafruit_NeoPixel::show();
+            ParentNeoPixelObject->Adafruit_NeoPixel::show();
         }
     } else {
 #if defined(LOCAL_TRACE)
@@ -302,8 +303,8 @@ neoPixelType NeoPixel::getType() {
 void NeoPixel::setPixelOffsetForPartialNeoPixel(uint16_t aPixelOffset) {
     if (PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL) {
         // clip aPixelOffset
-        if (aPixelOffset > (UnderlyingNeoPixelObject->numLEDs - numLEDs)) {
-            aPixelOffset = UnderlyingNeoPixelObject->numLEDs - numLEDs;
+        if (aPixelOffset > (ParentNeoPixelObject->numLEDs - numLEDs)) {
+            aPixelOffset = ParentNeoPixelObject->numLEDs - numLEDs;
         }
         PixelOffset = aPixelOffset;
     }
@@ -1058,7 +1059,11 @@ uint8_t Blue(color32_t color) {
 }
 // end deprecated
 
-#if defined(ADC_UTILS_ARE_INCLUDED)
+#if !defined(ADC_UTILS_ARE_AVAILABLE)
+uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
+    return 0;
+}
+#else
 /*
  * !!! #include "ADCUtils.hpp" must be before #include "NeoPatterns.hpp" !!!
  *

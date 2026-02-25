@@ -170,18 +170,18 @@ bool NeoPatterns::init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTyp
 }
 
 /*
- * Used to create a NeoPattern, which runs on a segment of the existing NeoPattern object.
- * This creates a new NeoPixel object and replaces the new pixel buffer with the underlying existing one.
+ * Used to create a NeoPattern, which runs on a segment of the parent NeoPattern object.
+ * This creates a new NeoPixel object and replaces the new pixel buffer with the parent one.
  * @param aShowAllPixel - true = calls show function of the existing NeoPixel object (compatibility mode)
  *                        false = suppress calling the show function, since it makes no sense
- * ATTENTION. To save a lot of CPU time, set aShowAllPixel to false and use only UnderlyingNeoPixelObject->show().
+ * ATTENTION. To save a lot of CPU time, set aShowAllPixel to false and use only ParentNeoPixelObject->show().
  * if(PartialNeoPixelBar1.update() || PartialNeoPixelBar2.update()){
- *   UnderlyingNeoPixelObject->show();
+ *   ParentNeoPixelObject->show();
  * }
  */
-NeoPatterns::NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
-        bool aEnableShowOfUnderlyingPixel, void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) :
-        NeoPixel(aUnderlyingNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfUnderlyingPixel) {
+NeoPatterns::NeoPatterns(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, // @suppress("Class members should be properly initialized")
+        bool aEnableShowOfParentPixel, void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) :
+        NeoPixel(aParentNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfParentPixel) {
 
     init();
 
@@ -191,10 +191,10 @@ NeoPatterns::NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOff
     }
 }
 
-void NeoPatterns::init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-        bool aEnableShowOfUnderlyingPixel, void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) {
+void NeoPatterns::init(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
+        bool aEnableShowOfParentPixel, void (*aPatternCompletionCallback)(NeoPatterns*), bool aShowOnlyAtUpdate) {
 
-    NeoPixel::init(aUnderlyingNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfUnderlyingPixel);
+    NeoPixel::init(aParentNeoPixelObject, aPixelOffset, aNumberOfPixels, aEnableShowOfParentPixel);
     init();
 
     OnPatternComplete = aPatternCompletionCallback;
@@ -238,34 +238,57 @@ void NeoPatterns::updateShowAndWaitForPatternToStop() {
 }
 
 /*
- * This function checks all patterns of an underlying NeoPixel for update and calls show() of the underlying NeoPixel if needed.
+ * This function checks its own pattern and then all patterns of its child NeoPixel for update and calls show() if needed.
  * @return true, if AtLeastOnePatternIsActive
  */
-bool NeoPatterns::updateAndShowAlsoAllPartialPatterns(uint8_t aBrightness) {
+bool NeoPatterns::updateAndShowAlsoAllChildPatterns(uint8_t aBrightness, bool aEnableChildOverlay) {
 #if defined(SUPPORT_BRIGHTNESS)
     Brightness = aBrightness;
 #else
     (void) aBrightness;
 #endif
-    return updateAndShowAlsoAllPartialPatterns();
+    return updateAndShowAlsoAllChildPatterns(aEnableChildOverlay);
 }
-bool NeoPatterns::updateAndShowAlsoAllPartialPatterns() {
+/**
+ * Must be called only for parent patterns i.e. where ParentNeoPixelObject == this
+ * or equivalent PIXEL_FLAG_IS_PARTIAL_NEOPIXEL is NOT set in PixelFlags.
+ * This function updates all parent and child pattern and call show() for the parent object if one parent or child pattern requires it.
+ *
+ * @param aEnableChildOverlay - if true, then call child patterns even if a pattern on parent is active,
+ *                              otherwise an active pattern on parent disables all child patterns
+ * @return true if AtLeastOnePatternIsActive
+ */
+bool NeoPatterns::updateAndShowAlsoAllChildPatterns(bool aEnableChildOverlay) {
+    // Plausi
+//    if(PixelFlags & PIXEL_FLAG_IS_PARTIAL_NEOPIXEL){
+//        // we are not a parent object
+//        return false; // I have no better idea for a return value :-(
+//    }
 
     bool tNeedShow = false;
     bool tAtLeastOnePatternIsActive = false;
-    /*
-     * Traverse through complete NeoPattern list and process all UnderlyingNeoPixelObjects including the object itself!
-     */
-    for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != nullptr; tNextObjectPointer =
-            tNextObjectPointer->NextNeoPatternsObject) {
+
+    if (!aEnableChildOverlay && ActivePattern != PATTERN_NONE) {
+        tAtLeastOnePatternIsActive = true;
+        // Just run pattern of this parent object
+        tNeedShow = updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE); // Do not use update() here, this can save up to 120 byte program memory
+    } else {
+
         /*
-         * Check for same underlying object (including the underlying object itself) and update if pattern is active
+         * Traverse the entire list of NeoPattern objects.
+         * Process this parent object first (it appears first in the list, since it must be defined before any of its child objects),
+         * and then process all of its child objects.
          */
-        if (tNextObjectPointer->ActivePattern != PATTERN_NONE
-                && tNextObjectPointer->UnderlyingNeoPixelObject == UnderlyingNeoPixelObject) {
-            tAtLeastOnePatternIsActive = true;
-            tNeedShow |= tNextObjectPointer->updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE); // this avoids show of any patterns at this call
-        }
+        for (NeoPatterns *tNextObjectPointer = NeoPatterns::FirstNeoPatternsObject; tNextObjectPointer != nullptr;
+                tNextObjectPointer = tNextObjectPointer->NextNeoPatternsObject) {
+            /*
+             * Check for child objects (this check also gets the parent object itself) and update if pattern is active
+             */
+            if (tNextObjectPointer->ActivePattern != PATTERN_NONE && tNextObjectPointer->ParentNeoPixelObject == this) {
+                // The selected NeoPixelObject has "this" as parent object -> call updateOrRedraw for it.
+                tAtLeastOnePatternIsActive = true;
+                tNeedShow |= tNextObjectPointer->updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE); // This does not call show() for any patterns
+            }
 #if defined(LOCAL_TRACE)
         printPin(&Serial);
         Serial.print(F("&Pattern=0x"));
@@ -274,30 +297,32 @@ bool NeoPatterns::updateAndShowAlsoAllPartialPatterns() {
         Serial.print((uintptr_t) tNextObjectPointer->NextNeoPatternsObject, HEX);
         Serial.print(F(" ActivePattern="));
         Serial.print(tNextObjectPointer->ActivePattern);
-        Serial.print(F(" &UnderlyingNeoPixel=0x"));
-        Serial.print((uintptr_t) tNextObjectPointer->UnderlyingNeoPixelObject, HEX);
+        Serial.print(F(" &ParentNeoPixel=0x"));
+        Serial.print((uintptr_t) tNextObjectPointer->ParentNeoPixelObject, HEX);
         Serial.print(F(" tNeedShow="));
         Serial.println(tNeedShow);
 #endif
+        }
     }
+
     if (tNeedShow) {
-        UnderlyingNeoPixelObject->show();
+        show();
     }
     return tAtLeastOnePatternIsActive;
 }
 
-void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness) {
+void NeoPatterns::updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(uint8_t aBrightness, bool aEnableChildOverlay) {
 #if defined(SUPPORT_BRIGHTNESS)
     Brightness = aBrightness;
 #else
     (void) aBrightness;
 #endif
-    updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop();
+    updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(aEnableChildOverlay);
 }
-void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop() {
+void NeoPatterns::updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(bool aEnableChildOverlay) {
     void (*tOnPatternCompleteBackup)(NeoPatterns*) = OnPatternComplete;
     OnPatternComplete = nullptr;
-    while (updateAndShowAlsoAllPartialPatterns()) {
+    while (updateAndShowAlsoAllChildPatterns(aEnableChildOverlay)) {
         yield();
     }
     OnPatternComplete = tOnPatternCompleteBackup;
@@ -306,11 +331,23 @@ void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop() 
 /*
  * DEPRECATED
  */
+void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop() {
+    updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop();
+}
+void NeoPatterns::updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness) {
+    updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(aBrightness);
+}
+bool NeoPatterns::updateAndShowAlsoAllPartialPatterns() {
+    return updateAndShowAlsoAllChildPatterns();
+}
+bool NeoPatterns::updateAndShowAlsoAllPartialPatterns(uint8_t aBrightness) {
+    return updateAndShowAlsoAllChildPatterns(aBrightness);
+}
 bool NeoPatterns::updateAllPartialPatterns(uint8_t aBrightness) {
-    return updateAndShowAlsoAllPartialPatterns(aBrightness);
+    return updateAndShowAlsoAllChildPatterns(aBrightness);
 }
 bool NeoPatterns::updateAllPartialPatterns() {
-    return updateAndShowAlsoAllPartialPatterns();
+    return updateAndShowAlsoAllChildPatterns();
 }
 void NeoPatterns::updateAndWaitForPatternToStop(uint8_t aBrightness) {
     updateShowAndWaitForPatternToStop(aBrightness);
@@ -319,10 +356,10 @@ void NeoPatterns::updateAndWaitForPatternToStop() {
     updateShowAndWaitForPatternToStop();
 }
 void NeoPatterns::updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness) {
-    updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(aBrightness);
+    updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(aBrightness);
 }
 void NeoPatterns::updateAllPartialPatternsAndWaitForPatternsToStop() {
-    updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop();
+    updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop();
 }
 
 /*
@@ -537,7 +574,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
              */
 #if defined(LOCAL_DEBUG)
             printPin(&Serial);
-            printPattern();
+            printPattern(&Serial);
             Serial.print(F(": Call completion callback 0x"));
             Serial.println((__SIZE_TYPE__) (OnPatternComplete) << 1, HEX);
             Serial.flush();
@@ -546,14 +583,14 @@ bool NeoPatterns::decrementTotalStepCounter() {
 #if defined(LOCAL_DEBUG)
             printPin(&Serial);
             Serial.print(F("New "));
-            printPattern();
+            printPattern(&Serial);
             Serial.println();
             Serial.flush();
 #endif
         } else {
 #if defined(LOCAL_DEBUG)
             printPin(&Serial);
-            printPattern();
+            printPattern(&Serial);
             Serial.println(F(": No completion callback, ActivePattern = PATTERN_NONE"));
 #endif
             ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
@@ -575,7 +612,7 @@ bool NeoPatterns::decrementTotalStepCounter() {
  * This update time must be subtracted from all aIntervalMillis parameters.
  */
 void NeoPatterns::setCompensatedInterval(uint16_t aIntervalToCompensate) {
-    uint8_t tCompensationForShowTime = UnderlyingNeoPixelObject->getNumberOfPixels() / 33;
+    uint8_t tCompensationForShowTime = ParentNeoPixelObject->getNumberOfPixels() / 33;
     if (aIntervalToCompensate > tCompensationForShowTime) {
         Interval = aIntervalToCompensate - tCompensationForShowTime;
     } else {
@@ -593,7 +630,7 @@ void NeoPatterns::setNextIndex() {
     }
 #if defined(LOCAL_DEBUG)
     printPin(&Serial);
-    printPattern();
+    printPattern(&Serial);
     Serial.print(F("TotalSteps="));
     Serial.print(TotalStepCounter);
     Serial.print(F(" Index="));
@@ -626,7 +663,7 @@ void NeoPatterns::RainbowCycleDuration(uint8_t aCompleteDurationMillis, uint8_t 
 }
 
 /*
- * @param aDirection where the rainbow starts and therfor also in which direction it moves
+ * @param aDirection where the rainbow starts and therefore also in which direction it moves
  */
 void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection, uint8_t aRepetitions) {
     // Must move index in opposite direction
@@ -764,7 +801,7 @@ bool NeoPatterns::TwinkleUpdate(bool aDoUpdate) {
      * Refresh pattern
      * Remove every nth pixel, so we have n loops to remove all old pixel
      */
-    for (uint16_t i = random8(ByteValue1.AverageNumberOfActivePixel); i < numLEDs - 1; i += ByteValue1.AverageNumberOfActivePixel) {
+    for (uint16_t i = random8(ByteValue1.AverageNumberOfActivePixel); i < numLEDs; i += ByteValue1.AverageNumberOfActivePixel) {
         clearPixel(i);
     }
     /*
@@ -1856,16 +1893,16 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 /*
  * For debugging purposes
  */
-void NeoPatterns::printPattern() {
-    Serial.print(F("Pattern="));
-    printPatternName(ActivePattern, &Serial);
-    Serial.print(' ');
+void NeoPatterns::printPattern(Print *aSerial) {
+    aSerial->print(F("Pattern="));
+    printPatternName(ActivePattern, aSerial);
+    aSerial->print(' ');
 }
 
-void NeoPatterns::printlnPattern() {
-    Serial.print(F("Pattern="));
-    printPatternName(ActivePattern, &Serial);
-    Serial.println();
+void NeoPatterns::printlnPattern(Print *aSerial) {
+    aSerial->print(F("Pattern="));
+    printPatternName(ActivePattern, aSerial);
+    aSerial->println();
 }
 
 void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
@@ -1956,7 +1993,7 @@ void initMultipleFallingStars(NeoPatterns *aLedsPtr, color32_t aColor, uint8_t a
     aLedsPtr->ScannerExtended(aColor, aLength, aScannerIntervalMillis, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE, aDirection);
 #if defined(LOCAL_DEBUG)
     aLedsPtr->printPin(&Serial);
-    aLedsPtr->printPattern();
+    aLedsPtr->printPattern(&Serial);
     Serial.print(F("Repetitions="));
     Serial.println(aRepetitions);
 #endif

@@ -2,10 +2,11 @@
  *  LCDBigNumbers.h
  *
  *  The plain include file without sources.
+ *  Not required if LCDBigNumbers.hpp is included!
  *
  *  Arduino library to write big numbers on a 1602 or 2004 LCD.
  *
- *  Copyright (C) 2022-2023  Armin Joachimsmeyer
+ *  Copyright (C) 2022-2026  Armin Joachimsmeyer
  *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of LCDBigNumbers https://github.com/ArminJo/LCDBigNumbers.

@@ -136,6 +136,12 @@ const char* DirectionToString(uint8_t aDirection);
 
 #define MAXIMUM_HEAT_VALUE  0xFF // we have 8 bit for heat
 
+/*
+ * Values for bool parameter of init()
+ */
+#define SHOW_ONLY_AT_PATTERN_UPDATE     true
+#define SHOW_ALSO_AT_PATTERN_START      false
+
 // NeoPattern Class - derived from the NeoPixel and Adafruit_NeoPixel class
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
 // SIZE = 39 bytes + 28 from NeoPixel = 67
@@ -144,15 +150,15 @@ public:
     NeoPatterns();
     void init();
     NeoPatterns(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = false);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = SHOW_ALSO_AT_PATTERN_START);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel,
-            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = false);
-    NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr,
-            bool aShowOnlyAtUpdate = false);
-    void init(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
-            bool aEnableShowOfUnderlyingPixel = true, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr,
-            bool aShowOnlyAtUpdate = false);
+            void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = SHOW_ALSO_AT_PATTERN_START);
+    NeoPatterns(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, bool aEnableShowOfParentPixel =
+    DISABLE_CALLING_SHOW_OF_PARENT, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr, bool aShowOnlyAtUpdate =
+            SHOW_ALSO_AT_PATTERN_START);
+    void init(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, bool aEnableShowOfParentPixel =
+    DISABLE_CALLING_SHOW_OF_PARENT, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr, bool aShowOnlyAtUpdate =
+    SHOW_ALSO_AT_PATTERN_START);
     void _insertIntoNeopatternsList();
 
     void setCallback(void (*callback)(NeoPatterns*));
@@ -173,21 +179,30 @@ public:
 
     void updateShowAndWaitForPatternToStop();
     void updateShowAndWaitForPatternToStop(uint8_t aBrightness);
-    bool updateAndShowAlsoAllPartialPatterns();
-    bool updateAndShowAlsoAllPartialPatterns(uint8_t aBrightness);
-    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop();
-    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness);
+    bool updateAndShowAlsoAllChildPatterns(bool aEnableChildOverlay = false);
+    bool updateAndShowAlsoAllChildPatterns(uint8_t aBrightness, bool aEnableChildOverlay = false);
+    void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(bool aEnableChildOverlay = false);
+    void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(uint8_t aBrightness, bool aEnableChildOverlay = false);
 
-    bool updateAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
-    bool updateAllPartialPatterns(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatterns()")));
+    // deprecated
+    bool updateAndShowAlsoAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
+    bool updateAndShowAlsoAllPartialPatterns(uint8_t aBrightness)
+            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
+    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop()
+            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
+    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness)
+            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
+
     void updateAndWaitForPatternToStop() __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
     void updateAndWaitForPatternToStop(uint8_t aBrightness)
             __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
+    bool updateAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
+    bool updateAllPartialPatterns(uint8_t aBrightness)
+            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
     void updateAllPartialPatternsAndWaitForPatternsToStop()
-            __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
+            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
     void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateAndShowAllPartialPatternsAndWaitForPatternsToStop()")));
+            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
 
     void showPatternInitially();
     bool decrementTotalStepCounter();
@@ -210,9 +225,9 @@ public:
 #if defined(ENABLE_PATTERN_COLOR_WIPE)
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDoNotClearBefore = false, uint8_t aDirection = DIRECTION_UP);
     void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = false, uint8_t aDirection =
-            DIRECTION_UP) __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
+    DIRECTION_UP) __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
     void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = false, uint8_t aDirection =
-            DIRECTION_UP);
+    DIRECTION_UP);
     bool ColorWipeUpdate(bool aDoUpdate = true);
 #endif
 #if defined(ENABLE_PATTERN_FADE)
@@ -317,8 +332,8 @@ public:
 #endif
     void printPatternName(uint8_t aPatternNumber, Print *aSerial);
     void printInfo(Print *aSerial, bool aFullInfo = true);
-    void printPattern();
-    void printlnPattern();
+    void printPattern(Print *aSerial);
+    void printlnPattern(Print *aSerial);
 
     /*
      * Internal control variables
@@ -445,8 +460,11 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
- * Version 3.3.1 - 11/2025
+ * Version 3.4.0 - 02/2026
  * - Fixed bug in allPatternsRandomHandler().
+ * - Renamed UnderlyingNeoPixelObject to ParentNeoPixelObject.
+ * - Fixed bug in TWINKLE, which did not clear the last pixel.
+ *
  *
  * Version 3.3.0 - 04/2025
  * - New pattern TWINKLE.
@@ -468,7 +486,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  *
  * Version 3.1.0 - 8/2022
  * - Added functions printConnectionInfo(), fillRegion(), stop() and stopAllPatterns().
- * - Fixed brightness initialization bug for Neopixel with UnderlyingNeoPixelObjects.
+ * - Fixed brightness initialization bug for Neopixel with ParentNeoPixelObjects.
  * - Renamed updateAll* and updateAndWait* functions.
  * - Now all NeoPattern objects are contained in NeoPatterns list.
  * - Now updateOrRedraw() does never call show().
@@ -519,7 +537,7 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  *
  * Version 2.1.0 - 12/2019
  * - Ported to ESP8266 and ESP32.
- * - Changed signature of NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
+ * - Changed signature of NeoPatterns(NeoPixel *aParentNeoPixelObject). Swapped 4. and 5. parameter to make it consistent to the NeoPixel signature.
  * - Function `setPixelOffsetForPartialNeoPixel()` in NeoPixel.cpp added.
  *
  * Version 2.0.0 - 11/2019

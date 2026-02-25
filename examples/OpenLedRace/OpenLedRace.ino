@@ -77,10 +77,9 @@
 //#define TRACE
 //#define DEBUG
 #define INFO    // Enable additional informative output like e.g. offsets,
-#include "DebugLevel.h" // to propagate debug level
 
 #if defined(INFO) && defined(__AVR__)
-#include "AVRUtils.h" // for initStackFreeMeasurement() and printRAMInfo()
+#include "AVRUtils.h" // for initStackFreeMeasurement() and printRAMAndStackInfo()
 #endif
 
 // for hunting errors
@@ -337,7 +336,7 @@ public:
         void *tMallocTest = malloc(sizeof(NeoPatterns)); // 67 + 2
         if (tMallocTest != nullptr) {
             free(tMallocTest);
-            RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, false);
+            RampPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, RampLength, DISABLE_CALLING_SHOW_OF_PARENT);
             isInitialized = true;
         } else {
             Serial.print(F("Not enough heap memory ("));
@@ -447,8 +446,8 @@ public:
 public:
     void init(NeoPatterns *aTrackPtr, uint16_t aBridgeStartPositionOnTrack, uint8_t aBridgeHeight, uint8_t aRampLength,
             uint8_t aRampPlatformLength) {
-        RampUp.init(aTrackPtr, aBridgeStartPositionOnTrack, aBridgeHeight, aRampLength, false);
-        RampDown.init(aTrackPtr, aBridgeStartPositionOnTrack + aRampLength + aRampPlatformLength, aBridgeHeight, aRampLength, true);
+        RampUp.init(aTrackPtr, aBridgeStartPositionOnTrack, aBridgeHeight, aRampLength, false); // false = ramp up
+        RampDown.init(aTrackPtr, aBridgeStartPositionOnTrack + aRampLength + aRampPlatformLength, aBridgeHeight, aRampLength, true); // true = ramp down
 #if !defined(BRIDGE_NO_NEOPATTERNS)
         TrackPtr = aTrackPtr;
         isInitialized = true;
@@ -518,10 +517,10 @@ public:
         if (tMallocTest != nullptr) {
             free(tMallocTest);
             // Create a NeoPattern, which runs on a segment of the existing NeoPattern object.
-            LoopPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, LoopLength, false);
+            LoopPatterns = new NeoPatterns(TrackPtr, StartPositionOnTrack, LoopLength, DISABLE_CALLING_SHOW_OF_PARENT);
             isInitialized = true;
 #  if defined(__AVR__) && defined(DEBUG)
-            printRAMInfo(&Serial);
+            printRAMAndStackInfo(&Serial);
 #  endif
         } else {
             Serial.print(F("Not enough heap memory ("));
@@ -529,7 +528,7 @@ public:
             Serial.println(F(") for LoopPatterns."));
 #  if defined(__AVR__)
             if (!sOnlyPlotterOutput) {
-                printRAMInfo(&Serial);
+                printRAMAndStackInfo(&Serial);
             }
 #  endif
         }
@@ -1162,13 +1161,13 @@ void setup() {
 //    myTone(64000);
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
-        printRAMInfo(&Serial);
+        printRAMAndStackInfo(&Serial);
     }
 #  endif
     loops[0].init(&track, LOOP_1_UP_START, LOOP_1_LENGTH); // Requires 69 bytes on heap
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
-        printRAMInfo(&Serial);
+        printRAMAndStackInfo(&Serial);
     }
 #  endif
     /*
@@ -1221,7 +1220,7 @@ void setup() {
     tone(PIN_BUZZER, 1200, 200);
 
 // wait for animation to end
-    while (track.updateAndShowAlsoAllPartialPatterns()) {
+    while (track.updateAndShowAlsoAllChildPatterns()) {
         yield();
         if (checkAllCarInputs() || isStartStopButtonPressed()) {
             break;
@@ -1234,7 +1233,7 @@ void setup() {
     resetAndShowTrackWithoutCars();
 #if defined(INFO) && defined(__AVR__)
     if (!sOnlyPlotterOutput) {
-        printRAMInfo(&Serial);
+        printRAMAndStackInfo(&Serial);
         initStackFreeMeasurement(); // initialize for getting stack usage in loop
     }
 #endif
@@ -1297,7 +1296,7 @@ void loop() {
             sLoopMode = MODE_START;
         }
 
-        track.updateAndShowAlsoAllPartialPatterns(); // Show animation
+        track.updateAndShowAlsoAllChildPatterns(); // Show animation
 
     } else {
         digitalWrite(PIN_START_END_GAME_BUTTON_LED, LOW);

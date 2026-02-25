@@ -32,7 +32,7 @@
 #include <Arduino.h>
 
 #if defined(__AVR__)
-#include "AVRUtils.h" // for printRAMInfo()
+#include "AVRUtils.h" // for printRAMAndStackInfo()
 //#include "AvrTracing.hpp"
 #endif
 //#include "HexDump.hpp"
@@ -194,13 +194,13 @@ void setup() {
 //    NeoPixelMatrix.clear();
 
 #if defined(__AVR__)
-    printRAMInfo(&Serial);
+    printRAMAndStackInfo(&Serial);
 #endif
 //    initTrace();
     delay(1000);
     startPattern(sCurrentMode);
 #if defined(__AVR__)
-    printRAMInfo(&Serial);
+    printRAMAndStackInfo(&Serial);
 #endif
 }
 
@@ -386,7 +386,7 @@ void switchMode() {
      */
     Serial.println();
 #if defined(__AVR__)
-    printRAMInfo(&Serial);
+    printRAMAndStackInfo(&Serial);
 #endif
     Serial.print(F("Stop old mode "));
     printlnMode(sCurrentMode);
@@ -405,7 +405,7 @@ void switchMode() {
      */
 
 #if defined(__AVR__)
-    printRAMInfo(&Serial);
+    printRAMAndStackInfo(&Serial);
 #endif
 
     delay(100); // debounce
@@ -432,7 +432,7 @@ void DemoModeHandler(NeoPatterns *aLedsPtr) {
         Serial.print(F("Not enough heap available for new mode "));
         printlnMode(sCurrentMode);
 #if defined(__AVR__)
-        printRAMInfo(&Serial);
+        printRAMAndStackInfo(&Serial);
 #endif
         DemoModeHandler(aLedsPtr); // Try next pattern
     } else {
@@ -441,7 +441,7 @@ void DemoModeHandler(NeoPatterns *aLedsPtr) {
         Serial.println();
     }
 #if defined(__AVR__)
-    printRAMInfo(&Serial);
+    printRAMAndStackInfo(&Serial);
 #endif
 }
 

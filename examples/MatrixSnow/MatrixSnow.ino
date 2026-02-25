@@ -37,7 +37,7 @@
 #include <MatrixNeoPatterns.hpp>
 
 #if defined(__AVR__)
-#include "AVRUtils.h" // for printRAMInfo()
+#include "AVRUtils.h" // for printRAMAndStackInfo()
 #endif
 
 //#define USE_16_X_16_MATRIX          // else 8x8 matrix
@@ -88,7 +88,7 @@ void setup() {
     NeoPixelMatrix.Snow();
 
 #if defined(__AVR__)
-    printRAMInfo(&Serial);
+    printRAMAndStackInfo(&Serial);
 #endif
 }
 

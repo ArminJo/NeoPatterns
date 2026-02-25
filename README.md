@@ -103,6 +103,11 @@ and fancy functions like:
 
 <br/>
 
+# Timing
+WS2812 require a 800 kHz bit signal and 24 bit per LED, resulting in 30 &micro;s (33 kHz) per LED.
+An 8 bit strip requires 0.24 ms and a 8x8 matrix 1.92 ms (520 Hz). 
+For 550 LEDs we get 60 Hz refresh rate.
+
 # Installation
 First, you need to install "Adafruit NeoPixel" library with *Tools -> Manage Libraries...* or *Ctrl+Shift+I*. Use "neoPixel" as filter string.
 Then install this "NeoPatterns" library with *Tools -> Manage Libraries... (Ctrl+Shift+I)*. Use "NeoPatterns" as filter string.
@@ -131,7 +136,7 @@ In case you need `NEO_MATRIX_COLUMNS` layout, try to rotate your Matrix and use 
 
 # Using the new *.hpp files / how to avoid `multiple definitions` linker errors
 In order to support [compile options](#compile-options--macros-for-this-library) more easily, the line `#include <NeoPatterns.h>`
- or `MatrixNeoPatterns.hpp` or `MatrixSnake.hpp` must be changed to `#include <NeoPatterns.hpp>`,
+ or `MatrixNeoPatterns.hpp` or `MatrixSnake.hpp` **must** be changed to `#include <NeoPatterns.hpp>`,
  but only in your **main program (aka *.ino file with setup() and loop())**, like it is done in the examples.<br/>
 In **all other files** you must use `#include <NeoPatterns.h>` etc., otherwise you will get tons of **"multiple definition"** errors.
 Take care that all macros you define in your main program before `#include <NeoPatterns.hpp>` etc. ,
@@ -235,7 +240,7 @@ SnakeGame with 4 buttons on breadboard
 
 ## TwoPatternsOnOneStrip
 This example renders a slow "background pattern" and a fast "foreground pattern" on the same strip.<br/>
-It also shows, how to dynamically **determine the length of the attached strip** und to resize the underlying pixel buffer.
+It also shows, how to dynamically **determine the length of the attached strip** und to resize a parent pixel buffer.
 
 ## UserPatterns
 
@@ -246,6 +251,11 @@ It also shows, how to dynamically **determine the length of the attached strip**
 <br/>
 
 # Revision History
+### Version 3.4.0
+- Fixed bug in `allPatternsRandomHandler()`.
+- Renamed `UnderlyingNeoPixelObject` to `ParentNeoPixelObject`.
+- Fixed bug in `TWINKLE`, which did not clear the last pixel.
+
 ### Version 3.3.0
 - New pattern `TWINKLE`.
 - New functions `setCompensatedInterval()` and `copyRegion()`.
