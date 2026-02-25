@@ -2,7 +2,7 @@
  *  MultiplePatternsOnOneBar.cpp
  *
  *  Runs 3 8-pixel patterns simultaneously on a 24 NeoPixel bar.
- *  This is done by using one base NeoPixel object and 3 NeoPatterns using the constructor NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, ...
+ *  This is done by using one base NeoPixel object and 3 NeoPatterns using the constructor NeoPatterns(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, ...
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
@@ -43,12 +43,12 @@ void MultiPatterns(NeoPatterns *aLedsPtr);
 // construct the NeoPatterns instances
 NeoPatterns NeoPixelBar24 = NeoPatterns(24, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 /*
- * Here we use the constructor NeoPatterns(NeoPixel *aUnderlyingNeoPixelObject, uint16_t aPixelOffset, ...
+ * For the child pixel regions we use the constructor NeoPatterns(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, ...
  * false -> do not allow show on partial NeoPixel bar
  */
-NeoPatterns LowerNeoPixelBar = NeoPatterns(&NeoPixelBar24, 0, 8, false, &MultiPatterns);
-NeoPatterns MiddleNeoPixelBar = NeoPatterns(&NeoPixelBar24, 8, 8, false, &MultiPatterns);
-NeoPatterns UpperNeoPixelBar = NeoPatterns(&NeoPixelBar24, 16, 8, false, &MultiPatterns);
+NeoPatterns LowerNeoPixelBar = NeoPatterns(&NeoPixelBar24, 0, 8, DISABLE_CALLING_SHOW_OF_PARENT, &MultiPatterns);
+NeoPatterns MiddleNeoPixelBar = NeoPatterns(&NeoPixelBar24, 8, 8, DISABLE_CALLING_SHOW_OF_PARENT, &MultiPatterns);
+NeoPatterns UpperNeoPixelBar = NeoPatterns(&NeoPixelBar24, 16, 8, DISABLE_CALLING_SHOW_OF_PARENT, &MultiPatterns);
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);

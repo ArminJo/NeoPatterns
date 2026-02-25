@@ -252,9 +252,11 @@ It also shows, how to dynamically **determine the length of the attached strip**
 
 # Revision History
 ### Version 3.4.0
-- Fixed bug in `allPatternsRandomHandler()`.
 - Renamed `UnderlyingNeoPixelObject` to `ParentNeoPixelObject`.
 - Fixed bug in `TWINKLE`, which did not clear the last pixel.
+
+### Version 3.3.1
+- Fixed bug in `allPatternsRandomHandler()`.
 
 ### Version 3.3.0
 - New pattern `TWINKLE`.

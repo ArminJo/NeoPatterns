@@ -418,7 +418,7 @@ void NeoPatterns::forceUpdate(uint8_t aBrightness) {
 #else
     (void) aBrightness;
 #endif
-    _update(true);
+    _update(UPDATE_AND_DRAW_NEW_PATTERN);
     lastUpdate = millis(); // remember last time of update
 }
 
@@ -427,7 +427,7 @@ bool NeoPatterns::update() {
         return false;
     }
     if ((millis() - lastUpdate) > Interval) {
-        if (!_update(true)) {
+        if (!_update(UPDATE_AND_DRAW_NEW_PATTERN)) {
             show();
         }
         lastUpdate = millis(); // remember last time of update
@@ -444,7 +444,7 @@ bool NeoPatterns::update() {
  *
  * Updates (and redraws) the pattern if update interval has expired. Otherwise only redraws it if aDoRedrawIfNoUpdate is true.
  *
- * @param aDoRedrawIfNoUpdate Only if true, do an redraw, if no update was scheduled.
+ * @param aDoRedrawIfNoUpdate Only if true, do an redraw, if no update was scheduled. DO_REDRAW_IF_NO_UPDATE or DO_NO_REDRAW_IF_NO_UPDATE
  * @return true if update has happened to signal that a show() is required after all partial neopixels are updated.
  *              It also gives the caller a chance to manually change parameters (like color etc.).
  */
@@ -672,7 +672,7 @@ void NeoPatterns::RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection, uint
     Index = 0;
     setCompensatedInterval(aIntervalMillis);
 
-    RainbowCycleUpdate(false);
+    RainbowCycleUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_RAINBOW_CYCLE;
@@ -730,7 +730,7 @@ void NeoPatterns::ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDo
     if( !aDoNotClearBefore){
         clear();
     }
-    ColorWipeUpdate(false);
+    ColorWipeUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_COLOR_WIPE;
@@ -781,7 +781,7 @@ void NeoPatterns::Twinkle(color32_t aColorSpecial, uint8_t aAverageNumberOfActiv
     if( !aDoNotClearBefore){
         clear();
     }
-    TwinkleUpdate(false);
+    TwinkleUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_TWINKLE;
@@ -835,7 +835,7 @@ void NeoPatterns::Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNum
     Index = 0;
     Direction = DIRECTION_UP;
 
-    FadeUpdate(false);
+    FadeUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FADE;
@@ -895,7 +895,7 @@ void NeoPatterns::Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t
     Direction = DIRECTION_UP;
     Index = 8;
 
-    HeartbeatUpdate(false);
+    HeartbeatUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_HEARTBEAT;
@@ -1027,7 +1027,7 @@ void NeoPatterns::ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aI
 
     TotalStepCounter += 1; // + 1 for last pattern
 
-    ScannerExtendedUpdate(false);
+    ScannerExtendedUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_SCANNER_EXTENDED;
@@ -1251,7 +1251,7 @@ void NeoPatterns::Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2
     Serial.println();
 #endif
 
-    StripesUpdate(false);
+    StripesUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_STRIPES;
@@ -1324,7 +1324,7 @@ void NeoPatterns::Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color
         PatternFlags = FLAG_END_WITH_BLACK;
     }
 
-    FlashUpdate(false); // This sets Interval
+    FlashUpdate(ONLY_REDRAW_PATTERN); // This sets Interval
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FLASH;
@@ -1512,7 +1512,7 @@ void NeoPatterns::Fire(uint16_t aNumberOfSteps, uint16_t aIntervalMillis, uint8_
 
     LongValue1.PixelHeatArrayPtr = (uint8_t*) calloc(numLEDs, 1);
 
-    FireUpdate(false);
+    FireUpdate(ONLY_REDRAW_PATTERN);
     showPatternInitially();
 // must be after showPatternInitially(), since it requires the old value do detect asynchronous calling
     ActivePattern = PATTERN_FIRE;

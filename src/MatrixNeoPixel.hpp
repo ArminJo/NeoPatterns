@@ -411,16 +411,15 @@ void MatrixNeoPixel::drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength,
  *          negative picture is shift down and truncated and top lines are padded with aBackgroundColor
  * aXOffset positive -> picture is shift right and left lines are padded -> rightmost part of graphic is not displayed
  *          negative -> picture is shift left and right lines are padded
- * doPaddingRight -> if  doPadding == false only do padding right from graphic. Required for (last) character while moving left.
- * doPadding true -> fill bottom, top and right lines with background color
+ * aDoPadding true -> fill bottom, top and right lines with background color
  */
 void MatrixNeoPixel::loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding) {
+        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding) {
     loadPicture(aGraphicsArrayPtrPGM, aWidthOfGraphic, aHeightOfGraphic, aForegroundColor, aBackgroundColor, aXOffset, aYOffset,
-            doPadding, true);
+            aDoPadding, true);
 }
 void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding, bool IsPGMData) {
+        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding, bool IsPGMData) {
 
 #if defined(LOCAL_DEBUG)
     printPin(&Serial);
@@ -430,8 +429,8 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
     Serial.print(aXOffset);
     Serial.print(F(" aYOffset="));
     Serial.print(aYOffset);
-    Serial.print(F(" doPadding="));
-    Serial.println(doPadding);
+    Serial.print(F(" aDoPadding="));
+    Serial.println(aDoPadding);
 #endif
 
     const uint8_t *tGraphicsPointer = aGraphicsArrayPtr;
@@ -451,7 +450,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
 
             if (y == (aYOffset + aHeightOfGraphic) || y == (aYOffset - 1)) {
                 // extra line for optional padding
-                if (doPadding) {
+                if (aDoPadding) {
                     // set dummy blank line for padding below
                     tLineBitPattern = 0;
                 } else {
@@ -500,7 +499,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
                 }
                 tCurrentBitmask = tCurrentBitmask >> 1;
             }
-            if (doPadding) {
+            if (aDoPadding) {
                 // do padding right
                 setMatrixPixelColor(aXOffset + aWidthOfGraphic, y, aBackgroundColor);
             }
@@ -518,7 +517,7 @@ void MatrixNeoPixel::loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidth
  * Smaller graphics can be displayed by using aNumberOfVerticalLinesToProcess < 16 which ignores left / highest bits of 16bit line
  */
 void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding, bool IsPGMData) {
+        color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding, bool IsPGMData) {
 
 #if defined(LOCAL_DEBUG)
     printPin(&Serial);
@@ -550,7 +549,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
 
             if (y == (aYOffset + aHeightOfGraphic) || y == (aYOffset - 1)) {
                 // extra line for optional padding
-                if (doPadding) {
+                if (aDoPadding) {
                     // set dummy blank line for padding below
                     tLineBitPattern = 0;
                 } else {
@@ -597,7 +596,7 @@ void MatrixNeoPixel::loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidt
                 }
                 tCurrentBitmask = tCurrentBitmask >> 1;
             }
-            if (doPadding) {
+            if (aDoPadding) {
                 // do padding right
                 setMatrixPixelColor(aXOffset + aWidthOfGraphic, y, aBackgroundColor);
             }

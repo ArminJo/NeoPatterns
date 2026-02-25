@@ -77,7 +77,7 @@ uint8_t Green(color32_t color) __attribute__ ((deprecated ("Renamed to getGreenP
 uint8_t Blue(color32_t color) __attribute__ ((deprecated ("Renamed to getBluePart()"))); // deprecated
 
 /*
- * Values for bool parameter of init()
+ * Values for parameter aEnableShowOfParentPixel of init()
  */
 #define ENABLE_CALLING_SHOW_OF_PARENT   true
 #define DISABLE_CALLING_SHOW_OF_PARENT  false

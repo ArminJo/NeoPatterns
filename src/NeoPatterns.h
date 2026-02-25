@@ -137,10 +137,26 @@ const char* DirectionToString(uint8_t aDirection);
 #define MAXIMUM_HEAT_VALUE  0xFF // we have 8 bit for heat
 
 /*
- * Values for bool parameter of init()
+ * Values for parameter aShowOnlyAtUpdate of init()
  */
 #define SHOW_ONLY_AT_PATTERN_UPDATE     true
 #define SHOW_ALSO_AT_PATTERN_START      false
+
+// Definitions for parameter aEnableChildOverlay
+#define ENABLE_CHILD_OVERLAY            true
+#define DISABLE_CHILD_OVERLAY           false
+
+// Definitions for parameter aDoNotClearBefore !!! negative Logic !!!
+#define CLEAR_PATTERN_BEFORE            false
+#define DO_NOT_CLEAR_PATTERN_BEFORE     true
+
+// Definitions for parameter aDoUpdate
+#define UPDATE_AND_DRAW_NEW_PATTERN     true
+#define ONLY_REDRAW_PATTERN             false
+
+// Definitions for parameter aDoRedrawIfNoUpdate
+#define DO_REDRAW_IF_NO_UPDATE          true
+#define DO_NO_REDRAW_IF_NO_UPDATE       false
 
 // NeoPattern Class - derived from the NeoPixel and Adafruit_NeoPixel class
 // virtual to enable double inheritance of the NeoPixel functions and the NeoPatterns ones.
@@ -155,7 +171,7 @@ public:
             void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr, bool aShowOnlyAtUpdate = SHOW_ALSO_AT_PATTERN_START);
     NeoPatterns(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, bool aEnableShowOfParentPixel =
     DISABLE_CALLING_SHOW_OF_PARENT, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr, bool aShowOnlyAtUpdate =
-            SHOW_ALSO_AT_PATTERN_START);
+    SHOW_ALSO_AT_PATTERN_START);
     void init(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels, bool aEnableShowOfParentPixel =
     DISABLE_CALLING_SHOW_OF_PARENT, void (*aPatternCompletionCallback)(NeoPatterns*) = nullptr, bool aShowOnlyAtUpdate =
     SHOW_ALSO_AT_PATTERN_START);
@@ -170,8 +186,6 @@ public:
     bool update(uint8_t aBrightness);
     void forceUpdate(uint8_t aBrightness);
 
-#define DO_REDRAW_IF_NO_UPDATE  true
-#define DO_NO_REDRAW_IF_NO_UPDATE  false
     bool updateOrRedraw(bool aDoRedrawIfNoUpdate);
     bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness);
 
@@ -179,10 +193,11 @@ public:
 
     void updateShowAndWaitForPatternToStop();
     void updateShowAndWaitForPatternToStop(uint8_t aBrightness);
-    bool updateAndShowAlsoAllChildPatterns(bool aEnableChildOverlay = false);
-    bool updateAndShowAlsoAllChildPatterns(uint8_t aBrightness, bool aEnableChildOverlay = false);
-    void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(bool aEnableChildOverlay = false);
-    void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(uint8_t aBrightness, bool aEnableChildOverlay = false);
+    bool updateAndShowAlsoAllChildPatterns(bool aEnableChildOverlay = DISABLE_CHILD_OVERLAY);
+    bool updateAndShowAlsoAllChildPatterns(uint8_t aBrightness, bool aEnableChildOverlay = DISABLE_CHILD_OVERLAY);
+    void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(bool aEnableChildOverlay = DISABLE_CHILD_OVERLAY);
+    void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(uint8_t aBrightness, bool aEnableChildOverlay =
+            DISABLE_CHILD_OVERLAY);
 
     // deprecated
     bool updateAndShowAlsoAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
@@ -213,27 +228,28 @@ public:
     /*
      * PATTERNS
      * *Update() functions return true if pattern has ended, false if pattern has NOT ended
-     * If aDoUpdate is true, update pattern, otherwise only redraw the pattern
+     * If aDoUpdate is true, update pattern (to next step), otherwise only redraw the pattern
      */
 #if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
     void RainbowCycleD(uint8_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1)
             __attribute__ ((deprecated ("Renamed to RainbowCycleDuration()")));
     void RainbowCycleDuration(uint8_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
-    bool RainbowCycleUpdate(bool aDoUpdate = true);
+    bool RainbowCycleUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 #if defined(ENABLE_PATTERN_COLOR_WIPE)
-    void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDoNotClearBefore = false, uint8_t aDirection = DIRECTION_UP);
-    void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = false, uint8_t aDirection =
-    DIRECTION_UP) __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
-    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = false, uint8_t aDirection =
-    DIRECTION_UP);
-    bool ColorWipeUpdate(bool aDoUpdate = true);
+    void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE, uint8_t aDirection =
+            DIRECTION_UP);
+    void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE,
+            uint8_t aDirection = DIRECTION_UP) __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
+    void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE,
+            uint8_t aDirection = DIRECTION_UP);
+    bool ColorWipeUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 #if defined(ENABLE_PATTERN_FADE)
     void Fade(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
     void FadeDuration(color32_t aColorStart, color32_t aColorEnd, uint16_t aNumberOfSteps, uint16_t aCompleteDurationMillis);
-    bool FadeUpdate(bool aDoUpdate = true);
+    bool FadeUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
     /*
@@ -241,7 +257,7 @@ public:
      */
     // Delay is always enabled, since it is used by many other patterns
     void Delay(uint16_t aMillis);
-    bool DelayUpdate(bool aDoUpdate = true);
+    bool DelayUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 
 #if defined(ENABLE_PATTERN_STRIPES)
     void StripesD(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
@@ -251,13 +267,13 @@ public:
             uint16_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP);
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP);
-    bool StripesUpdate(bool aDoUpdate = true);
+    bool StripesUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_FLASH)
     void Flash(color32_t aColor1, uint16_t aIntervalMillisColor1, color32_t aColor2, uint16_t aIntervalMillisColor2,
             uint16_t aRepetitions, bool doEndWithBlack = false);
-    bool FlashUpdate(bool aDoUpdate = true);
+    bool FlashUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
@@ -268,35 +284,35 @@ public:
                     __attribute__ ((deprecated ("Renamed to ScannerExtendedDuration()")));
     void ScannerExtendedDuration(color32_t aColor, uint8_t aLength, uint16_t aCompleteDurationMillis, uint16_t aNumberOfBouncings =
             0, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    bool ScannerExtendedUpdate(bool aDoUpdate = true);
+    bool ScannerExtendedUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_HEARTBEAT)
     void Heartbeat(color32_t aColor, uint16_t aIntervalMillis, uint16_t aRepetitions, bool aDoNotClearAfter = false);
-    bool HeartbeatUpdate(bool aDoUpdate = true);
+    bool HeartbeatUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_TWINKLE)
     void Twinkle(color32_t aColorSpecial, uint8_t aPercentageOfStripFilling, uint16_t aIntervalMillis, uint16_t aRepetitions,
-            bool aDoNotClearBefore = false);
-    bool TwinkleUpdate(bool aDoUpdate = true);
+            bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE);
+    bool TwinkleUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_PROCESS_SELECTIVE)
     void ProcessSelectiveColor(color32_t aColorForSelection, color32_t (*aSingleLEDProcessingFunction)(NeoPatterns*),
             uint16_t aNumberOfSteps, uint16_t aIntervalMillis);
-    bool ProcessSelectiveColorUpdate(bool aDoUpdate = true);
+    bool ProcessSelectiveColorUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_FIRE)
     void Fire(uint16_t aNumberOfSteps = 100, uint16_t aIntervalMillis = 30, uint8_t aDirection = DIRECTION_UP);
-    bool FireUpdate(bool aDoUpdate = true);
+    bool FireUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 #if defined(ENABLE_PATTERN_EMBER)
     void Ember(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode, uint8_t aIncreaseIntervalFactor,
             uint16_t aNumberOfDecreasingSteps, uint16_t aIntervalMillis);
     void initEmberHeat(uint8_t aMinHeatValue, uint8_t aMaxHeatValue, uint8_t aMode);
-    bool EmberUpdate(bool aDoUpdate = true);
+    bool EmberUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
     void convertHeatToColor();
@@ -313,14 +329,14 @@ public:
 #if defined(ENABLE_PATTERN_BOUNCING_BALL)
     void BouncingBall(color32_t aColor, uint16_t aIndexOfTopPixel, uint16_t aIntervalMillis = 70, int8_t aPercentageOfLossAtBounce =
             10, uint8_t aDirection = DIRECTION_DOWN);
-    bool BouncingBallUpdate(bool aDoUpdate = true);
+    bool BouncingBallUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
 #if defined(ENABLE_PATTERN_USER_PATTERN1)
-    bool Pattern1Update(bool aDoUpdate = true);
+    bool Pattern1Update(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 #if defined(ENABLE_PATTERN_USER_PATTERN2)
-    bool Pattern2Update(bool aDoUpdate = true);
+    bool Pattern2Update(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 
     void ProcessSelectiveColorForAllPixel();
@@ -461,10 +477,11 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 
 /*
  * Version 3.4.0 - 02/2026
- * - Fixed bug in allPatternsRandomHandler().
  * - Renamed UnderlyingNeoPixelObject to ParentNeoPixelObject.
  * - Fixed bug in TWINKLE, which did not clear the last pixel.
  *
+ * Version 3.3.1 - 11/2025
+ * - Fixed bug in allPatternsRandomHandler().
  *
  * Version 3.3.0 - 04/2025
  * - New pattern TWINKLE.

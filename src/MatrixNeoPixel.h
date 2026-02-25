@@ -78,6 +78,10 @@
 #define MAX_SUPPORTED_GRAPHICS_WIDTH    16 // see void loadPicture(const uint16_t *aGraphicsArrayPtr...
 #define MAX_SUPPORTED_GRAPHICS_HEIGHT   16 // a guess
 
+// Definitions for parameter aDoPadding
+#define DO_PADDING          true
+#define DO_NO_PADDING       false
+
 class MatrixNeoPixel: public virtual NeoPixel {
 public:
     MatrixNeoPixel();
@@ -101,13 +105,13 @@ public:
     void addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t aColor);
 
     void loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false);
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding = DO_NO_PADDING);
 
     void loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
-            color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false, bool IsPGMData = false);
+            color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding = DO_NO_PADDING, bool IsPGMData = false);
 
     void loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool doPadding = false,
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding = DO_NO_PADDING,
             bool IsPGMData = false);
 
     void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);

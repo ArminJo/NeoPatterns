@@ -587,7 +587,7 @@ bool MatrixNeoPatterns::MovingPicturePGMUpdate() {
 if (decrementTotalStepCounter()) {
     return true;
 }
-loadPicturePGM(DataPtr, 8, 8, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset, true);
+loadPicturePGM(DataPtr, 8, 8, Color1, LongValue1.Color2, GraphicsXOffset, GraphicsYOffset, DO_PADDING);
 if (Direction == DIRECTION_UP) {
     GraphicsYOffset--;
 } else if (Direction == DIRECTION_DOWN) {
@@ -1171,15 +1171,15 @@ delay(TEST_DELAY_MILLIS);
 }
 
 void myLoadTest(MatrixNeoPatterns *aLedsPtr) {
-aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 0, true);
+aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 0, DO_PADDING);
 delay(TEST_DELAY_MILLIS);
 myMoveTest1(aLedsPtr);
-aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 2, 0, true);
+aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 2, 0, DO_PADDING);
 delay(TEST_DELAY_MILLIS);
 myMoveTest2(aLedsPtr);
-aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 2, true);
+aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, 0, 2, DO_PADDING);
 delay(TEST_DELAY_MILLIS);
-aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, -2, -2, true);
+aLedsPtr->loadPicturePGM(heart8x8, 8, 8, COLOR32_RED_HALF, COLOR32_BLACK, -2, -2, DO_PADDING);
 delay(TEST_DELAY_MILLIS);
 }
 
