@@ -1065,7 +1065,7 @@ uint16_t NeoPixel::getAndAdjustActualNeopixelLenghtSimple() {
 }
 #else
 /*
- * !!! #include "ADCUtils.hpp" must be before #include "NeoPatterns.hpp" !!!
+ * !!! To have getAndAdjustActualNeopixelLenghtSimple available, #include "ADCUtils.hpp" before #include "NeoPatterns.hpp" !!!
  *
  * Get the actual (even) length of the strip (which only can be lower than the current length)
  * and adjust pixel buffer to the new length.

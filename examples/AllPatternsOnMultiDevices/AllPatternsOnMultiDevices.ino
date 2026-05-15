@@ -43,6 +43,7 @@
 //#define VCC_UNDERVOLTAGE_CHECKS_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_UNDERVOLTAGE_THRESHOLD_MILLIVOLT
 #define LOCAL_INFO // For Serial output at isVCCUndervoltageMultipleTimes(). This is undefined after the include!
 #include "ADCUtils.hpp" // !!! Must be included before NeoPatterns.hpp !!!
+#include "ToneUtils.hpp"
 
 #include <MatrixSnake.hpp>
 
@@ -51,9 +52,7 @@
 #include "AvrTracing.hpp"
 #include "AVRUtils.h"
 #  endif
-
 //#define ALL_PATTERN_ON_ONE_STRIP // shows all patterns on one consecutive device / multiple chained devices
-
 #define FALLING_STAR_DURATION 12
 char sStringBufferForVCC[8] = "xxxxmV ";
 #endif // (__AVR__)
@@ -68,7 +67,9 @@ char sStringBufferForVCC[8] = "xxxxmV ";
 #define PIN_NEOPIXEL_RING_24    6
 #define PIN_NEOPIXEL_RING_12    7
 
-#define PIN_NEOPIXEL_MATRIX      8
+#define PIN_NEOPIXEL_MATRIX     8
+
+#define PIN_BUZZER              9
 
 #define MATRIX_NUMBER_OF_COLUMNS 8
 #define MATRIX_NUMBER_OF_ROWS    8
@@ -92,6 +93,13 @@ NeoPatterns ring16 = NeoPatterns(16, PIN_NEOPIXEL_RING_16, NEO_GRB + NEO_KHZ800,
 NeoPatterns ring24 = NeoPatterns(24, PIN_NEOPIXEL_RING_24, NEO_GRB + NEO_KHZ800, &allPatternsRandomHandler);
 #endif
 
+bool sUndervoltage = false;
+unsigned long sLastAttentionToneMillis;
+#if !defined(MILLIS_IN_ONE_MINUTE)
+#define MILLIS_IN_ONE_MINUTE    60000U
+#endif
+#define MILLISECONDS_BETWEEN_ATTENTION_TONES    MILLIS_IN_ONE_MINUTE
+
 /*
  * Specify your matrix geometry as 4th parameter.
  * ....BOTTOM ....RIGHT specify the position of the zeroth pixel.
@@ -102,11 +110,16 @@ NEO_MATRIX_BOTTOM | NEO_MATRIX_RIGHT | NEO_MATRIX_ROWS | NEO_MATRIX_PROGRESSIVE,
         &MatrixAndSnakePatternsDemoHandler);
 
 uint8_t readBrightness();
+#if defined(ADC_UTILS_ARE_AVAILABLE)
+void playUndervoltageAttentionTone();
+void playPeriodicUndervoltageAttentionTone();
 void checkAndHandleVCCUndervoltage();
+#endif
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
+    delay(2000);
     Serial.begin(115200);
 #if defined(__AVR_ATmega32U4__) || defined(SERIAL_PORT_USBVIRTUAL) || defined(SERIAL_USB) /*stm32duino*/|| defined(USBCON) /*STM32_stm32*/ \
     || defined(SERIALUSB_PID)  || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_attiny3217)
@@ -224,25 +237,33 @@ void loop() {
     uint8_t tBrightness = 0; // value is ignored :-)
 #endif
     //    sBrightnessPrint.printIfChanged(tBrightness);
-
-    bar16.update(tBrightness);
-    bar24.update(tBrightness);
-    ring12.update(tBrightness);
-    ring16.update(tBrightness);
-    ring24.update(tBrightness);
-    if (NeoPixelMatrix.update(tBrightness)) {
-        if (NeoPixelMatrix.ActivePattern == MATRIX_PATTERN_TICKER) {
-            // change color of ticker after each update
-            NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
-            sWheelPosition += 4;
-        } else if (NeoPixelMatrix.ActivePattern == SPECIAL_PATTERN_SNAKE) {
-            if (NeoPixelMatrix.Index == 4) {
-                NeoPixelMatrix.Direction = DIRECTION_LEFT;
-            } else if (NeoPixelMatrix.Index == 8) {
-                NeoPixelMatrix.Direction = DIRECTION_DOWN;
+#if defined(ADC_UTILS_ARE_AVAILABLE)
+    if (sUndervoltage) {
+        // only the 2 MultipleFallingStars pattern on the 2 bars are active
+        playPeriodicUndervoltageAttentionTone();
+    } else
+#endif
+    {
+        ring12.update(tBrightness);
+        ring16.update(tBrightness);
+        ring24.update(tBrightness);
+        if (NeoPixelMatrix.update(tBrightness)) {
+            if (NeoPixelMatrix.ActivePattern == MATRIX_PATTERN_TICKER) {
+                // change color of ticker after each update
+                NeoPixelMatrix.Color1 = NeoPatterns::Wheel(sWheelPosition);
+                sWheelPosition += 4;
+            } else if (NeoPixelMatrix.ActivePattern == SPECIAL_PATTERN_SNAKE) {
+                if (NeoPixelMatrix.Index == 4) {
+                    NeoPixelMatrix.Direction = DIRECTION_LEFT;
+                } else if (NeoPixelMatrix.Index == 8) {
+                    NeoPixelMatrix.Direction = DIRECTION_DOWN;
+                }
             }
         }
     }
+
+    bar16.update(tBrightness);
+    bar24.update(tBrightness);
 }
 
 /*
@@ -305,11 +326,46 @@ uint8_t readBrightness() {
 }
 
 #if defined(ADC_UTILS_ARE_AVAILABLE)
+void playUndervoltageAttentionTone() {
+    // 200 bytes program size
+    toneSimpleAtPin11(2000);
+    delay(200);
+    noToneSimpleAtPin3Or11();
+    delay(200);
+    toneSimpleAtPin11(1400);
+    delay(300);
+    noToneSimpleAtPin3Or11();
+    delay(300);
+    toneSimpleAtPin11(1000);
+    delay(400);
+    noToneSimpleAtPin3Or11();
+    delay(400);
+    toneSimpleAtPin11(700);
+    delay(600);
+    noToneSimpleAtPin3Or11();
+    delay(600);
+
+
+    // 1600 bytes program size
+//    tone(PIN_BUZZER, 2000, 200);
+//    delay(400);
+//    tone(PIN_BUZZER, 1400, 300);
+//    delay(600);
+//    tone(PIN_BUZZER, 1000, 400);
+//    delay(800);
+//    tone(PIN_BUZZER, 700, 600);
+//    delay(600);
+}
+void playPeriodicUndervoltageAttentionTone() {
+    if (millis() - sLastAttentionToneMillis >= MILLISECONDS_BETWEEN_ATTENTION_TONES) {
+        playUndervoltageAttentionTone();
+        sLastAttentionToneMillis = millis();
+    }
+}
 /*
- * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
+ * If isVCCTooLowMultipleTimes() returns true, clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
 void checkAndHandleVCCUndervoltage() {
-
     if (isVCCUndervoltageMultipleTimes()) {
         /*
          * clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
@@ -329,6 +385,7 @@ void checkAndHandleVCCUndervoltage() {
         NeoPixelMatrix.clear();
         NeoPixelMatrix.show();
         Serial.println(F("Shut down"));
+        sUndervoltage = true;
     }
 }
 #endif // defined(ADC_UTILS_ARE_AVAILABLE)

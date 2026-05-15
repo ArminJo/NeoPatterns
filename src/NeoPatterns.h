@@ -346,6 +346,7 @@ public:
 #else
     // use PatternNamesArray[aPatternNumber] on other platforms
 #endif
+    void printPatternName(Print *aSerial);
     void printPatternName(uint8_t aPatternNumber, Print *aSerial);
     void printInfo(Print *aSerial, bool aFullInfo = true);
     void printPattern(Print *aSerial);

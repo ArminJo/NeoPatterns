@@ -95,7 +95,6 @@ void checkAndHandleVCCUndervoltage();
 //#define LI_ION_VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT     3400 // Do not stress your battery and we require some power for standby
 //#define VCC_CHECK_PERIOD_MILLIS                         10000L // 10 seconds period of VCC checks
 //#define VCC_UNDERVOLTAGE_CHECKS_BEFORE_STOP     6 // Shutdown after 6 times (60 seconds) VCC below VCC_UNDERVOLTAGE_THRESHOLD_MILLIVOLT or 1 time below VCC_EMERGENCY_UNDERVOLTAGE_THRESHOLD_MILLIVOLT
-#include "ADCUtils.hpp"
 
 // construct the NeoPatterns instances
 NeoPatterns NeoPatternsBackground = NeoPatterns(NEOPIXEL_STRIP_LENGTH, PIN_NEOPIXEL_STRIP, NEO_GRB + NEO_KHZ800,

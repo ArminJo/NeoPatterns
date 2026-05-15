@@ -1890,6 +1890,9 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 #endif
 }
 
+void NeoPatterns::printPatternName(Print *aSerial) {
+    printPatternName(ActivePattern, aSerial);
+}
 /*
  * For debugging purposes
  */
