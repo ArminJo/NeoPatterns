@@ -5,7 +5,6 @@
  * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
  *
  *  Copyright (C) 2019  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *

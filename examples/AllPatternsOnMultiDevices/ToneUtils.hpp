@@ -6,7 +6,6 @@
  *  Uses 80 bytes instead if 1500 when using Arduino tone().
  *
  *  Copyright (C) 2022-2026  Armin Joachimsmeyer
- *  Email: armin.joachimsmeyer@gmail.com
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -33,12 +32,12 @@
 #include <Arduino.h>
 #include "digitalWriteFast.h"
 
-void setTimer2PrescalerAndCTCMode(unsigned int aFrequencyHerz){
+void setTimer2PrescalerAndCTCMode(unsigned int aFrequencyHertz){
     /*
      * Linear range only from  03 = %32 to 06 =  %256. 02 is %8 and 07 is %1024
      */
     uint8_t tPrescaler = 0x03; // F_CPU / 32 = 500 kHz
-    uint16_t tOCR = (F_CPU / 32) / aFrequencyHerz;
+    uint16_t tOCR = (F_CPU / 32) / aFrequencyHertz;
     while (tOCR > 0x100 && tPrescaler <= 0x06) {
         tPrescaler++;
         tOCR >>= 1;
@@ -46,10 +45,10 @@ void setTimer2PrescalerAndCTCMode(unsigned int aFrequencyHerz){
     TCCR2B = tPrescaler;
     OCR2A = tOCR - 1;       // The frequency of the PWM will be (F_CPU / prescaler) frequency divided by (OCR1C value + 1).
 }
-void toneSimpleAtPin3(unsigned int aFrequencyHerz) {
+void toneSimpleAtPin3(unsigned int aFrequencyHertz) {
     pinModeFast(3, OUTPUT);
     TCCR2A |= _BV(COM2B0)| _BV(WGM21);  // Enable direct output at pin 3 and CTC with OCRA as top
-    setTimer2PrescalerAndCTCMode(aFrequencyHerz); // must be after TCCR2A = ...
+    setTimer2PrescalerAndCTCMode(aFrequencyHertz); // must be after TCCR2A = ...
     TIMSK2 = 0;             // Disable interrupts for Arduino tone() function
     OCR2B = OCR2A;          // Must use channel b for output at pin 3
 }
@@ -58,10 +57,10 @@ void toneSimpleAtPin3(unsigned int aFrequencyHerz) {
  * Small code: 80 Bytes for first call
  * Supports only frequencies from 244 Hz to 500 kHz
  */
-void toneSimpleAtPin11(unsigned int aFrequencyHerz) {
+void toneSimpleAtPin11(unsigned int aFrequencyHertz) {
     pinModeFast(11, OUTPUT);
     TCCR2A = _BV(COM2A0) | _BV(WGM21);  // Enable direct output at pin 11 and CTC with OCRA as top
-    setTimer2PrescalerAndCTCMode(aFrequencyHerz); // must be after TCCR2A = ...
+    setTimer2PrescalerAndCTCMode(aFrequencyHertz); // must be after TCCR2A = ...
     TIMSK2 = 0;             // Disable interrupts for Arduino tone() function
 }
 

@@ -4,7 +4,6 @@
  * Implements extensions to Adafruit_NeoPixel functions
  *
  *  Copyright (C) 2019-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *

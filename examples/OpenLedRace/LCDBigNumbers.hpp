@@ -4,7 +4,6 @@
  *  Arduino library to write big numbers on a 1602 or 2004 LCD.
  *
  *  Copyright (C) 2022-2026  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of LCDBigNumbers https://github.com/ArminJo/LCDBigNumbers.
  *
@@ -59,20 +58,19 @@
 #endif
 
 #if defined(USE_PARALLEL_2004_LCD) || defined(USE_PARALLEL_1602_LCD)
-#  if defined(USE_PARALLEL_2004_LCD)
-#define LCD_ROWS        4
-#  else
-#define LCD_ROWS        2
-#  endif
 #define USE_PARALLEL_LCD
-#include <LiquidCrystal.h>
+#include "LiquidCrystal.h"
 #else
-#  if defined(USE_SERIAL_2004_LCD)
-#define LCD_ROWS        4
-#  else
-#define LCD_ROWS        2
-#  endif
+#define USE_SERIAL_LCD
 #include "LiquidCrystal_I2C.hpp" // Here we use an enhanced version, which supports SoftI2CMaster
+#endif
+
+#if defined(USE_PARALLEL_1602_LCD) || defined(USE_SERIAL_1602_LCD)
+#define LCD_COLUMNS     16
+#define LCD_ROWS        2
+#else
+#define LCD_COLUMNS     20
+#define LCD_ROWS        4
 #endif
 // END Copy from https://github.com/ArminJo/Arduino-Utils/blob/master/src/LCDPrintUtils.hpp
 
@@ -297,12 +295,14 @@ public:
     uint8_t NumberWidth; // Width of the rendered number not including the optional blank gap
     uint8_t NumberHeight;
     uint8_t FontVariant;
-    const uint8_t (*bigNumbersCustomPatterns)[8];
+    const uint8_t (*bigNumbersCustomPatternsPGM)[8];
     uint8_t NumberOfCustomPatterns;
     const uint8_t *bigNumbersFont;
     bool forceGapBetweenNumbers;    // The default depends on the font used
     uint8_t upperLeftColumnIndex;   // Start of the next character
+#if defined(AUTO_DETECT_LCD_COLUMNS)
     uint8_t maximumColumns; // Auto detected maximum of columns which can be written (e.g. 16 or 20). To avoid clearing the gap after a number which ends at the last column. (44 bytes program space)
+#endif
     uint8_t upperLeftRowIndex;      // Start of the next character
 
     /*
@@ -322,10 +322,12 @@ public:
      * This also sets cursor to 0.0 by call to _createChar()
      */
     void begin() {
+#if defined(AUTO_DETECT_LCD_COLUMNS)
         maximumColumns = 0;
+#endif
         // create maximum 8 custom characters
         for (uint_fast8_t i = 0; i < NumberOfCustomPatterns; i++) {
-            _createChar(i, bigNumbersCustomPatterns[i]);
+            _createChar(i, bigNumbersCustomPatternsPGM[i]);
         }
     }
 
@@ -351,54 +353,54 @@ public:
         forceGapBetweenNumbers = true;
         switch (aBigNumberFontIdentifier) {
         case BIG_NUMBERS_FONT_1_COLUMN_2_ROWS_VARIANT_1:
-            bigNumbersCustomPatterns = bigNumbers1x2CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers1x2CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers1x2_1;
             forceGapBetweenNumbers = false;
             break;
         case BIG_NUMBERS_FONT_2_COLUMN_2_ROWS_VARIANT_1:
-            bigNumbersCustomPatterns = bigNumbers2x2CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers2x2CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers2x2_1;
             break;
         case BIG_NUMBERS_FONT_3_COLUMN_2_ROWS_VARIANT_1:
-            bigNumbersCustomPatterns = bigNumbers3x2CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers3x2CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers3x2_1;
             NumberOfCustomPatterns = 6;
             break;
         case BIG_NUMBERS_FONT_3_COLUMN_2_ROWS_VARIANT_2:
-            bigNumbersCustomPatterns = bigNumbers3x2CustomPatterns_3;
+            bigNumbersCustomPatternsPGM = bigNumbers3x2CustomPatterns_3;
             bigNumbersFont = (const uint8_t*) bigNumbers3x2_3;
             forceGapBetweenNumbers = false;
             break;
         case BIG_NUMBERS_FONT_3_COLUMN_2_ROWS_VARIANT_3:
-            bigNumbersCustomPatterns = bigNumbers3x2CustomPatterns_2;
+            bigNumbersCustomPatternsPGM = bigNumbers3x2CustomPatterns_2;
             bigNumbersFont = (const uint8_t*) bigNumbers3x2_2;
             forceGapBetweenNumbers = false;
             break;
 #if LCD_ROWS <= 2
         default:
             // ERROR: NumberHeight is greater than 2 for a 2 line display -> fallback to 2x2 font
-            bigNumbersCustomPatterns = bigNumbers2x2CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers2x2CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers2x2_1;
             break;
 #else
         case BIG_NUMBERS_FONT_2_COLUMN_3_ROWS_VARIANT_1:
-            bigNumbersCustomPatterns = bigNumbers2x3CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers2x3CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers2x3_1;
             break;
         case BIG_NUMBERS_FONT_2_COLUMN_3_ROWS_VARIANT_2:
-            bigNumbersCustomPatterns = bigNumbers2x3CustomPatterns_2;
+            bigNumbersCustomPatternsPGM = bigNumbers2x3CustomPatterns_2;
             bigNumbersFont = (const uint8_t*) bigNumbers2x3_2;
             break;
         case BIG_NUMBERS_FONT_3_COLUMN_3_ROWS_VARIANT_1:
-            bigNumbersCustomPatterns = bigNumbers3x3And3x4CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers3x3And3x4CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers3x3_1;
             break;
         case BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1:
-            bigNumbersCustomPatterns = bigNumbers3x3And3x4CustomPatterns_1;
+            bigNumbersCustomPatternsPGM = bigNumbers3x3And3x4CustomPatterns_1;
             bigNumbersFont = (const uint8_t*) bigNumbers3x4_1;
             break;
         case BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_2:
-            bigNumbersCustomPatterns = bigNumbers3x4CustomPatterns_2;
+            bigNumbersCustomPatternsPGM = bigNumbers3x4CustomPatterns_2;
             bigNumbersFont = (const uint8_t*) bigNumbers3x4_2;
             break;
 #endif
@@ -420,11 +422,11 @@ public:
      * but with PROGMEM input
      * This also sets cursor to 0.0
      */
-    void _createChar(uint8_t location, const uint8_t *charmap) {
-        location &= 0x7; // we only have 8 locations 0-7
-        LCD->command(LCD_SETCGRAMADDR | (location << 3));
-        for (int i = 0; i < 8; i++) {
-            LCD->write(pgm_read_byte(charmap++));
+    void _createChar(uint_fast8_t aCharacterIndex, const uint8_t *CustomPatternMapPGM) {
+        aCharacterIndex &= 0x7; // we only have 8 locations 0-7
+        LCD->command(LCD_SETCGRAMADDR | (aCharacterIndex << 3));
+        for (uint_fast8_t i = 0; i < 8; i++) {
+            LCD->write(pgm_read_byte(CustomPatternMapPGM++));
         }
         LCD->command(LCD_SETDDRAMADDR); // set cursor to 0.0, this avoids overwriting CGRAM by next write() command.
     }
@@ -507,6 +509,8 @@ public:
         }
         upperLeftColumnIndex += tCharacterWidth; // now we are at the index for the next number or the optional blank gap
 
+#if defined(AUTO_DETECT_LCD_COLUMNS)
+
         /*
          * Auto detect maximum column count, which can be written.
          * We assume that all characters, which were written, fit on the display.
@@ -516,12 +520,18 @@ public:
             // find maximum column at runtime
             maximumColumns = upperLeftColumnIndex;
         }
+#endif
 
         /*
          * Implement the gap after the number character
          */
         if (forceGapBetweenNumbers && (NumberWidth == 1 || tCharacterWidth > 1 || aNumberOrSpecialCharacter == '-')) {
-            if (maximumColumns >= upperLeftColumnIndex) {
+#if defined(AUTO_DETECT_LCD_COLUMNS)
+            if (maximumColumns >= upperLeftColumnIndex)
+#else
+                if (LCD_COLUMNS >= upperLeftColumnIndex)
+#endif
+                {
                 // We are not at the last column, so clear the gap after the number
                 for (uint_fast8_t tRow = 0; tRow < NumberHeight; tRow++) {
                     LCD->setCursor(upperLeftColumnIndex, upperLeftRowIndex + tRow);

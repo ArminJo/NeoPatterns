@@ -6,7 +6,6 @@
  *
  *  Created on: 19.11.2020
  *  Copyright (C) 2020-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of PWMMotorControl https://github.com/ArminJo/PWMMotorControl.
  *
@@ -26,7 +25,9 @@
 #ifndef _MPU6050_IMU_DATA_HPP
 #define _MPU6050_IMU_DATA_HPP
 
-//#define DEBUG // Only for development
+// This block must be located after the includes of other *.hpp files
+//#define BD_LOCAL_DEBUG // This enables debug output only for this file - only for development
+#include "LocalDebugLevelStart.h"
 
 //#define DO_NOT_USE_GYRO           // Do not read any gyroscope parameter from IMU
 //#define USE_ACCEL_FLOATING_OFFSET // Compute a low pass value (floating offset) for each accelerator axis which enables the computeAccelerationWithFloatingOffset() function.
@@ -179,7 +180,7 @@ bool MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t
 
 #if defined(USE_ACCEL_FLOATING_OFFSET)
     uint_fast8_t tLowPassShiftValue; // 8 for aSampleRateDivider = 1 equivalent to 1 kHz gives 0.6 Hz cutoff frequency
-#  if defined(DEBUG)
+#  if defined(LOCAL_DEBUG)
     uint8_t tSampleRateDivider = aSampleRateDivider;
 #  endif
     for (tLowPassShiftValue = 8; tLowPassShiftValue > 0; --tLowPassShiftValue) {
@@ -189,7 +190,7 @@ bool MPU6050IMUData::initMPU6050(uint8_t aSampleRateDivider, mpu6050_bandwidth_t
         }
     }
     LowPassShiftValue = tLowPassShiftValue;
-#  if defined(DEBUG)
+#  if defined(LOCAL_DEBUG)
     Serial.print(F("LowPassShiftValue for sample rate "));
     Serial.print(tSampleRateDivider);
     Serial.print(F(" ms = "));
@@ -236,7 +237,7 @@ void MPU6050IMUData::initMPU6050Fifo() {
 uint8_t MPU6050IMUData::readDataFromMPU6050Fifo() {
     // Get FIFO count
     uint16_t tFifoCount = MPU6050ReadWordSwapped(MPU6050_RA_FIFO_COUNTH);
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
     Serial.print(F("FiFoCnt="));
     Serial.print(tFifoCount);
     Serial.print(" ");
@@ -247,7 +248,7 @@ uint8_t MPU6050IMUData::readDataFromMPU6050Fifo() {
     if (tFifoCount > 0x300) {
         // Fifo is over 3/4 full -> reset it
         resetMPU6050Fifo();
-#if defined(DEBUG)
+#if defined(LOCAL_DEBUG)
         Serial.println(F("Reset Fifo"));
 #endif
         return 0;
@@ -366,7 +367,7 @@ uint8_t MPU6050IMUData::readDataFromMPU6050Fifo() {
                 GyroscopeOffset[i] = Rotation[i].Long / CountOfFifoChunksForOffset;
 #  endif
             }
-#  if defined(DEBUG)
+#  if defined(LOCAL_DEBUG)
             Serial.println();
             printAllOffsets(&Serial);
 #  endif
@@ -736,5 +737,7 @@ uint16_t MPU6050IMUData::MPU6050ReadWord(uint8_t aRegisterNumber) {
     return tWord.UWord;
 #endif
 }
+
+#include "LocalDebugLevelEnd.h"
 
 #endif // _MPU6050_IMU_DATA_HPP

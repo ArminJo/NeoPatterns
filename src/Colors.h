@@ -3,9 +3,9 @@
  *
  *
  *  Copyright (C) 2018-2021  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
- *  This file is part of BlueDisplay https://github.com/ArminJo/android-blue-display.
+ *  This file is part of Arduino-BlueDisplay https://github.com/ArminJo/Arduino-BlueDisplay.
+ *  This file is part of android-blue-display https://github.com/ArminJo/android-blue-display.
  *
  *  BlueDisplay is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

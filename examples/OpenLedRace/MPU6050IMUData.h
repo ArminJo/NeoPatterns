@@ -5,7 +5,6 @@
  *
  *  Created on: 19.11.2019
  *  Copyright (C) 2020  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of PWMMotorControl https://github.com/ArminJo/PWMMotorControl.
  *

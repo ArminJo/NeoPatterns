@@ -69,13 +69,6 @@ Formula is: **NewSpeed = Speed + Gravity + Friction + (Speed * Drag)**
 
 <br/>
 
-# Size
-The version using a 5 m IP30 - 60 pixel per meter strip with ramp and loop reqires an area of 145 cm x 80 cm plus 20 cm space for breadboard etc.<br/>
-The base of the ramp is 83 cm, the height is 23.5 cm. The slope is 45 degree and therefore the top of the ramp is 83 cm - (2 * 23.5 cm) = 36 cm.<br/>
-The diameter of the loop is 26 cm.
-
-<br/>
-
 # YouTube Videos
 | At the Hannover MakerFaire 2022 | At the Cologne public library MINTk&ouml;ln-Festival 2021 |
 | :-: | :-: |
@@ -86,12 +79,19 @@ The diameter of the loop is 26 cm.
 
 <br/>
 
+# Size
+The version using a 5 m IP30 - 60 pixel per meter strip with ramp and loop reqires an area of 145 cm x 80 cm plus 20 cm space for breadboard etc.<br/>
+The base of the ramp is 83 cm, the height is 23.5 cm. The slope is 45 degree and therefore the top of the ramp is 83 cm - (2 * 23.5 cm) = 36 cm.<br/>
+The diameter of the loop is 26 cm.
+
+<br/>
+
 # Arduino plotter output
 ![Arduino plotter output](https://github.com/ArminJo/OpenledRace/blob/master/pictures/ArduinoPlotterOutput.png)
 
 In this output, both accelerators were initially moving, then only the first, and finally the second alone. `AccelLP` is the low-pass value of `Accel`.<br/>
 In the middle, there is a steep decrease in speed at the same input level. This is because the car has reached the ramp and must now overcome gravity.<br/>
-At the end, you can see negative speed. This is because the car was on the ramp when the input stopped and gravity moved it backwards down the ramp.
+At the end, negative speed can be seen. This is because the car was on the ramp when the input stopped and gravity moved it backwards down the ramp.
 
 <br/>
 

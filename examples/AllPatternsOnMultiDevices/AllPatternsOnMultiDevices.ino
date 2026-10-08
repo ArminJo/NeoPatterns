@@ -6,7 +6,6 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
  *  Copyright (C) 2018-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -312,7 +311,7 @@ void TestPatterns(NeoPatterns *aLedsPtr) {
     Serial.print(" Length=");
     Serial.print(aLedsPtr->numPixels());
     Serial.print(" ActivePattern=");
-    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    aLedsPtr->printPatternName(&Serial, aLedsPtr->ActivePattern);
     Serial.print("|");
     Serial.print(aLedsPtr->ActivePattern);
     Serial.print(" State=");

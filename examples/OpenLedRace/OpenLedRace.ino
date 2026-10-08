@@ -31,8 +31,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  You also need to install "NeoPatterns" and "PlayRtttl" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I"
  *
- *  Copyright (C) 2020-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2020-2026  Armin Joachimsmeyer
  *
  *  This file is part of OpenledRace https://github.com/ArminJo/OpenledRace.
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
@@ -67,7 +66,7 @@
 #include "PlayRtttl.hpp"
 
 /*
- * We enable only these 3 patterns to save program space
+ * We enable only these 3 NeoPatterns patterns to save RAM
  */
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_COLOR_WIPE
@@ -86,7 +85,7 @@
 //#include "AvrTracing.hpp"
 
 #define VERSION_EXAMPLE "1.4"
-// 1.4 - work in progress
+// 1.4 Longer cars
 // 1.3 Moved Bridge and loop, VU Bar animations
 // 1.2 Improvements from Hannover Maker Faire
 // 1.1 Hannover Maker Faire version
@@ -113,11 +112,10 @@
 
 #include "LongUnion.h"
 
-#define LCD_I2C_ADDRESS 0x27    // Default LCD address is 0x27 for a 20 chars and 4 line / 2004 display
-#include "LiquidCrystal_I2C.hpp"  // This defines USE_SOFT_I2C_MASTER, if SoftI2CMasterConfig.h is available. Use only the modified version delivered with this program!
-LiquidCrystal_I2C myLCD(LCD_I2C_ADDRESS, 20, 4);
 #define USE_SERIAL_2004_LCD // required by LCDBigNumbers.hpp
 #include "LCDBigNumbers.hpp" // Include sources for LCD big number generation
+#define LCD_I2C_ADDRESS 0x27    // Default LCD address is 0x27 for a 20 chars and 4 line / 2004 display
+LiquidCrystal_I2C myLCD(LCD_I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS); // LCD_COLUMNS and LCD_ROWS are set by LCDBigNumbers.hpp depending on the defined display
 
 LCDBigNumbers BigNumbers(&myLCD, BIG_NUMBERS_FONT_3_COLUMN_4_ROWS_VARIANT_1);
 
@@ -172,6 +170,8 @@ bool sPrintCurrentDatasetToPlotterOutput;   // Print data for Arduino plotter, i
  * Maximum number of cars supported. Each car is individually activated at runtime
  * by first press of its button or movement of its accelerator input.
  */
+#define CAR_INITIAL_LENGTH                  4
+#define CAR_INCREASE_OF_LENGTH_PER_LAP      1 // 0 = Constant length
 #if defined(ENABLE_ACCELERATOR_INPUT)
 #define NUMBER_OF_CARS            2 // Currently we can handle only 2 distinct accelerometers.
 #define ACCELERATOR_TRIGGER_VALUE 32 // The value of getAcceleratorValueShift8() to trigger a new race
@@ -719,7 +719,7 @@ public:
     }
 
     /*
-     * The car consists of number of laps pixels
+     * The car consists of number of CAR_INITIAL_LENGTH + Laps * CAR_INCREASE_OF_LENGTH_PER_LAP pixels
      * Overlapping of cars is handled by using addPixelColor for drawing
      */
     void draw() {
@@ -727,7 +727,7 @@ public:
 #if defined(TEST_MODE)
         for (int i = 0; i <= 1; i++) {
 #else
-        for (int i = 0; i <= Laps; i++) {
+        for (int i = 0; i <= CAR_INITIAL_LENGTH + (Laps * CAR_INCREASE_OF_LENGTH_PER_LAP); i++) {
 #endif
             // draw from back to front
             int16_t tDrawPosition = PixelPosition - i;

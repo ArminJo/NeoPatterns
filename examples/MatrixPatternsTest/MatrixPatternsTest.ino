@@ -9,8 +9,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2021-2024  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
+ *  Copyright (C) 2021-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -37,7 +36,8 @@
 #endif
 //#include "HexDump.hpp"
 
-#define INFO
+//#define DEBUG
+#define INFO // global for this source and all included libraries
 
 #define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
@@ -113,6 +113,10 @@ bool sDemoModeEnabled;
 void handleButtonPress(bool aButtonToggleState);
 EasyButton Button0AtPin2(&handleButtonPress); // Only one callback parameter => button is connected to INT0
 
+// This block must be located after the includes of other *.hpp files
+//#define LOCAL_INFO  // This enables info output only for this file
+#define LOCAL_DEBUG // enables printRAMAndStackInfo()
+#include "LocalDebugLevelStart.h"
 /*
  * Helper macro for getting a macro definition as string
  */
@@ -137,7 +141,7 @@ void setup() {
     Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
     Serial.println(
             F(
-                    "Button pin=" STR(INT0_PIN) ", Brightness pin=" STR(BRIGHTNESS_INPUT_PIN) ", Fire cooling pin=" STR(FIRE_COOLING_INPUT_PIN)));
+                    "Button pin=" STR(INT0_PIN) ", DemoMode pin =" STR(DEMO_MODE_PIN) ", Brightness input=" STR(BRIGHTNESS_INPUT_PIN) ", Fire cooling input=" STR(FIRE_COOLING_INPUT_PIN)));
 
     NeoPixelMatrix.printConnectionInfo(&Serial);
 
@@ -174,7 +178,8 @@ void setup() {
         }
     }
     NeoPixelMatrix.clear();
-    NeoPixelMatrix.testMapping(100); // Draw a triangle with its right angle at upper left
+    NeoPixelMatrix.testMapping(40); // Draw a triangle with its right angle at upper left
+    delay(2000); // to see the brightness map
 
 //    NeoPixelMatrix.setBrightness(MAX_BRIGHTNESS);
 //    for (int i = 0; i < 256; ++i) {
@@ -193,13 +198,15 @@ void setup() {
 //    }
 //    NeoPixelMatrix.clear();
 
-#if defined(__AVR__)
+#if defined(LOCAL_DEBUG) && defined(__AVR__)
+    Serial.println(F("Before pattern start:"));
     printRAMAndStackInfo(&Serial);
 #endif
 //    initTrace();
     delay(1000);
     startPattern(sCurrentMode);
-#if defined(__AVR__)
+#if defined(LOCAL_DEBUG) && defined(__AVR__)
+    Serial.println(F("After pattern start:"));
     printRAMAndStackInfo(&Serial);
 #endif
 }
@@ -241,12 +248,6 @@ void loop() {
     /*
      * call update
      */
-#if defined(__AVR__)
-    if (printStackMaxUsedAndUnusedSizesIfChanged(&Serial)) {
-//        Serial.println(F("Dump stack / end of RAM"));
-//        printMemoryHexDump((uint8_t*) (RAMEND - 512) + 1, 512);
-    }
-#endif
     if (sCurrentMode == MODE_FIRE) {
         if (!sDemoModeEnabled) {
             NeoPixelMatrix.TotalStepCounter = 3; // to enable fast ending, if demo mode is enabled again
@@ -254,9 +255,8 @@ void loop() {
         /*
          * Can set cooling (and sparking- not yet) parameters by potentiometers
          */
-        // set cooling. 10 to 25 are sensible with optimum around 14 to 20
         uint8_t tOldCooling = NeoPixelMatrix.ByteValue1.Cooling;
-        NeoPixelMatrix.ByteValue1.Cooling = map(analogRead(FIRE_COOLING_INPUT_PIN), 0, 1023, 2, 40);
+        NeoPixelMatrix.ByteValue1.Cooling = map(analogRead(FIRE_COOLING_INPUT_PIN), 0, 1023, 2, 40); // 10 to 25 are sensible with optimum around 14 to 20
         if (tOldCooling != NeoPixelMatrix.ByteValue1.Cooling) {
             Serial.print(F("Cooling="));
             Serial.println(NeoPixelMatrix.ByteValue1.Cooling);
@@ -292,6 +292,7 @@ void loop() {
         } else if (sCurrentMode == MODE_ALL_COLORS) {
             /*
              * first color map 1 / drawAllColors, then next map / drawAllColors2
+             * 37 seconds
              */
             MatrixNeoPixelMemberFunctionPointer tDrawAllColorsFunctionPointer = &MatrixSnake::drawAllColors;
             for (int i = 0; i < 2; ++i) {
@@ -365,30 +366,37 @@ bool startPattern(uint8_t aNewMode) {
     sCurrentMode = aNewMode;
 
     if (aNewMode == MODE_SNOW) {
-        return NeoPixelMatrix.Snow(1000, 20);
+        return NeoPixelMatrix.Snow(1000, 20); // 40 seconds
 
     } else if (aNewMode == MODE_TWINKLE) {
-        NeoPixelMatrix.Twinkle(COLOR32_SPECIAL, NeoPixelMatrix.getNumberOfPixels() / 4, 50, 60);
+        NeoPixelMatrix.Twinkle(COLOR32_SPECIAL, NeoPixelMatrix.getNumberOfPixels() / 4, 50, 450);  // 45 seconds
         return true;
 
     } else if (aNewMode == MODE_SNAKE) {
+#if defined(USE_16_X_16_MATRIX)
+        return initSnakeAutorun(&NeoPixelMatrix, 200, COLOR32_BLUE, 1);
+#else
         return initSnakeAutorun(&NeoPixelMatrix, 200, COLOR32_BLUE, 2);
+#endif
 
     } else if (aNewMode == MODE_FIRE) {
-        return NeoPixelMatrix.Fire(800, 30);
+        return NeoPixelMatrix.Fire(800, 30); // 50 seconds
     }
     return true;
 }
 
+/*
+ * Called at button press
+ */
 void switchMode() {
     /*
      * Stop old pattern
      */
     Serial.println();
-#if defined(__AVR__)
+#if defined(LOCAL_DEBUG) && defined(__AVR__)
     printRAMAndStackInfo(&Serial);
 #endif
-    Serial.print(F("Stop old mode "));
+    Serial.print(F("Button pressed -> stop old mode "));
     printlnMode(sCurrentMode);
     if (sCurrentMode == MODE_FIRE) {
         NeoPixelMatrix.FireMatrixStop();
@@ -399,15 +407,9 @@ void switchMode() {
     } else {
         DemoModeHandler(&NeoPixelMatrix); // no stop function, which calls handler, so call handler manually
     }
-    Serial.println();
     /*
-     * New pattern is started by completion handler called by *Stop() function
+     * Here new pattern is started by completion handler called by *Stop() function
      */
-
-#if defined(__AVR__)
-    printRAMAndStackInfo(&Serial);
-#endif
-
     delay(100); // debounce
 }
 
@@ -435,12 +437,16 @@ void DemoModeHandler(NeoPatterns *aLedsPtr) {
         printRAMAndStackInfo(&Serial);
 #endif
         DemoModeHandler(aLedsPtr); // Try next pattern
+
     } else {
         Serial.print(F("New mode="));
         printlnMode(sCurrentMode);
-        Serial.println();
     }
-#if defined(__AVR__)
+#if defined(LOCAL_DEBUG) && defined(__AVR__)
+    /*
+     * Re-paint the stack for new values
+     */
+    initStackFreeMeasurement();
     printRAMAndStackInfo(&Serial);
 #endif
 }

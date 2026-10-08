@@ -13,7 +13,6 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
  *  Copyright (C) 2018-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -273,7 +272,7 @@ void BackgroundPatternsHandler(NeoPatterns *aLedsPtr) {
     }
 
     Serial.print("Back: ActivePattern=");
-    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    aLedsPtr->printPatternName(&Serial, aLedsPtr->ActivePattern);
     Serial.print(" Interval=");
     Serial.print(tInterval);
     Serial.print(" Delay=");
@@ -335,7 +334,7 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
         }
     }
     Serial.print("Fast: ActivePattern=");
-    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    aLedsPtr->printPatternName(&Serial, aLedsPtr->ActivePattern);
     Serial.print(" Interval=");
     Serial.print(tInterval);
     Serial.print(" Delay=");

@@ -7,7 +7,6 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
  *
  *  Copyright (C) 2019-2024  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -871,17 +870,20 @@ void MatrixNeoPixel::testMapping(uint16_t aDelayMillis) {
         delay(aDelayMillis);
     }
 #if defined(SUPPORT_BRIGHTNESS)
-    // Test brightness
+    /*
+     * Test the lowest brightness values 1 to 4 for each color
+     * Here we see that brightness 1 for blue is not supported by some WS chips
+     */
     uint8_t tOldBrightness = Brightness;
     Brightness = MAX_BRIGHTNESS;
-    setMatrixPixelColor(1, 1, 1, 1, 1); // lowest brightness at all colors
-    setMatrixPixelColor(2, 1, 2, 2, 2);
+    setMatrixPixelColor(1, 1, 1, 1, 1); // lowest brightness at all colors / white
+    setMatrixPixelColor(2, 1, 2, 2, 2); // column 2, row 1
     setMatrixPixelColor(3, 1, 3, 3, 3);
     setMatrixPixelColor(4, 1, 4, 4, 4);
     setMatrixPixelColor(1, 2, 1, 0, 0); // lowest brightness at red
     setMatrixPixelColor(2, 2, 2, 0, 0);
     setMatrixPixelColor(3, 2, 3, 0, 0);
-    setMatrixPixelColor(4, 2, 4, 0, 0);
+    setMatrixPixelColor(4, 2, 4, 0, 0); // column 4, row 2
     setMatrixPixelColor(1, 3, 0, 1, 0); // lowest brightness at green
     setMatrixPixelColor(2, 3, 0, 2, 0);
     setMatrixPixelColor(3, 3, 0, 3, 0);

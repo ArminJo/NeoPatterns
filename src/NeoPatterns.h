@@ -8,7 +8,6 @@
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
  *  Copyright (C) 2018-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -347,7 +346,7 @@ public:
     // use PatternNamesArray[aPatternNumber] on other platforms
 #endif
     void printPatternName(Print *aSerial);
-    void printPatternName(uint8_t aPatternNumber, Print *aSerial);
+    void printPatternName(Print *aSerial, uint8_t aPatternNumber);
     void printInfo(Print *aSerial, bool aFullInfo = true);
     void printPattern(Print *aSerial);
     void printlnPattern(Print *aSerial);

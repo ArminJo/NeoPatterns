@@ -20,7 +20,6 @@
  *  Therefore a pattern with 4 different pattern steps needs 4 updates, the last updates only switches to next pattern or sets ActivePattern to PATTERN_NONE.
  *
  *  Copyright (C) 2018-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -68,6 +67,7 @@ const char PatternHeartbeat[] PROGMEM ="Heartbeat";
 const char PatternFire[] PROGMEM ="Fire";
 const char PatternTwinkle[] PROGMEM ="Twinkle";
 const char PatternBouncingBall[] PROGMEM ="Bouncing ball";
+const char PatternEmber[] PROGMEM ="Ember";
 const char PatternUserPattern1[] PROGMEM ="User pattern 1";
 const char PatternUserPattern2[] PROGMEM ="User pattern 2";
 
@@ -84,7 +84,7 @@ const char PatternUnknown[] PROGMEM ="Unknown";
 // ActivePattern can be used as index of PatternNamesArray
 const char *const PatternNamesArray[] PROGMEM = { PatternNone, PatternRainbowCycle, PatternColorWipe, PatternFade, PatternDelay,
         PatternScannerExtended, PatternStripes, PatternFlash, PatternProcessSelectiveColor, PatternHeartbeat, PatternFire,
-        PatternTwinkle, PatternBouncingBall, PatternUserPattern1, PatternUserPattern2, MatrixPatternTicker, MatrixPatternMove,
+        PatternTwinkle, PatternBouncingBall, PatternEmber, PatternUserPattern1, PatternUserPattern2, MatrixPatternTicker, MatrixPatternMove,
         MatrixPatternMovingPicture, PatternFire, MatrixPatternSnow, MatrixExtraPatternSnake, PatternUnknown };
 
 // array of update function pointer, not used since it needs 150 bytes more :-(
@@ -1877,7 +1877,7 @@ void NeoPatterns::getPatternName(uint8_t aPatternNumber, char *aBuffer, uint8_t 
  * Prints name of the pattern e.g. "Rainbow cycle"
  * call it e.g. printPatternName(&Serial);
  */
-void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
+void NeoPatterns::printPatternName(Print *aSerial, uint8_t aPatternNumber) {
 #if defined(__AVR__)
     const char *aNameArrayPointerPGM = (char*) pgm_read_word(&PatternNamesArray[aPatternNumber]);
 #if defined(LOCAL_TRACE)
@@ -1891,20 +1891,20 @@ void NeoPatterns::printPatternName(uint8_t aPatternNumber, Print *aSerial) {
 }
 
 void NeoPatterns::printPatternName(Print *aSerial) {
-    printPatternName(ActivePattern, aSerial);
+    printPatternName(aSerial, ActivePattern);
 }
 /*
  * For debugging purposes
  */
 void NeoPatterns::printPattern(Print *aSerial) {
     aSerial->print(F("Pattern="));
-    printPatternName(ActivePattern, aSerial);
+    printPatternName(aSerial, ActivePattern);
     aSerial->print(' ');
 }
 
 void NeoPatterns::printlnPattern(Print *aSerial) {
     aSerial->print(F("Pattern="));
-    printPatternName(ActivePattern, aSerial);
+    printPatternName(aSerial, ActivePattern);
     aSerial->println();
 }
 
@@ -1934,7 +1934,7 @@ void NeoPatterns::printInfo(Print *aSerial, bool aFullInfo) {
     }
     if (aFullInfo) {
         aSerial->print(F("ActivePattern="));
-        printPatternName(ActivePattern, aSerial);
+        printPatternName(aSerial, ActivePattern);
         aSerial->print('|');
         aSerial->print(ActivePattern);
         aSerial->print(F(" CompensatedInterval="));
@@ -2226,7 +2226,7 @@ void allPatternsRandomHandler(NeoPatterns *aLedsPtr) {
     Serial.print(aLedsPtr->numPixels());
     Serial.print(F(" ActivePattern="));
 #if defined(LOCAL_DEBUG)
-    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    aLedsPtr->printPatternName(&Serial, aLedsPtr->ActivePattern);
     Serial.print('|');
 #endif
     Serial.print(aLedsPtr->ActivePattern);

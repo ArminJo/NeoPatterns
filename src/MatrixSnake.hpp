@@ -10,7 +10,6 @@
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
  *  Copyright (C) 2018-2025  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -1227,7 +1226,7 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     Serial.print(F(" Length="));
     Serial.print(aLedsPtr->numPixels());
     Serial.print(F(" ActivePattern="));
-    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    aLedsPtr->printPatternName(&Serial, aLedsPtr->ActivePattern);
     Serial.print('|');
     Serial.print(aLedsPtr->ActivePattern);
     Serial.print(F(" State="));

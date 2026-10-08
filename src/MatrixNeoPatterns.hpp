@@ -9,7 +9,6 @@
  *  and patterns for nxn NeoPixel matrix (tested with 8x8 and 10x10).
  *
  *  Copyright (C) 2018-2024  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
