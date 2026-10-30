@@ -350,7 +350,7 @@ void FastMovePatternsHandler(NeoPatterns *aLedsPtr) {
  * If isVCCTooLowMultipleTimes() returns true clear all pattern and activate only 2 MultipleFallingStars pattern on the 2 bars
  */
 void checkAndHandleVCCUndervoltage() {
-    if (isVCCUndervoltageMultipleTimes()) {
+    if (isVCCUndervoltageMultipleTimes(&Serial)) {
         /*
          * clear background pattern and let only fast pattern run
          */

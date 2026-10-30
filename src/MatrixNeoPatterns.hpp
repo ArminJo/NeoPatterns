@@ -140,23 +140,23 @@ bool MatrixNeoPatterns::update() {
 
 #if defined(ENABLE_MATRIX_PATTERN_FIRE)
 /*
- *  Set the invisible bottom line / initalHeatLine of fire which is set by random values every 4 updates
+ *  Set the invisible bottom line / initialHeatLine of fire which is set by random values every 4 updates
  *  Set index 0 to index Columns + 1
  */
 void MatrixNeoPatterns::setInitHeat() {
-    // The initalHeatLine is of size Columns + 2
+    // The initialHeatLine is of size Columns + 2
     for (uint_fast8_t i = 0; i < (uint_fast8_t)(Columns + 2); ++i) {
         MatrixOld[i] = random8(40, 255); // Values from 40 to 254
     }
 #if defined(LOCAL_TRACE)
-    Serial.print(F("initalHeatLine="));
+    Serial.print(F("initialHeatLine="));
     for (uint_fast8_t i = 0; i < (Columns + 2); ++i) {
         Serial.print(MatrixOld[i]);
         Serial.print(' ');
     }
     Serial.println();
 #endif
-    // copy this to the initalHeatLine of the other matrix
+    // copy this to the initialHeatLine of the other matrix
     memcpy(MatrixNew, MatrixOld, Columns + 2);
     return;
 }
@@ -257,7 +257,7 @@ if (Index == 4) {
     setInitHeat();
 }
 
-// First refresh (invisible) bottom line on every update from initalHeatLine
+// First refresh (invisible) bottom line on every update from initialHeatLine
 
 /*
  * Process and Map center (without padding) from heat cells to LED colors.
