@@ -47,7 +47,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  */
 /*
  * Open LED Race
@@ -97,6 +97,7 @@
 #define USE_ACCELERATION_NEOPIXEL_BARS  // Shows the low pass value of user acceleration input (button or IMU) on an 8 Neopixel bar
 //#define BRIDGE_NO_NEOPATTERNS           // No patterns on bridge. Saves 13 bytes RAM
 //#define LOOP_NO_NEOPATTERNS             // No patterns on loop. Saves 4 bytes RAM
+#define SUPPORT_ANALOG_INPUT_FOR_PARAMETERS // Control the values of gravity, friction and drag by potentiometers at PIN_GRAVITY_INPUT etc. if PIN_MANUAL_PARAMETER_MODE is low
 
 #if defined(ENABLE_ACCELERATOR_INPUT)
 /*
@@ -142,11 +143,13 @@ bool sSerialLCDAvailable;
 #endif
 
 #define PIN_BUZZER              11   // must be pin 11, since we use the direct hardware tone output for ATmega328, which is not disturbed by Neopixel show()
-#define PIN_MANUAL_PARAMETER_MODE  12 // if connected to ground, analog inputs for parameters are used
 
+#if defined(SUPPORT_ANALOG_INPUT_FOR_PARAMETERS)
+#define PIN_MANUAL_PARAMETER_MODE  12 // if connected to ground, analog inputs for parameters are used
 #define PIN_GRAVITY_INPUT       A0
 #define PIN_FRICTION_INPUT      A1
 #define PIN_DRAG_INPUT          A2
+#endif
 #define ONLY_PLOTTER_OUTPUT_PIN A3 // Verbose output to Arduino Serial Monitor is disabled, if connected to ground. This is intended for Arduino Plotter mode, where you can see accelerator input.
 /*
  * A4 and A5 are used by I2C
@@ -168,7 +171,7 @@ bool sPrintCurrentDatasetToPlotterOutput;   // Print data for Arduino plotter, i
  * Maximum number of cars supported. Each car is individually activated at runtime
  * by first press of its button or movement of its accelerator input.
  */
-#define CAR_INITIAL_LENGTH                  4
+#define CAR_INITIAL_LENGTH                  3
 #define CAR_INCREASE_OF_LENGTH_PER_LAP      1 // 0 = Constant length
 #if defined(ENABLE_ACCELERATOR_INPUT) || defined(USE_ACCELERATION_NEOPIXEL_BARS)
 #define NUMBER_OF_CARS            2 // Currently we can handle only 2 distinct accelerometers.
@@ -258,7 +261,7 @@ uint8_t sIndexOfLeadingCar = 0; // To check for playing overtaking sound.
  */
 #define FRICTION_PER_LOOP           0.006
 #define AERODYNAMIC_DRAG_PER_LOOP   0.0002 // can also be 0.0
-#define GRAVITY_FACTOR_FOR_MAP      0.0007 // gravity constant for gravity values from 0 to 100 => gravity 1 is 0.02 -- 0.001 is too much.
+#define GRAVITY_FACTOR_FOR_TRACK    0.0007 // gravity constant for gravity values from 0 to 100 => gravity 1 is 0.02 -- 0.001 is too much.
 
 /*
  * Forward declarations
@@ -705,6 +708,7 @@ public:
         lastButtonState = 1;
 #if defined(ENABLE_ACCELERATOR_INPUT)
         ButtonInputDetected = false;
+        AcceleratorInput.resetOffset();
 #endif
 #if defined(USE_ACCELERATION_NEOPIXEL_BARS)
         AccelerationCommonNeopixelBar.setPin(AccelerationBarPin);
@@ -895,6 +899,7 @@ public:
 #endif
         if (tAcceleration > 0) {
             float tAdditionalEnergy = ((float) tAcceleration) / 4096;
+            // Add energy not just speed
             SpeedAsPixelPerLoop = sqrt((SpeedAsPixelPerLoop * SpeedAsPixelPerLoop) + tAdditionalEnergy);
         }
         if (sPrintCurrentDatasetToPlotterOutput) {
@@ -920,11 +925,12 @@ public:
         }
 #endif
 
-        bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
         float tGravity;
         float tFriction;
         float tDrag;
 
+#if defined(SUPPORT_ANALOG_INPUT_FOR_PARAMETERS)
+        bool tIsAnalogParameterInputMode = !digitalRead(PIN_MANUAL_PARAMETER_MODE);
         if (tIsAnalogParameterInputMode) {
             /*
              * Read analog values for gravity etc. from potentiometers
@@ -934,7 +940,7 @@ public:
             uint16_t tFrictionRaw = analogRead(PIN_FRICTION_INPUT);
             uint16_t tDragRaw = analogRead(PIN_DRAG_INPUT);
             if (tGravityRaw >= ANALOG_OFFSET) {
-                // -ANALOG_OFFSET (20) to get real 0 value even if ground has bias because of high LED current on breadboard
+                // -ANALOG_OFFSET (20) to get real 0 values even if ground has bias because of high LED current on breadboard
                 tGravityRaw -= ANALOG_OFFSET;
             }
             if (tFrictionRaw >= ANALOG_OFFSET) {
@@ -943,27 +949,30 @@ public:
             if (tDragRaw >= ANALOG_OFFSET) {
                 tDragRaw -= ANALOG_OFFSET;
             }
-            tGravity = tGravityRaw * (GRAVITY_FACTOR_FOR_MAP / 512);
+            // Scale to get the default values at middle position
+            tGravity = tGravityRaw * (GRAVITY_FACTOR_FOR_TRACK / 512);
             tFriction = tFrictionRaw * (FRICTION_PER_LOOP / 512);
             tDrag = tDragRaw * (AERODYNAMIC_DRAG_PER_LOOP / 512);
-#if defined(DEBUG)
+#  if defined(DEBUG)
             if ((((sLoopCountForDebugPrint & 0x3F) == 0) || checkInput()) && NumberOfThisCar == 1) {
-#  if defined(TRACE)
+#    if defined(TRACE)
                     Serial.print(F("GRaw="));
                     Serial.print(tGravityRaw);
                     Serial.print(F(" FRaw="));
                     Serial.print(tFrictionRaw);
                     Serial.print(F(" DRaw="));
                     Serial.println(tDragRaw);
-#  endif
+#    endif
 
                 print(tGravity, tFriction, tDrag);
             }
-#endif
+#  endif
 
-        } else {
+        } else
+#endif // defined(SUPPORT_ANALOG_INPUT_FOR_PARAMETERS)
+        {
             // 100 microseconds
-            tGravity = GRAVITY_FACTOR_FOR_MAP;
+            tGravity = GRAVITY_FACTOR_FOR_TRACK;
             tFriction = FRICTION_PER_LOOP;
             tDrag = AERODYNAMIC_DRAG_PER_LOOP;
         }
@@ -999,24 +1008,26 @@ public:
 
         /*
          * Compute new speed:
-         * - Acceleration from map and friction are simply subtracted from speed
+         * - Gravity acceleration and friction are simply subtracted from speed
          * - Aerodynamic drag is subtracted proportional from speed
          */
         int8_t tGravityAcceleration = 0;
+        /*
+         * Check for gravity i.e. if we are on a ramp or loop
+         */
         if (PixelPosition >= bridges[0].RampUp.StartPositionOnTrack
                 && PixelPosition < (bridges[0].RampUp.StartPositionOnTrack + bridges[0].RampUp.RampLength)) {
-            tGravityAcceleration = bridges[0].RampUp.getGravityAcceleration(PixelPosition);
+            tGravityAcceleration = bridges[0].RampUp.getGravityAcceleration(PixelPosition); // Ramp UP
         } else if (PixelPosition >= bridges[0].RampDown.StartPositionOnTrack
                 && PixelPosition < (bridges[0].RampDown.StartPositionOnTrack + bridges[0].RampDown.RampLength)) {
-            tGravityAcceleration = bridges[0].RampDown.getGravityAcceleration(PixelPosition);
+            tGravityAcceleration = bridges[0].RampDown.getGravityAcceleration(PixelPosition); // Ramp DOWN
         } else if (PixelPosition >= loops[0].StartPositionOnTrack
                 && PixelPosition < (loops[0].StartPositionOnTrack + loops[0].LoopLength)) {
-            tGravityAcceleration = loops[0].getGravityAcceleration(PixelPosition);
+            tGravityAcceleration = loops[0].getGravityAcceleration(PixelPosition); // LOOP
         }
-
         if (tGravityAcceleration != 0) {
             /*
-             * Here we are on a ramp or loop
+             * Here we are on a ramp or loop -> apply gravity
              */
             SpeedAsPixelPerLoop += tGravity * tGravityAcceleration;
 #if defined(DEBUG)
@@ -1025,6 +1036,9 @@ public:
 #endif
         }
 
+        /*
+         * Apply friction
+         */
         if (SpeedAsPixelPerLoop > 0) {
             // forward direction
             if (SpeedAsPixelPerLoop > tFriction) {
@@ -1041,6 +1055,9 @@ public:
             }
         }
 
+        /*
+         * Apply drag
+         */
         SpeedAsPixelPerLoop -= SpeedAsPixelPerLoop * tDrag;
 
 #if defined(TRACE)
@@ -1071,8 +1088,10 @@ void setup() {
     pinMode(PIN_START_END_GAME_BUTTON_LED, OUTPUT);
 #endif
 
-    pinMode(PIN_START_END_GAME_BUTTON, INPUT_PULLUP);
+#if defined(SUPPORT_ANALOG_INPUT_FOR_PARAMETERS)
     pinMode(PIN_MANUAL_PARAMETER_MODE, INPUT_PULLUP);
+#endif
+    pinMode(PIN_START_END_GAME_BUTTON, INPUT_PULLUP);
     pinMode(ONLY_PLOTTER_OUTPUT_PIN, INPUT_PULLUP);
     pinMode(PIN_START_BY_INPUT_DISABLE, INPUT_PULLUP);
 
@@ -1098,7 +1117,12 @@ void setup() {
         Serial.println(
                 F(
                         "Connect pin " STR(ONLY_PLOTTER_OUTPUT_PIN) " to ground, to suppress such prints not suited for Arduino plotter"));
+
+#if defined(SUPPORT_ANALOG_INPUT_FOR_PARAMETERS)
         printConfigPinInfo(&Serial, PIN_MANUAL_PARAMETER_MODE, F("AnalogParameterInputMode"));
+#endif
+        printConfigPinInfo(&Serial, PIN_START_BY_INPUT_DISABLE, F("Start game by input"));
+        Serial.println(F("Start stop pin = " STR(PIN_START_END_GAME_BUTTON) " Buzzer pin = " STR(PIN_BUZZER)));
     }
 
 #if defined(ENABLE_ACCELERATOR_INPUT)
@@ -1121,6 +1145,7 @@ void setup() {
         myLCD.print(F("Open LED Race " STR(LAPS_PER_RACE) " Laps"));
         myLCD.setCursor(0, 1);
         myLCD.print(F(VERSION_EXAMPLE " " __DATE__));
+#if defined(SUPPORT_ANALOG_INPUT_FOR_PARAMETERS)
         myLCD.setCursor(0, 2);
         myLCD.print(F("Man. mode pin="));
         if (digitalRead(PIN_MANUAL_PARAMETER_MODE)) {
@@ -1128,6 +1153,7 @@ void setup() {
         } else {
             myLCD.print(F("=" STR(PIN_MANUAL_PARAMETER_MODE) " on"));
         }
+#endif
         myLCD.setCursor(0, 3);
         myLCD.print(F("Start/End game pin=" STR(PIN_START_END_GAME_BUTTON)));
 

@@ -251,8 +251,11 @@ It also shows, how to dynamically **determine the length of the attached strip**
 <br/>
 
 # Revision History
-### Version 3.4.1
+### Version 3.5.0
 - Minor improvements.
+- Added printPatternName(Print *aSerial);
+- Changed function signatures; Parameter Print *aSerial is always the first parameter.
+- Improved examples.
 
 ### Version 3.4.0
 - Renamed `UnderlyingNeoPixelObject` to `ParentNeoPixelObject`.

@@ -22,7 +22,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -47,17 +47,19 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.4.1"
+#define VERSION_NEOPATTERNS "3.5.0"
 #define VERSION_NEOPATTERNS_MAJOR 3
-#define VERSION_NEOPATTERNS_MINOR 4
-#define VERSION_NEOPATTERNS_PATCH 1
+#define VERSION_NEOPATTERNS_MINOR 5
+#define VERSION_NEOPATTERNS_PATCH 0
 // The change log is at the bottom of the file
 
 /*
  * Macro to convert 3 version parts into an integer
  * To be used in preprocessor comparisons, such as #if VERSION_NEOPATTERNS_HEX >= VERSION_HEX_VALUE(3, 7, 0)
  */
-#define VERSION_HEX_VALUE(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+#if !defined(VERSION_HEX_VALUE)
+#define VERSION_HEX_VALUE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
+#endif
 #define VERSION_NEOPATTERNS_HEX  VERSION_HEX_VALUE(VERSION_NEOPATTERNS_MAJOR, VERSION_NEOPATTERNS_MINOR, VERSION_NEOPATTERNS_PATCH)
 
 extern const char *const PatternNamesArray[] PROGMEM;
@@ -476,8 +478,11 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
- * Version 3.4.1 - 02/2026
- * . Minor improvements.
+ * Version 3.5.0 - 10/2026
+ * - Minor improvements.
+ * - Added printPatternName(Print *aSerial);
+ * - Changed function signatures; Parameter Print *aSerial is always the first parameter.
+ * - Improved examples.
  *
  * Version 3.4.0 - 02/2026
  * - Renamed UnderlyingNeoPixelObject to ParentNeoPixelObject.

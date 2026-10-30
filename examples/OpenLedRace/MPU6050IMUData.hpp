@@ -20,7 +20,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  */
 #ifndef _MPU6050_IMU_DATA_HPP
 #define _MPU6050_IMU_DATA_HPP
@@ -437,7 +437,7 @@ void MPU6050IMUData::readDataFromMPU6050() {
         Accelerator[i] = tValue.Word;
 #if defined(USE_ACCEL_FLOATING_OFFSET)
         if ( CountOfFifoChunksForOffset == 1){
-            // Take the second value (a guess) as initial value
+            // Take the second value (a guess) as initial value for low pass filtering
             AcceleratorLowpassSubOneHertz[i].Word.HighWord = tValue.Word;
         } else {
             // Do not compensate the accelerator values with the initial offset.

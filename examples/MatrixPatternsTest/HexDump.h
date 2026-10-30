@@ -1,7 +1,7 @@
 /*
  * HexDump.h
  *
- *  Copyright (C) 2022  Armin Joachimsmeyer
+ *  Copyright (C) 2022-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -16,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 #ifndef _HEX_DUMP_H
@@ -35,8 +35,8 @@
 
 void printBufferHex(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint);     // Prints no address and hex bytes without ASCII representation.
 void printBufferHexDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint); // Prints short relative address and hex bytes without ASCII representation.
-void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint); // Prints short relative address and hex bytes without ASCII representation.
-void printMemoryHexNoASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint);  // Prints 16 bit address and hex bytes with ASCII representation.
+void printBufferHexAndASCIIDump(uint8_t *aBufferAddress, uint16_t aNumberOfBytesToPrint); // Prints short relative address and hex bytes with ASCII representation.
+void printMemoryHexNoASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint);  // Prints 16 bit address and hex bytes without ASCII representation.
 void printMemoryHexAndASCIIDump(uint8_t *aMemoryAddress, uint16_t aNumberOfBytesToPrint); // Prints 16 bit address and hex bytes with ASCII representation.
 void printStackMemory(uint16_t aNumberOfBytesToPrint); // Prints 16 bit address and hex bytes ending at top of stack / RAM end.
 void printStackDump(); // Prints 16 bit address and hex bytes starting at current stackpointer and ending at ending at top of stack / RAM end.

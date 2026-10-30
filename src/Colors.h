@@ -2,7 +2,7 @@
  * Colors.h
  *
  *
- *  Copyright (C) 2018-2021  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-BlueDisplay https://github.com/ArminJo/Arduino-BlueDisplay.
  *  This file is part of android-blue-display https://github.com/ArminJo/android-blue-display.
@@ -18,7 +18,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -33,17 +33,17 @@
  */
 typedef uint16_t color16_t;
 
-// If used as background color for char or text, the background will not filled
 #define COLOR16_BLUEMASK 0x1F
-#define COLOR16_GET_RED(rgb)    ((rgb & 0xF800) >> 8)
-#define COLOR16_GET_GREEN(rgb)  ((rgb & 0x07E0) >> 3)
-#define COLOR16_GET_BLUE(rgb)   ((rgb & 0x001F) << 3)
-#define COLOR16(r,g,b) ((color16_t)(((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3))) // 5 red | 6 green | 5 blue
+#define COLOR16_GET_RED(rgb)    (((rgb) & 0xF800) >> 8)
+#define COLOR16_GET_GREEN(rgb)  (((rgb) & 0x07E0) >> 3)
+#define COLOR16_GET_BLUE(rgb)   (((rgb) & 0x001F) << 3)
+#define COLOR16(r,g,b) ((color16_t)((((r)&0xF8)<<8)|(((g)&0xFC)<<3)|(((b)&0xF8)>>3))) // 5 red | 6 green | 5 blue
 
 #define COLOR16_WHITE     ((color16_t)0xFFFF)
 #define COLOR16_ALMOST_WHITE ((color16_t)0xF7DE) // Every color is 1 bit less than maximum value, but we can distinguish it from white
 
-#define COLOR16_NO_BACKGROUND ((color16_t)COLOR16_WHITE - 1) // No background drawing for text and button (Only-text button)
+// If used as background color for char or text, the background will not filled
+#define COLOR16_NO_BACKGROUND ((color16_t)COLOR16_WHITE - 1) // 0xFFFE No background drawing for text and button (Only-text button)
 
 #define COLOR16_LIGHT_GREY ((color16_t)0x7BEF)
 #define COLOR16_GREY      ((color16_t)0x39E7)
@@ -107,12 +107,11 @@ typedef uint32_t color32_t;
 #define COLOR32_CYAN_QUARTER   COLOR32(0,64,64)
 
 // deprecated
-#define COLOR32(r,g,b)   ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
 #define COLOR_W32(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
-#define WHITE(color) ((color >> 24) & 0xFF)
-#define RED(color)   ((color >> 16) & 0xFF)
-#define GREEN(color) ((color >> 8) & 0xFF)
-#define BLUE(color)  (color & 0xFF)
+#define WHITE(color) (((color) >> 24) & 0xFF)
+#define RED(color)   (((color) >> 16) & 0xFF)
+#define GREEN(color) (((color) >> 8) & 0xFF)
+#define BLUE(color)  ((color) & 0xFF)
 // end deprecated
 
 #endif // _COLORS_H

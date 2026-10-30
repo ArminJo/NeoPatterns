@@ -1,7 +1,7 @@
 /*
  * AVRUtils.h
  *
- *  Copyright (C) 2016-2024  Armin Joachimsmeyer
+ *  Copyright (C) 2016-2026  Armin Joachimsmeyer
  *
  *  This file is part of Arduino-Utils https://github.com/ArminJo/Arduino-Utils.
  *
@@ -16,7 +16,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -26,10 +26,10 @@
 #ifndef _AVR_UTILS_H
 #define _AVR_UTILS_H
 
+#include <Print.h>
 #include <stdint.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
-#include "avr/boot.h"
 
 /*
  * The largest address just not allocated so far
@@ -49,13 +49,7 @@ extern char __heap_start; // = __bss_end, the linker address of heap start
  */
 #define HEURISTIC_ADDITIONAL_MALLOC_MARGIN 14
 
-/*
- * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
- */
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)  || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)
-#  if !defined(_MILLIS_UTILS_H)
-#define timer0_millis millis_timer_millis // The ATTinyCore libraries use other variable name in wiring.c - copied from MillisUtils.h
-#  endif
 #  if !defined(DEFAULT_MILLIS_FOR_WAKEUP_AFTER_POWER_DOWN)
 #define DEFAULT_MILLIS_FOR_WAKEUP_AFTER_POWER_DOWN  65
 #  endif
@@ -65,6 +59,12 @@ extern char __heap_start; // = __bss_end, the linker address of heap start
 #  endif
 #endif
 
+/*
+ * storage for millis value to enable compensation for interrupt disable at signal acquisition etc.
+ */
+#if !defined(timer0_millis) && (defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__))
+#define timer0_millis millis_timer_millis // The ATTinyCore + Digispark libraries use millis_timer_millis in wiring.c
+#endif
 extern volatile unsigned long timer0_millis;
 
 void initSleep(uint8_t tSleepMode);
@@ -73,10 +73,6 @@ void initTimeoutWithWatchdog(uint8_t aWatchdogPrescaler);
 uint16_t computeSleepMillis(uint8_t aWatchdogPrescaler);
 void sleepWithWatchdog(uint8_t aWatchdogPrescaler, bool aAdjustMillis = false);
 
-#include <Print.h>
-
-uint8_t* getAvailableHeapStart() __attribute__ ((deprecated ("Renamed to getStartOfAvailableHeap()")));
-void printAvailableHeapStart(Print *aSerial) __attribute__ ((deprecated ("Renamed to printStartOfAvailableHeap()")));
 uint8_t* getStartOfAvailableHeap(void);
 void printStartOfAvailableHeap(Print *aSerial);
 uint16_t getCurrentAvailableStackSize(void);
@@ -86,7 +82,7 @@ uint16_t getTheoreticalMaximumAvailableHeapSize(void);
 void printCurrentAvailableHeapSize(Print *aSerial);
 void printCurrentAvailableHeapSizeSimple(Print *aSerial);
 // print available heap at current program (SP value matters) position
-#define PRINT_AVAILABLE_HEAP   Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - HEURISTIC_ADDITIONAL_MALLOC_MARGIN - ((uint16_t) __malloc_margin))
+#define PRINT_AVAILABLE_HEAP   do {Serial.print(F("available="));Serial.println(SP - (uint16_t) __brkval + 1 - HEURISTIC_ADDITIONAL_MALLOC_MARGIN - ((uint16_t) __malloc_margin));} while (0)
 
 #define HEAP_STACK_UNTOUCHED_VALUE 0x5A
 void initStackFreeMeasurement();

@@ -28,7 +28,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
 #ifndef _EASY_BUTTON_AT_INT01_H
@@ -44,7 +44,9 @@
  * Macro to convert 3 version parts into an integer
  * To be used in preprocessor comparisons, such as #if VERSION_EASY_BUTTON_HEX >= VERSION_HEX_VALUE(3, 0, 0)
  */
-#define VERSION_HEX_VALUE(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+#if !defined(VERSION_HEX_VALUE)
+#define VERSION_HEX_VALUE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
+#endif
 #define VERSION_EASY_BUTTON_HEX  VERSION_HEX_VALUE(VERSION_EASY_BUTTON_MAJOR, VERSION_EASY_BUTTON_MINOR, VERSION_EASY_BUTTON_PATCH)
 #if defined(__AVR__)
 #include <Arduino.h>
@@ -321,8 +323,8 @@ public:
     volatile bool ButtonToggleState;    // Toggle is on press, not on release - initial value is false
 
     /*
-     * Flag to enable action only once. Only set to true by library.
-     * Can be checked and set to false by main program to enable only one action per button press.
+     * Flag to enable action only once. Library only sets it to true. Must be set to false by user program.
+     * Can be checked and set to false by main loop to enable only one action per button press.
      */
     volatile bool ButtonStateHasJustChanged;
 
