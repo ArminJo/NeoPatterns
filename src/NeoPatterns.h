@@ -47,10 +47,10 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.4.1"
+#define VERSION_NEOPATTERNS "3.5.0"
 #define VERSION_NEOPATTERNS_MAJOR 3
-#define VERSION_NEOPATTERNS_MINOR 4
-#define VERSION_NEOPATTERNS_PATCH 1
+#define VERSION_NEOPATTERNS_MINOR 5
+#define VERSION_NEOPATTERNS_PATCH 0
 // The change log is at the bottom of the file
 
 /*
@@ -476,8 +476,11 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
- * Version 3.4.1 - 02/2026
- * . Minor improvements.
+ * Version 3.5.0 - 10/2026
+ * - Minor improvements.
+ * - Added printPatternName(Print *aSerial);
+ * - Changed function signatures; Parameter Print *aSerial is always the first parameter.
+ * - Improved examples.
  *
  * Version 3.4.0 - 02/2026
  * - Renamed UnderlyingNeoPixelObject to ParentNeoPixelObject.
