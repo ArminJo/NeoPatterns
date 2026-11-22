@@ -4,7 +4,7 @@
  * Implements basic functions for NeoPixel matrix. Tested with 8x8 matrix.
  * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
  *
- *  Copyright (C) 2019  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -85,15 +85,15 @@ class MatrixNeoPixel: public virtual NeoPixel {
 public:
     MatrixNeoPixel();
     void init();
-    MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
-    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel);
+    MatrixNeoPixel(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel);
+    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel);
 
     void printConnectionInfo(Print *aSerial);
 
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
     void setLayoutMappingFunction(uint16_t (*aLayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t));
-    uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);
 #endif
+    uint16_t LayoutMapping(uint8_t aColumnX, uint8_t aRowY);
 
     color32_t getMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY);
     void setMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t a32BitColor);
@@ -104,15 +104,19 @@ public:
     void addMatrixPixelColor(uint8_t aColumnX, uint8_t aRowY, color32_t aColor);
 
     void loadPicturePGM(const uint8_t *aGraphicsArrayPtrPGM, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding = DO_NO_PADDING);
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding =
+            DO_NO_PADDING);
 
     void loadPicture(const uint8_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic, color32_t aForegroundColor,
             color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding = DO_NO_PADDING, bool IsPGMData = false);
 
     void loadPicture(const uint16_t *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
-            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding = DO_NO_PADDING,
-            bool IsPGMData = false);
-
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding =
+            DO_NO_PADDING, bool IsPGMData = false);
+    template<typename LineType>
+    void _loadPicture(const LineType *aGraphicsArrayPtr, int8_t aWidthOfGraphic, uint8_t aHeightOfGraphic,
+            color32_t aForegroundColor, color32_t aBackgroundColor, int8_t aXOffset, int8_t aYOffset, bool aDoPadding,
+            bool IsPGMData);
     void drawQuarterPatternOdd(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
     void drawQuarterPatternEven(uint16_t aPatternValue, color32_t aForegroundColor, color32_t aBackgroundColor);
 
@@ -120,15 +124,18 @@ public:
     void drawAllColors2();
     void testMapping(uint16_t aDelayMillis);
 
-    void drawBar(uint8_t aColumnX, uint8_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
-    void drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
+    void drawBar(uint8_t aColumnX, uint8_t aBarLength, color32_t aColor, bool aDrawFromTop = false);
+    void drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromTop = false);
+    void drawBarFromColorArray(uint8_t aColumnX, uint8_t aBarLength, color16_t *aColor16ArrayPtr, bool aDrawFromTop = false);
 
-    // Geometry of Matrix
+    /*
+     * Geometry of Matrix
+     * Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
+     */
     uint8_t Rows;       // Y Direction / size
     uint8_t Columns;    // X Direction / size
 
 #if !defined(SUPPORT_ONLY_DEFAULT_GEOMETRY)
-    // Origin (0,0) of x and y values is at the top left corner and the positive direction is right and down.
     uint8_t Geometry;    // Flags for geometry
     uint16_t (*LayoutMappingFunction)(uint8_t, uint8_t, uint8_t, uint8_t); // Pointer to function, which implements the mapping between X/Y and pixel number
 #endif

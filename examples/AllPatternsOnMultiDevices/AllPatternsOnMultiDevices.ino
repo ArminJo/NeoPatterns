@@ -1,11 +1,11 @@
 /*
- *  AllPatternsOnMultiDevices.cpp
+ *  AllPatternsOnMultiDevices.ino
  *
  *  Shows all patterns for strips rings and matrixes included in the NeoPattern MatrixNeoPattern and Snake library.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -29,8 +29,10 @@
 #define INFO
 //#define DEBUG
 
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define FONT_END7F // No fonts > 0x7f for Ticker supported - saves up to 1024 bytes program memory for the used 6x8 font
+#define DO_NOT_SUPPORT_DYNAMIC_OBJECTS // saves up to 42 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_RGBW // saves up to 450 bytes program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 376 bytes program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 /*
@@ -163,7 +165,7 @@ void setup() {
 #  if defined(DEBUG)
     initStackFreeMeasurement();
     initTrace();
-    printFreeRam(&Serial);
+    printRAMAndStackInfo(&Serial);
 #  endif
 #endif
 

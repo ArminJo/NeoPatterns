@@ -7,7 +7,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -47,9 +47,9 @@
 #define PROGMEM
 #endif
 
-#define VERSION_NEOPATTERNS "3.5.0"
-#define VERSION_NEOPATTERNS_MAJOR 3
-#define VERSION_NEOPATTERNS_MINOR 5
+#define VERSION_NEOPATTERNS "4.0.0"
+#define VERSION_NEOPATTERNS_MAJOR 4
+#define VERSION_NEOPATTERNS_MINOR 0
 #define VERSION_NEOPATTERNS_PATCH 0
 // The change log is at the bottom of the file
 
@@ -200,26 +200,6 @@ public:
     void updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop(uint8_t aBrightness, bool aEnableChildOverlay =
             DISABLE_CHILD_OVERLAY);
 
-    // deprecated
-    bool updateAndShowAlsoAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
-    bool updateAndShowAlsoAllPartialPatterns(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
-    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop()
-            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
-    void updateAndShowAlsoAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
-
-    void updateAndWaitForPatternToStop() __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
-    void updateAndWaitForPatternToStop(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateShowAndWaitForPatternToStop()")));
-    bool updateAllPartialPatterns() __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
-    bool updateAllPartialPatterns(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatterns()")));
-    void updateAllPartialPatternsAndWaitForPatternsToStop()
-            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
-    void updateAllPartialPatternsAndWaitForPatternsToStop(uint8_t aBrightness)
-            __attribute__ ((deprecated ("Renamed to updateAndShowAlsoAllChildPatternsAndWaitForPatternsToStop()")));
-
     void showPatternInitially();
     bool decrementTotalStepCounter();
     void setCompensatedInterval(uint16_t aIntervalToCompensate);
@@ -233,16 +213,12 @@ public:
      */
 #if defined(ENABLE_PATTERN_RAINBOW_CYCLE)
     void RainbowCycle(uint8_t aIntervalMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
-    void RainbowCycleD(uint8_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1)
-            __attribute__ ((deprecated ("Renamed to RainbowCycleDuration()")));
-    void RainbowCycleDuration(uint8_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
+    void RainbowCycleDuration(uint16_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP, uint8_t aRepetitions = 1);
     bool RainbowCycleUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
 #if defined(ENABLE_PATTERN_COLOR_WIPE)
     void ColorWipe(color32_t aColor, uint16_t aIntervalMillis, bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE, uint8_t aDirection =
             DIRECTION_UP);
-    void ColorWipeD(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE,
-            uint8_t aDirection = DIRECTION_UP) __attribute__ ((deprecated ("Renamed to ColorWipeDuration()")));
     void ColorWipeDuration(color32_t aColor, uint16_t aCompleteDurationMillis, bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE,
             uint8_t aDirection = DIRECTION_UP);
     bool ColorWipeUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
@@ -261,9 +237,6 @@ public:
     bool DelayUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 
 #if defined(ENABLE_PATTERN_STRIPES)
-    void StripesD(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
-            uint16_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP)
-                    __attribute__ ((deprecated ("Renamed to StripesDuration()")));
     void StripesDuration(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
             uint16_t aCompleteDurationMillis, uint8_t aDirection = DIRECTION_UP);
     void Stripes(color32_t aColor1, uint8_t aLength1, color32_t aColor2, uint8_t aLength2, uint16_t aNumberOfSteps,
@@ -280,9 +253,6 @@ public:
 #if defined(ENABLE_PATTERN_SCANNER_EXTENDED)
     void ScannerExtended(color32_t aColor, uint8_t aLength, uint16_t aIntervalMillis, uint16_t aNumberOfBouncings = 0,
             uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
-    void ScannerExtendedD(color32_t aColor, uint8_t aLength, uint16_t aCompleteDurationMillis, uint16_t aNumberOfBouncings = 0,
-            uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP)
-                    __attribute__ ((deprecated ("Renamed to ScannerExtendedDuration()")));
     void ScannerExtendedDuration(color32_t aColor, uint8_t aLength, uint16_t aCompleteDurationMillis, uint16_t aNumberOfBouncings =
             0, uint8_t aMode = 0, uint8_t aDirection = DIRECTION_UP);
     bool ScannerExtendedUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
@@ -294,7 +264,7 @@ public:
 #endif
 
 #if defined(ENABLE_PATTERN_TWINKLE)
-    void Twinkle(color32_t aColorSpecial, uint8_t aPercentageOfStripFilling, uint16_t aIntervalMillis, uint16_t aRepetitions,
+    void Twinkle(color32_t aColorSpecial, uint8_t aAverageNumberOfActivePixel, uint16_t aIntervalMillis, uint16_t aRepetitions,
             bool aDoNotClearBefore = CLEAR_PATTERN_BEFORE);
     bool TwinkleUpdate(bool aDoUpdate = UPDATE_AND_DRAW_NEW_PATTERN);
 #endif
@@ -357,7 +327,7 @@ public:
      * Internal control variables
      */
     uint8_t ActivePattern; // Number of pattern which is running. If no callback activated, set to PATTERN_NONE in decrementTotalStepCounter().
-    uint16_t Interval;   // Milliseconds between updates
+    uint16_t Interval;     // Milliseconds between updates
     unsigned long lastUpdate; // Milliseconds of last update of pattern. Set by decrementTotalStepCounter(), showPatternInitially() or XXXupdate()
 
     void (*OnPatternComplete)(NeoPatterns*); // Callback on completion of pattern. This should set aLedsPtr->ActivePattern = PATTERN_NONE; if no other pattern is started.
@@ -365,7 +335,7 @@ public:
     /*
      * Variables for almost each pattern
      */
-    int16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
+    uint16_t TotalStepCounter; // Total number of steps in the pattern including all repetitions and the last delay step to show the end result
     int16_t Index; // or Position. Counter for basic patterns. Current step within the pattern. Step counter of snake. int for Cylon.
     color32_t Color1;           // Main pattern color
     int8_t Direction;           // Direction to run the pattern  DIRECTION_UP, DIRECTION_LEFT, DIRECTION_DOWN or DIRECTION_RIGHT
@@ -401,7 +371,7 @@ public:
      */
     union {
         uint8_t PatternLength;          // 2. length of a (stripes) pattern
-        uint8_t SnakeAutorunStep;
+        uint8_t SnakeAutorunStep;       // AUTORUN_MODE_SHOW_END or AUTORUN_MODE_SHOW_SCORE or AUTORUN_MODE_MOVE_SCORE or AUTORUN_MODE_START_NEW
         uint8_t ScannerIntervalMillis;  // for delay of multiple falling stars
     } ByteValue2;
 
@@ -478,11 +448,21 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
 #endif
 
 /*
+ * Version 4.0.0 - 11/2026
+ * - Added: Classes VUBar, NeoPixelVU and MatrixNeoPixelVU for VU bars and new examples ThreeVUBars and SoundToNeoPixelVU.
+ * - Changed: #define NEO_KHZ400 (for old Neopixels) in Adafruit_NeoPixel.h disabled - saves up to 260 bytes and 6 bytes RAM.
+ * - Changed: Snake length and high score now 8 bit.
+ * - Changed: Renamed getAndAdjustActualNeopixelLenghtSimple() to getAndAdjustActualNeopixelLengthSimple().
+ * - Changed: Parameter aDrawFromBottom of drawBar() and drawBarFromColorArray() is replaced by aDrawFromTop, which has the inverted meaning. The default is still to draw from bottom.
+ * - Changed: The included Adafruit_NeoPixel.h file has #define NEO_KHZ400 disabled, which saves 260 bytes for AllPatternsOnMultiDevices.
+ * - Changed: NeoPixel::drawBarFromColorArray() now uses the first color of the array for the pixel where the bar starts. Before, the order of the colors was reversed.
+ * - Removed: All deprecated functions and definitions which were already deprecated in version 3.5.
+ *
  * Version 3.5.0 - 10/2026
- * - Minor improvements.
- * - Added printPatternName(Print *aSerial);
- * - Changed function signatures; Parameter Print *aSerial is always the first parameter.
- * - Improved examples.
+ * - Added: printPatternName(Print *aSerial);
+ * - Changed: Minor improvements.
+ * - Changed: function signatures; Parameter Print *aSerial is always the first parameter.
+ * - Changed: Improved examples.
  *
  * Version 3.4.0 - 02/2026
  * - Renamed UnderlyingNeoPixelObject to ParentNeoPixelObject.
@@ -496,7 +476,6 @@ void __attribute__((weak)) UserPattern2(NeoPatterns *aNeoPatterns, color32_t aCo
  * - New functions setCompensatedInterval() and copyRegion().
  * - Renamed ColorWipeD() to ColorWipeDuration() etc. and new FadeDuration() etc.
  * - Renamed setBrightnessValue() to setBrightness().
- * - Member variable Interval is now signed.
  * - Copied and used random8() from FastLED https://github.com/FastLED/FastLED/blob/master/src/lib8tion/random8.h
  *
  * Version 3.2.0 - 09/2024

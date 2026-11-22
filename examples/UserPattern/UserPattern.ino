@@ -1,5 +1,5 @@
 /*
- *  UserPattern.cpp
+ *  UserPattern.ino
  *
  *  User pattern must at least implement the following functions:
  *  bool UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate);
@@ -10,7 +10,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2022-2024  Armin Joachimsmeyer
+ *  Copyright (C) 2022-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -123,7 +123,7 @@ bool UserPattern1Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
      * Refresh pattern
      */
     for (unsigned int i = 0; i < aNeoPatterns->numPixels(); i++) {
-        if (i == aNeoPatterns->Index) {
+        if ((int16_t) i == aNeoPatterns->Index) {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->Color1);
         } else {
             aNeoPatterns->setPixelColor(i, aNeoPatterns->LongValue1.BackgroundColor);
@@ -178,7 +178,7 @@ bool UserPattern2Update(NeoPatterns *aNeoPatterns, bool aDoUpdate) {
          */
         if (aNeoPatterns->Direction == DIRECTION_UP) {
             // do not use top pixel twice
-            if (aNeoPatterns->Index == (aNeoPatterns->numPixels() - 1)) {
+            if (aNeoPatterns->Index == (int) (aNeoPatterns->numPixels() - 1)) {
                 aNeoPatterns->Direction = DIRECTION_DOWN;
             }
         } else {
@@ -215,9 +215,10 @@ void userPatternsHandler(NeoPatterns *aLedsPtr) {
     case 0:
         Serial.println("Start user pattern 1");
         Serial.flush();
-        // tRepetitions & DIRECTION_UP_DOWN_MASK leads to 0 or 2 which is UP and DOWN
+        // tDuration  & DIRECTION_UP_DOWN_MASK leads to 0 or 2 which is UP and DOWN
         // dimColor() reduces color intensity to 50 %
-        UserPattern1(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::dimColor(NeoPatterns::Wheel(tColor)), tDuration, tRepetitions & DIRECTION_UP_DOWN_MASK);
+        UserPattern1(aLedsPtr, COLOR32_RED_HALF, NeoPatterns::dimColor(NeoPatterns::Wheel(tColor)), tDuration,
+                tDuration & DIRECTION_UP_DOWN_MASK);
         break;
 
     case 1:

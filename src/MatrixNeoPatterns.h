@@ -100,13 +100,10 @@ struct SnowFlakeInfoStruct {
 class MatrixNeoPatterns: public MatrixNeoPixel, public NeoPatterns {
 public:
     MatrixNeoPatterns();
-    void init();
     MatrixNeoPatterns(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
     bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
-
-    void setGeometry(uint8_t aRows, uint8_t aColoums);
 
 #if defined(ENABLE_MATRIX_PATTERN_TICKER)
     void TickerPGM(const char *aStringPtrPGM, color32_t aForegroundColor, color32_t aBackgroundColor, uint16_t aIntervalMillis,
@@ -170,7 +167,7 @@ public:
     void setInitHeat();
 };
 
-void MatrixPatternsDemo(NeoPatterns *aLedsPtr);
+void MatrixPatternsDemoHandler(NeoPatterns *aLedsPtr);
 
 void myLoadTest(MatrixNeoPatterns *aLedsPtr);
 

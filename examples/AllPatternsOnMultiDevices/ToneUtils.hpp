@@ -60,7 +60,7 @@ void toneSimpleAtPin3(unsigned long aFrequencyHertz) {
 
 /*
  * Small code: 80 Bytes for first call
- * Supports only frequencies from 244 Hz to 500 kHz
+ * Supports only frequencies from 122 Hz to 250 kHz
  */
 void toneSimpleAtPin11(unsigned long aFrequencyHertz) {
     pinModeFast(11, OUTPUT);

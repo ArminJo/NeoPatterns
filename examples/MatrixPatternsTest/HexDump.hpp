@@ -101,7 +101,7 @@ void printStackDump() {
  */
 void printStackMemory(uint16_t aNumberOfBytesToPrint) {
     Serial.print(F("SP=0x"));
-    Serial.print((uint16_t) SP, HEX);
+    Serial.print((uintptr_t) SP, HEX);
     Serial.print(F(", caller address=(0x"));
     uint16_t tCallerAddress = (uint16_t) __builtin_return_address(0);
     Serial.print(tCallerAddress, HEX);

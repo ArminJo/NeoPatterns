@@ -64,17 +64,20 @@ jobs:
           - arduino-boards-fqbn: arduino:avr:leonardo
             sketches-exclude: AllPatternsOnMultiDevices,OpenLedRace # too big
 
+          - arduino-boards-fqbn: arduino:avr:mega
+            sketches-exclude: SoundToNeoPixelVU # INTERNAL << REFS0
+
           - arduino-boards-fqbn: esp8266:esp8266:huzzah:eesz=4M3M,xtal=80
             platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip # Comma separated list of example names to exclude in build
+            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip,SoundToNeoPixelVU,ThreeVUBars # Comma separated list of example names to exclude in build
 
           - arduino-boards-fqbn: esp32:esp32:featheresp32:FlashFreq=80
             platform-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip # MatrixPatternsTest,TwoPatternsOnOneStrip because of missing EasyButton library
+            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip,SoundToNeoPixelVU # MatrixPatternsTest,TwoPatternsOnOneStrip because of missing EasyButton library
 
           - arduino-boards-fqbn: STMicroelectronics:stm32:GenF1:pnum=BLUEPILL_F103C8
             platform-url: https://raw.githubusercontent.com/stm32duino/BoardManagerFiles/main/package_stmicroelectronics_index.json
-            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip # MatrixPatternsTest,TwoPatternsOnOneStrip because of missing EasyButton library
+            sketches-exclude: OpenLedRace,MatrixPatternsTest,TwoPatternsOnOneStrip,SoundToNeoPixelVU # MatrixPatternsTest,TwoPatternsOnOneStrip because of missing EasyButton library
 
 #          - arduino-boards-fqbn: stm32duino:STM32F1:genericSTM32F103C # Roger Clark version
 #            platform-url: http://dan.drown.org/stm32duino/package_STM32duino_index.json

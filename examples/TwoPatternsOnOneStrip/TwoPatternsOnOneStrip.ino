@@ -1,5 +1,5 @@
 /*
- *  TwoPatternsOnOneStrip.cpp
+ *  TwoPatternsOnOneStrip.ino
  *
  *  Runs 2 patterns simultaneously on a NeoPixel strip. One is the main background pattern
  *  and the other is the fast moves pattern intended to be more random and quite seldom.
@@ -12,7 +12,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -49,8 +49,8 @@
 #define ENABLE_PATTERN_COLOR_WIPE
 #define ENABLE_PATTERN_SCANNER_EXTENDED
 #define ENABLE_PATTERN_RAINBOW_CYCLE
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_RGBW // saves up to 450bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 376 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 #define TEST_PATTERN_LENGTH_FOR_PIXEL_DETECTION     6  // Adjust this value if test pattern length for successful detection is greater than 1
 #include <NeoPatterns.hpp>
@@ -137,7 +137,7 @@ void setup() {
      * and adjust pixel buffer to the new length.
      * After this initialize the pixel regions with the parent object to also get the new length here
      */
-    uint16_t tActualNeopixelLength = NeoPatternsBackground.getAndAdjustActualNeopixelLenghtSimple();
+    uint16_t tActualNeopixelLength = NeoPatternsBackground.getAndAdjustActualNeopixelLengthSimple();
     Serial.print(F("Actual neopixel length="));
     Serial.println(tActualNeopixelLength);
 

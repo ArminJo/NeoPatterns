@@ -5,7 +5,7 @@
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -81,9 +81,9 @@ position const SnakeInitialPixels[] = { { 4, 4 }, { 5, 4 }, { 6, 4 }, { 6, 5 } }
 class MatrixSnake: public MatrixNeoPatterns {
 public:
     MatrixSnake();
-    MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+    MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
-    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+    bool init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
             void (*aPatternCompletionCallback)(NeoPatterns*)=nullptr);
 
     bool Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPinOfRightButton = 0, uint8_t aPinOfLeftButton = 0,
@@ -91,10 +91,12 @@ public:
 
     bool update();
     bool update(uint8_t aBrightness);
-    bool updateOrRedraw(bool aDoRedrawIfNoUpdate);
-    bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness);
+    // deprecated, the snake has no redraw anymore. Hides NeoPatterns::updateOrRedraw(), which does not know the snake pattern.
+    bool updateOrRedraw(bool aDoRedrawIfNoUpdate) __attribute__ ((deprecated ("Use update() instead")));
+    bool updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness) __attribute__ ((deprecated ("Use update(aBrightness) instead")));
+    bool _redrawAndUpdate(bool aDoRedraw); // internal, not deprecated, to avoid deprecated warnings inside the library
 
-    void SnakeUpdate(bool aDoUpdate = true);
+    void SnakeUpdate();
     void SnakeStop();
     void SnakeInputHandler();
     void SnakeEndHandler();
@@ -108,7 +110,6 @@ public:
     void rotateLeft();
     //
     bool isPositionInArea(position aPositionToCheck);
-    uint16_t getIndexOfPositionInSnake(uint8_t aPositionToCheckX, uint8_t aPositionToCheckY);
     uint16_t getIndexOfPositionInSnake(position aPositionToCheck);
     uint16_t getIndexOfPositionInSnakeTail(position aPositionToCheck);
     uint16_t checkDirection(uint8_t aDirectionToCheck);
@@ -125,10 +126,8 @@ public:
     uint8_t runAndCheckIfAppleCanBeReached();
     uint8_t builtinGetNextSnakeDirection();
 
-    // The pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed
-    // SnakePixelList[0] is head of snake
-    position *SnakePixelList;
-    uint16_t SnakeLength; // current length of snake
+    position *SnakePixelList; // Pixel positions of the Snake. Only the positions up until snake_length - 1 are displayed. SnakePixelList[0] is head of snake.
+    uint8_t SnakeLength; // current length of snake, overflow at 256!
 
 #define AUTOSOLVER_CLOCKWISE_FLAG 0x01 // if set choose directions from 3 to 0
     uint8_t SnakeAutoSolverMode; // The mode for findNextDir()
@@ -136,7 +135,7 @@ public:
     // the apple the snake chases after
     position Apple;
 
-    uint16_t HighScore;
+    uint8_t HighScore;
 
     /*
      * Snake input stuff
@@ -153,7 +152,11 @@ private:
 
 uint8_t computeDirection(position aStartPosition, position aEndPosition);
 
-extern const char sDefaultTickerText[] PROGMEM; // = "I love Neopixel"
+extern const char ILoveNeopixelString[] PROGMEM;
+extern const char ILoveNeopatternsString[] PROGMEM;
+extern const char MatrixDemoString[] PROGMEM;
+extern const char WelcomeString[] PROGMEM;
+
 extern const char *sTickerTextPtr; // = sDefaultTickerText;
 void setMatrixAndSnakePatternsDemoHandlerTickerText(const __FlashStringHelper *aTextForTicker);
 void setMatrixAndSnakePatternsDemoHandlerTickerText(const char *aTextForTicker);

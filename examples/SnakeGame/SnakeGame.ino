@@ -1,5 +1,5 @@
 /*
- * SnakeGame.cpp
+ * SnakeGame.ino
  *
  *  Simply runs the Snake game. It can be controlled by 2 or 4 buttons or by serial input (WASD).
  *  The experimental Python script in the extras folder converts key presses and game controller input to appropriate serial output for the game.
@@ -10,7 +10,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -25,7 +25,7 @@
  *  See the GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/gpl.html>.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  *
  */
 
@@ -34,8 +34,8 @@
 //#define DEBUG // implies also setting of INFO
 //#define INFO
 
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_RGBW // saves up to 450bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 376 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 #define ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
@@ -145,12 +145,11 @@ void loop() {
         sLastBrightness = tBrightness;
         Serial.print(F("Brightness="));
         Serial.println(tBrightness);
-        NeoPixelMatrixSnake.updateOrRedraw(DO_REDRAW_IF_NO_UPDATE, tBrightness);
-    } else {
-        NeoPixelMatrixSnake.updateOrRedraw(DO_NO_REDRAW_IF_NO_UPDATE, tBrightness);
+        NeoPixelMatrixSnake.Brightness = tBrightness;
+        NeoPixelMatrixSnake.drawApple();
+        NeoPixelMatrixSnake.drawSnake();
     }
-#else
-    NeoPixelMatrixSnake.update(); // calls SnakeInputHandler()
 #endif
+    NeoPixelMatrixSnake.update(); // calls SnakeInputHandler()
     delay(50);
 }

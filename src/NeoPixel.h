@@ -3,7 +3,7 @@
  *
  * Implements extensions to Adafruit_NeoPixel functions
  *
- *  Copyright (C) 2019-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2019-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -43,20 +43,19 @@
 #include "Adafruit_NeoPixel.h" // Click here to get the library: http://librarymanager/All#Adafruit_NeoPixel
 #include "Colors.h"
 
-//#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_RGBW // saves up to 450 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 #if !defined(DO_NOT_SUPPORT_RGBW)
 // Support rgbw colors for pattern.
-// Deactivate this, if you do NOT need RGBW support and want to save program memory (max 300 bytes).
 #define _SUPPORT_RGBW // Introduced to avoid double negations below using #if ! defined(DO_NOT_SUPPORT_RGBW)
 #endif
 
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 376 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 #if !defined(DO_NOT_SUPPORT_BRIGHTNESS)
 #define SUPPORT_BRIGHTNESS // Introduced to avoid double negations
 
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 #  if !defined(DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS)
-// // Each color is only set to zero, if brightness or input color is zero. Otherwise each color brightness is at least 1 e.g. 0x000100
+// Each color is only set to zero, if brightness or input color is zero. Otherwise each color brightness is at least 1 e.g. 0x000100
 #define SUPPORT_NO_ZERO_BRIGHTNESS // Introduced to avoid double negations
 #  endif
 #endif
@@ -65,15 +64,11 @@
 
 #if defined(_SUPPORT_RGBW)
 uint8_t getWhitePart(color32_t color);
-uint8_t White(color32_t color) __attribute__ ((deprecated ("Renamed to getWhitePart()"))); // deprecated
 #endif
 uint8_t getRedPart(color32_t color);
 uint8_t getGreenPart(color32_t color);
 uint8_t getBluePart(color32_t color);
 
-uint8_t Red(color32_t color) __attribute__ ((deprecated ("Renamed to getRedPart()"))); // deprecated
-uint8_t Green(color32_t color) __attribute__ ((deprecated ("Renamed to getGreenPart()"))); // deprecated
-uint8_t Blue(color32_t color) __attribute__ ((deprecated ("Renamed to getBluePart()"))); // deprecated
 
 /*
  * Values for parameter aEnableShowOfParentPixel of init()
@@ -82,13 +77,13 @@ uint8_t Blue(color32_t color) __attribute__ ((deprecated ("Renamed to getBluePar
 #define DISABLE_CALLING_SHOW_OF_PARENT  false
 
 /*
- * SIZE = 6 + 22 from Adafruit_NeoPixel = 28
+ * SIZE = 6 + 22 from Adafruit_NeoPixel = 28, or with _SUPPORT_RGBW: SIZE = 7 + 22 from Adafruit_NeoPixel = 29
  */
 class NeoPixel: public Adafruit_NeoPixel {
 public:
     NeoPixel();
     NeoPixel(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel);
-    void AdafruitNeoPixelIinit(uint16_t aNumberOfPixels, uint16_t aPin, neoPixelType aTypeOfPixel);
+    void AdafruitNeoPixelInit(uint16_t aNumberOfPixels, uint16_t aPin, neoPixelType aTypeOfPixel);
     bool init(uint16_t aNumberOfPixels, uint8_t aPin, neoPixelType aTypeOfPixel);
     NeoPixel(NeoPixel *aParentNeoPixelObject, uint16_t aPixelOffset, uint16_t aNumberOfPixels,
             bool aEnableShowOfParentPixel = DISABLE_CALLING_SHOW_OF_PARENT);
@@ -100,7 +95,7 @@ public:
     void printConnectionInfo(Print *aSerial);
     void printPin(Print *aSerial);
 
-    uint16_t getAndAdjustActualNeopixelLenghtSimple();
+    uint16_t getAndAdjustActualNeopixelLengthSimple();
 
     // To enable more than one pattern on the same strip
     void setPixelBuffer(uint8_t *aNewPixelBufferPointer);
@@ -117,7 +112,6 @@ public:
     bool begin(Print *aSerial);
     bool begin(Print *aSerial, uint8_t aBrightness, bool aEnableBrightnessNonZeroMode = false);
 
-    void ColorSet(color32_t aColor) __attribute__ ((deprecated ("Renamed to setColor()"))); // deprecated;
     void setColor(color32_t aColor);
     color32_t getPixelColor(uint16_t aPixelIndex);
     uint8_t getBytesPerPixel();
@@ -136,19 +130,21 @@ public:
     void setPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue, uint8_t aWhite);
 #endif
     void setPixelColor(uint16_t aPixelIndex, color32_t aColor);
+    void setPixelColor16(uint16_t aPixelIndex, color16_t aColor); // RGB 565 color, see Colors.h
 
-    void setBrightnessValue(uint8_t aBrightness)__attribute__ ((deprecated ("Renamed to setBrightness()")));
     void setBrightness(uint8_t aBrightness);                // Sets the brightness used by Neopixel drawing functions
     void setAdafruitBrightnessValue(uint8_t aBrightness);   // Convenience function to set the brightness used by the (unused) Adafruit drawing functions
     void setBrightnessNonZeroMode(bool aEnableBrightnessNonZeroMode);
 
     void fillWithRainbow(uint8_t aRainbowWheelStartPos, bool aStartAtTop = false);
-    void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromBottom = true);
-    void fillRegion(color32_t aColor, uint16_t aRegionStartIndext, uint16_t aRegionLength);
+    void drawBar(uint16_t aBarLength, color32_t aColor, bool aDrawFromTop = false);
+    void fillRegion(color32_t aColor, uint16_t aRegionStartIndex, uint16_t aRegionLength);
     void copyRegion(uint16_t aSourcePixelIndex, uint16_t aTargetPixelIndex, uint16_t aLength, bool aDoReverseCopy);
-    void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromBottom = true);
+    void drawBarFromColorArray(uint16_t aBarLength, color32_t *aColorArrayPtr, bool aDrawFromTop = false);
+    void drawBarFromColorArray(uint16_t aBarLength, color16_t *aColor16ArrayPtr, bool aDrawFromTop = false);
 
     void addPixelColor(uint16_t aPixelIndex, uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+    void addColorPartWithBrightness(uint8_t *aColorPartPtr, uint8_t aValueToAdd);
     void addPixelColor(uint16_t aPixelIndex, color32_t aColor);
     // Static functions
     static uint32_t dimColor(color32_t aColor);
@@ -161,17 +157,12 @@ public:
     static color32_t convertLinearToGamma5Color(color32_t aLinearBrightnessColor);
     static color32_t dimColorWithGamma5(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero = false);
 
-    // deprecated
-    static uint8_t gamma32(uint8_t aLinearBrightnessValue) __attribute__ ((deprecated ("Renamed to gamma5().")));
-    static color32_t dimColorWithGamma32(color32_t aLinearBrightnessColor, uint8_t aBrightness, bool doSpecialZero = false)
-            __attribute__ ((deprecated ("Renamed to dimColorWithGamma5().")));
-
     void TestWS2812Resolution();
 
 #if defined(_SUPPORT_RGBW)
     uint8_t BytesPerPixel;  // can be 3 or 4
 #else
-#define BytesPerPixel 3
+    static constexpr uint8_t BytesPerPixel = 3;
 #endif
     uint8_t PixelFlags;
     uint16_t PixelOffset;           // The offset of the pattern on the parent pixel buffer to enable partial patterns overlays

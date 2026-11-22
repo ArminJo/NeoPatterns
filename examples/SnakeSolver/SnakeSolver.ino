@@ -1,11 +1,11 @@
 /*
- * SnakeSolver.cpp
+ * SnakeSolver.ino
  *
  *  It runs the snake game using your AI code in the getNextSnakeDirection() function.
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018-2022  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *

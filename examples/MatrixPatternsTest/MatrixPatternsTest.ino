@@ -1,5 +1,5 @@
 /*
- * MatrixPatternsTest.cpp
+ * MatrixPatternsTest.ino
  *
  *  For testing the MatrixNeoPatterns Fire, Snow, AllColors, and Snake
  *  One analog input controls brightness, the other selects the fire cooling.
@@ -39,8 +39,8 @@
 //#define DEBUG
 #define INFO // global for this source and all included libraries
 
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_RGBW // saves up to 450bytes additional program memory for the AllPatternsOnMultiDevices() example.
+//#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 376 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
 
 #define ENABLE_MATRIX_PATTERN_FIRE
@@ -110,8 +110,8 @@ bool sDemoModeEnabled;
 #define BUTTON_DEBOUNCING_MILLIS 80 // With this you can adapt to the characteristic of your button. Default is 50.
 #include "EasyButtonAtInt01.hpp"
 // The callback function for button 0
-void handleButtonPress(bool aButtonToggleState);
-EasyButton Button0AtPin2(&handleButtonPress); // Only one callback parameter => button is connected to INT0
+void handleButtonPressForButton0(bool aButtonToggleState);
+EasyButton Button0AtPin2(&handleButtonPressForButton0); // Only one callback parameter => button is connected to INT0
 
 // This block must be located after the includes of other *.hpp files
 //#define LOCAL_INFO  // This enables info output only for this file
@@ -479,7 +479,7 @@ uint8_t readModePins() {
     return (digitalRead(MODE_PIN_0) | (digitalRead(MODE_PIN_1) << 1)) ^ 0x03;
 }
 
-void handleButtonPress(bool aButtonToggleState) {
+void handleButtonPressForButton0(bool aButtonToggleState) {
     (void) aButtonToggleState;
     sButtonJustPressed = true;
 }

@@ -1,5 +1,5 @@
 /*
- * MatrixDemo.cpp
+ * MatrixDemo.ino
  *
  *  Simply runs the MatrixAndSnakePatternsDemoHandler for one 8x8 matrix at PIN_NEO_PIXEL_MATRIX.
  *      1. Runs ticker "I love Neopixel" from right to left / from bottom to top
@@ -8,7 +8,7 @@
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string
  *
- *  Copyright (C) 2018  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -30,10 +30,13 @@
 #include <Arduino.h>
 
 #define INFO
+//#define DEBUG
 
-#define DO_NOT_SUPPORT_RGBW // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
-#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 428 bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define FONT_END7F // No fonts > 0x7f for Ticker supported - saves up to 1024 bytes program memory for the used 6x8 font
+#define DO_NOT_SUPPORT_RGBW // saves up to 450bytes additional program memory for the AllPatternsOnMultiDevices() example.
+#define DO_NOT_SUPPORT_BRIGHTNESS // saves up to 376 bytes additional program memory for the AllPatternsOnMultiDevices() example.
 //#define DO_NOT_SUPPORT_NO_ZERO_BRIGHTNESS // If activated, disables writing of zero only if brightness or color is zero. Saves up to 144 bytes ...
+#define SUPPORT_ONLY_DEFAULT_GEOMETRY // Pixel 0 is at bottom right of matrix, matrix is row major (horizontal) and same pixel order across each line. This saves 560 bytes program memory and 3 bytes RAM.
 
 #define ENABLE_PATTERNS_FOR_MATRIX_AND_SNAKE_DEMO_HANDLER
 #include <MatrixSnake.hpp>
@@ -89,7 +92,7 @@ void setup() {
 #  if defined(DEBUG)
     initStackFreeMeasurement();
     initTrace();
-    printFreeRam(&Serial);
+    printRAMAndStackInfo(&Serial);
 #  endif
 #endif
 

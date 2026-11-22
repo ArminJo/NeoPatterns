@@ -65,13 +65,37 @@ typedef uint16_t color16_t;
  */
 typedef uint32_t color32_t;
 
-#define COLOR32_GET_WHITE(color) ((color >> 24) & 0xFF)
-#define COLOR32_GET_RED(color)   ((color >> 16) & 0xFF)
-#define COLOR32_GET_GREEN(color) ((color >> 8) & 0xFF)
-#define COLOR32_GET_BLUE(color)  (color & 0xFF)
+#define COLOR32_GET_WHITE(color) (((color) >> 24) & 0xFF)
+#define COLOR32_GET_RED(color)   (((color) >> 16) & 0xFF)
+#define COLOR32_GET_GREEN(color) (((color) >> 8) & 0xFF)
+#define COLOR32_GET_BLUE(color)  ((color) & 0xFF)
+/*
+ * Converts a 32 bit (W)RGB color to 16 bit RGB 565. The white part is ignored.
+ */
+inline color16_t Color32ToColor16(color32_t aColor) {
+    return (color16_t) (((aColor >> 8) & 0xF800)    // red:   bits 23..19 -> 15..11
+    | ((aColor >> 5) & 0x07E0)    // green: bits 15..10 -> 10..5
+            | ((aColor >> 3) & 0x001F));  // blue:  bits  7..3  ->  4..0
+}
+
 // Eases constant color declarations but should only be used for constant colors. Otherwise better use Adafruit_NeoPixel::Color() to save program memory
-#define COLOR32(r,g,b)  ((color32_t)(((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
-#define COLOR32_W(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+#define COLOR32(r,g,b)  ((color32_t)(((uint32_t)(r)<<16)|((uint16_t)(g)<<8)|(b))) // return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+#define COLOR32_W(r,g,b,w)   ((color32_t)(((uint32_t)(w)<<24)|((uint32_t)(r)<<16)|((uint16_t)(g)<<8)|(b))) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
+
+/*
+ * Converts a 16 bit RGB 565 color to 32 bit RGB. White part is 0.
+ * The 5 or 6 bits are expanded to 8 bits by copying their upper bits into the lower ones,
+ * so COLOR16_WHITE becomes 0x00FFFFFF and COLOR16_BLACK becomes 0.
+ */
+inline color32_t Color16ToColor32(color16_t aColor) {
+    uint8_t tRed = (aColor >> 8) & 0xF8;    // 5 bit
+    tRed |= tRed >> 5;
+    uint8_t tGreen = (aColor >> 3) & 0xFC;  // 6 bit
+    tGreen |= tGreen >> 6;
+    uint8_t tBlue = (aColor << 3) & 0xF8;   // 5 bit
+    tBlue |= tBlue >> 5;
+    return COLOR32(tRed, tGreen, tBlue);
+}
 
 #define COLOR32_BLACK          COLOR32(0,0,0)
 
@@ -105,13 +129,5 @@ typedef uint32_t color32_t;
 #define COLOR32_CYAN           COLOR32(0,255,255)
 #define COLOR32_CYAN_HALF      COLOR32(0,128,128)
 #define COLOR32_CYAN_QUARTER   COLOR32(0,64,64)
-
-// deprecated
-#define COLOR_W32(r,g,b,w)   ((color32_t)(((uint32_t)w<<24)|((uint32_t)r<<16)|((uint16_t)g<<8)|b)) // return ((uint32_t)w << 24) |(uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
-#define WHITE(color) (((color) >> 24) & 0xFF)
-#define RED(color)   (((color) >> 16) & 0xFF)
-#define GREEN(color) (((color) >> 8) & 0xFF)
-#define BLUE(color)  ((color) & 0xFF)
-// end deprecated
 
 #endif // _COLORS_H

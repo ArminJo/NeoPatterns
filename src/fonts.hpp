@@ -19,8 +19,8 @@
 //#define FONT_12X20
 //#define FONT_16X26
 
-//if defined char range 0x20-0x7F otherwise 0x20-0xFF
-//#define FONT_END7F
+
+//#define FONT_END7F // if defined char range 0x20-0x7F otherwise 0x20-0xFF. Saves 1kB for 6x8 font
 
 #define FONT_START (0x20) //first character
 

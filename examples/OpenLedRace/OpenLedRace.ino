@@ -893,7 +893,7 @@ public:
 #  endif
         // scale it so that 100 -> 8
         // Parameter NumberOfThisCar == 1 has the effect, that bar for car 2 can be mounted upside down
-        AccelerationCommonNeopixelBar.drawBar(tAcceleratorLowPassValue / (100 / 8), Color, NumberOfThisCar == 1);
+        AccelerationCommonNeopixelBar.drawBar(tAcceleratorLowPassValue / (100 / 8), Color, NumberOfThisCar != 1);
         AccelerationCommonNeopixelBar.setPin(AccelerationBarPin);
         AccelerationCommonNeopixelBar.show();
 #endif

@@ -7,8 +7,19 @@
  *  Arduino library for handling push buttons connected between ground and INT0 and / or INT1 pin.
  *  INT0 and INT1 are connected to Pin 2 / 3 on most Arduinos (ATmega328), to PB6 / PA3 on ATtiny167 and on ATtinyX5 we have only INT0 at PB2.
  *  The library is totally based on interrupt.
- *  Debouncing is implemented in a not blocking way! It is merely done by ignoring a button change within the debouncing time.
- *  So button state is instantly available without debouncing delay!
+ *
+ *  How debouncing works:
+ *  The first level change after a quiet period is accepted immediately.
+ *  Every further level change within BUTTON_DEBOUNCING_MILLIS (default 30 ms) is ignored as bouncing, and restarts the debouncing time.
+ *  So the button must be quiet for 30 ms before the next change is accepted.
+ *  Because the debouncing time is retriggered, a small value is sufficient, even for buttons with long bouncing.
+ *  A very short press, whose release falls into the debouncing time, is not completely detected. Call updateButtonState() in your loop to catch up with such a missed release.
+ *  To determine the bouncing of your button, use the DebounceTest example. It enables ANALYZE_MAX_BOUNCING_PERIOD, which prints the maximum time between 2 bouncing interrupts.
+ *
+ *  The first button must always be connected to the INT0 pin!
+ *  If 2 buttons are requested, and the second is not connected to the INT1 pin it will then be handled by Pin Change Interrupts.
+ *
+ *  Interrupts are forced enabled after the call of many functions!
  *
  *  Usage:
  *  #define USE_BUTTON_0
@@ -44,7 +55,7 @@
  * - BUTTON_IS_ACTIVE_HIGH          Enable this if your buttons are active high.
  * - USE_ATTACH_INTERRUPT           This forces use of the arduino function attachInterrupt(). It is required if you get the error "multiple definition of __vector_1".
  * - NO_BUTTON_RELEASE_CALLBACK     Disables the code for release callback. This saves 2 bytes RAM and 64 bytes program memory.
- * - BUTTON_DEBOUNCING_MILLIS       With this you can adapt to the characteristic of your button. Default is 50.
+ * - BUTTON_DEBOUNCING_MILLIS       With this you can adapt to the characteristic of your button. Default is 30.
  * - ANALYZE_MAX_BOUNCING_PERIOD    Analyze the buttons actual debounce value.
  * - BUTTON_LED_FEEDBACK            This activates LED_BUILTIN as long as button is pressed.
  * - BUTTON_LED_FEEDBACK_PIN        The pin to use for button LED feedback.
@@ -58,6 +69,7 @@
 #if defined(__AVR__)
 #include <Arduino.h>
 #include "EasyButtonAtInt01.h"
+#include <avr/cpufunc.h> // for _NOP()
 
 /*
  * Usage:
@@ -69,7 +81,6 @@
  * ...
  * digitalWrite(LED_BUILTIN, Button0AtPin2.ButtonToggleState); // The value at the first call after first press is true
  * ...
- *
  */
 
 // For external measurement of code timing
@@ -83,9 +94,6 @@ EasyButton *EasyButton::sPointerToButton0ForISR;
 #endif
 #if defined(USE_BUTTON_1)
 EasyButton *EasyButton::sPointerToButton1ForISR;
-#endif
-#if !defined(USE_BUTTON_0) && !defined(USE_BUTTON_1)
-#error One of USE_BUTTON_0 or USE_BUTTON_1 must be defined
 #endif
 
 // After all includes
@@ -133,7 +141,7 @@ EasyButton::EasyButton(void (*aButtonPressCallback)(bool aButtonToggleState),
         void (*aButtonReleaseCallback)(bool aButtonToggleState, uint16_t aButtonPressDurationMillis)) { // @suppress("Class members should be properly initialized")
     ButtonPressCallback = aButtonPressCallback;
     ButtonReleaseCallback = aButtonReleaseCallback;
-#if !defined(NO_INITIALIZE_IN_CONSTRUCTOR)
+#  if !defined(NO_INITIALIZE_IN_CONSTRUCTOR)
 #    if defined(USE_BUTTON_0)
     init(BUTTON_AT_INT0); // 1. button
 #    else
@@ -178,6 +186,7 @@ EasyButton::EasyButton(bool aIsButtonAtINT0, void (*aButtonPressCallback)(bool a
 
 #if !defined(NO_BUTTON_RELEASE_CALLBACK)
 /**
+ * Constructor with callback
  * @param aIsButtonAtINT0   true if this button is connected to INT0 i.e. is button 0
  */
 EasyButton::EasyButton(bool aIsButtonAtINT0, void (*aButtonPressCallback)(bool aButtonToggleState),
@@ -188,9 +197,9 @@ EasyButton::EasyButton(bool aIsButtonAtINT0, void (*aButtonPressCallback)(bool a
     ButtonPressCallback = aButtonPressCallback;
     ButtonReleaseCallback = aButtonReleaseCallback;
 #  if defined(USE_BUTTON_0) && not defined(USE_BUTTON_1)
-init(BUTTON_AT_INT0); // 1. button
+    init(BUTTON_AT_INT0); // 1. button
 #  elif defined(USE_BUTTON_1) && not defined(USE_BUTTON_0)
-init(BUTTON_AT_INT1_OR_PCINT); // 2. button
+    init(BUTTON_AT_INT1_OR_PCINT); // 2. button
 #  else
     init(aIsButtonAtINT0);
 #  endif
@@ -206,6 +215,14 @@ init(BUTTON_AT_INT1_OR_PCINT); // 2. button
  */
 void EasyButton::init(bool aIsButtonAtINT0) {
     isButtonAtINT0 = aIsButtonAtINT0;
+    // Initialize state before enabling the interrupt, otherwise an early interrupt may be overwritten
+    ButtonStateIsActive = false; // true means button pin is LOW
+    ButtonToggleState = false;
+#if defined(BUTTON_IS_ACTIVE_HIGH)
+    LastButtonLevel = false; // Hardware level for fast filtering pin changes - initial state is inactive
+#else
+    LastButtonLevel = true; // Hardware level for fast filtering pin changes - initial state is inactive
+#endif
 #if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)
     pinModeFast(INTERRUPT_TIMING_OUTPUT_PIN, OUTPUT);
 #endif
@@ -223,22 +240,22 @@ void EasyButton::init(bool aIsButtonAtINT0) {
     INT0_OUT_PORT |= _BV(INT0_BIT); // enable pullup
 #  endif
     sPointerToButton0ForISR = this;
+    /*************************************************
+     * Enable interrupt for first button USE_BUTTON_0
+     *************************************************/
 #  if defined(USE_ATTACH_INTERRUPT)
-#    if defined(ARDUINO_ARCH_SAMD) // see https://www.arduino.cc/reference/tr/language/functions/external-interrupts/attachinterrupt/ paragraph: Syntax
-    attachInterrupt(INT0_PIN, &handleINT1Interrupt, CHANGE);
-#    else
     attachInterrupt(digitalPinToInterrupt(INT0_PIN), &handleINT0Interrupt, CHANGE);
-#    endif
 
-#  elif defined(USE_INT2_FOR_BUTTON_0)
-    EICRA |= _BV(ISC20);  // interrupt on any logical change
-    EIFR |= _BV(INTF2);// clear interrupt bit
-    EIMSK |= _BV(INT2);// enable interrupt on next change
+#  elif defined(USE_INT2_FOR_BUTTON_0) // is set e.g. for Atmega644P
+    MY_EICRA |= _BV(ISC20);  // interrupt on any logical change
+    MY_EIFR = _BV(INTF2);    // clear interrupt bit. Writing 1 clears the flag
+    MY_EIMSK |= _BV(INT2);   // enable interrupt on next change
 
 #  else
-    EICRA |= _BV(ISC00);  // interrupt on any logical change
-    EIFR |= _BV(INTF0);// clear interrupt bit
-    EIMSK |= _BV(INT0);// enable interrupt on next change
+    // USE_INT0_FOR_BUTTON_0
+    MY_EICRA |= _BV(ISC00);  // interrupt on any logical change, if ISC01 was set we get interrupt on rising edge, what we will notice
+    MY_EIFR = _BV(INTF0);    // clear interrupt bit. Writing 1 clears the flag
+    MY_EIMSK |= _BV(INT0);   // enable interrupt on next change
 #  endif //USE_ATTACH_INTERRUPT
 
 #elif defined(USE_BUTTON_1) && not defined(USE_BUTTON_0)
@@ -251,32 +268,31 @@ void EasyButton::init(bool aIsButtonAtINT0) {
 #  endif
     sPointerToButton1ForISR = this;
 
+    /**********************************************************
+     * Enable regular interrupt for second button USE_BUTTON_1
+     **********************************************************/
 #  if (!defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
 #    if defined(PCICR)
     PCICR |= _BV(PCIE0); // Enable pin change interrupt for port PA0 to PA7
-    PCMSK0 = digitalPinToBitMask(INT1_PIN);
+    PCMSK0 = _BV(INT1_BIT);
 #    else
     // ATtinyX5 no ISC10 flag existent
     GIMSK |= _BV(PCIE); //PCINT enable, we have only one
-    PCMSK = digitalPinToBitMask(INT1_PIN);
+    PCMSK = _BV(INT1_BIT);
 #    endif
 #  elif (INT1_PIN != 3)
     /*
-     * ATmega328 (Uno, Nano ) etc. Enable pin change interrupt for port PD0 to PD7 (Arduino pin 0 to 7)
+     * ATmega328 (Uno, Nano ) etc. Enable pin change interrupt for port PD4 to PD7 (Arduino pin 4 to 7)
      */
     PCICR |= _BV(PCIE2);
-    PCMSK2 = digitalPinToBitMask(INT1_PIN);
+    PCMSK2 = _BV(INT1_BIT);
 #  else
 #    if defined(USE_ATTACH_INTERRUPT)
-#      if defined(ARDUINO_ARCH_SAMD) // see https://www.arduino.cc/reference/tr/language/functions/external-interrupts/attachinterrupt/ paragraph: Syntax
-    attachInterrupt(INT1_PIN, &handleINT1Interrupt, CHANGE);
-#      else
     attachInterrupt(digitalPinToInterrupt(INT1_PIN), &handleINT1Interrupt, CHANGE);
-#      endif
 #    else
-    EICRA |= _BV(ISC10);  // interrupt on any logical change
-    EIFR |= _BV(INTF1);     // clear interrupt bit
-    EIMSK |= _BV(INT1);     // enable interrupt on next change
+    MY_EICRA |= _BV(ISC10);  // interrupt on any logical change
+    MY_EIFR = _BV(INTF1);    // clear interrupt bit
+    MY_EIMSK |= _BV(INT1);     // enable interrupt on next change
 #    endif //USE_ATTACH_INTERRUPT
 #  endif // !defined(ISC10)
 
@@ -285,24 +301,20 @@ void EasyButton::init(bool aIsButtonAtINT0) {
      * Both buttons 0 + 1 requested
      */
     if (isButtonAtINT0) {
-        /*
-         * Button 0
-         */
+        /*************************************************
+         * Enable interrupt for first button USE_BUTTON_0
+         *************************************************/
         INT0_DDR_PORT &= ~(_BV(INT0_BIT)); // pinModeFast(2, INPUT);
 #  if !defined(BUTTON_IS_ACTIVE_HIGH)
         INT0_OUT_PORT |= _BV(INT0_BIT); // enable pullup
 #  endif
         sPointerToButton0ForISR = this;
 #  if defined(USE_ATTACH_INTERRUPT)
-#    if defined(ARDUINO_ARCH_SAMD) // see https://www.arduino.cc/reference/tr/language/functions/external-interrupts/attachinterrupt/ paragraph: Syntax
-        attachInterrupt(INT1_PIN, &handleINT1Interrupt, CHANGE);
-#    else
         attachInterrupt(digitalPinToInterrupt(INT0_PIN), &handleINT0Interrupt, CHANGE);
-#    endif
 #  else
-        EICRA |= _BV(ISC00);    // interrupt on any logical change
-        EIFR |= _BV(INTF0);     // clear interrupt bit
-        EIMSK |= _BV(INT0);     // enable interrupt on next change
+        MY_EICRA |= _BV(ISC00);    // interrupt on any logical change
+        MY_EIFR = _BV(INTF0);      // clear interrupt bit
+        MY_EIMSK |= _BV(INT0);     // enable interrupt on next change
 #  endif //USE_ATTACH_INTERRUPT
     } else {
         /*
@@ -315,53 +327,39 @@ void EasyButton::init(bool aIsButtonAtINT0) {
 #  endif
         sPointerToButton1ForISR = this;
 
-        /*
-         * Enable interrupt for 2. buttons
-         */
+        /************************************************************************
+         * Enable Pin Change or regular interrupt for second button USE_BUTTON_1
+         ***********************************************************************/
 #  if (!defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
 #    if defined(PCICR)
         /*
          * ATtiny167 + 87. Enable pin change interrupt for port PA0 to PA7
          */
         PCICR |= _BV(PCIE0);
-        PCMSK0 = digitalPinToBitMask(INT1_PIN);
+        PCMSK0 = _BV(INT1_BIT);
 #    else
         /*
          *ATtinyX5. Enable pin change interrupt for port PB0 to PB5
          */
         GIMSK |= _BV(PCIE); // PCINT enable, we have only one
-        PCMSK = digitalPinToBitMask(INT1_PIN);
+        PCMSK = _BV(INT1_BIT);
 #    endif
 #  elif INT1_PIN == 4 || INT1_PIN == 5 || INT1_PIN == 6 || INT1_PIN == 7
-    //ATmega328 (Uno, Nano ) etc. Enable pin change interrupt for port PD0 to PD7 (Arduino pin 0 to 7)
+    //ATmega328 (Uno, Nano ) etc. Enable pin change interrupt for port PD4 to PD7 (Arduino pin 4 to 7)
         PCICR |= _BV(PCIE2);
-        PCMSK2 = digitalPinToBitMask(INT1_PIN);
-#    elif INT1_PIN == 8 || INT1_PIN == 9 || INT1_PIN == 10 || INT1_PIN == 11 || INT1_PIN == 12 || INT1_PIN == 13
-    //ATmega328 (Uno, Nano ) etc. Enable pin change interrupt 0 to 5 for port PB0 to PB5 (Arduino pin 8 to 13)
-        PCICR |= _BV(PCIE0);
-        PCMSK0 = digitalPinToBitMask(INT1_PIN);
-#    elif INT1_PIN == A0 || INT1_PIN == A1 || INT1_PIN == A2 || INT1_PIN == A3 || INT1_PIN == A4 || INT1_PIN == A5
-    //ATmega328 (Uno, Nano ) etc. Enable pin change interrupt 8 to 13 for port PC0 to PC5 (Arduino pin A0 to A5)
-        PCICR |= _BV(PCIE1);
-        PCMSK1 = digitalPinToBitMask(INT1_PIN);
+        PCMSK2 = _BV(INT1_BIT);
 #  else
 #    if defined(USE_ATTACH_INTERRUPT)
-#      if defined(ARDUINO_ARCH_SAMD) // see https://www.arduino.cc/reference/tr/language/functions/external-interrupts/attachinterrupt/ paragraph: Syntax
-        attachInterrupt(INT1_PIN, &handleINT1Interrupt, CHANGE);
-#      else
         attachInterrupt(digitalPinToInterrupt(INT1_PIN), &handleINT1Interrupt, CHANGE);
-#      endif
 #    else
         // ATmega328 here
-        EICRA |= _BV(ISC10);  // interrupt on any logical change
-        EIFR |= _BV(INTF1);     // clear interrupt bit
-        EIMSK |= _BV(INT1);     // enable interrupt on next change
+        MY_EICRA |= _BV(ISC10);  // interrupt on any logical change
+        MY_EIFR = _BV(INTF1);    // clear interrupt bit
+        MY_EIMSK |= _BV(INT1);   // enable interrupt on next change
 #    endif //USE_ATTACH_INTERRUPT
 #  endif // !defined(ISC10)
     }
 #endif
-    ButtonStateIsActive = false; // negative logic for ButtonStateIsActive! true means button pin is LOW
-    ButtonToggleState = false;
 }
 
 /*
@@ -405,98 +403,118 @@ bool EasyButton::readButtonState() {
 
 // @formatter:on
 
-bool EasyButton::getButtonStateIsActive() {
+bool EasyButton::getStoredButtonState() {
     return ButtonStateIsActive;
-
 }
+
 /*
- * Returns stored state if in debouncing period otherwise current state of button
- * If button is in bouncing period, we do not know button state, so it is only save to return BUTTON_IS_INACTIVE
+ * Returns stored state if in debouncing period, otherwise current state of button
  * @return BUTTON_IS_ACTIVE (true) or BUTTON_IS_INACTIVE (false)
  */
 bool EasyButton::readDebouncedButtonState() {
     // Check if we are in bouncing period
-    if (millis() - ButtonLastChangeMillis <= BUTTON_DEBOUNCING_MILLIS) {
-        // If button is in bouncing period, we do not know button state, so it is only save to return BUTTON_IS_INACTIVE
-        return BUTTON_IS_INACTIVE;
+    noInterrupts();
+    bool tInBouncingPeriod = (millis() - ButtonLastInterruptMillis <= BUTTON_DEBOUNCING_MILLIS);
+    interrupts();
+    if (tInBouncingPeriod) {
+        return ButtonStateIsActive;
+    }
+    return readButtonState();
+}
+/*
+ * Not guarded by noInterrupt() - for internal use
+ */
+bool EasyButton::_readDebouncedButtonState() {
+    // Check if we are in bouncing period
+    bool tInBouncingPeriod = (millis() - ButtonLastInterruptMillis <= BUTTON_DEBOUNCING_MILLIS);
+    if (tInBouncingPeriod) {
+        return ButtonStateIsActive;
     }
     return readButtonState();
 }
 
 /*
- * Update button state if state change was not captured by the ISR
- * @return true if state was changed and updated
+ * Update button state.
+ * can be used to compensate for state change which that was not captured by the ISR
  */
-bool EasyButton::updateButtonState() {
+void EasyButton::updateButtonState() {
     noInterrupts();
-    if (readDebouncedButtonState() != ButtonStateIsActive) {
-#if defined(LOCAL_TRACE)
-        if (LastBounceWasChangeToInactive) {
-            Serial.print(F("Updated button state, assume last button press was shorter than debouncing period of "));
-            Serial.print(BUTTON_DEBOUNCING_MILLIS);
-            Serial.print(F(" ms"));
-#if defined(ANALYZE_MAX_BOUNCING_PERIOD)
-            Serial.print(F(" MaxBouncingPeriod was="));
-            Serial.print(MaxBouncingPeriodMillis);
-            MaxBouncingPeriodMillis = 0;
-#endif
-        } else {
-            // It can happen, that we just catch the release of the button here, so no worry!
-            Serial.print(F("Update button state to "));
-            Serial.print(!ButtonStateIsActive);
-            Serial.print(F(", current state was not yet caught by ISR"));
-        }
-        Serial.println();
+    bool tButtonStateIsActive = readButtonState();
+    if (millis() - ButtonLastInterruptMillis > BUTTON_DEBOUNCING_MILLIS && tButtonStateIsActive != ButtonStateIsActive) {
+        /*
+         * Here we have no debouncing any more and button state was not stored in ButtonStateIsActive
+         * -> force handleINT01Interrupts() to evaluate the current level
+         */
+#if defined(BUTTON_IS_ACTIVE_HIGH)
+        LastButtonLevel = !tButtonStateIsActive; // force handleINT01Interrupts() to evaluate the current level
+#else
+        LastButtonLevel = tButtonStateIsActive;
 #endif
         handleINT01Interrupts();
-        interrupts();
-        return true;
     }
     interrupts();
-    return false;
 }
 
 /*
  * Updates the ButtonPressDurationMillis by polling, since this cannot be done by interrupt.
  */
 uint16_t EasyButton::updateButtonPressDuration() {
-    if (readDebouncedButtonState()) {
+// noInterrupts() is required, since otherwise we may get wrong results if interrupted during load of long value by button ISR
+    noInterrupts();
+    if (_readDebouncedButtonState()) {
+        interrupts();
+        _NOP(); // let a pending button ISR run
+        noInterrupts();
         // Button still active -> update ButtonPressDurationMillis
         ButtonPressDurationMillis = millis() - ButtonLastChangeMillis;
     }
-    return ButtonPressDurationMillis;
+    uint16_t tButtonPressDurationMillis = ButtonPressDurationMillis;
+    interrupts();
+    return tButtonPressDurationMillis;
 }
 
 /*
  * Used for long button press recognition, while button is still pressed!
  * !!! Consider to use button release callback handler and check the ButtonPressDurationMillis
- * You may use EASY_BUTTON_LONG_PRESS_DEFAULT_MILLIS which is 400
+ * @param aLongPressThresholdMillis - Default is EASY_BUTTON_LONG_PRESS_DEFAULT_MILLIS which is 400
  * returns EASY_BUTTON_LONG_PRESS_DETECTED, EASY_BUTTON_LONG_PRESS_STILL_POSSIBLE and EASY_BUTTON_LONG_PRESS_ABORT
  */
 uint8_t EasyButton::checkForLongPress(uint16_t aLongPressThresholdMillis) {
-    uint8_t tRetvale = EASY_BUTTON_LONG_PRESS_ABORT;
-    // noInterrupts() is required, since otherwise we may get wrong results if interrupted during processing by button ISR
+    uint8_t tReturnValue = EASY_BUTTON_LONG_PRESS_ABORT;
+// noInterrupts() is required, since otherwise we may get wrong results if interrupted during processing by button ISR
     noInterrupts();
-    if (readDebouncedButtonState() != BUTTON_IS_INACTIVE) {
+    if (_readDebouncedButtonState()) {
+        interrupts();
+        _NOP(); // let a pending button ISR run
+        noInterrupts();
         // Button still active -> update current ButtonPressDurationMillis
-
         ButtonPressDurationMillis = millis() - ButtonLastChangeMillis;
-        tRetvale = EASY_BUTTON_LONG_PRESS_STILL_POSSIBLE; // if not detected, you may try again
+#if defined(LOCAL_TRACE)
+        Serial.print(F("LastButtonLevel="));
+        Serial.print(LastButtonLevel);
+        Serial.print(F(" Duration "));
+        Serial.print(ButtonPressDurationMillis);
+        Serial.print('=');
+        Serial.print(millis());
+        Serial.print('-');
+        Serial.println(ButtonLastChangeMillis);
+#endif
+        tReturnValue = EASY_BUTTON_LONG_PRESS_STILL_POSSIBLE; // if not detected yet, you may have a chance at next try
+
+        if (ButtonPressDurationMillis >= aLongPressThresholdMillis) {
+            tReturnValue = EASY_BUTTON_LONG_PRESS_DETECTED;
+        }
     }
     interrupts();
-    if (ButtonPressDurationMillis >= aLongPressThresholdMillis) {
-        // long press detected
-        return EASY_BUTTON_LONG_PRESS_DETECTED;
-    }
-
-    return tRetvale;
+    return tReturnValue;
 }
 
 /*
  * Checks for long press of button
  * Blocks until long press threshold is reached or button was released.
  * !!! Consider to use button release callback handler and check the ButtonPressDurationMillis
- * @return true if long press was detected - only once for each long press
+ * @param aLongPressThresholdMillis - Default is EASY_BUTTON_LONG_PRESS_DEFAULT_MILLIS which is 400
+ * @return true if long press was detected. If button is not pressed, it returns true, if the last press was a long press (since 3.0.0)!
  */
 bool EasyButton::checkForLongPressBlocking(uint16_t aLongPressThresholdMillis) {
     /*
@@ -517,26 +535,30 @@ bool EasyButton::checkForLongPressBlocking(uint16_t aLongPressThresholdMillis) {
  * and last release timestamp ButtonReleaseMillis.
  * !!!Works only reliable if called early in ButtonPress callback function!!!
  * !!!Do not call it in ButtonRelease callback function, it makes no sense!!!
- * You may use EASY_BUTTON_DOUBLE_PRESS_DEFAULT_MILLIS which is 400
+ * @param aDoublePressCheckDistanceMillis - default is EASY_BUTTON_DOUBLE_PRESS_DEFAULT_MILLIS which is 400
  * @return true if double press detected.
  */
-bool EasyButton::checkForDoublePress(uint16_t aDoublePressDelayMillis) {
+bool EasyButton::checkForDoublePress(uint16_t aDoublePressCheckDistanceMillis) {
     /*
      * Check if ButtonReleaseMillis is not in initialized state
-     * otherwise a single press before aDoublePressDelayMillis after boot is mistakenly detected as double press
+     * otherwise a single press before aDoublePressCheckDistanceMillis after boot is mistakenly detected as double press
      * Check costs 26 bytes program memory :-(
      */
     if (ButtonReleaseMillis != 0) {
         // because ButtonReleaseMillis is initialized with 0 milliseconds, which is interpreted as the first press happened at the beginning of boot.
         unsigned long tReleaseToPressTimeMillis = ButtonLastChangeMillis - ButtonReleaseMillis;
-#if defined(LOCAL_TRACE)
-        Serial.print(F("DoublePressDelayMillis="));
-        Serial.print(aDoublePressDelayMillis);
-        Serial.print(F(", ReleaseToPressTimeMillis="));
-        Serial.println(tReleaseToPressTimeMillis);
-#endif
+
         // tReleaseToPressTimeMillis != 0 adds 4 bytes, but avoids wrong double press detection if calling this function after release of button
-        return (tReleaseToPressTimeMillis != 0 && tReleaseToPressTimeMillis <= aDoublePressDelayMillis);
+        bool tReturnValue = (tReleaseToPressTimeMillis != 0 && tReleaseToPressTimeMillis <= aDoublePressCheckDistanceMillis);
+#if defined(LOCAL_TRACE)
+        if (tReturnValue) {
+            Serial.print(F("DoublePressCheckMillis="));
+            Serial.print(aDoublePressCheckDistanceMillis);
+            Serial.print(F(", ReleaseToPressTimeMillis="));
+            Serial.println(tReleaseToPressTimeMillis);
+        }
+#endif
+        return tReturnValue;
     }
     return false;
 }
@@ -546,8 +568,8 @@ bool EasyButton::checkForDoublePress(uint16_t aDoublePressDelayMillis) {
  * Can be used to recognize timeout for user button actions
  * @return true if timeout reached: false if last button release was before aTimeoutMillis
  */
-bool EasyButton::checkForForButtonNotPressedTime(uint16_t aTimeoutMillis) {
-    // noInterrupts() is required, since otherwise we may get wrong results if interrupted during load of long value by button ISR
+bool EasyButton::checkForButtonNotPressedTime(uint16_t aTimeoutMillis) {
+// noInterrupts() is required, since otherwise we may get wrong results if interrupted during load of long value by button ISR
     noInterrupts();
     unsigned long tButtonReleaseMillis = ButtonReleaseMillis;
     interrupts();
@@ -561,10 +583,11 @@ bool EasyButton::checkForForButtonNotPressedTime(uint16_t aTimeoutMillis) {
  * 4. Process valid button state change. If callback requested, call callback routine, get button pin level again and handle if button was released in the meantime.
  */
 void EasyButton::handleINT01Interrupts() {
-    // Read button value
+// Read button value
     bool tCurrentButtonStateIsActive;
 
     /*
+     * 1. Read button state
      * This is faster than readButtonState();
      */
 #if defined(USE_BUTTON_0) && not defined(USE_BUTTON_1)
@@ -580,150 +603,119 @@ void EasyButton::handleINT01Interrupts() {
         tCurrentButtonStateIsActive = INT1_IN_PORT & _BV(INT1_BIT);  //  = digitalReadFast(3);
     }
 #endif
+
+    if (LastButtonLevel == tCurrentButtonStateIsActive) {
+        /*
+         * Fast return, if we detect a missing interrupt / state has not changed, which may happen at really bad buttons.
+         * This also allow us to call this program at any time from main or after callback
+         */
+        return;
+    }
+    /*
+     * Here we know, that pin level has changed
+     */
+    LastButtonLevel = tCurrentButtonStateIsActive;
+
+    // handle active low / high button
 #if !defined(BUTTON_IS_ACTIVE_HIGH)
     tCurrentButtonStateIsActive = !tCurrentButtonStateIsActive; // negative logic for tCurrentButtonStateIsActive! true means button pin is LOW
 #endif
 
 #if defined(LOCAL_TRACE)
+// This prints show a long line of adjacent ones or zeros, which means, that we miss a lot of the bouncing interrupts at least for LOCAL_TRACE
     Serial.print(tCurrentButtonStateIsActive);
-    Serial.print('-');
 #endif
 
     unsigned long tMillis = millis();
-    unsigned int tDeltaMillis = tMillis - ButtonLastChangeMillis;
-    // Check for bouncing - state change during debounce period
+    unsigned long tDeltaMillis = tMillis - ButtonLastInterruptMillis;
+    ButtonLastInterruptMillis = tMillis; // rearm dead time
+    /*
+     * 2. Check for bouncing - state change during debounce period
+     */
     if (tDeltaMillis <= BUTTON_DEBOUNCING_MILLIS) {
         /*
-         * Button is bouncing, signal is ringing - do nothing, ignore and wait for next interrupt
+         * Here we have an interrupt during dead time of BUTTON_DEBOUNCING_MILLIS
+         * Button is bouncing, ignore and wait for next interrupt
+         * Therefore the release of a very short press is not detected.
          */
 #if defined(ANALYZE_MAX_BOUNCING_PERIOD)
         if (MaxBouncingPeriodMillis < tDeltaMillis) {
             MaxBouncingPeriodMillis = tDeltaMillis;
-            Serial.print(F("Bouncing, MBP="));
+            Serial.print(F("MaxBouncingPeriod="));
             Serial.println(MaxBouncingPeriodMillis);
-            //        Serial.print(F("ms="));
-            //        Serial.print(tMillis);
-            //        Serial.print(F(" D="));
-            //        Serial.println(tDeltaMillis);
         }
+#endif
+
+    } else if (tCurrentButtonStateIsActive != ButtonStateIsActive
+            || (tCurrentButtonStateIsActive && (tMillis - ButtonLastChangeMillis) > (4 * BUTTON_DEBOUNCING_MILLIS))) {
+        /*
+         * Here we are at first interrupt or after debouncing period
+         * or we had a very short press whose release was not detected, but now enough time is gone to accept a new first press
+         * We always ignore very short releases!
+         */
+#if defined(LOCAL_TRACE)
+        if (tCurrentButtonStateIsActive == ButtonStateIsActive) {
+            Serial.print(F("Last missing release simulated"));
+        }
+#endif
+        uint16_t tPressDurationMillis = tMillis - ButtonLastChangeMillis; // before ButtonLastChangeMillis is overwritten
+        ButtonLastChangeMillis = tMillis;
+        ButtonStateIsActive = tCurrentButtonStateIsActive;
+        ButtonStateHasJustChanged = true;
+#if defined(LOCAL_TRACE)
+        Serial.print(F("\r\n->")); // because here we are the first after a break
+        Serial.print(tCurrentButtonStateIsActive);
+        Serial.print(' ');
 #endif
         if (tCurrentButtonStateIsActive) {
-            LastBounceWasChangeToInactive = false;
+            /*
+             * Button pressed
+             */
+            ButtonToggleState = !ButtonToggleState;
+#if defined(BUTTON_LED_FEEDBACK)
+            digitalWriteFast(BUTTON_LED_FEEDBACK_PIN, HIGH);
+#endif
+            if (ButtonPressCallback != nullptr) {
+                /*
+                 * Call callback function.
+                 * interrupts() is required if callback function needs more time to allow millis() to proceed.
+                 * Otherwise we may see bouncing instead of button release followed by spike instead of button press
+                 */
+                interrupts();
+                ButtonPressCallback(ButtonToggleState);
+                /*
+                 * Check button again since it may have changed state while processing callback function
+                 */
+                noInterrupts();
+                handleINT01Interrupts(); // call to maintain state
+            }
         } else {
             /*
-             * Store, that switch goes inactive during debouncing period.
-             * This may be a bouncing issue (fine) but it can also be a very short button press.
-             * In this case we do not set the ButtonStateIsActive to false because we are in debouncing period.
-             * On the next press this will be detected as a spike, if not considered.
+             * Button release
              */
-            LastBounceWasChangeToInactive = true;
-        }
-
-    } else {
-        /*
-         * Here we are after debouncing period
-         */
-        if (tCurrentButtonStateIsActive == ButtonStateIsActive) {
-            /*
-             * No valid change detected - current is equals last state
-             */
-            if (tCurrentButtonStateIsActive && LastBounceWasChangeToInactive) {
-                // We assume we had a very short press before (or a strange spike), which was handled as a bounce. -> must adjust last button state
-                ButtonStateIsActive = false;
-#if defined(LOCAL_TRACE)
-                Serial.println(F("Preceding short press detected, which was handled as bounce"));
-#endif
-
-            } else {
-                /*
-                 * tCurrentButtonStateIsActive == OldButtonStateIsActive. We had an interrupt, but nothing seems to have changed -> spike
-                 * Do nothing, ignore and wait for next interrupt
-                 */
-#if defined(LOCAL_TRACE)
-                Serial.println(F("Spike"));
-#endif
-            }
-        }
-
-        // do not use else since we may have changed ButtonStateIsActive
-        if (tCurrentButtonStateIsActive != ButtonStateIsActive) {
-            /*
-             * Valid change detected
-             */
-            ButtonLastChangeMillis = tMillis;
-            LastBounceWasChangeToInactive = false;
-#if defined(LOCAL_TRACE)
-            Serial.println(F("Change"));
-#endif
-            ButtonStateIsActive = tCurrentButtonStateIsActive;
-            ButtonStateHasJustChanged = true;
-            if (tCurrentButtonStateIsActive) {
-                /*
-                 * Button pressed
-                 */
+            ButtonPressDurationMillis = tPressDurationMillis;
+            ButtonReleaseMillis = tMillis;
 #if defined(BUTTON_LED_FEEDBACK)
-                digitalWriteFast(BUTTON_LED_FEEDBACK_PIN, HIGH);
+            digitalWriteFast(BUTTON_LED_FEEDBACK_PIN, LOW);
 #endif
-                ButtonToggleState = !ButtonToggleState;
-                if (ButtonPressCallback != nullptr) {
-                    /*
-                     * Call callback function.
-                     * interrupts() is required if callback function needs more time to allow millis() to proceed.
-                     * Otherwise we may see bouncing instead of button release followed by spike instead of button press
-                     */
-                    interrupts();
-                    ButtonPressCallback(ButtonToggleState);
-                    /*
-                     * Check button again since it may changed back while processing callback function
-                     */
-                    if (!readButtonState()) {
-                        // button released now, so maintain status
-#if defined(LOCAL_TRACE)
-                        Serial.println(F("Button release during callback processing detected."));
-#endif
-                        ButtonStateIsActive = false;
-                        tMillis = millis();
-                        ButtonPressDurationMillis = tMillis - ButtonLastChangeMillis;
-                        ButtonLastChangeMillis = tMillis;
-                        ButtonStateHasJustChanged = true;
-                        ButtonReleaseMillis = tMillis;
-                    }
-                }
-            } else {
-                /*
-                 * Button release
-                 */
-                ButtonPressDurationMillis = tDeltaMillis;
-                ButtonReleaseMillis = tMillis;
 #if !defined(NO_BUTTON_RELEASE_CALLBACK)
-                if (ButtonReleaseCallback != nullptr) {
-                    /*
-                     * Call callback function.
-                     * interrupts() is required if callback function needs more time to allow millis() to proceed.
-                     */
-                    interrupts();
-                    ButtonReleaseCallback(ButtonToggleState, ButtonPressDurationMillis);
-                    /*
-                     * Check button again since it may be activated while processing callback function
-                     */
-                    if (readButtonState()) {
-                        // button activated now, so maintain status
-#  if defined(LOCAL_TRACE)
-                        Serial.println(F("Button active after callback processing detected."));
-#  endif
-                        ButtonStateIsActive = true;
-                        ButtonLastChangeMillis = millis();
-                        ButtonStateHasJustChanged = true;
-                        LastBounceWasChangeToInactive = false;
-                    }
-                }
-#endif
-#if defined(BUTTON_LED_FEEDBACK)
-                digitalWriteFast(BUTTON_LED_FEEDBACK_PIN, LOW);
-#endif
+            if (ButtonReleaseCallback != nullptr) {
+                /*
+                 * Call callback function.
+                 * interrupts() is required if callback function needs more time to allow millis() to proceed.
+                 */
+                interrupts();
+                ButtonReleaseCallback(ButtonToggleState, ButtonPressDurationMillis);
+                /*
+                 * Check button state again since it may be changed while processing callback function
+                 */
+                noInterrupts();
+                handleINT01Interrupts(); // call to maintain state
             }
+#endif
         }
-    }
+
+    } // after debouncing period
 }
 
 // end of class definitions
@@ -732,21 +724,18 @@ void EasyButton::handleINT01Interrupts() {
  * This functions are weak and can be replaced by your own code
  */
 #if defined(USE_BUTTON_0)
-void __attribute__ ((weak)) handleINT0Interrupt() {
+void handleINT0Interrupt() {
     EasyButton::sPointerToButton0ForISR->handleINT01Interrupts();
 }
 #endif
 
 #if defined(USE_BUTTON_1)
-void __attribute__ ((weak)) handleINT1Interrupt() {
+void handleINT1Interrupt() {
     EasyButton::sPointerToButton1ForISR->handleINT01Interrupts();
 }
 #endif
 
-#if not defined(USE_ATTACH_INTERRUPT)
-// ISR for PIN PD2
-// Cannot make the vector itself weak, since the vector table is already filled by weak vectors resulting in ignoring my weak one:-(
-//ISR(INT0_vect, __attribute__ ((weak))) {
+#if !defined(USE_ATTACH_INTERRUPT)
 #  if defined(USE_INT2_FOR_BUTTON_0)
 ISR(INT2_vect) {
 #    if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)
@@ -757,35 +746,32 @@ ISR(INT2_vect) {
     digitalWriteFast(INTERRUPT_TIMING_OUTPUT_PIN, LOW);
 #    endif
 }
-#  else
-#    if defined(USE_BUTTON_0)
+#  elif defined(USE_BUTTON_0)
 ISR(INT0_vect) {
-#      if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)
+#    if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)
     digitalWriteFast(INTERRUPT_TIMING_OUTPUT_PIN, HIGH);
-#      endif
-    handleINT0Interrupt();
-#      if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)
-    digitalWriteFast(INTERRUPT_TIMING_OUTPUT_PIN, LOW);
-#      endif
-}
 #    endif
+    handleINT0Interrupt();
+#    if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)
+    digitalWriteFast(INTERRUPT_TIMING_OUTPUT_PIN, LOW);
+#    endif
+}
 #  endif
 
 #  if defined(USE_BUTTON_1)
+// First check, if we must use Pin Change Interrupt PCINT
 #    if (!defined(ISC10)) || ((defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__)) && INT1_PIN != 3)
-// on ATtinyX5 we do not have a INT1_vect but we can use the PCINT0_vect
+// on ATtinyX5 we do not have a INT1_vect (ISC10) -> use the PCINT0_vect
+// if default INT1 pin on X7 is not chosen -> use the PCINT0_vect
+#      if !defined(INTENTIONALLY_USE_PCI0_FOR_BUTTON1) && !(defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)) // on X5 we MUST use PCINT0
+#warning You are using PCINT0 interrupt for button 1
+#      endif
 ISR(PCINT0_vect)
 #    elif INT1_PIN == 4 || INT1_PIN == 5 || INT1_PIN == 6 || INT1_PIN == 7
-// PCINT for ATmega328 Arduino pins 0 to 7
+// PCINT for ATmega328 Arduino pins 4 to 7
 ISR(PCINT2_vect)
-#    elif INT1_PIN == 8 || INT1_PIN == 9 || INT1_PIN == 10 || INT1_PIN == 11 || INT1_PIN == 12 || INT1_PIN == 13
-// PCINT for ATmega328 Arduino pins 8 (PB0) to 13 (PB5) - (PCINT 0 to 5)
-ISR(PCINT0_vect)
-#    elif INT1_PIN == A0 || INT1_PIN == A1 || INT1_PIN == A2 || INT1_PIN == A3 || INT1_PIN == A4 || INT1_PIN == A5
-// PCINT for ATmega328 Arduino pins A1 (PC0) to A5 (PC5) - (PCINT 8 to 13)
-ISR(PCINT1_vect)
 #    else
-ISR(INT1_vect)
+ISR(INT1_vect) // No Pin Change Interrupt required by pin selection -> use default INT1 :-)
 #    endif
 {
 #    if defined(MEASURE_EASY_BUTTON_INTERRUPT_TIMING)

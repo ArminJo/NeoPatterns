@@ -1,7 +1,7 @@
 /*
  * MatrixSnake.hpp
  *
- * Implements a snake game on NeoPixel matrix.
+ * Implements a snake game on NeoPixel matrix of size 8x8 or bigger.
  * High-Score is reset if both RightButton and Left Button are pressed at start of game by calling Snake().
  *
  *  You need to install "Adafruit NeoPixel" library under "Tools -> Manage Libraries..." or "Ctrl+Shift+I" -> use "neoPixel" as filter string.
@@ -9,7 +9,7 @@
  *  SUMMARY
  *  Extension are made to include more patterns and combined patterns and patterns for 8x8 NeoPixel matrix.
  *
- *  Copyright (C) 2018-2025  Armin Joachimsmeyer
+ *  Copyright (C) 2018-2026  Armin Joachimsmeyer
  *
  *  This file is part of NeoPatterns https://github.com/ArminJo/NeoPatterns.
  *
@@ -45,23 +45,32 @@
 #include "LocalDebugLevelStart.h"
 
 #if defined(__AVR__)
-EEMEM uint16_t HighScoreEEPROM; // is reset if both right and left button are pressed at startup.
+EEMEM uint8_t HighScoreEEPROM; // is reset if both right and left button are pressed at startup.
 #endif
 
 MatrixSnake::MatrixSnake() : // @suppress("Class members should be properly initialized")
         NeoPixel(), MatrixNeoPatterns() {
+#if !defined(DO_NOT_SUPPORT_DYNAMIC_OBJECTS)
+    SnakePixelList = nullptr; // is checked and freed in Snake(), so it must be initialized for non global objects
+    DirectionOfLastButtonPressed = DIRECTION_NONE;
+    MillisOfLastButtonChange = 0;
+#endif
 }
 
 // Constructor - calls base-class constructor to initialize strip
-MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel, // @suppress("Class members should be properly initialized")
+MatrixSnake::MatrixSnake(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel, // @suppress("Class members should be properly initialized")
         void (*aPatternCompletionCallback)(NeoPatterns*)) :
         NeoPixel(aColumns * aRows, aPin, aTypeOfPixel), MatrixNeoPatterns(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel,
                 aPatternCompletionCallback) {
+#if !defined(DO_NOT_SUPPORT_DYNAMIC_OBJECTS)
+    SnakePixelList = nullptr; // is checked and freed in Snake(), so it must be initialized for non global objects
+    DirectionOfLastButtonPressed = DIRECTION_NONE;
+    MillisOfLastButtonChange = 0;
+#endif
 }
 
-bool MatrixSnake::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, uint8_t aTypeOfPixel,
+bool MatrixSnake::init(uint8_t aColumns, uint8_t aRows, uint8_t aPin, uint8_t aMatrixGeometry, neoPixelType aTypeOfPixel,
         void (*aPatternCompletionCallback)(NeoPatterns*)) {
-    NeoPixel::init(aColumns * aRows, aPin, aTypeOfPixel);
     return MatrixNeoPatterns::init(aColumns, aRows, aPin, aMatrixGeometry, aTypeOfPixel, aPatternCompletionCallback);
 }
 
@@ -84,7 +93,6 @@ bool MatrixSnake::update() {
         // do it on every call in order not to miss any button press
         SnakeInputHandler();
     }
-
     if ((millis() - lastUpdate) > Interval) {
         // time to update
         if (ActivePattern == SPECIAL_PATTERN_SNAKE) {
@@ -92,6 +100,7 @@ bool MatrixSnake::update() {
             show();
             lastUpdate = millis(); // remember last time of update. Only required for snake here :-)
         } else {
+            // propagate call
             MatrixNeoPatterns::update();
         }
         return true;
@@ -99,41 +108,30 @@ bool MatrixSnake::update() {
     return false;
 }
 
-/*
- * Updates and show the pattern if update interval has expired. Otherwise redraw it if aDoRedrawIfNoUpdate is true.
- *
- * @param aDoRedrawIfNoUpdate Only if true, do an redraw, if no update was scheduled.
- * @return true if update has happened in order to give the caller a chance to manually change parameters (like color etc.)
- */
+// internal, not deprecated, to avoid deprecated warnings inside the library
+bool MatrixSnake::_redrawAndUpdate(bool aDoRedraw) {
+    if (aDoRedraw && ActivePattern == SPECIAL_PATTERN_SNAKE) {
+        // redraw e.g. with a new brightness, the same way SnakeGame.ino now does it
+        drawApple();
+        drawSnake();
+        show();
+    }
+    return update();
+}
+
+// deprecated
+bool MatrixSnake::updateOrRedraw(bool aDoRedrawIfNoUpdate) {
+    return _redrawAndUpdate(aDoRedrawIfNoUpdate);
+}
 bool MatrixSnake::updateOrRedraw(bool aDoRedrawIfNoUpdate, uint8_t aBrightness) {
 #if defined(SUPPORT_BRIGHTNESS)
     Brightness = aBrightness;
 #else
     (void) aBrightness;
 #endif
-    return updateOrRedraw(aDoRedrawIfNoUpdate);
+    return _redrawAndUpdate(aDoRedrawIfNoUpdate);
 }
-bool MatrixSnake::updateOrRedraw(bool aDoRedrawIfNoUpdate) {
-
-    if (ActivePattern == SPECIAL_PATTERN_SNAKE && !(PatternFlags & FLAG_SNAKE_AUTORUN)) {
-        // do it on every call in order not to miss any button press
-        SnakeInputHandler();
-    }
-
-    bool tDoUpdate = (millis() - lastUpdate) > Interval;
-    if (tDoUpdate || aDoRedrawIfNoUpdate) {
-        if (ActivePattern == SPECIAL_PATTERN_SNAKE) {
-            SnakeUpdate(tDoUpdate);
-            show();
-            if (tDoUpdate) {
-                lastUpdate = millis(); // remember last time of update. Only required for snake here :-)
-            }
-        } else {
-            MatrixNeoPatterns::update(); // no redraw available for matrix patterns
-        }
-    }
-    return tDoUpdate;
-}
+// end deprecated
 
 // moves the goal to a new position
 void MatrixSnake::newApple() {
@@ -211,39 +209,15 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
     if (SnakePixelList != nullptr) {
         free(SnakePixelList);
     }
-    SnakePixelList = new position[Rows * Columns]; // 128 bytes for 8x8, 512 for 16 x 16
-//    SnakePixelList = new position[Rows * Columns / 2]; // 64 bytes for 8x8, 256 for 16 x 16
+    SnakePixelList = (position*) malloc(Rows * Columns * sizeof(position)); // 128 bytes for 8x8, 512 for 16 x 16
     if (SnakePixelList == nullptr) {
         return false;
     }
 
-#if defined(__AVR__)
-    /*
-     * Read high score from EEPROM / reset high score
-     */
-    HighScore = eeprom_read_word(&HighScoreEEPROM);
-    if ((digitalRead(aPinOfRightButton) == LOW && digitalRead(aPinOfLeftButton) == LOW) || HighScore == 0xFFFF) {
-#if defined(LOCAL_INFO)
-        Serial.print(F("Reset High Score"));
-#endif
-        eeprom_write_word(&HighScoreEEPROM, 0);
-        HighScore = 0;
-    }
-#else
-    HighScore = 0;
-#endif
-
-#if defined(LOCAL_INFO)
-    Serial.print(F("Starting Snake game with refresh interval="));
-    Serial.print(aIntervalMillis);
-    Serial.print(F("ms. High Score="));
-    Serial.println(HighScore);
-#endif
-
     resetAndClearAndShowSnakeAndNewApple();
 
     if (PinOfRightButton == 0) {
-        // start in autorun mode
+        // No button(s) specified -> start in autorun mode
         PatternFlags = FLAG_SNAKE_AUTORUN;
     } else {
         // normal mode with timeout for autorun
@@ -255,6 +229,30 @@ bool MatrixSnake::Snake(uint16_t aIntervalMillis, color32_t aColor, uint8_t aPin
         }
         PatternFlags = 0; // always start with 2 button mode. 4 button mode is detected if up or down button are pressed
     }
+
+#if defined(__AVR__)
+    /*
+     * Read high score from EEPROM / reset high score
+     */
+    HighScore = eeprom_read_byte(&HighScoreEEPROM);
+    if ((aPinOfRightButton != 0 && ((digitalRead(aPinOfRightButton) == LOW && digitalRead(aPinOfLeftButton) == LOW)))
+            || HighScore == 0xFF) {
+#  if defined(LOCAL_INFO)
+        Serial.print(F("Reset High Score"));
+#  endif
+        eeprom_write_byte(&HighScoreEEPROM, 0);
+        HighScore = 0;
+    }
+# else
+    HighScore = 0;
+#endif
+
+#if defined(LOCAL_INFO)
+    Serial.print(F("Starting Snake game with refresh interval="));
+    Serial.print(aIntervalMillis);
+    Serial.print(F("ms. High Score="));
+    Serial.println(HighScore);
+#endif
     return true;
 }
 
@@ -273,7 +271,7 @@ void MatrixSnake::drawApple() {
 
 void MatrixSnake::drawSnake() {
 
-    for (uint_fast16_t i = 0; i < SnakeLength; i++) {
+    for (uint_fast8_t i = 0; i < SnakeLength; i++) {
         position tPosition = SnakePixelList[i];
         // linear brightness interpolation over the body of the snake between tail and head
         // from 255 to 255 / SnakeLength
@@ -335,8 +333,7 @@ void MatrixSnake::SnakeInputHandler() {
          * Buttons determine turn direction.
          * Debouncing required to avoid multiple turns on one press.
          */
-        uint16_t tMillisSinceLastButtonChanged = millis() - MillisOfLastButtonChange;
-        if (tMillisSinceLastButtonChanged > MILLIS_FOR_BUTTON_DEBOUNCING) {
+        if (millis() - MillisOfLastButtonChange > MILLIS_FOR_BUTTON_DEBOUNCING) {
 
             /*
              * Check, if no button was pressed before (== DIRECTION_NONE)
@@ -431,7 +428,7 @@ bool MatrixSnake::isPositionInArea(position aPositionToCheck) {
  * returns 0 if position is NOT in snake tail
  */
 uint16_t MatrixSnake::getIndexOfPositionInSnakeTail(position aPositionToCheck) {
-    for (uint_fast16_t i = 1; i < (uint8_t) (SnakeLength - 1); ++i) {
+    for (uint_fast8_t i = 1; i < (uint8_t) (SnakeLength - 1); ++i) {
         if (aPositionToCheck.x == SnakePixelList[i].x && aPositionToCheck.y == SnakePixelList[i].y) {
             return i;
         }
@@ -444,22 +441,8 @@ uint16_t MatrixSnake::getIndexOfPositionInSnakeTail(position aPositionToCheck) {
  * returns index value if position is found in snake
  * returns !!! SnakeLength !!! if position is NOT in snake
  */
-uint16_t MatrixSnake::getIndexOfPositionInSnake(uint8_t aPositionToCheckX, uint8_t aPositionToCheckY) {
-    for (uint_fast16_t i = 0; i < SnakeLength; ++i) {
-        if (aPositionToCheckX == SnakePixelList[i].x && aPositionToCheckY == SnakePixelList[i].y) {
-            return i;
-        }
-    }
-    return SnakeLength;
-}
-
-/*
- * Check every snake element
- * returns index value if position is found in snake
- * returns !!! SnakeLength !!! if position is NOT in snake
- */
 uint16_t MatrixSnake::getIndexOfPositionInSnake(position aPositionToCheck) {
-    for (uint_fast16_t i = 0; i < SnakeLength; ++i) {
+    for (uint_fast8_t i = 0; i < SnakeLength; ++i) {
         if (aPositionToCheck.x == SnakePixelList[i].x && aPositionToCheck.y == SnakePixelList[i].y) {
             return i;
         }
@@ -523,7 +506,7 @@ bool MatrixSnake::moveSnakeAndCheckApple(position tSnakeNewHeadPosition) {
     position tLastTailEnd = SnakePixelList[SnakeLength - 1];
     setMatrixPixelColor(tLastTailEnd.x, tLastTailEnd.y, COLOR32_BLACK);
 
-    memmove(&SnakePixelList[1], &SnakePixelList[0], SnakeLength * 2);
+    memmove(&SnakePixelList[1], &SnakePixelList[0], SnakeLength * sizeof(position));
     SnakePixelList[0] = tSnakeNewHeadPosition;
     /*
      * check apple
@@ -538,44 +521,42 @@ bool MatrixSnake::moveSnakeAndCheckApple(position tSnakeNewHeadPosition) {
  * This is called at a fixed interval and updates the snake "pattern".
  * The button input is acquired before by the global update routine.
  */
-void MatrixSnake::SnakeUpdate(bool aDoUpdate) {
-
-    if (aDoUpdate) {
+void MatrixSnake::SnakeUpdate() {
+    /*
+     * Change direction or state of snake flags
+     */
+    if (PatternFlags & FLAG_SNAKE_AUTORUN) {
+        // this calls the AI to simulate button presses which leads to a direction
+        Direction = getNextSnakeDirection(this);
+    } else {
         /*
-         * Change direction or state of snake flags
+         * Handling of showing end and score for plain snake pattern.
+         * For Autorun, this is done in the SnakeAutorunCompleteHandler()
          */
-        if (PatternFlags & FLAG_SNAKE_AUTORUN) {
-            // this calls the AI to simulate button presses which leads to a direction
-            Direction = getNextSnakeDirection(this);
-        } else {
-            /*
-             * Handling of showing end and score for plain snake pattern.
-             * For Autorun, this is done in the SnakeAutorunCompleteHandler()
-             */
-            if (PatternFlags & FLAG_SNAKE_SHOW_END) {
-                // show last state until index gets 0, then show score
-                Index--;
-                if (Index == 0) {
-                    // this activates show score
-                    showScore();
-                }
-                return;
-            } else if (PatternFlags & FLAG_SNAKE_SHOW_LENGTH_SCORE) {
-                // show score until index gets 0, then reset snake
-                Index--;
-                if (Index == 0) {
-                    resetAndClearAndShowSnakeAndNewApple();
-                }
-                return;
+        if (PatternFlags & FLAG_SNAKE_SHOW_END) {
+            // show last state until index gets 0, then show score
+            Index--;
+            if (Index == 0) {
+                // this activates show score
+                showScore();
             }
+            return;
+        } else if (PatternFlags & FLAG_SNAKE_SHOW_LENGTH_SCORE) {
+            // show score until index gets 0, then reset snake
+            Index--;
+            if (Index == 0) {
+                resetAndClearAndShowSnakeAndNewApple();
+            }
+            return;
         }
+    }
 
-        if (Direction != DIRECTION_NONE) {
-            /*
-             * Try to move the snake. If direction is not valid, set it to DIRECTION_NONE.
-             */
-            position tSnakeNewHeadPosition;
-            bool tHeadPositionIsInAreaAndDirectionIsValid = computeNewHeadPosition(Direction, &tSnakeNewHeadPosition);
+    if (Direction != DIRECTION_NONE) {
+        /*
+         * Try to move the snake. If direction is not valid, set it to DIRECTION_NONE.
+         */
+        position tSnakeNewHeadPosition;
+        bool tHeadPositionIsInAreaAndDirectionIsValid = computeNewHeadPosition(Direction, &tSnakeNewHeadPosition);
 #if defined(LOCAL_DEBUG)
         Serial.print(F("new head=("));
         Serial.print(tSnakeNewHeadPosition.x);
@@ -584,20 +565,20 @@ void MatrixSnake::SnakeUpdate(bool aDoUpdate) {
         Serial.println(')');
 #endif
 
-            uint16_t tIndexOfHeadPositionInSnake = 0;
-            if (!tHeadPositionIsInAreaAndDirectionIsValid) {
+        uint16_t tIndexOfHeadPositionInSnake = 0;
+        if (!tHeadPositionIsInAreaAndDirectionIsValid) {
 #if defined(LOCAL_DEBUG)
             Serial.print(F("New head position is out of area or direction invalid. dir="));
             Serial.print(Direction);
             Serial.print(F(" length="));
             Serial.println(SnakeLength);
 #endif
-            } else {
-                // check for self intersection of new head with tail
-                tIndexOfHeadPositionInSnake = getIndexOfPositionInSnakeTail(tSnakeNewHeadPosition);
-            }
-            // check for invalid head position
-            if ((tIndexOfHeadPositionInSnake > 0) || !tHeadPositionIsInAreaAndDirectionIsValid) {
+        } else {
+            // check for self intersection of new head with tail
+            tIndexOfHeadPositionInSnake = getIndexOfPositionInSnakeTail(tSnakeNewHeadPosition);
+        }
+        // check for invalid head position
+        if ((tIndexOfHeadPositionInSnake > 0) || !tHeadPositionIsInAreaAndDirectionIsValid) {
 #if defined(LOCAL_INFO)
             if (tIndexOfHeadPositionInSnake > 0) {
                 Serial.print(F("Intersection at index="));
@@ -608,42 +589,35 @@ void MatrixSnake::SnakeUpdate(bool aDoUpdate) {
                 Serial.println(SnakeLength);
             }
 #endif
-                Direction = DIRECTION_NONE; // Current direction is not valid
-            } else {
-                /*
-                 * move snake body -except head- back in array and set new head
-                 */
-                if (moveSnakeAndCheckApple(tSnakeNewHeadPosition)) {
-                    // eat the apple -> elongate snake, no plausi check :-)
-                    SnakeLength++;
-                    newApple();
-                    drawApple();
-                }
-                drawSnake();
-                Index++;
+            Direction = DIRECTION_NONE; // Current direction is not valid
+        } else {
+            /*
+             * move snake body -except head- back in array and set new head
+             */
+            if (moveSnakeAndCheckApple(tSnakeNewHeadPosition)) {
+                // eat the apple -> elongate snake, no plausi check :-)
+                SnakeLength++;
+                newApple();
+                drawApple();
             }
+            drawSnake();
+            Index++;
         }
+    }
 
+    if (Index != 0 && Direction == DIRECTION_NONE) {
         /*
          * Not at start of game and current direction was not valid or no valid direction found for autorun
          */
-        if (Index != 0 && Direction == DIRECTION_NONE) {
-            if (OnPatternComplete == nullptr) {
-                // set flags to show end and score and reset snake
-                SnakeEndHandler();
-            } else {
-                free(SnakePixelList);
-                SnakePixelList = nullptr;
-                ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
-                OnPatternComplete(this); // call the completion callback, which is set e.g. to SnakeAutorunCompleteHandler for snake autorun
-            }
+        if (OnPatternComplete == nullptr) {
+            // set flags to show end and score and reset snake
+            SnakeEndHandler();
+        } else {
+            free(SnakePixelList);
+            SnakePixelList = nullptr;
+            ActivePattern = PATTERN_NONE; // reset ActivePattern to enable polling for end of pattern.
+            OnPatternComplete(this); // call the completion callback, which is set e.g. to SnakeAutorunCompleteHandler for snake autorun
         }
-
-    } else if (!(Index != 0 && Direction == DIRECTION_NONE)) {
-        // only redraw here if no end or end handler
-        drawApple();
-        drawSnake();
-        return;
     }
 }
 
@@ -653,7 +627,7 @@ void MatrixSnake::SnakeUpdate(bool aDoUpdate) {
  */
 void MatrixSnake::SnakeEndHandler() {
 
-    uint16_t tSnakeLength = SnakeLength;
+    uint_fast8_t tSnakeLength = SnakeLength;
 #if defined(LOCAL_INFO)
     Serial.print(F("Game Over, snake length="));
     Serial.print(tSnakeLength);
@@ -668,7 +642,7 @@ void MatrixSnake::SnakeEndHandler() {
 #endif
         HighScore = tSnakeLength;
 #if defined(__AVR__)
-        eeprom_write_word(&HighScoreEEPROM, tSnakeLength);
+        eeprom_write_byte(&HighScoreEEPROM, tSnakeLength);
 #endif
     }
 #if defined(LOCAL_INFO)
@@ -687,7 +661,7 @@ void MatrixSnake::SnakeEndHandler() {
 void MatrixSnake::showScore() {
     color32_t tNumberColor = COLOR32_GREEN_HALF;
 
-    if (SnakeLength > HighScore) {
+    if (SnakeLength >= HighScore) {
         tNumberColor = COLOR32_RED;
     }
     showNumberOnMatrix(SnakeLength, tNumberColor);
@@ -711,10 +685,6 @@ uint8_t computeDirection(position aStartPosition, position aEndPosition) {
     } else /* if (tDeltaY < 0) */{
         return DIRECTION_UP;
     }
-}
-
-uint8_t computeReverseDirection(uint8_t aDirection) {
-    return ((aDirection + 2) % 4);
 }
 
 /*********************
@@ -862,9 +832,9 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     /*
      * store original snake values
      */
-    uint16_t tStoredSnakeLength = SnakeLength;
+    uint_fast8_t tStoredSnakeLength = SnakeLength;
     uint8_t tStoredDirection = Direction;
-    position *tStoredSnakePixelList = new position[SnakeLength];
+    position *tStoredSnakePixelList = (position*) malloc(SnakeLength * sizeof(position));
     if (tStoredSnakePixelList == nullptr) {
 #if defined(LOCAL_DEBUG)
         Serial.println(F("No memory for StoredSnakePixelList"));
@@ -899,7 +869,7 @@ uint8_t MatrixSnake::runAndCheckIfAppleCanBeReached() {
     SnakeLength = tStoredSnakeLength;
     Direction = tStoredDirection;
 
-    delete[] tStoredSnakePixelList;
+    free(tStoredSnakePixelList);
 
 #if defined(LOCAL_DEBUG)
     Serial.print(F("Check with settings=0x"));
@@ -967,7 +937,7 @@ uint8_t MatrixSnake::builtinGetNextSnakeDirection() {
  * Uses built in or user supplied auto solver
  * SnakeAutorun is implemented as a COMBINED PATTERN
  ****************************************************/
-#if defined(ENABLE_MATRIX_PATTERN_MOVE) // is required by SnakeAutorun and can be enabled by ENABLE_MATRIX_PATTERNS_FOR_SNAKE_AUTORUN
+#if defined(ENABLE_MATRIX_PATTERN_MOVE) // is required by SnakeAutorun and can be enabled by ENABLE_PATTERNS_FOR_SNAKE_AUTORUN
 #define AUTORUN_MODE_SHOW_END 0
 #define AUTORUN_MODE_SHOW_SCORE 1
 #define AUTORUN_MODE_MOVE_SCORE 2
@@ -1098,15 +1068,15 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
     }
 
     uint8_t tState = sState / 2;
-    uint8_t tYOffset;
+    int8_t tYOffset;
     uint8_t tSteps = HEART_HEIGHT + 1 + (tLedsPtr->Rows - HEART_HEIGHT) / 2;
-    uint8_t tXOffset = (tLedsPtr->Columns - HEART_WIDTH) / 2;
+    int8_t tXOffset = (tLedsPtr->Columns - HEART_WIDTH) / 2;
 
     switch (tState) {
     case 0:
 //        myLoadTest(tLedsPtr);
-        // Random ticker
-        setMatrixAndSnakePatternsDemoHandlerRandomTickerText();
+        setMatrixAndSnakePatternsDemoHandlerRandomTickerText(); // Random ticker
+//        setMatrixAndSnakePatternsDemoHandlerTickerText(ILoveNeopixelString); // Fixed ticker
         tLedsPtr->TickerInit(sTickerTextPtr, NeoPatterns::Wheel(0), COLOR32_BLACK, 80, sTickerDirection, FLAG_TICKER_DATA_IN_FLASH);
         sTickerDirection--;
         if (sTickerDirection < 0) {
@@ -1134,7 +1104,6 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &DimColor, 6, 40);
         break;
     case 5:
-//        aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &BrightenColor, 6, 40);
         aLedsPtr->ProcessSelectiveColor(aLedsPtr->LongValue2.ColorTmp, &BrightenColor, 6, 40);
         break;
 
@@ -1196,20 +1165,6 @@ void MatrixAndSnakePatternsDemoHandler(NeoPatterns *aLedsPtr) {
         // safety net
         sState = -1; // Start from beginning
         break;
-
-// SAMPLE ACTIONS for case
-//        aLedsPtr->Delay(40000);
-//        tLedsPtr->TickerPGM(PSTR("I love you"), COLOR32_RED, COLOR32_BLACK, 50, DIRECTION_LEFT);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 0, -8, 9, 100, DIRECTION_UP);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 0, 0, 9, 100, DIRECTION_UP);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 0, 8, 9, 100, DIRECTION_DOWN);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 0, 0, 9, 100, DIRECTION_DOWN);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, -8, 0, 9, 100, DIRECTION_LEFT);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 0, 0, 9, 100, DIRECTION_LEFT);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 8, 0, 9, 100, DIRECTION_RIGHT);
-//        tLedsPtr->MovingPicturePGM(heart8x8, COLOR32_RED, COLOR32_BLACK, 0, 0, 9, 100, DIRECTION_RIGHT);
-//        tLedsPtr->FadeSelective(COLOR32_RED, COLOR32_GREEN, 20, 40);
-
     default:
         aLedsPtr->Delay(1);
 #if defined(ERROR)
